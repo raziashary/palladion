@@ -52,6 +52,57 @@ or copied research reference into a Palladion result. Preserve failed experiment
   N/A, not perfect performance. No synthetic scalar winner is justified before criteria freeze.
 - Applied: RESEARCH_PROTOCOL metric definitions and future X01 tracks.
 
+## L006 — A module-level row is not an atomic execution task
+
+- Date/type: 2026-10-17; user correction and documentation-reference review.
+- Prior claim correction: ~~The initial suite's work-package rows provided sufficient
+  execution detail.~~ They grouped several files/behaviors; the user requested the finer
+  file-specific checkbox format used in Arcana's master development plan.
+- Source: Arcana “Every task names its proof,” provider task examples, active consumer
+  proofs and companion gate/goal/map records; Palladion blueprint “Every file and its
+  responsibility.” Arcana files were read live as a reference, not copied as authority.
+- Applied: ADR-0009 preserves parent IDs and adds bounded child cards with exact planned
+  files, explicit dependencies, reader and positive/negative proof. Check planned ownership
+  without creating a quota of empty modules. E-DOC-002 records coverage and review.
+
+## L007 — Falsify a validator against the real identifier grammar
+
+- Date/type: 2026-10-17; observed checker defect and correction.
+- Prior claim correction: ~~The initial checker checked every gate identifier.~~ Its
+  alphabetic-only gate expression omitted `G-E2E`; the atomic proof check exposed that
+  gap when a card named only this gate. Broadened parsing to include digits and added an
+  undefined numeric-gate mutation. The original runtime remains absent, so no product
+  defect or tested data leak is inferred from this documentation-parser issue.
+- A second self-test rejected the new proof-kind check: an unanchored expression matched
+  DOC inside G-DOC, so an absent kind could pass. Anchored the kind to the field start;
+  the deliberately missing-kind mutant now fails for that reason.
+- Applied: checker CLI plus in-memory negative controls, E-DOC-002; original E-DOC-001
+  check output remains historical with this explicit qualification, not silently erased.
+
+## L008 — Put useful lessons in the instructions every task actually reads
+
+- Date/type: 2026-10-17; explicit user request and method adaptation.
+- Source: Arcana “Method rules,” “Dual anchor,” “Per-phase workflow” and “Learnings
+  register,” notably false-green checks and helpers whose real consumer was never wired.
+- Applied: ADR-0010 and root AGENTS now require substantial premise refutation,
+  consumer/readback proof, meaningful negative controls, exact measurement scope,
+  visible findings, durable delegation and complete closeout. Keep Palladion's own
+  blueprint/permissions, proportional audits and no-UI/synthetic-only boundaries.
+- Limit: adopted methods are instructions, not evidence that a future implementation is
+  correct. Independent content review and falsifiable behavior remain required.
+
+## L009 — Name the reader available at the task's actual phase
+
+- Date/type: 2026-10-17; independent plan-audit finding and correction.
+- Error: ~~P02's retrieval-audit task could prove authorized API trace consumption.~~
+  The API reader is implemented at P04-T04.02. An early producer test could not establish
+  that later authorization path, despite the stated proof.
+- Correction: P02-T04.02 explicitly proves real append→reopen→internal readback in
+  telemetry/audit.py; P04-T04.02 owns role-gated HTTP trace consumption and depends on
+  the producer task. Early G-SECURITY evidence stays partial. Also repaired P00's stale
+  goal header to include D06 and recorded current checker results.
+- Evidence: E-DOC-002; independent review found the mismatch before any application code.
+
 ## Future learning entry
 
 ```text

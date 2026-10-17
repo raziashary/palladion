@@ -2,7 +2,7 @@
 
 As of 2026-10-17 (Asia/Bangkok). Owner: user; coordinator maintains evidence.
 
-## Current task: establish the development suite
+## Development-suite outcomes
 
 Create a source-grounded, internally navigable suite that lets a future session implement
 and test Palladion without reconstructing the vision or mistaking planned code for built code.
@@ -14,6 +14,7 @@ and test Palladion without reconstructing the vision or mistaking planned code f
 | D03: All 15 invariants and T01–T24 map to planned tasks and falsifiable gates | REQUIREMENTS_TRACEABILITY and TESTING_GATES; G-DOC; audit, E-DOC-001 | DONE |
 | D04: Hypothesis protocol preserves negative results and fair deferred comparisons | RESEARCH_PROTOCOL; ADR-0002; audit, E-DOC-001 | DONE |
 | D05: Documentation validates; scoped diff reviewed and preserved | G-DOC, E-DOC-001; documentation checkpoint containing this record | DONE |
+| D06: Master plan contains atomic file-specific tasks with dependencies, readers and proof; useful Arcana rules tailored into AGENTS | P00-T04; ADR-0009/ADR-0010; G-DOC; E-DOC-002 | DONE |
 
 Documentation completion does not close any system gate or establish the research hypothesis.
 
@@ -61,7 +62,7 @@ system work follows the plan; later external comparisons require their own concr
 
 ## Phase checklist
 
-- [x] P00 — development suite and documentation proof (E-DOC-001)
+- [x] P00 — initial suite (E-DOC-001) and atomic-plan/rules refinement (E-DOC-002) verified
 - [ ] P01 — corpus, contracts, adversarial fixtures (Slice 0)
 - [ ] P02 — provenance-first retrieval (Slice 1)
 - [ ] P03 — temporal policy and mock observations (Slice 2)
@@ -72,4 +73,5 @@ system work follows the plan; later external comparisons require their own concr
 - [ ] P08 — scientific evaluation and fault injection (Slice 7)
 - [ ] X01 — external baseline systems, deferred
 
-Task details: [master plan](MASTER_DEV_PLAN.md). Status authority: [progress](PROGRESS.md).
+Task details/child checkboxes: [master plan](MASTER_DEV_PLAN.md). Phase/gate summaries:
+[progress](PROGRESS.md).

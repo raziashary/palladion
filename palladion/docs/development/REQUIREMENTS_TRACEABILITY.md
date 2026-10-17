@@ -62,5 +62,14 @@ IDs preserve the order of blueprint “System invariants.”
 | Dev suite is this task's endpoint | P00 closure only; all system tasks remain PLANNED and gates NOT_RUN |
 
 The detailed T01–T24 mapping lives once in [TESTING_GATES](TESTING_GATES.md#hard-case-coverage-from-the-blueprint).
+Work-package IDs in these coverage tables retain their meaning. Their executable file
+owners, dependencies, readers and proof now live in the master's
+[atomic register](MASTER_DEV_PLAN.md#atomic-execution-register). Each child proof links
+to an exact gate-coverage heading, which links back to its card. Original package/phase
+acceptance remains required; child checkboxes do not waive the blueprint invariants.
+
+The follow-up user requirements are P00-T04: atomic file-specific checkbox tasks based
+on the requested Arcana reference, plus selected useful development rules tailored to
+Palladion AGENTS. ADR-0009/ADR-0010 and E-DOC-002 govern and prove that adaptation.
 When requirements change, update task, gate, traceability, ADR/risk and affected source/tests
 together. Add IDs; do not silently renumber stable references.

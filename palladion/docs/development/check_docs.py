@@ -29,7 +29,11 @@ REQUIRED = (
     )),
 )
 LINK = re.compile(r"\[[^\]\n]+\]\(([^)\n]+)\)")
-REF = re.compile(r"\b(?:P\d{2}-T\d{2}|G-[A-Z]+|ADR-\d{4}|I\d{2}|T\d{2}|Q\d{2})\b")
+REF = re.compile(r"\b(?:P\d{2}-T\d{2}(?:\.\d{2})?|G-[A-Z0-9]+|ADR-\d{4}|I\d{2}|T\d{2}|Q\d{2})\b")
+CARD = re.compile(
+    r"^- \[([ x])\] \*\*(P\d{2}-T\d{2}\.\d{2}) — ([^\n]+)\*\*\n"
+    r"(.*?)(?=^- \[[ x]\] \*\*P|\Z)", re.M | re.S,
+)
 
 
 def prose(text: str) -> str:
@@ -51,7 +55,7 @@ def prose(text: str) -> str:
 
 
 def anchors(text: str) -> set[str]:
-    result: set[str] = set()
+    result = set(re.findall(r'<a id="([^"]+)"></a>', text))
     counts: dict[str, int] = {}
     for heading in re.findall(r"^#{1,6}\s+(.+?)\s*#*\s*$", prose(text), re.M):
         slug = re.sub(r"[^\w\- ]", "", heading.lower()).replace(" ", "-")
@@ -59,6 +63,80 @@ def anchors(text: str) -> set[str]:
         counts[slug] = count + 1
         result.add(slug if count == 0 else f"{slug}-{count}")
     return result
+
+
+def atomic_tasks(plan: str) -> dict[str, dict[str, str]]:
+    return {match[1]: dict(re.findall(
+        r"^  - \*\*(Files|Depends|Change|Proof):\*\* (.+)$", match[3], re.M,
+    )) for match in CARD.findall(plan)}
+
+
+def validate_atomic_register(plan: str, vision: str, parents: set[str]) -> list[str]:
+    errors = []
+    cards = CARD.findall(plan)
+    tasks = atomic_tasks(plan)
+    if len(cards) != len(tasks):
+        errors.append("Atomic register has duplicate child task IDs")
+    for parent in parents - {"P00-T01", "P00-T02", "P00-T03"}:
+        if not any(ident.startswith(parent + ".") for ident in tasks):
+            errors.append(f"Work package has no atomic execution tasks: {parent}")
+    owned_files: set[str] = set()
+    graph: dict[str, set[str]] = {}
+    for ident, fields in tasks.items():
+        missing = {"Files", "Depends", "Change", "Proof"} - fields.keys()
+        if missing:
+            errors.append(f"{ident}: missing atomic fields: {sorted(missing)}")
+            continue
+        if ident.split(".")[0] not in parents:
+            errors.append(f"Atomic task has unknown parent: {ident}")
+        files = re.findall(r"`([^`]+)`", fields["Files"])
+        if not files:
+            errors.append(f"{ident}: no exact owning file paths")
+        for path in files:
+            if ".." in Path(path).parts or not (path.startswith("palladion/") or path == "AGENTS.md"):
+                errors.append(f"{ident}: owning file outside planned project scope: {path}")
+            owned_files.add(path)
+        if not re.match(r"(?:DOC|UNIT|INTEGRATION|SMOKE|MEASUREMENT);", fields["Proof"]):
+            errors.append(f"{ident}: missing proof kind")
+        if not re.search(r"\bG-[A-Z0-9]+\b", fields["Proof"]):
+            errors.append(f"{ident}: missing named gate")
+        deps = set(re.findall(r"\bP\d{2}-T\d{2}(?:\.\d{2})?\b", fields["Depends"]))
+        if not deps:
+            errors.append(f"{ident}: no explicit prerequisite")
+        for dep in deps:
+            if dep not in tasks and dep not in parents:
+                errors.append(f"{ident}: unknown dependency {dep}")
+        graph[ident] = set()
+        for dep in deps:
+            graph[ident].update([dep] if dep in tasks else
+                                [child for child in tasks if child.startswith(dep + ".")])
+    visiting: set[str] = set()
+    visited: set[str] = set()
+
+    def visit(ident: str) -> None:
+        if ident in visiting:
+            errors.append(f"Atomic dependency cycle includes {ident}")
+            return
+        if ident in visited:
+            return
+        visiting.add(ident)
+        for dep in graph.get(ident, set()):
+            visit(dep)
+        visiting.remove(ident)
+        visited.add(ident)
+
+    for ident in graph:
+        visit(ident)
+    sections = vision.split("### 12.2 Every file and its responsibility", 1)
+    if len(sections) != 2:
+        return errors + ["Cannot locate blueprint planned-file responsibility table"]
+    table = sections[1].split("### 12.3", 1)[0]
+    planned = {"palladion/" + path for path in re.findall(r"^\| `([^`]+)` \|", table, re.M)}
+    if not planned:
+        errors.append("Cannot locate blueprint planned-file responsibility table")
+    for path in sorted(planned - owned_files):
+        errors.append(f"Blueprint planned file lacks an atomic owner: {path}")
+    return errors
 
 
 def load_documents() -> dict[str, str]:
@@ -91,7 +169,7 @@ def validate(documents: dict[str, str]) -> list[str]:
     # Definitions have dedicated owners; mentions elsewhere do not create a definition.
     specs = (
         ("MASTER_DEV_PLAN.md", r"^\| (P\d{2}-T\d{2}) \|", "task"),
-        ("TESTING_GATES.md", r"^\| (G-[A-Z]+) \|", "gate"),
+        ("TESTING_GATES.md", r"^\| (G-[A-Z0-9]+) \|", "gate"),
         ("TESTING_GATES.md", r"^\| (T\d{2}) \|", "hard case"),
         ("REQUIREMENTS_TRACEABILITY.md", r"^\| (I\d{2}) \|", "invariant"),
         ("ADR_LOG.md", r"^## (ADR-\d{4}) [—–-]", "ADR"),
@@ -113,12 +191,12 @@ def validate(documents: dict[str, str]) -> list[str]:
         errors.append("Hard-case definitions must cover exactly T01–T24")
     if groups["invariant"] != expected_invariants:
         errors.append("Invariant definitions must cover exactly I01–I15")
-    expected_tasks = {f"P{phase:02d}-T{task:02d}"
-                      for phase, count in enumerate((3, 4, 4, 3, 4, 3, 3, 3, 4))
-                      for task in range(1, count + 1)}
-    if groups["task"] != expected_tasks:
-        errors.append("Task catalog differs from the documented P00–P08 task inventory")
     plan = documents[DEV + "MASTER_DEV_PLAN.md"]
+    for phase in range(9):
+        if not any(task.startswith(f"P{phase:02d}-") for task in groups["task"]):
+            errors.append(f"Task catalog lacks phase P{phase:02d}")
+    errors.extend(validate_atomic_register(plan, documents[VISION], groups["task"]))
+    definitions.update(atomic_tasks(plan))
     if not re.search(r"^## X01 .*deferred", plan, re.M):
         errors.append("Missing deferred external comparison phase X01")
     for name, body in documents.items():
@@ -133,7 +211,7 @@ def validate(documents: dict[str, str]) -> list[str]:
                          ("REQUIREMENTS_TRACEABILITY.md", r"I\d{2}")):
         for line in documents[DEV + file].splitlines():
             if re.match(rf"^\| {prefix} \|", line):
-                if not re.search(r"\bP\d{2}-T\d{2}\b", line) or not re.search(r"\bG-[A-Z]+\b", line):
+                if not re.search(r"\bP\d{2}-T\d{2}\b", line) or not re.search(r"\bG-[A-Z0-9]+\b", line):
                     errors.append(f"{file}: coverage row lacks task/gate: {line}")
     memory_files = [name for name in documents if name.endswith("/PROJECT_MEMORY.md")]
     if memory_files != [DEV + "PROJECT_MEMORY.md"]:
@@ -146,6 +224,8 @@ def validate(documents: dict[str, str]) -> list[str]:
 
 def self_test(documents: dict[str, str]) -> int:
     key = DEV + "TESTING_GATES.md"
+    plan_key = DEV + "MASTER_DEV_PLAN.md"
+    plan = documents[plan_key]
     mutations = {
         "broken local link": (key, documents[key] + "\n[bad](missing-proof.md)\n"),
         "broken heading": (key, documents[key] + "\n[bad](GOAL.md#absent-heading)\n"),
@@ -156,6 +236,16 @@ def self_test(documents: dict[str, str]) -> int:
         "missing task/gate mapping": (key, documents[key].replace(
             "| T01 | Similar old SOP cannot win against applicable approved policy | P02-T03 | G-RETRIEVAL, G-GATE |",
             "| T01 | Similar old SOP | none | none |")),
+        "missing atomic metadata": (plan_key, plan.replace("  - **Files:**", "  - **Omitted:**", 1)),
+        "atomic dependency cycle": (plan_key, plan.replace(
+            "**Depends:** P00-T03.", "**Depends:** P00-T04.01.", 1)),
+        "unowned blueprint file": (plan_key, plan.replace(
+            "`palladion/src/evidence_agent/storage/exact.py`",
+            "`palladion/src/evidence_agent/storage/not_the_owner.py`")),
+        "unknown atomic dependency": (plan_key, plan.replace(
+            "**Depends:** P00-T03.", "**Depends:** P99-T99.99.", 1)),
+        "missing atomic proof kind": (plan_key, plan.replace("**Proof:** DOC;", "**Proof:** unexplained;", 1)),
+        "undefined numeric gate": (key, documents[key] + "\nG-MISSING2\n"),
     }
     for label, (path, replacement) in mutations.items():
         altered = dict(documents)
@@ -183,6 +273,8 @@ def main() -> int:
         return 1
     print(f"PASS: {len(documents)} Markdown files; local links/anchors and stable IDs resolve; "
           "18 sections, 15 invariants, 24 hard cases mapped")
+    print(f"PASS: {len(atomic_tasks(documents[DEV + 'MASTER_DEV_PLAN.md']))} atomic tasks; "
+          "required fields, dependencies/cycles and blueprint planned-file ownership checked")
     print("Structural check only: no runtime correctness, semantic fidelity or research claim verified")
     return self_test(documents) if options.self_test else 0
 

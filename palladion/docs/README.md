@@ -9,7 +9,7 @@ Begin with the master plan's reading protocol and the current progress record.
 
 | Document | Owns |
 |---|---|
-| [MASTER_DEV_PLAN.md](development/MASTER_DEV_PLAN.md) | Per-task reading rules, sequence, stable tasks, phase exits |
+| [MASTER_DEV_PLAN.md](development/MASTER_DEV_PLAN.md) | Per-task rules, work packages, atomic file-specific checkbox cards, dependencies, proof, phase exits |
 | [GOAL.md](development/GOAL.md) | Checkable current setup goal and longer-term system outcomes |
 | [ADR_LOG.md](development/ADR_LOG.md) | Accepted decisions, reasons, consequences, supersession |
 | [TESTING_GATES.md](development/TESTING_GATES.md) | Integrity gates, hard cases, validation and smoke procedures |

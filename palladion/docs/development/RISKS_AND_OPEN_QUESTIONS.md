@@ -21,6 +21,27 @@ The coordinator proposes grounded options; the user/policy owner approves escala
 
 ## Escalation and conflict handling
 
+### Owner decision inbox
+
+The documentation decisions ADR-0009/ADR-0010 are accepted from the user's explicit
+requests. The implementation choices below remain **proposals**, not silently made ADRs.
+They do not block finishing this documentation revision. The user asked to make needed
+ADRs before a push if everything is resolved, so retain this inbox and report it at closeout.
+
+| When / owner decision | Recommendation to consider | Exact execution card |
+|---|---|---|
+| Before P01, Q01: how synthetic approval becomes trusted | Start with authenticated administrator approval events and separate upload/approval grants; simulate signatures only if they test a needed hypothesis. | [P01-T01.01](MASTER_DEV_PLAN.md#p01-t01-01) |
+| Before package setup, Q02: approve concrete dependencies/tooling and model execution scope | Keep fake LLMs first. Propose compatible Python/tooling/client/model pins after source/API checks; hosted/local generation and spending require explicit enablement. Development-agent Luna choice does not select runtime models. | [P01-T01.02](MASTER_DEV_PLAN.md#p01-t01-02), [P01-T01.03](MASTER_DEV_PLAN.md#p01-t01-03) |
+| Before temporal implementation, Q05: audit reconstruction scope and any time-basis migration | Use declared basis and knowledge_cutoff; incompatible timelines remain conflict unless owner supplies approved migration/precedence. Define retained historical queries rather than build a full temporal database. | [P03-T01.04](MASTER_DEV_PLAN.md#p03-t01-04) |
+| Before live fixtures, Q07: synthetic observation freshness/validity values | Let each synthetic policy/adapter owner declare use-specific limits; preserve historical observation separately. Do not invent universal TTL or treat reported validity as freshness. | [P03-T03.01](MASTER_DEV_PLAN.md#p03-t03-01) |
+| Before consequential supported demonstrations, Q09: claim adequacy and escalation owner | Approve a support/exception rubric and designated human escalation when necessary-condition checks cannot establish adequacy; preserve qualified outcomes. | [P04-T03.04](MASTER_DEV_PLAN.md#p04-t03-04) |
+| Before held-out research, Q08: annotation resources, splits, repetitions, numerical acceptance and tradeoffs | Two independent annotators plus adjudication; calibrate on B0/B1 development data and freeze criteria before held-out. Label earlier evidence pilot-only if resources unavailable. | [P08-T01.01](MASTER_DEV_PLAN.md#p08-t01-01) |
+
+Q03/Q04 primarily require implementation-time API/language compatibility evidence and
+may lead to a dependency decision; Q06/Q11/Q12 concern later inventory/comparator/real
+deployment scope. Q10 optional treatments need their declared owner/dependency choices
+before enablement. These are not requests to decide every future detail now.
+
 A missing future choice is not a reason to stop unrelated documentation or mock-only work.
 At the owning implementation task, present the decision, evidenced options, recommendation
 and required direction before dependent changes. A conflict with locked blueprint/user

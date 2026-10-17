@@ -31,14 +31,18 @@ Read root AGENTS → [master plan task protocol](MASTER_DEV_PLAN.md#task-reading
 
 ## Current state and next action
 
-P00 complete: structural CLI checks and seven negative tests passed; independent Luna High
-requirements/fresh suite reviews completed with no material findings. Local checkpoint
-is the commit containing this record; no remote push. No product implementation or
-experiment exists. System phases P01–P08 are PLANNED; X01 is DEFERRED; G-DOC PASS and
-all system gates NOT_RUN. Evidence lives in [EVIDENCE_LOG](EVIDENCE_LOG.md).
-After verified P00 closeout, the next implementation unit is **P01-T01**: contracts/corpus
-foundation with explicit resolution of approval trust model and tooling/model choices.
-This setup task does not authorize starting it automatically.
+Initial P00 suite committed at `26015fd` (E-DOC-001). P00-T04 refinement is verified:
+89 atomic cards (five documentation tasks complete, 84 system tasks planned), adapted
+Arcana methods in AGENTS (ADR-0009/ADR-0010), all 74 blueprint-file owners covered.
+Work packages retain original IDs; child checkboxes own task state and PROGRESS summarizes
+phase/active task. G-DOC PASS including 13 negative controls and independent review with
+all findings resolved. Current checkpoint is the commit containing this record; no push
+while user's conditional ADR decision inbox remains open. No product code/experiment
+exists. P01–P08 remain PLANNED, X01 DEFERRED, all system gates NOT_RUN; E-DOC-002 holds proof.
+The next implementation unit is **P01-T01.01**: owner approval-trust decision, followed
+by explicit tooling/dependency choices for the contracts/corpus foundation.
+This setup task does not authorize starting it automatically. User requests needed ADRs
+before publishing if everything is resolved; owner implementation choices stay open.
 
 ## Open risks to retain
 

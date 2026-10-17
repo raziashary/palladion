@@ -130,6 +130,56 @@ mechanism in a new entry. Superseding a rule needs the applicable user approval.
   auditor used those settings. Runtime provider remains an experimental factor (Q02).
 - Reopen: only on user instruction.
 
+## ADR-0009 — File-specific atomic execution register
+
+- Date/status/owner: 2026-10-17; ACCEPTED; user's requested refinement of the development suite.
+- Context: the initial master plan's P01–P08 rows bundle several files and behaviors.
+  User requests atomic tasks using Arcana's `docs/restructurization/development/` as a
+  documentation reference. Inspected its master plan “The document family,” “Every task
+  names its proof,” provider/active-phase task examples, and companion gate/goal/map records.
+- Decision: preserve existing Pxx-Txx IDs as work-package IDs; append stable child IDs
+  `Pxx-Txx.nn` as executable checkbox tasks in the same master plan. Each child names exact
+  planned file paths, dependencies, one bounded change, its reader, and falsifiable proof.
+  No blind one-task-per-file quota: a behavior can touch its owner, wiring and test together.
+- Where/how: master plan atomic register, task-reading/closure protocol, documentation
+  validator, gate ownership links, progress/goal/map/memory/learning/evidence records.
+  Checkbox task state lives in the plan; PROGRESS summarizes phases and active task.
+- Consequences: old group references retain meaning; a group closes only when all children
+  and its acceptance pass. Planned file coverage is checked against blueprint §12.2, but
+  code presence is never inferred. If implementation consolidates a planned file, record
+  its owner/consumer mapping and revise the plan before closing the changed contract.
+- Alternatives: replacing/renumbering old IDs breaks traceability; simply appending file
+  lists leaves multi-deliverable tasks ambiguous. Copying Arcana's product rules would
+  import unrelated architecture, readiness scores and approvals, so those do not transfer.
+- Validation: E-DOC-002 and G-DOC cover child metadata, parent/dependency references,
+  dependency cycles, blueprint file ownership and deliberate validator failures; independent
+  GPT 6 Luna High review checks semantic task size, sequencing and coverage.
+- Reopen: if source or owner decisions change a task boundary; keep IDs and dated history.
+
+## ADR-0010 — Adapt Arcana's evidence and development rules for Palladion
+
+- Date/status/owner: 2026-10-17; ACCEPTED; user explicitly requested selection and tailoring
+  of useful Arcana master-plan rules into Palladion AGENTS, then continuation.
+- Context/source: inspected Arcana “Rules of Development,” “Every task names its proof,”
+  “Adversarially verify every phase BEFORE building it,” “Method rules,” “Per-phase workflow,”
+  “Dual anchor,” and the “Learnings register,” including false-green and unused-helper examples.
+- Decision: add local rules for dual grounding, bounded atomic tasks, pre-build refutation,
+  actual consumers, meaningful negative controls, exact measurement/scope, visible review
+  resolution, incremental durable delegation, learning/no-stale updates and fresh/populated
+  lifecycle proof. Put a complete closeout sequence in AGENTS where every task reads it.
+- Why: these methods address Palladion's core risks—citation laundering, incomplete
+  evidence, unwired gates, stale memory, budget failures and overstated research claims.
+- Where/how: root AGENTS, master-plan task protocol/atomic P00-T04.05, G-DOC content review,
+  PROJECT_LEARNING and E-DOC-002. No product code or deployment approval added.
+- Boundaries: do not import Arcana's two-auditor minimum, every-finding owner veto, public
+  deployment requirement, numeric readiness weights, platform triples, Rust/Tauri scope,
+  GO history or destructive-operation examples. Use proportional independent review and
+  the user's universal escalation rules. No rule is silently narrowed by this adaptation.
+- Consequences/proof: AGENTS must match the atomic plan and preserve current scope,
+  synthetic-only operations, Luna High constraint and explicit push permissions. Independent
+  review checks for conflict with universal rules; documentation self-tests prove structure.
+- Reopen: when a concrete source/behavior conflict or user instruction changes a method.
+
 ## Future decision template
 
 ```text
@@ -143,5 +193,5 @@ Validation and evidence:
 Supersedes / reopening condition:
 ```
 
-Next free ADR number: 0009. Pending choices live in [risks](RISKS_AND_OPEN_QUESTIONS.md), not
+Next free ADR number: 0011. Pending choices live in [risks](RISKS_AND_OPEN_QUESTIONS.md), not
 as implicitly accepted ADRs. Record implementation-time material choices immediately.

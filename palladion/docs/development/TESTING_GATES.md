@@ -28,7 +28,7 @@ Read source and test fixtures before running anything with stateful-resource acc
 
 | Gate | Owner phases / blueprint source | Falsifiable proof and required negative cases |
 |---|---|---|
-| G-DOC | P00 and every doc-affecting task; user suite request | `python palladion/docs/development/check_docs.py` and `--self-test`; local file/fragment links, IDs, requirements/hard-case mappings and required docs resolve. Deliberate bad-link/missing-ID/duplicate-ID mutants rejected. Manual independent content audit; checker cannot prove semantic fidelity. |
+| G-DOC | P00 and every doc-affecting task; user suite request | `python palladion/docs/development/check_docs.py` and `--self-test`; local links/anchors, numeric/child IDs, required docs, section/invariant/case mappings, atomic card fields/parents/acyclic dependencies and blueprint file ownership resolve. Deliberate malformed metadata, missing file/ID, duplicate, unknown gate and cycle mutants rejected. Independent content/rule audit; checker cannot prove semantic fidelity or task size. |
 | G-CONTRACT | P01; Core typed contracts, Test corpus | Planned `tests/test_goldens.py` plus typed schema tests: every case has scope, refs, required slots, policy basis/outcome, permitted hypotheses, forbidden claims and disposition. Invalid enums/unknown fields/naive times rejected; persisted envelopes schema-versioned; valid round trips pass. |
 | G-SOURCE | P01/P02/P07; Ingestion and revocation | Planned `tests/test_ingest.py`: exact immutable bytes/spans/hash, authenticated approval separate from READY, failed/partial generations unpublishable, manifest exact IDs/counts, idempotency/recovery, revocation after cache/search and before release. Real citation API consumes original bytes; no source self-approval. Optional graph configuration changes required-index set explicitly. |
 | G-RETRIEVAL | P02; Hybrid document retrieval | Planned `tests/test_retrieval.py`: actual Qdrant same-point dense/bm25, pinned compatible API/native RRF k=60 exactly once, exact-ID union, correct canonical filtering and post-expansion checks. Near IDs, opposite clauses, old/draft/restricted hits, missing exceptions, sparse outage and English/Indonesian fixtures. Measure stages/ANN-vs-exact; quality target calibrated later, not assumed. |
@@ -43,6 +43,72 @@ Read source and test fixtures before running anything with stateful-resource acc
 | G-SECURITY | Every runtime phase; Trust boundaries, Threat model | Planned `tests/test_security.py`: tenant/case/role/target scope at every boundary, source/graph/memory/tool prompt injection and poisoned approval, denied citation and mid-session revocation, tampered packet/arguments. Inspect prompts/responses/cache/diagnostics/audit for leaked content/existence; trace endpoint role-gated/redacted; zero unapproved operational side effects in written tests. |
 | G-E2E | P04 onward, final P08; Full lifecycle, Walkthrough | Planned `tests/test_end_to_end.py`: authenticated message endpoint to actual domain tools/ledger/gate, evidence GET and next-session timeline/packet. Supported, partial, conflict, not-established, verification-unavailable fixtures. No evidence, no tools, model format failure, critical outage and deadline all useful safe outcomes. Health/ready and resource cleanup smoke. |
 | G-RESEARCH | P02/P06/P07/P08; Research evaluation | Planned `tests/test_goldens.py`, `scripts/evaluate.py`, `scripts/reconcile.py`: frozen run manifests, split integrity, metric denominator checks, reproducible retrieval, repeated stochastic runs, annotation adjudication, paired ablations, full failures/false vetoes, per-slice metrics and cost/tail latency. Scorer reads actual output artifacts, not model self-grades; missing measurements cannot become zero. |
+
+## Atomic task coverage
+
+Gate rows above own the assertions. Links below route to exact file-specific tasks in
+the master plan; these links are planned obligations, not passing evidence. Parent work
+packages retain their original full acceptance.
+
+### G-BUDGET task coverage
+
+[P04-T01.01](MASTER_DEV_PLAN.md#p04-t01-01), [P04-T01.03](MASTER_DEV_PLAN.md#p04-t01-03), [P04-T01.04](MASTER_DEV_PLAN.md#p04-t01-04), [P04-T02.01](MASTER_DEV_PLAN.md#p04-t02-01), [P04-T02.02](MASTER_DEV_PLAN.md#p04-t02-02), [P04-T02.03](MASTER_DEV_PLAN.md#p04-t02-03), [P06-T01.02](MASTER_DEV_PLAN.md#p06-t01-02), [P08-T02.04](MASTER_DEV_PLAN.md#p08-t02-04), [P08-T03.02](MASTER_DEV_PLAN.md#p08-t03-02).
+
+### G-CONTRACT task coverage
+
+[P01-T01.02](MASTER_DEV_PLAN.md#p01-t01-02), [P01-T01.03](MASTER_DEV_PLAN.md#p01-t01-03), [P01-T01.04](MASTER_DEV_PLAN.md#p01-t01-04), [P01-T02.01](MASTER_DEV_PLAN.md#p01-t02-01), [P01-T02.02](MASTER_DEV_PLAN.md#p01-t02-02), [P01-T04.01](MASTER_DEV_PLAN.md#p01-t04-01), [P01-T04.02](MASTER_DEV_PLAN.md#p01-t04-02), [P01-T04.03](MASTER_DEV_PLAN.md#p01-t04-03).
+
+### G-CRITIC task coverage
+
+[P06-T01.01](MASTER_DEV_PLAN.md#p06-t01-01), [P06-T01.02](MASTER_DEV_PLAN.md#p06-t01-02), [P06-T02.01](MASTER_DEV_PLAN.md#p06-t02-01), [P06-T02.02](MASTER_DEV_PLAN.md#p06-t02-02), [P08-T02.03](MASTER_DEV_PLAN.md#p08-t02-03).
+
+### G-DOC task coverage
+
+[P00-T04.01](MASTER_DEV_PLAN.md#p00-t04-01), [P00-T04.02](MASTER_DEV_PLAN.md#p00-t04-02), [P00-T04.03](MASTER_DEV_PLAN.md#p00-t04-03), [P00-T04.04](MASTER_DEV_PLAN.md#p00-t04-04), [P00-T04.05](MASTER_DEV_PLAN.md#p00-t04-05), [P01-T01.01](MASTER_DEV_PLAN.md#p01-t01-01).
+
+### G-E2E task coverage
+
+[P04-T04.01](MASTER_DEV_PLAN.md#p04-t04-01), [P04-T04.02](MASTER_DEV_PLAN.md#p04-t04-02), [P04-T04.03](MASTER_DEV_PLAN.md#p04-t04-03), [P05-T03.01](MASTER_DEV_PLAN.md#p05-t03-01), [P06-T02.02](MASTER_DEV_PLAN.md#p06-t02-02), [P08-T03.01](MASTER_DEV_PLAN.md#p08-t03-01), [P08-T03.02](MASTER_DEV_PLAN.md#p08-t03-02), [P08-T03.03](MASTER_DEV_PLAN.md#p08-t03-03).
+
+### G-GATE task coverage
+
+[P04-T02.02](MASTER_DEV_PLAN.md#p04-t02-02), [P04-T03.01](MASTER_DEV_PLAN.md#p04-t03-01), [P04-T03.02](MASTER_DEV_PLAN.md#p04-t03-02), [P04-T03.03](MASTER_DEV_PLAN.md#p04-t03-03), [P04-T03.04](MASTER_DEV_PLAN.md#p04-t03-04), [P04-T04.03](MASTER_DEV_PLAN.md#p04-t04-03), [P06-T02.01](MASTER_DEV_PLAN.md#p06-t02-01).
+
+### G-GRAPH task coverage
+
+[P07-T01.01](MASTER_DEV_PLAN.md#p07-t01-01), [P07-T01.02](MASTER_DEV_PLAN.md#p07-t01-02), [P07-T01.03](MASTER_DEV_PLAN.md#p07-t01-03), [P07-T02.01](MASTER_DEV_PLAN.md#p07-t02-01), [P07-T02.02](MASTER_DEV_PLAN.md#p07-t02-02).
+
+### G-LIVE task coverage
+
+[P03-T03.01](MASTER_DEV_PLAN.md#p03-t03-01), [P03-T03.02](MASTER_DEV_PLAN.md#p03-t03-02), [P03-T03.03](MASTER_DEV_PLAN.md#p03-t03-03), [P03-T03.04](MASTER_DEV_PLAN.md#p03-t03-04).
+
+### G-MEMORY task coverage
+
+[P04-T01.02](MASTER_DEV_PLAN.md#p04-t01-02), [P05-T01.01](MASTER_DEV_PLAN.md#p05-t01-01), [P05-T01.02](MASTER_DEV_PLAN.md#p05-t01-02), [P05-T02.01](MASTER_DEV_PLAN.md#p05-t02-01), [P05-T02.02](MASTER_DEV_PLAN.md#p05-t02-02), [P05-T02.03](MASTER_DEV_PLAN.md#p05-t02-03), [P05-T03.01](MASTER_DEV_PLAN.md#p05-t03-01), [P08-T02.06](MASTER_DEV_PLAN.md#p08-t02-06).
+
+### G-POLICY task coverage
+
+[P03-T01.01](MASTER_DEV_PLAN.md#p03-t01-01), [P03-T02.01](MASTER_DEV_PLAN.md#p03-t02-01), [P03-T02.02](MASTER_DEV_PLAN.md#p03-t02-02).
+
+### G-RESEARCH task coverage
+
+[P02-T04.04](MASTER_DEV_PLAN.md#p02-t04-04), [P05-T03.02](MASTER_DEV_PLAN.md#p05-t03-02), [P06-T03.01](MASTER_DEV_PLAN.md#p06-t03-01), [P06-T03.02](MASTER_DEV_PLAN.md#p06-t03-02), [P07-T03.01](MASTER_DEV_PLAN.md#p07-t03-01), [P08-T01.01](MASTER_DEV_PLAN.md#p08-t01-01), [P08-T01.02](MASTER_DEV_PLAN.md#p08-t01-02), [P08-T02.01](MASTER_DEV_PLAN.md#p08-t02-01), [P08-T02.02](MASTER_DEV_PLAN.md#p08-t02-02), [P08-T02.03](MASTER_DEV_PLAN.md#p08-t02-03), [P08-T02.04](MASTER_DEV_PLAN.md#p08-t02-04), [P08-T02.05](MASTER_DEV_PLAN.md#p08-t02-05), [P08-T02.06](MASTER_DEV_PLAN.md#p08-t02-06), [P08-T04.01](MASTER_DEV_PLAN.md#p08-t04-01).
+
+### G-RETRIEVAL task coverage
+
+[P02-T02.01](MASTER_DEV_PLAN.md#p02-t02-01), [P02-T02.02](MASTER_DEV_PLAN.md#p02-t02-02), [P02-T03.01](MASTER_DEV_PLAN.md#p02-t03-01), [P02-T03.03](MASTER_DEV_PLAN.md#p02-t03-03), [P02-T03.04](MASTER_DEV_PLAN.md#p02-t03-04), [P02-T03.05](MASTER_DEV_PLAN.md#p02-t03-05), [P02-T04.04](MASTER_DEV_PLAN.md#p02-t04-04), [P08-T02.05](MASTER_DEV_PLAN.md#p08-t02-05).
+
+### G-SECURITY task coverage
+
+[P01-T02.04](MASTER_DEV_PLAN.md#p01-t02-04), [P02-T01.03](MASTER_DEV_PLAN.md#p02-t01-03), [P02-T03.02](MASTER_DEV_PLAN.md#p02-t03-02), [P02-T04.01](MASTER_DEV_PLAN.md#p02-t04-01), [P02-T04.02](MASTER_DEV_PLAN.md#p02-t04-02), [P03-T03.03](MASTER_DEV_PLAN.md#p03-t03-03), [P04-T01.03](MASTER_DEV_PLAN.md#p04-t01-03), [P04-T04.02](MASTER_DEV_PLAN.md#p04-t04-02), [P05-T01.02](MASTER_DEV_PLAN.md#p05-t01-02), [P05-T02.03](MASTER_DEV_PLAN.md#p05-t02-03), [P07-T02.01](MASTER_DEV_PLAN.md#p07-t02-01), [P08-T03.01](MASTER_DEV_PLAN.md#p08-t03-01).
+
+### G-SOURCE task coverage
+
+[P01-T02.03](MASTER_DEV_PLAN.md#p01-t02-03), [P01-T03.01](MASTER_DEV_PLAN.md#p01-t03-01), [P01-T03.02](MASTER_DEV_PLAN.md#p01-t03-02), [P01-T03.03](MASTER_DEV_PLAN.md#p01-t03-03), [P02-T01.01](MASTER_DEV_PLAN.md#p02-t01-01), [P02-T01.02](MASTER_DEV_PLAN.md#p02-t01-02), [P02-T01.03](MASTER_DEV_PLAN.md#p02-t01-03), [P02-T01.04](MASTER_DEV_PLAN.md#p02-t01-04), [P02-T03.02](MASTER_DEV_PLAN.md#p02-t03-02), [P02-T04.01](MASTER_DEV_PLAN.md#p02-t04-01), [P02-T04.03](MASTER_DEV_PLAN.md#p02-t04-03), [P07-T02.02](MASTER_DEV_PLAN.md#p07-t02-02), [P08-T03.03](MASTER_DEV_PLAN.md#p08-t03-03).
+
+### G-TEMPORAL task coverage
+
+[P03-T01.02](MASTER_DEV_PLAN.md#p03-t01-02), [P03-T01.03](MASTER_DEV_PLAN.md#p03-t01-03), [P03-T01.04](MASTER_DEV_PLAN.md#p03-t01-04).
 
 ## Fixed integrity targets and empirical targets
 

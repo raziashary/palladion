@@ -22,10 +22,13 @@ Do not include credentials, private source text or hidden reasoning in evidence.
   read-only, no credentials/live resources/network/git mutations; checked section coverage,
   slice order, hard cases, unresolved choices and later comparator scope.
 - Structural validation: `python palladion/docs/development/check_docs.py` PASS: 16 Markdown
-  files, all local links/anchors and defined stable IDs resolve; 18 section/15 invariant/
+  files, local links/anchors and ~~all defined stable IDs~~ recognized stable IDs resolve;
+  18 section/15 invariant/
   24 hard-case mappings present. `python .../check_docs.py --self-test` PASS: seven in-memory
   bad-link/anchor, missing-doc/case, duplicate-gate, unknown-task and missing-mapping
   mutants rejected. Checker smoke is its actual CLI invocation; no services started.
+  Correction at E-DOC-002/L007: ~~every gate identifier was checked~~; initial grammar
+  omitted numeric gate IDs such as G-E2E. The current checker explicitly tests them.
 - Initial checker run failed because a prose “next free ADR” label looked like an undefined
   accepted decision ID. Changed the label to a number; retained definition/reference checking.
 - Python syntax: standard-library `ast.parse` on checker source PASS; no bytecode generated.
@@ -47,6 +50,53 @@ Do not include credentials, private source text or hidden reasoning in evidence.
 - Cleanup: no server, watcher, container, provider call or listener started by this task.
 - Limitations: structural checking cannot prove document semantics or runtime behavior;
   no system tests/benchmarks can run because no application exists. No research success claim.
+
+## E-DOC-002 — Atomic plan and tailored development rules
+
+- Date/scope: 2026-10-17; P00-T04 and D06; baseline local commit `26015fd`, clean working
+  tree and one main worktree at start; no push. This is a documentation-only refinement.
+- Reference read live: `C:/arcana/docs/restructurization/development/` master plan “Rules
+  of Development,” “Every task names its proof,” “Method rules,” “Dual anchor,” “Per-phase
+  workflow,” “Learnings register,” representative provider/active-phase tasks; companion
+  gates, goal, map and document-family roles. Scope/architecture remains Palladion's.
+- Reference-pattern agent `arcana_task_pattern`: GPT 6 Luna High, read-only exact
+  documentation scope, no live resources/credentials/network/git mutations; recommended
+  stable child IDs, explicit paths/consumers/proof, retained parent acceptance and no
+  imported Arcana architecture, readiness percentages or mandatory auditor count.
+- Source checks: blueprint §12.2 file table and §15 slices, existing plan/gates/ADRs,
+  project instructions, git status/diff/worktrees. Original blueprint not edited.
+- Changes: atomic cards in MASTER_DEV_PLAN; exact gate/card links; ADR-0009/ADR-0010;
+  selected Arcana methods tailored in AGENTS; companion status/learning/navigation updates.
+- Structural instrument: expanded checker validates required card fields, stable parent/
+  child references, prerequisite graph/cycles and ownership of every blueprint-proposed
+  file without requiring that planned file to exist. File coverage does not prove code.
+- Intermediate failures retained: child proof check exposed alphabetic-only gate parser
+  missing G-E2E; fixed and numeric-gate mutation added. Missing-kind self-test exposed
+  unanchored match inside G-DOC; anchored kind and reran. L007 records mechanisms.
+- Checks: both `python palladion/docs/development/check_docs.py` and `--self-test` PASS
+  after the rule-card addition: 16 Markdown files, 89 atomic cards, exact planned ownership
+  for all 74 blueprint responsibility-table files, resolved child/parent/gate links and
+  acyclic explicit dependencies; 13 deliberate negative mutations rejected in memory.
+  Standard-library ast.parse also accepts checker syntax; no third-party install.
+- Fresh independent content/rule review: `atomic_rules_audit`, GPT 6 Luna High, read-only,
+  reran both allowed commands. Three findings recorded and addressed: P00 goal header
+  now includes D06; P02-T04.02 proves real internal persisted audit readback, with API
+  role authorization reserved for P04-T04.02 and explicit dependency; latest successful
+  checker counts incorporated here. No runtime proof claimed. Targeted resolution review
+  reports all findings resolved and no material conflict with universal instructions.
+- Final scoped checks: `git diff --check` and `git diff --cached --check` PASS. Deliberate
+  14-file staged diff reviewed; private-key/token/credential-pattern scan PASS; all paths
+  confined to AGENTS and project docs. Blueprint SHA-256 unchanged from E-DOC-001 and
+  baseline/ still empty. No Arcana file or product runtime file modified.
+- Checkpoint: verified local commit `docs: make Palladion plan atomic and strengthen development rules`
+  with descriptive body; this record is contained in that checkpoint (git history supplies
+  its hash). Five P00 child tasks checked, 84 future system children unchecked. D06 and
+  G-DOC complete; every application/research gate remains NOT_RUN.
+- Owner decisions/push: implementation choices Q01/Q02/Q05/Q07/Q08/Q09 remain unresolved;
+  no decision is silently accepted. User conditions push on absence of needed ADRs;
+  prepare the verified local checkpoint and report decisions before publishing.
+- Cleanup/limits: no product services, container, watcher, live model request or listener
+  started; no runtime or research gate run; no Arcana files modified.
 
 ## Future evidence record template
 

@@ -1,6 +1,6 @@
 # Palladion master development plan
 
-Version 1, 2026-10-17. Scope anchor: [blueprint v0.2](../vision/palladion-blueprint-v2.md),
+Version 2, 2026-10-17. Scope anchor: [blueprint v0.2](../vision/palladion-blueprint-v2.md),
 especially “Locked decisions,” “Build plan,” “System invariants,” and the full walkthrough.
 The current user mandate is **P00 only**: create this development suite. P01–P08 describe
 future system work. X01 is deferred comparison work. No UI phase is authorized.
@@ -15,7 +15,7 @@ future system work. X01 is deferred comparison work. No UI phase is authorized.
 | This plan + GOAL | Decomposition and acceptance, subordinate to user/blueprint; update when scope changes |
 | ADR_LOG | Dated material decisions; append/supersede, never erase an inconvenient decision |
 | TESTING_GATES + RESEARCH_PROTOCOL | Proof contracts; changes require rationale before measurements, not after failure |
-| PROGRESS + EVIDENCE_LOG | Status and verification artifacts; link every closure to evidence |
+| Atomic checkboxes + PROGRESS + EVIDENCE_LOG | Plan owns child task state; PROGRESS derives phase/active-task summaries; evidence proves closure |
 | PROJECT_MEMORY + PROJECT_MAP | Recovery and navigation, not substitutes for source or vision |
 | PROJECT_LEARNING + RISKS_AND_OPEN_QUESTIONS | Lessons with evidence, uncertain hypotheses and pending owner decisions |
 
@@ -32,7 +32,7 @@ must update it in the same unit, or be explicitly queued for the user's decision
    commits, and `git worktree list`. Preserve unrelated changes. Confirm starting revision.
 2. Read [GOAL](GOAL.md), [PROGRESS](PROGRESS.md), and [PROJECT_MEMORY](PROJECT_MEMORY.md).
    Identify the active task and outcome, the latest verified checkpoint, and unresolved risks.
-3. Read this plan's task row and phase exit, relevant [ADRs](ADR_LOG.md), and the relevant
+3. Read this plan's parent task row, exact atomic child card and phase exit, relevant [ADRs](ADR_LOG.md), and the relevant
    [risk rows](RISKS_AND_OPEN_QUESTIONS.md). Do not assume a proposed decision is accepted.
 4. Read the full blueprint on first onboarding. On every subsequent task, reread the
    named blueprint sections in the row, “Locked decisions,” “System invariants,” and
@@ -92,15 +92,50 @@ Some gates span multiple phases: record the phase-local obligations and their ev
 as PARTIAL until the entire catalog contract is exercised. An early phase exits on its
 own task/exit checks; it cannot claim a full multi-phase gate passed ahead of its consumers.
 
+### Atomic task contract
+
+The original Pxx-Txx rows below are **work packages**, retained so existing references
+remain valid. Execute their child checkbox tasks in the [atomic execution register](#atomic-execution-register).
+`P01-T01.01` is a stable child of P01-T01; suffixes are never reused or renumbered.
+Unchecked means unproven, not absent effort. Record in-progress/blocked detail in PROGRESS.
+Parent references mean the complete package, never an arbitrary child. Every package and
+phase exit retains its original acceptance; completing children alone cannot waive it.
+
+Each atomic card specifies exact repository-relative **Files**, explicit **Depends**,
+bounded **Change** with its reader, and **Proof** (kind, gate, positive/negative observation).
+Paths are planned unless already in this documentation suite. No product file exists yet.
+Evidence kind means: DOC = structural/content check; UNIT = deterministic isolated behavior;
+INTEGRATION = actual local store/domain boundary; SMOKE = real API/script entry point;
+MEASUREMENT = recorded comparative result. These are proof requirements, not earned badges.
+
+Before executing a card, verify its named files/contracts against current source and the
+blueprint, resolve its open owner/dependency decisions, and inspect tests. Shared files
+may be touched by multiple **sequential** cards; dependencies do not permit concurrent
+writers. File lists are bounded change ownership, not blanket edit permission for every
+neighboring module. Add the smallest needed test in the named test file alongside the
+behavior. Task closure records changed paths, actual consumer/readback, commands, evidence
+ID and limitations directly beneath its checkbox; flip it only after those checks pass.
+Card dependencies supplement the phase prerequisites; they do not authorize entering a
+later phase before the preceding phase exits. Read root AGENTS “Evidence and execution
+rules” and “Phase closeout order” on every task, including pre-build refutation and
+meaningful negative controls (ADR-0010).
+
+Arcana's master plan and companion family were read as a formatting/granularity reference
+at `C:/arcana/docs/restructurization/development/`. Palladion's blueprint still determines
+the files, architecture and slices. No Arcana-specific runtime, UI, score or approval rule
+is adopted (ADR-0009).
+
 ## P00 — Development suite
 
-Goal D01–D05. Inputs: entire blueprint, current request and repository inspection.
+Goal D01–D06. Inputs: entire blueprint, current request, Arcana documentation reference
+and repository inspection. D01–D05 cover initial setup; D06 covers the atomic-plan/rules refinement.
 
 | Task | Work and producer → consumer | Acceptance / proof |
 |---|---|---|
 | P00-T01 | Read full vision and establish authority, layout, scope | All 18 sections mapped; blueprint preserved; ADR-0001–ADR-0003 |
 | P00-T02 | Create linked plan, goal, gates, ADR, learning, memory, map, risks and research records | Every document has a distinct owner/function and task-start navigation |
 | P00-T03 | Validate references/IDs, independently audit blueprint fidelity, fix findings | G-DOC; positive and deliberate-failure validator checks; E-DOC-001; reviewed commit |
+| P00-T04 | Refine the suite into atomic file-specific work using the requested Arcana documentation reference | Atomic cards, file/dependency coverage, synced companion records, independent audit; E-DOC-002; G-DOC |
 
 Exit: documentation is usable by the next session; no system gate or hypothesis declared passed.
 
@@ -240,6 +275,806 @@ After system and evaluation interface stabilize: define capability-matched tasks
 isolated comparator adapters, freeze common inputs and resource tracks, run held-out tests,
 and publish multidimensional results under [RESEARCH_PROTOCOL](RESEARCH_PROTOCOL.md).
 Implementation-library labels alone are not experimental treatments.
+
+## Atomic execution register
+
+Every path below is repository-relative. Runtime paths are proposed by blueprint “Every
+file and its responsibility”; none is created by this planning task. Tests listed with
+an owner belong to the same bounded behavior change. Execute dependencies, not file-count
+order. Shared-file tasks are sequential. Each proof names the observation that could fail.
+
+### Atomic tasks — P00
+
+#### P00-T04 execution tasks
+
+<a id="p00-t04-01"></a>
+
+- [x] **P00-T04.01 — Ground the task format in Arcana and record the adaptation**
+  - **Files:** `palladion/docs/development/ADR_LOG.md`, `palladion/docs/development/PROJECT_LEARNING.md`.
+  - **Depends:** P00-T03.
+  - **Change:** Read representative master-plan tasks and companion documents; record transferable task/proof patterns and retain Palladion scope.
+  - **Proof:** DOC; [G-DOC](TESTING_GATES.md#g-doc-task-coverage); reference headings explain task size and named consumers without importing Arcana product rules.
+  - **Evidence:** E-DOC-002; live Arcana task/rule/reference review and ADR-0009/ADR-0010.
+
+<a id="p00-t04-02"></a>
+
+- [x] **P00-T04.02 — Write file-specific cards for every implementation package**
+  - **Files:** `palladion/docs/development/MASTER_DEV_PLAN.md`.
+  - **Depends:** P00-T04.01.
+  - **Change:** Retain parent IDs and add bounded child tasks with exact paths, dependencies, reader and negative-case proof; keep runtime files planned.
+  - **Proof:** DOC; [G-DOC](TESTING_GATES.md#g-doc-task-coverage); every implementation package has children and every blueprint responsibility-table file has a planned owner.
+  - **Evidence:** E-DOC-002; atomic register and complete 74-file blueprint ownership check.
+
+<a id="p00-t04-03"></a>
+
+- [x] **P00-T04.03 — Enforce the register and synchronize document navigation**
+  - **Files:** `palladion/docs/development/check_docs.py`, `palladion/docs/development/TESTING_GATES.md`, `palladion/docs/development/REQUIREMENTS_TRACEABILITY.md`, `palladion/docs/development/PROJECT_MAP.md`, `palladion/docs/development/GOAL.md`, `AGENTS.md`, `palladion/docs/README.md`.
+  - **Depends:** P00-T04.02.
+  - **Change:** Check child fields, IDs, acyclic dependencies and planned file coverage; update gate/requirement reading links so a future task reaches its card.
+  - **Proof:** DOC; [G-DOC](TESTING_GATES.md#g-doc-task-coverage); valid register passes; missing files/metadata, dependency cycles and uncovered packages fail checker self-tests.
+  - **Evidence:** E-DOC-002; checker CLI and 13 negative controls pass; task/gate links resolve.
+
+<a id="p00-t04-04"></a>
+
+- [x] **P00-T04.04 — Audit and preserve the atomic-plan checkpoint**
+  - **Files:** `palladion/docs/development/PROGRESS.md`, `palladion/docs/development/PROJECT_MEMORY.md`, `palladion/docs/development/EVIDENCE_LOG.md`, `palladion/docs/development/GOAL.md`, `palladion/docs/development/MASTER_DEV_PLAN.md`.
+  - **Depends:** P00-T04.03, P00-T04.05.
+  - **Change:** Review task size/order independently; synchronize status and preserve commands, consumer checks, limitations and scoped commit evidence.
+  - **Proof:** DOC; [G-DOC](TESTING_GATES.md#g-doc-task-coverage); Luna High findings resolved, docs CLI/self-test pass, vision unchanged, no runtime gate closed.
+  - **Evidence:** E-DOC-002; independent audit and targeted resolution check completed; final checker passes, scoped documentation checkpoint contains this record.
+
+<a id="p00-t04-05"></a>
+
+- [x] **P00-T04.05 — Tailor useful Arcana development rules into AGENTS**
+  - **Files:** `AGENTS.md`, `palladion/docs/development/ADR_LOG.md`, `palladion/docs/development/PROJECT_LEARNING.md`, `palladion/docs/development/MASTER_DEV_PLAN.md`.
+  - **Depends:** P00-T04.01.
+  - **Change:** Adopt the user's requested source-grounding, meaningful-proof, consumer, audit, learning and closeout methods; keep Palladion-specific authority and universal escalation rules.
+  - **Proof:** DOC; [G-DOC](TESTING_GATES.md#g-doc-task-coverage); source headings/selection recorded; independent review checks no imported UI/runtime/score/approval assumptions or new contradiction.
+  - **Evidence:** E-DOC-002; selected Arcana methods tailored into AGENTS and rationale retained in ADR-0010.
+
+### Atomic tasks — P01
+
+#### P01-T01 execution tasks
+
+<a id="p01-t01-01"></a>
+
+- [ ] **P01-T01.01 — Resolve the synthetic approval fixture trust boundary**
+  - **Files:** `palladion/docs/development/ADR_LOG.md`, `palladion/docs/development/RISKS_AND_OPEN_QUESTIONS.md`.
+  - **Depends:** P00-T04.04.
+  - **Change:** Present Q01 options and record the owner's selected approver identity/event model before implementing its registry consumer.
+  - **Proof:** DOC; [G-DOC](TESTING_GATES.md#g-doc-task-coverage); accepted decision names who can approve and how; document self-approval remains rejected.
+
+<a id="p01-t01-02"></a>
+
+- [ ] **P01-T01.02 — Establish the Python package and validation tooling**
+  - **Files:** `palladion/pyproject.toml`, `palladion/src/evidence_agent/__init__.py`, `palladion/docs/development/ADR_LOG.md`.
+  - **Depends:** P00-T04.04.
+  - **Change:** Resolve Q02 tooling/dependency choices, declare Python compatibility and test/lint/type/build commands, expose package version for app wiring.
+  - **Proof:** SMOKE; [G-CONTRACT](TESTING_GATES.md#g-contract-task-coverage); isolated install/import and actual check entry points run without provider keys; unsupported environment fails visibly.
+
+<a id="p01-t01-03"></a>
+
+- [ ] **P01-T01.03 — Validate mock-first settings and explicit model enablement**
+  - **Files:** `palladion/src/evidence_agent/settings.py`, `palladion/config/settings.yaml`, `palladion/.env.example`, `palladion/.gitignore`, `palladion/tests/test_goldens.py`.
+  - **Depends:** P01-T01.02.
+  - **Change:** Load typed budgets/flags and placeholder inputs; exclude databases/traces/secrets; settings consumer cannot enable paid calls merely from a key.
+  - **Proof:** UNIT; [G-CONTRACT](TESTING_GATES.md#g-contract-task-coverage); valid mock config loads, invalid budget/unknown config fails, credential-only configuration still denies generation.
+
+<a id="p01-t01-04"></a>
+
+- [ ] **P01-T01.04 — Document runnable development commands and safety boundaries**
+  - **Files:** `palladion/README.md`.
+  - **Depends:** P01-T01.03.
+  - **Change:** Publish actual environment/check commands and synthetic-only setup for the implementer; distinguish app startup from provider evaluation.
+  - **Proof:** SMOKE; [G-CONTRACT](TESTING_GATES.md#g-contract-task-coverage); run documented package/check commands in isolated environment; no absent secret or unavailable entry point assumed.
+
+#### P01-T02 execution tasks
+
+<a id="p01-t02-01"></a>
+
+- [ ] **P01-T02.01 — Define identity, evidence and typed error envelopes**
+  - **Files:** `palladion/src/evidence_agent/core/models.py`, `palladion/src/evidence_agent/core/errors.py`, `palladion/tests/test_goldens.py`.
+  - **Depends:** P01-T01.02.
+  - **Change:** Define Principal, EvidenceRecord, source references and result/error envelopes with schema versions; store/tool readers retain types and provenance.
+  - **Proof:** UNIT; [G-CONTRACT](TESTING_GATES.md#g-contract-task-coverage); valid round-trip preserves fields; invalid enums/extras and naive required timestamps rejected.
+
+<a id="p01-t02-02"></a>
+
+- [ ] **P01-T02.02 — Define claims, decisions, observations, packets and reviews**
+  - **Files:** `palladion/src/evidence_agent/core/models.py`, `palladion/tests/test_goldens.py`.
+  - **Depends:** P01-T02.01.
+  - **Change:** Add typed ClaimDraft, requirement origins, PolicyDecision, LiveObservation, packet, CriticReview and GateDecision shapes for later domain consumers.
+  - **Proof:** UNIT; [G-CONTRACT](TESTING_GATES.md#g-contract-task-coverage); observed/reported/hypothesis distinctions survive serialization; missing provenance and invalid dispositions fail.
+
+<a id="p01-t02-03"></a>
+
+- [ ] **P01-T02.03 — Implement canonical source and namespace-scoped IDs**
+  - **Files:** `palladion/src/evidence_agent/core/ids.py`, `palladion/tests/test_ingest.py`, `palladion/tests/test_graph_identity.py`.
+  - **Depends:** P01-T02.01.
+  - **Change:** Derive stable revision/chunk/reference IDs from explicit identity and namespace; registry/search/graph later consume the same IDs.
+  - **Proof:** UNIT; [G-SOURCE](TESTING_GATES.md#g-source-task-coverage); same immutable inputs repeat IDs, changed tenant/revision does not collide, label similarity cannot determine identity.
+
+<a id="p01-t02-04"></a>
+
+- [ ] **P01-T02.04 — Establish backend principal and case authorization**
+  - **Files:** `palladion/src/evidence_agent/security/access.py`, `palladion/tests/test_security.py`.
+  - **Depends:** P01-T02.01.
+  - **Change:** Implement synthetic principal/membership/grant checks for domain callers; model and packet identity fields cannot widen request scope.
+  - **Proof:** UNIT; [G-SECURITY](TESTING_GATES.md#g-security-task-coverage); authorized operation passes; wrong tenant/case/role, swapped identity and revoked grants denied without existence leak.
+
+#### P01-T03 execution tasks
+
+<a id="p01-t03-01"></a>
+
+- [ ] **P01-T03.01 — Define registry, case-membership and audit persistence**
+  - **Files:** `palladion/src/evidence_agent/storage/schema.sql`, `palladion/tests/test_ingest.py`.
+  - **Depends:** P01-T01.01, P01-T02.02, P01-T02.03.
+  - **Change:** Define blueprint registry/chunk/policy/event/memory/manifest/audit tables plus memberships/keys; store schema versions and consistent UTC semantics.
+  - **Proof:** INTEGRATION; [G-SOURCE](TESTING_GATES.md#g-source-task-coverage); temporary SQLite accepts valid references and rejects invalid FK/status relationships; no existing database reset.
+
+<a id="p01-t03-02"></a>
+
+- [ ] **P01-T03.02 — Own SQLite connections, transactions and upgrades**
+  - **Files:** `palladion/src/evidence_agent/storage/sqlite.py`, `palladion/tests/test_ingest.py`.
+  - **Depends:** P01-T03.01.
+  - **Change:** Apply WAL/FK and transactional initialization/upgrades under approved migration strategy; production connection reader reopens stored data.
+  - **Proof:** INTEGRATION; [G-SOURCE](TESTING_GATES.md#g-source-task-coverage); close/reopen preserves fixture rows, failed upgrade rolls back; migration tests use isolated temporary files.
+
+<a id="p01-t03-03"></a>
+
+- [ ] **P01-T03.03 — Implement write-once originals and verified range reads**
+  - **Files:** `palladion/src/evidence_agent/storage/originals.py`, `palladion/tests/test_ingest.py`.
+  - **Depends:** P01-T03.02, P01-T02.03.
+  - **Change:** Store immutable content-addressed bytes and exact range reads consumed later by citation resolver rather than model summaries.
+  - **Proof:** INTEGRATION; [G-SOURCE](TESTING_GATES.md#g-source-task-coverage); readback hash/bytes match, overwrite/path escape/corrupt range fails without replacing previously cited content.
+
+#### P01-T04 execution tasks
+
+<a id="p01-t04-01"></a>
+
+- [ ] **P01-T04.01 — Author synthetic SOP revisions, exception and draft**
+  - **Files:** `palladion/data/demo/sop_2025.md`, `palladion/data/demo/sop_2026.md`, `palladion/data/demo/exception_appendix.md`, `palladion/data/demo/draft_memo.md`.
+  - **Depends:** P01-T01.01, P01-T02.03.
+  - **Change:** Write consistent fictional historical/current clauses, explicit exception and persuasive unapproved memo; approval remains outside document prose.
+  - **Proof:** DOC; [G-CONTRACT](TESTING_GATES.md#g-contract-task-coverage); reviewer traces expected clauses; draft/old-only text cannot receive a gold current-authorization label.
+
+<a id="p01-t04-02"></a>
+
+- [ ] **P01-T04.02 — Author case, policy and changing-observation fixtures**
+  - **Files:** `palladion/data/demo/sample_cases.json`, `palladion/config/policies/demo_reversal_v2.json`, `palladion/tests/test_goldens.py`.
+  - **Depends:** P01-T04.01, P01-T02.02.
+  - **Change:** Define two tenants/roles/cases, trusted/untrusted times, synthetic policy and mock snapshots for policy/live readers.
+  - **Proof:** UNIT; [G-CONTRACT](TESTING_GATES.md#g-contract-task-coverage); valid fixtures resolve intended clauses; unknown source/time field and contradictory fixture assumptions fail validation.
+
+<a id="p01-t04-03"></a>
+
+- [ ] **P01-T04.03 — Validate gold labels and adversarial fixture inventory**
+  - **Files:** `palladion/data/demo/goldens.jsonl`, `palladion/tests/test_goldens.py`.
+  - **Depends:** P01-T04.02.
+  - **Change:** Encode scope, exact clauses, slots/time basis, policy/disposition, hypotheses and forbidden actions; catalog T01–T24 for evaluator.
+  - **Proof:** UNIT; [G-CONTRACT](TESTING_GATES.md#g-contract-task-coverage); every gold reference resolves, missing labels/impossible expected answers/duplicate IDs fail; annotation limits recorded.
+
+### Atomic tasks — P02
+
+#### P02-T01 execution tasks
+
+<a id="p02-t01-01"></a>
+
+- [ ] **P02-T01.01 — Parse MD/TXT into source-preserving structures**
+  - **Files:** `palladion/src/evidence_agent/ingest/parsing.py`, `palladion/tests/test_ingest.py`.
+  - **Depends:** P01-T04.03.
+  - **Change:** Parse UTF-8 headings/tables/clauses with original offsets and lines; chunker consumes exact text and parser version.
+  - **Proof:** UNIT; [G-SOURCE](TESTING_GATES.md#g-source-task-coverage); spans reconstruct Unicode originals; malformed/unsupported input returns explicit failure, not fabricated text.
+
+<a id="p02-t01-02"></a>
+
+- [ ] **P02-T01.02 — Chunk without detaching rule exceptions**
+  - **Files:** `palladion/src/evidence_agent/ingest/chunking.py`, `palladion/tests/test_ingest.py`.
+  - **Depends:** P02-T01.01, P01-T02.03.
+  - **Change:** Produce deterministic chunks and parent/neighbor links; separate original citation text from generated embedding prefixes.
+  - **Proof:** UNIT; [G-SOURCE](TESTING_GATES.md#g-source-task-coverage); rule/exception boundary is recoverable, IDs/order/hash stable, contextual prefix never enters original quote.
+
+<a id="p02-t01-03"></a>
+
+- [ ] **P02-T01.03 — Validate trusted approval and upload metadata**
+  - **Files:** `palladion/src/evidence_agent/ingest/metadata.py`, `palladion/tests/test_ingest.py`, `palladion/tests/test_security.py`.
+  - **Depends:** P01-T03.03, P01-T02.04.
+  - **Change:** Check uploader/approver grants, MIME/size/hash, temporal scope and supersession before pipeline writes authenticated registry metadata.
+  - **Proof:** UNIT; [G-SOURCE](TESTING_GATES.md#g-source-task-coverage), [G-SECURITY](TESTING_GATES.md#g-security-task-coverage); valid upload accepted; prose approval, unauthorized approver and invalid supersession scope rejected.
+
+<a id="p02-t01-04"></a>
+
+- [ ] **P02-T01.04 — Publish only reconciled ingest generations**
+  - **Files:** `palladion/src/evidence_agent/ingest/pipeline.py`, `palladion/tests/test_ingest.py`.
+  - **Depends:** P02-T01.02, P02-T01.03, P02-T02.02.
+  - **Change:** Stage sources/chunks/backend acknowledgments; publish SQLite generation only after exact manifest reconciliation; retry accepted input idempotently.
+  - **Proof:** INTEGRATION; [G-SOURCE](TESTING_GATES.md#g-source-task-coverage); interrupted/partial upsert stays unpublishable, recovery idempotent, graph-off required-index set explicit.
+
+#### P02-T02 execution tasks
+
+<a id="p02-t02-01"></a>
+
+- [ ] **P02-T02.01 — Pin and probe dense/BM25 retrieval dependencies**
+  - **Files:** `palladion/compose.yaml`, `palladion/pyproject.toml`, `palladion/config/settings.yaml`, `palladion/docs/development/ADR_LOG.md`.
+  - **Depends:** P01-T01.03.
+  - **Change:** Resolve Q03/Q04 using official pinned APIs and actual probe; configure synthetic local Qdrant, model/tokenizer and BM25 mode for adapter.
+  - **Proof:** INTEGRATION; [G-RETRIEVAL](TESTING_GATES.md#g-retrieval-task-coverage); real server/client supports named vectors and native RRF k=60; incompatible mode fails visibly instead of switching weighting.
+
+<a id="p02-t02-02"></a>
+
+- [ ] **P02-T02.02 — Implement Qdrant collection, points and scoped queries**
+  - **Files:** `palladion/src/evidence_agent/storage/qdrant.py`, `palladion/tests/test_retrieval.py`.
+  - **Depends:** P02-T02.01, P01-T02.03.
+  - **Change:** Create payload indexes before ingestion and shared dense/bm25 point IDs; expose scoped upsert/query/health for pipeline and hybrid readers.
+  - **Proof:** INTEGRATION; [G-RETRIEVAL](TESTING_GATES.md#g-retrieval-task-coverage); actual collection readback includes both representations/filters; missing vector or generation is not trusted as READY.
+
+#### P02-T03 execution tasks
+
+<a id="p02-t03-01"></a>
+
+- [ ] **P02-T03.01 — Resolve exact identifiers without fuzzy substitution**
+  - **Files:** `palladion/src/evidence_agent/storage/exact.py`, `palladion/tests/test_retrieval.py`.
+  - **Depends:** P01-T03.02, P01-T02.03.
+  - **Change:** Map validated exact codes/aliases to canonical targets; hybrid reader unions results separately from ranking fusion.
+  - **Proof:** INTEGRATION; [G-RETRIEVAL](TESTING_GATES.md#g-retrieval-task-coverage); known exact ID resolves, unknown stays unknown, POL-17 never silently returns POL-71; namespace filter enforced.
+
+<a id="p02-t03-02"></a>
+
+- [ ] **P02-T03.02 — Resolve eligible immutable evidence before exposure**
+  - **Files:** `palladion/src/evidence_agent/retrieval/evidence.py`, `palladion/tests/test_ingest.py`, `palladion/tests/test_security.py`.
+  - **Depends:** P02-T01.03, P01-T03.03, P01-T02.04.
+  - **Change:** Recheck ACL, publication generation, approval/time/scope and exact span/hash; citation and final gate share canonical resolver.
+  - **Proof:** INTEGRATION; [G-SOURCE](TESTING_GATES.md#g-source-task-coverage), [G-SECURITY](TESTING_GATES.md#g-security-task-coverage); valid span readback passes; draft/revoked/stale-index/restricted/corrupt hit blocked before prompt or output.
+
+<a id="p02-t03-03"></a>
+
+- [ ] **P02-T03.03 — Fuse dense/sparse once and union exact candidates**
+  - **Files:** `palladion/src/evidence_agent/retrieval/hybrid.py`, `palladion/tests/test_retrieval.py`.
+  - **Depends:** P02-T02.02, P02-T03.01, P02-T03.02.
+  - **Change:** Run scoped dense/BM25 queries, native RRF exactly once, exact injection and canonical eligibility before rerank reader.
+  - **Proof:** INTEGRATION; [G-RETRIEVAL](TESTING_GATES.md#g-retrieval-task-coverage); relevant/wrong-ID/old-source cases and sparse outage classified; score never becomes truth probability or exhaustive absence.
+
+<a id="p02-t03-04"></a>
+
+- [ ] **P02-T03.04 — Rerank and expand parent/exception context**
+  - **Files:** `palladion/src/evidence_agent/retrieval/rerank.py`, `palladion/config/settings.yaml`, `palladion/tests/test_retrieval.py`.
+  - **Depends:** P02-T03.03.
+  - **Change:** Add explicit rerank/no-op treatment and bounded original parent/neighbor expansion; assembly rechecks expanded spans and deduplicates sources.
+  - **Proof:** INTEGRATION; [G-RETRIEVAL](TESTING_GATES.md#g-retrieval-task-coverage); exception recovered within passage budget; restricted adjacent text excluded, duplicates cannot consume all slots.
+
+<a id="p02-t03-05"></a>
+
+- [ ] **P02-T03.05 — Report searched scope, required slots and index health**
+  - **Files:** `palladion/src/evidence_agent/retrieval/coverage.py`, `palladion/tests/test_retrieval.py`.
+  - **Depends:** P02-T03.04.
+  - **Change:** Build search-result provenance, partial failures and supplied-source coverage distinct from inventory attestation for agent/evaluator readers.
+  - **Proof:** UNIT; [G-RETRIEVAL](TESTING_GATES.md#g-retrieval-task-coverage); accepted-but-unindexed revision warns; zero hits cannot certify missing external inventory or required-slot sufficiency.
+
+#### P02-T04 execution tasks
+
+<a id="p02-t04-01"></a>
+
+- [ ] **P02-T04.01 — Wire source and citation API entry points**
+  - **Files:** `palladion/src/evidence_agent/main.py`, `palladion/src/evidence_agent/api/routes.py`, `palladion/src/evidence_agent/api/schemas.py`, `palladion/tests/test_end_to_end.py`.
+  - **Depends:** P02-T01.04, P02-T03.05.
+  - **Change:** Add app factory/lifespan and authenticated upload/separate approval/index-health/evidence-read transport with real domain adapters.
+  - **Proof:** SMOKE; [G-SOURCE](TESTING_GATES.md#g-source-task-coverage), [G-SECURITY](TESTING_GATES.md#g-security-task-coverage); API upload/approve/search/citation reads exact original; unauthorized self-approval and citation read denied.
+
+<a id="p02-t04-02"></a>
+
+- [ ] **P02-T04.02 — Record minimal correlated retrieval audit events**
+  - **Files:** `palladion/src/evidence_agent/telemetry/audit.py`, `palladion/tests/test_security.py`.
+  - **Depends:** P02-T04.01.
+  - **Change:** Persist generation, safe scope, stage counts/timing, exclusion reasons and failure IDs through audit.py's internal append/read interface. P04-T04.02 later exposes the role-gated API reader; its authorization is not claimed here.
+  - **Proof:** INTEGRATION; [G-SECURITY](TESTING_GATES.md#g-security-task-coverage); production audit append→close/reopen→internal readback preserves matched trace/result; restricted-text/credential canaries absent on success/error. API authorization proof remains P04-T04.02.
+
+<a id="p02-t04-03"></a>
+
+- [ ] **P02-T04.03 — Expose idempotent seed and reconciliation commands**
+  - **Files:** `palladion/scripts/reconcile.py`, `palladion/scripts/seed.py`, `palladion/tests/test_ingest.py`.
+  - **Depends:** P02-T04.02.
+  - **Change:** Seed synthetic accepted sources and compare manifest IDs/counts/hashes through real adapters; existing volumes are never reset by default.
+  - **Proof:** SMOKE; [G-SOURCE](TESTING_GATES.md#g-source-task-coverage); second seed preserves IDs, missing point is detected, citation still resolves; no destructive default.
+
+<a id="p02-t04-04"></a>
+
+- [ ] **P02-T04.04 — Measure B0/B1/B2 retrieval before agent and graph**
+  - **Files:** `palladion/scripts/evaluate.py`, `palladion/tests/test_retrieval.py`, `palladion/tests/test_goldens.py`, `palladion/docs/development/EVIDENCE_LOG.md`.
+  - **Depends:** P02-T04.03.
+  - **Change:** Run pinned lexical/hybrid/rerank per-stage queries including ANN-vs-exact and language/time/ACL slices; scorer consumes actual ranked references.
+  - **Proof:** MEASUREMENT; [G-RETRIEVAL](TESTING_GATES.md#g-retrieval-task-coverage), [G-RESEARCH](TESTING_GATES.md#g-research-task-coverage); wrong expected clause fails scoring; preserve pilot counts/failures with no invented target or held-out tuning.
+
+### Atomic tasks — P03
+
+#### P03-T01 execution tasks
+
+<a id="p03-t01-01"></a>
+
+- [ ] **P03-T01.01 — Register approved policies and source-clause eligibility**
+  - **Files:** `palladion/src/evidence_agent/policy/registry.py`, `palladion/tests/test_policy_engine.py`.
+  - **Depends:** P02-T04.04.
+  - **Change:** Read approved family/version/source links under principal scope; validate rule metadata and preserve current/historical selection inputs for temporal resolver.
+  - **Proof:** INTEGRATION; [G-POLICY](TESTING_GATES.md#g-policy-task-coverage); valid table loads; unapproved/missing/revoked current clause cannot create policy authority.
+
+<a id="p03-t01-02"></a>
+
+- [ ] **P03-T01.02 — Resolve four trusted time bases and half-open intervals**
+  - **Files:** `palladion/src/evidence_agent/policy/temporal.py`, `palladion/tests/test_policy_temporal.py`.
+  - **Depends:** P03-T01.01.
+  - **Change:** Obtain policy-declared time from permitted live/case/clock/domain sources; selection uses valid intervals without revision-name ranking.
+  - **Proof:** UNIT; [G-TEMPORAL](TESTING_GATES.md#g-temporal-task-coverage); all bases/exact boundaries select correctly; missing/untrusted/naive time cannot select convenient version.
+
+<a id="p03-t01-03"></a>
+
+- [ ] **P03-T01.03 — Apply supersession, conflicts and historical cutoffs**
+  - **Files:** `palladion/src/evidence_agent/policy/temporal.py`, `palladion/src/evidence_agent/policy/registry.py`, `palladion/tests/test_policy_temporal.py`.
+  - **Depends:** P03-T01.02, P03-T01.04.
+  - **Change:** Apply authorized scope-matching edges and knowledge_cutoff; preserve audit semantics and reject incomparable overlaps or mixed-basis definitions.
+  - **Proof:** INTEGRATION; [G-TEMPORAL](TESTING_GATES.md#g-temporal-task-coverage); T02/T03/T21 and concurrent overlap writes cannot silently choose winner; undefined migration remains conflict.
+
+<a id="p03-t01-04"></a>
+
+- [ ] **P03-T01.04 — Decide historical-audit and time-basis migration policy**
+  - **Files:** `palladion/docs/development/ADR_LOG.md`, `palladion/docs/development/RISKS_AND_OPEN_QUESTIONS.md`, `palladion/tests/test_policy_temporal.py`.
+  - **Depends:** P03-T01.02.
+  - **Change:** Resolve Q05 owner requirements for knowledge-cutoff reconstruction and time-basis migration; temporal implementation consumes explicit precedence or conflict semantics.
+  - **Proof:** DOC; [G-TEMPORAL](TESTING_GATES.md#g-temporal-task-coverage); accepted decision and boundary fixtures distinguish historical knowledge/current revocation; no inferred retroactive authorization.
+
+#### P03-T02 execution tasks
+
+<a id="p03-t02-01"></a>
+
+- [ ] **P03-T02.01 — Validate and execute the bounded predicate AST**
+  - **Files:** `palladion/src/evidence_agent/policy/engine.py`, `palladion/tests/test_policy_engine.py`.
+  - **Depends:** P03-T01.03.
+  - **Change:** Implement typed allowlisted comparison/all/any/not operators with depth/work bounds; required-field validation precedes predicate execution.
+  - **Proof:** UNIT; [G-POLICY](TESTING_GATES.md#g-policy-task-coverage); valid rows match; unknown type/operator, missing fact and excessive recursion fail; no eval/exec/SQL path.
+
+<a id="p03-t02-02"></a>
+
+- [ ] **P03-T02.02 — Produce evidence-linked policy decision traces**
+  - **Files:** `palladion/src/evidence_agent/policy/engine.py`, `palladion/src/evidence_agent/policy/registry.py`, `palladion/tests/test_policy_engine.py`.
+  - **Depends:** P03-T02.01, P03-T03.02.
+  - **Change:** Validate fact provenance and intended-use freshness; return selected version/basis/as-of/inputs/rows/source clauses/audit result for gate reader.
+  - **Proof:** INTEGRATION; [G-POLICY](TESTING_GATES.md#g-policy-task-coverage); replay trace; missing settlement is INCOMPLETE_INPUT, unverified fact is not false, conflicting rows cannot grant eligibility.
+
+#### P03-T03 execution tasks
+
+<a id="p03-t03-01"></a>
+
+- [ ] **P03-T03.01 — Define named operation and timestamp contracts**
+  - **Files:** `palladion/src/evidence_agent/live/contracts.py`, `palladion/config/adapters.yaml`, `palladion/tests/test_live.py`, `palladion/docs/development/ADR_LOG.md`.
+  - **Depends:** P03-T01.03.
+  - **Change:** Resolve Q07 synthetic owner values; validate operation versions, request/response bounds, errors and observed/event/data-as-of semantics for gateway.
+  - **Proof:** UNIT; [G-LIVE](TESTING_GATES.md#g-live-task-coverage); valid envelope preserves three times; unknown operation/extra URL/invalid identifier/schema rejected before adapter call.
+
+<a id="p03-t03-02"></a>
+
+- [ ] **P03-T03.02 — Provide deterministic observations and failure fixtures**
+  - **Files:** `palladion/src/evidence_agent/live/mock.py`, `palladion/tests/test_live.py`.
+  - **Depends:** P03-T03.01.
+  - **Change:** Implement fictional transaction/settlement/incident and optional BI reads with changing snapshots and timeout/throttle/schema/denied/not-found cases.
+  - **Proof:** UNIT; [G-LIVE](TESTING_GATES.md#g-live-task-coverage); repeatable fixtures preserve owning system/times; old data_as_of remains stale despite fresh read and NOT_FOUND stays scoped.
+
+<a id="p03-t03-03"></a>
+
+- [ ] **P03-T03.03 — Authorize target-bound read-only gateway calls**
+  - **Files:** `palladion/src/evidence_agent/live/gateway.py`, `palladion/src/evidence_agent/security/access.py`, `palladion/tests/test_live.py`, `palladion/tests/test_security.py`.
+  - **Depends:** P03-T03.02.
+  - **Change:** Map backend principal/case to permitted operations/targets; minimize/redact output before ledger; model never supplies credentials/host/write verbs.
+  - **Proof:** INTEGRATION; [G-LIVE](TESTING_GATES.md#g-live-task-coverage), [G-SECURITY](TESTING_GATES.md#g-security-task-coverage); authorized target passes; cross-case merchant and dynamic SQL/URL/write denied without existence leak.
+
+<a id="p03-t03-04"></a>
+
+- [ ] **P03-T03.04 — Bound live retries, deduplication and failure audit**
+  - **Files:** `palladion/src/evidence_agent/live/gateway.py`, `palladion/src/evidence_agent/telemetry/audit.py`, `palladion/tests/test_live.py`.
+  - **Depends:** P03-T03.03, P03-T02.02.
+  - **Change:** Apply deadlines/response/rate limits and single retry owner; deduplicate identical in-flight reads and classify failures for gate consumer.
+  - **Proof:** INTEGRATION; [G-LIVE](TESTING_GATES.md#g-live-task-coverage); transient retry stays capped, permission/schema failure never broadens scope, cancellation stops read and audit preserves timestamps/errors.
+
+### Atomic tasks — P04
+
+#### P04-T01 execution tasks
+
+<a id="p04-t01-01"></a>
+
+- [ ] **P04-T01.01 — Create provider-neutral structured model boundary**
+  - **Files:** `palladion/src/evidence_agent/agent/llm.py`, `palladion/tests/test_agent_budget.py`.
+  - **Depends:** P03-T03.04.
+  - **Change:** Implement fake structured responses and provider-neutral errors/results/usage; configuration explicitly decides whether hosted calls are enabled.
+  - **Proof:** UNIT; [G-BUDGET](TESTING_GATES.md#g-budget-task-coverage); fake tool/draft/final replay works; malformed/timeout attempts observable, no key-only live call or implicit repair loop.
+
+<a id="p04-t01-02"></a>
+
+- [ ] **P04-T01.02 — Hydrate minimal case state and current evidence ledger**
+  - **Files:** `palladion/src/evidence_agent/memory/store.py`, `palladion/src/evidence_agent/memory/packet.py`, `palladion/src/evidence_agent/retrieval/evidence.py`, `palladion/tests/test_memory.py`.
+  - **Depends:** P04-T01.01.
+  - **Change:** Read authorized events into packet skeleton/current-request ledger; preserve reported/observed distinction for preflight/four-tool readers.
+  - **Proof:** INTEGRATION; [G-MEMORY](TESTING_GATES.md#g-memory-task-coverage); reopen hydrates same case, wrong case denied; old handle remains pointer until source revalidation.
+
+<a id="p04-t01-03"></a>
+
+- [ ] **P04-T01.03 — Define and dispatch exactly four read tools**
+  - **Files:** `palladion/src/evidence_agent/agent/tools.py`, `palladion/tests/test_security.py`, `palladion/tests/test_agent_budget.py`.
+  - **Depends:** P04-T01.02.
+  - **Change:** Expose knowledge/policy/live/memory schemas only; inject server identity, validate limits and call implemented domain readers.
+  - **Proof:** INTEGRATION; [G-SECURITY](TESTING_GATES.md#g-security-task-coverage), [G-BUDGET](TESTING_GATES.md#g-budget-task-coverage); four valid calls read domain results; arbitrary network/SQL/approval/payment/identity overrides rejected.
+
+<a id="p04-t01-04"></a>
+
+- [ ] **P04-T01.04 — Produce nonexclusive deterministic preflight hints**
+  - **Files:** `palladion/src/evidence_agent/agent/preflight.py`, `palladion/tests/test_agent_budget.py`.
+  - **Depends:** P04-T01.03.
+  - **Change:** Hydrate packet/detect IDs and optionally prefetch bounded authorized evidence; hints cannot restrict later authorized tool selection.
+  - **Proof:** UNIT; [G-BUDGET](TESTING_GATES.md#g-budget-task-coverage); greeting skips fetch, mixed question retains grants, zero hits/outage never asserts exhaustive absence or broadens target.
+
+#### P04-T02 execution tasks
+
+<a id="p04-t02-01"></a>
+
+- [ ] **P04-T02.01 — Account model and tool attempts before dispatch**
+  - **Files:** `palladion/src/evidence_agent/agent/loop.py`, `palladion/tests/test_agent_budget.py`.
+  - **Depends:** P04-T01.04.
+  - **Change:** Atomically reserve/consume main/critic/tool attempts across parallel dispatch/retries/failures; keep one of five main slots for finalization.
+  - **Proof:** UNIT; [G-BUDGET](TESTING_GATES.md#g-budget-task-coverage); timeout/invalid JSON/races never create free calls; fourth exploration stops, fifth final and forbidden sixth exercised.
+
+<a id="p04-t02-02"></a>
+
+- [ ] **P04-T02.02 — Wire investigation, draft and unavailable-review boundary**
+  - **Files:** `palladion/src/evidence_agent/agent/loop.py`, `palladion/src/evidence_agent/agent/draft.py`, `palladion/tests/test_agent_budget.py`.
+  - **Depends:** P04-T02.01.
+  - **Change:** Drive fake model→tools→ledger→draft→review boundary→reserved final; P06 critic absence has explicit unavailable handling, never simulated normative approval.
+  - **Proof:** INTEGRATION; [G-BUDGET](TESTING_GATES.md#g-budget-task-coverage), [G-GATE](TESTING_GATES.md#g-gate-task-coverage); normal draft finalizes, absent draft yields safe partial, unavailable review cannot authorize operational answer.
+
+<a id="p04-t02-03"></a>
+
+- [ ] **P04-T02.03 — Stop and persist work on deadline or cancellation**
+  - **Files:** `palladion/src/evidence_agent/agent/loop.py`, `palladion/src/evidence_agent/memory/store.py`, `palladion/tests/test_agent_budget.py`.
+  - **Depends:** P04-T02.02.
+  - **Change:** Propagate deadline/cancellation to model/tools; persist completed results and explicit errors for next authorized request.
+  - **Proof:** INTEGRATION; [G-BUDGET](TESTING_GATES.md#g-budget-task-coverage); slow parallel work terminates under cap, no detached invocation continues, resumed reader sees attempt status.
+
+#### P04-T03 execution tasks
+
+<a id="p04-t03-01"></a>
+
+- [ ] **P04-T03.01 — Validate claim drafts and requirement origins**
+  - **Files:** `palladion/src/evidence_agent/agent/draft.py`, `palladion/src/evidence_agent/retrieval/coverage.py`, `palladion/tests/test_gate.py`.
+  - **Depends:** P04-T02.02.
+  - **Change:** Validate claim/evidence IDs and policy-required slots independently of model suggestions; preserve hypotheses and precise missing requirements for gate.
+  - **Proof:** UNIT; [G-GATE](TESTING_GATES.md#g-gate-task-coverage); valid associations accepted, invented ref/omitted slot and action relabeled hypothesis cannot evade requirements.
+
+<a id="p04-t03-02"></a>
+
+- [ ] **P04-T03.02 — Apply per-claim deterministic eligibility checks**
+  - **Files:** `palladion/src/evidence_agent/agent/gate.py`, `palladion/tests/test_gate.py`.
+  - **Depends:** P04-T03.01, P04-T03.04.
+  - **Change:** Revalidate evidence/source/time/ACL, rule trace, freshness and critical challenges under actual claims before release; semantic inadequacy stays qualified.
+  - **Proof:** INTEGRATION; [G-GATE](TESTING_GATES.md#g-gate-task-coverage); supported informational fixture passes; stale/revoked/wrong-scope/unrelated citation and missing rule input block material claim.
+
+<a id="p04-t03-03"></a>
+
+- [ ] **P04-T03.03 — Render five dispositions and deterministic fallback**
+  - **Files:** `palladion/src/evidence_agent/agent/gate.py`, `palladion/src/evidence_agent/api/schemas.py`, `palladion/tests/test_gate.py`.
+  - **Depends:** P04-T03.02.
+  - **Change:** Render gate-owned verified claims, scoped gaps/conflicts/hypotheses/citations; malformed final output or budget exhaustion invokes safe template.
+  - **Proof:** UNIT; [G-GATE](TESTING_GATES.md#g-gate-task-coverage); five outcomes preserve reasons; fallback never repeats blocked directive, leaks protected diagnostic or calls a sixth model turn.
+
+<a id="p04-t03-04"></a>
+
+- [ ] **P04-T03.04 — Define claim-support rubric and escalation ownership**
+  - **Files:** `palladion/docs/development/ADR_LOG.md`, `palladion/docs/development/RISKS_AND_OPEN_QUESTIONS.md`, `palladion/data/demo/goldens.jsonl`.
+  - **Depends:** P04-T03.01.
+  - **Change:** Resolve Q09 with the owner before consequential supported demonstrations; gold scorer/gate consume a defined support/exception-sufficiency rubric and escalation boundary.
+  - **Proof:** DOC; [G-GATE](TESTING_GATES.md#g-gate-task-coverage); authorized criteria distinguish valid but irrelevant citation, unsupported operational directive and unresolved critical challenge; no claim of complete semantic proof.
+
+#### P04-T04 execution tasks
+
+<a id="p04-t04-01"></a>
+
+- [ ] **P04-T04.01 — Wire authenticated messages into the runtime**
+  - **Files:** `palladion/src/evidence_agent/api/routes.py`, `palladion/src/evidence_agent/main.py`, `palladion/tests/test_end_to_end.py`.
+  - **Depends:** P04-T03.03, P04-T02.03.
+  - **Change:** Inject real services into message endpoint and return gate-owned response; persist attempts/outcomes for later continuity reader.
+  - **Proof:** SMOKE; [G-E2E](TESTING_GATES.md#g-e2e-task-coverage); synthetic HTTP request consumes real tools/ledger/gate and returned citations read back; denied case/tool failure safe.
+
+<a id="p04-t04-02"></a>
+
+- [ ] **P04-T04.02 — Expose authorized timeline, traces and health**
+  - **Files:** `palladion/src/evidence_agent/api/routes.py`, `palladion/src/evidence_agent/telemetry/audit.py`, `palladion/src/evidence_agent/main.py`, `palladion/tests/test_end_to_end.py`, `palladion/tests/test_security.py`.
+  - **Depends:** P04-T04.01, P02-T04.02.
+  - **Change:** Read persisted case/audit events with role redaction; report health/readiness of required dependencies without conflating liveness and successful verification.
+  - **Proof:** SMOKE; [G-E2E](TESTING_GATES.md#g-e2e-task-coverage), [G-SECURITY](TESTING_GATES.md#g-security-task-coverage); reader sees persisted result, ordinary operator denied developer trace, dependency outage leaks no config or false success.
+
+<a id="p04-t04-03"></a>
+
+- [ ] **P04-T04.03 — Prove the full fake-model answer walkthrough**
+  - **Files:** `palladion/tests/test_end_to_end.py`, `palladion/tests/test_goldens.py`, `palladion/docs/development/EVIDENCE_LOG.md`.
+  - **Depends:** P04-T04.02.
+  - **Change:** Exercise supported information, missing-settlement partial, conflict, scoped no-evidence and unavailable paths through HTTP and evidence reader.
+  - **Proof:** SMOKE; [G-E2E](TESTING_GATES.md#g-e2e-task-coverage), [G-GATE](TESTING_GATES.md#g-gate-task-coverage); T09/T22 never authorize reversal; no-tool/invalid-model paths retain useful gaps; task processes/ports verified stopped.
+
+### Atomic tasks — P05
+
+#### P05-T01 execution tasks
+
+<a id="p05-t01-01"></a>
+
+- [ ] **P05-T01.01 — Persist scoped memory categories and failed attempts**
+  - **Files:** `palladion/src/evidence_agent/memory/store.py`, `palladion/tests/test_memory.py`.
+  - **Depends:** P04-T04.03.
+  - **Change:** Expand event store into episodic/semantic/procedural entries with USER/CASE/TEAM/ORGANIZATION scope and attributable source/event refs for recall.
+  - **Proof:** INTEGRATION; [G-MEMORY](TESTING_GATES.md#g-memory-task-coverage); close/reopen preserves labels/failures; cross-case read and unsupported guess promotion denied.
+
+<a id="p05-t01-02"></a>
+
+- [ ] **P05-T01.02 — Control fact validity and semantic promotion**
+  - **Files:** `palladion/src/evidence_agent/memory/store.py`, `palladion/tests/test_memory.py`, `palladion/tests/test_security.py`.
+  - **Depends:** P05-T01.01.
+  - **Change:** Apply authorized user/owner validity/revocation and explicit organization promotion; retain actor/time/rule without model expiry decisions.
+  - **Proof:** INTEGRATION; [G-MEMORY](TESTING_GATES.md#g-memory-task-coverage), [G-SECURITY](TESTING_GATES.md#g-security-task-coverage); no expiry stays UNSPECIFIED, correction auditable, repeated assertion cannot become global policy.
+
+#### P05-T02 execution tasks
+
+<a id="p05-t02-01"></a>
+
+- [ ] **P05-T02.01 — Read structured/FTS memory under current principal**
+  - **Files:** `palladion/src/evidence_agent/memory/store.py`, `palladion/src/evidence_agent/agent/tools.py`, `palladion/tests/test_memory.py`.
+  - **Depends:** P05-T01.02.
+  - **Change:** Implement typed/exact/FTS recall and feed attributable facts/events to recall_memory; vector augmentation remains disabled until measured.
+  - **Proof:** INTEGRATION; [G-MEMORY](TESTING_GATES.md#g-memory-task-coverage); authorized known fact recalled with source, similar private case excluded, stale principal grants not inherited.
+
+<a id="p05-t02-02"></a>
+
+- [ ] **P05-T02.02 — Generate bounded packets from actual case events**
+  - **Files:** `palladion/src/evidence_agent/memory/packet.py`, `palladion/tests/test_memory.py`.
+  - **Depends:** P05-T02.01.
+  - **Change:** Regenerate compact packet separating verified/reported/hypothesis state, unresolved questions, attempts and bounded handles for next preflight.
+  - **Proof:** UNIT; [G-MEMORY](TESTING_GATES.md#g-memory-task-coverage); critical missing settlement survives compression, tampered prose/principal cannot override authenticated typed state.
+
+<a id="p05-t02-03"></a>
+
+- [ ] **P05-T02.03 — Cache exact passages by source and authorization context**
+  - **Files:** `palladion/src/evidence_agent/memory/hotcache.py`, `palladion/tests/test_memory.py`, `palladion/tests/test_security.py`.
+  - **Depends:** P05-T02.02.
+  - **Change:** Add bounded ephemeral passage cache keyed by content/scope/generation/time; correction/close/revocation invalidates handles before readers reuse them.
+  - **Proof:** INTEGRATION; [G-MEMORY](TESTING_GATES.md#g-memory-task-coverage), [G-SECURITY](TESTING_GATES.md#g-security-task-coverage); authorized repeat hits cache, role/source change invalidates, another user never receives cached passage.
+
+#### P05-T03 execution tasks
+
+<a id="p05-t03-01"></a>
+
+- [ ] **P05-T03.01 — Resume a second message with revalidated evidence**
+  - **Files:** `palladion/src/evidence_agent/agent/preflight.py`, `palladion/src/evidence_agent/agent/loop.py`, `palladion/tests/test_end_to_end.py`, `palladion/tests/test_memory.py`.
+  - **Depends:** P05-T02.03.
+  - **Change:** Wire full memory/packet/cache into continuation; current material claims reread source/live facts rather than reusing old authority.
+  - **Proof:** SMOKE; [G-E2E](TESTING_GATES.md#g-e2e-task-coverage), [G-MEMORY](TESTING_GATES.md#g-memory-task-coverage); restart/follow-up reads attempts, correction/revocation/changed settlement updates answer; no hidden-thought resumption assumed.
+
+<a id="p05-t03-02"></a>
+
+- [ ] **P05-T03.02 — Measure long-session recall and packet omissions**
+  - **Files:** `palladion/scripts/evaluate.py`, `palladion/tests/test_goldens.py`, `palladion/docs/development/EVIDENCE_LOG.md`.
+  - **Depends:** P05-T03.01.
+  - **Change:** Compare fixed B4/B5 continuations with varying compression; score completion, omitted facts, stale claims and token/call cost from actual outputs.
+  - **Proof:** MEASUREMENT; [G-RESEARCH](TESTING_GATES.md#g-research-task-coverage); scorer catches deliberately missing critical fact; vector memory remains a separately declared treatment, not hidden B5 work.
+
+### Atomic tasks — P06
+
+#### P06-T01 execution tasks
+
+<a id="p06-t01-01"></a>
+
+- [ ] **P06-T01.01 — Validate independent-context critic review output**
+  - **Files:** `palladion/src/evidence_agent/agent/critic.py`, `palladion/tests/test_critic.py`.
+  - **Depends:** P05-T03.02.
+  - **Change:** Build question/state/requirements/evidence/draft context and validate structured findings against current claim/evidence objects for finalization reader.
+  - **Proof:** UNIT; [G-CRITIC](TESTING_GATES.md#g-critic-task-coverage); grounded challenge stays advisory; invented source/claim and unsupported veto cannot fabricate authoritative conflict.
+
+<a id="p06-t01-02"></a>
+
+- [ ] **P06-T01.02 — Bound critic calls and authorized counter-search**
+  - **Files:** `palladion/src/evidence_agent/agent/critic.py`, `palladion/src/evidence_agent/agent/tools.py`, `palladion/tests/test_critic.py`, `palladion/tests/test_agent_budget.py`.
+  - **Depends:** P06-T01.01.
+  - **Change:** Normally review once; cap total critic calls at three/counter-searches at two under shared tool/time budgets; revalidate new ledger evidence.
+  - **Proof:** INTEGRATION; [G-CRITIC](TESTING_GATES.md#g-critic-task-coverage), [G-BUDGET](TESTING_GATES.md#g-budget-task-coverage); valid exception enters ledger, fourth review/third search/cross-scope target denied with counted failure.
+
+#### P06-T02 execution tasks
+
+<a id="p06-t02-01"></a>
+
+- [ ] **P06-T02.01 — Enforce mandatory review and critic outage policy**
+  - **Files:** `palladion/src/evidence_agent/agent/loop.py`, `palladion/src/evidence_agent/agent/gate.py`, `palladion/tests/test_critic.py`, `palladion/tests/test_gate.py`.
+  - **Depends:** P06-T01.02.
+  - **Change:** Replace early unavailable boundary with real critic consumer; operational/normative drafts require review and deterministic gate after finalization.
+  - **Proof:** INTEGRATION; [G-CRITIC](TESTING_GATES.md#g-critic-task-coverage), [G-GATE](TESTING_GATES.md#g-gate-task-coverage); PASS cannot bypass missing slot, timeout/malformed review yields safe partial/unavailable, no unchecked directive.
+
+<a id="p06-t02-02"></a>
+
+- [ ] **P06-T02.02 — Revalidate revisions after critic evidence changes**
+  - **Files:** `palladion/src/evidence_agent/agent/loop.py`, `palladion/src/evidence_agent/agent/draft.py`, `palladion/tests/test_end_to_end.py`.
+  - **Depends:** P06-T02.01.
+  - **Change:** Incorporate supported review in reserved final call, revalidate affected claims when counter-search changes evidence, persist review/outcome for timeline.
+  - **Proof:** SMOKE; [G-E2E](TESTING_GATES.md#g-e2e-task-coverage), [G-CRITIC](TESTING_GATES.md#g-critic-task-coverage); T10 correction visible through answer/citation API; T11 fabricated objection cannot erase valid evidence or escape budget.
+
+#### P06-T03 execution tasks
+
+<a id="p06-t03-01"></a>
+
+- [ ] **P06-T03.01 — Pair critic on/off using saved draft and ledger**
+  - **Files:** `palladion/scripts/evaluate.py`, `palladion/tests/test_goldens.py`, `palladion/tests/test_critic.py`.
+  - **Depends:** P06-T02.02.
+  - **Change:** Add frozen-input controls for same-context review, independent counter-search and optional blind-requirements variant; scorer isolates critique from changed retrieval.
+  - **Proof:** MEASUREMENT; [G-RESEARCH](TESTING_GATES.md#g-research-task-coverage); initial inputs hashed equal, true corrections/false vetoes/changed evidence/misses reported, withheld-appendix blind spot retained.
+
+<a id="p06-t03-02"></a>
+
+- [ ] **P06-T03.02 — Report critic cost, failures and retention conclusion**
+  - **Files:** `palladion/scripts/evaluate.py`, `palladion/docs/development/EVIDENCE_LOG.md`, `palladion/docs/development/PROJECT_LEARNING.md`.
+  - **Depends:** P06-T03.01.
+  - **Change:** Report extra calls/searches/tokens/latency and correction tradeoffs beside full-runtime results; do not silently change mandatory normative-review default.
+  - **Proof:** MEASUREMENT; [G-RESEARCH](TESTING_GATES.md#g-research-task-coverage); failed reviews retained and no best-of-N selection; neutral result cannot be relabeled accuracy gain.
+
+### Atomic tasks — P07
+
+#### P07-T01 execution tasks
+
+<a id="p07-t01-01"></a>
+
+- [ ] **P07-T01.01 — Create Neo4j uniqueness and provenance adapter**
+  - **Files:** `palladion/src/evidence_agent/storage/neo4j.py`, `palladion/compose.yaml`, `palladion/tests/test_graph_identity.py`, `palladion/docs/development/ADR_LOG.md`.
+  - **Depends:** P06-T03.02.
+  - **Change:** Pin compatible Neo4j after dependency direction; add real namespace uniqueness constraints and bounded typed upsert/read templates for graph domain.
+  - **Proof:** INTEGRATION; [G-GRAPH](TESTING_GATES.md#g-graph-task-coverage); concurrent verified key produces one node, unknown relation/raw model Cypher rejected; graph-off needs no running Neo4j.
+
+<a id="p07-t01-02"></a>
+
+- [ ] **P07-T01.02 — Separate verified identity, provisional links and reviewed merges**
+  - **Files:** `palladion/src/evidence_agent/graph/identity.py`, `palladion/tests/test_graph_identity.py`.
+  - **Depends:** P07-T01.01.
+  - **Change:** Derive verified namespace keys or source-scoped provisional IDs; require authorized equivalence attestation and preserve reconstructible before/after merge refs.
+  - **Proof:** INTEGRATION; [G-GRAPH](TESTING_GATES.md#g-graph-task-coverage); T05/T06 safe under races; same name/category cannot merge, rejected and approved merge history retained.
+
+<a id="p07-t01-03"></a>
+
+- [ ] **P07-T01.03 — Extract typed source-linked relation candidates**
+  - **Files:** `palladion/src/evidence_agent/graph/relations.py`, `palladion/src/evidence_agent/ingest/graph_extract.py`, `palladion/tests/test_graph_identity.py`.
+  - **Depends:** P07-T01.02.
+  - **Change:** Validate relation allowlist, review/provenance states and exact spans; extraction feeds graph without promoting inferred edges to authority.
+  - **Proof:** UNIT; [G-GRAPH](TESTING_GATES.md#g-graph-task-coverage); explicit/unreviewed labels retained; unsupported relation/missing source/rejected edge cannot authorize material claim.
+
+#### P07-T02 execution tasks
+
+<a id="p07-t02-01"></a>
+
+- [ ] **P07-T02.01 — Traverse bounded paths back to canonical passages**
+  - **Files:** `palladion/src/evidence_agent/retrieval/graph_expand.py`, `palladion/tests/test_graph_identity.py`, `palladion/tests/test_security.py`.
+  - **Depends:** P07-T01.03.
+  - **Change:** Traverse authorized anchors under hop/edge/node/time caps; resolve neighbors to source passages with current ACL/time before evidence assembly.
+  - **Proof:** INTEGRATION; [G-GRAPH](TESTING_GATES.md#g-graph-task-coverage), [G-SECURITY](TESTING_GATES.md#g-security-task-coverage); known exception recovered, restricted inferred neighbor never exposed, high-degree hub obeys bounds.
+
+<a id="p07-t02-02"></a>
+
+- [ ] **P07-T02.02 — Wire optional graph into retrieval and publication**
+  - **Files:** `palladion/src/evidence_agent/retrieval/hybrid.py`, `palladion/src/evidence_agent/ingest/pipeline.py`, `palladion/config/settings.yaml`, `palladion/tests/test_retrieval.py`, `palladion/tests/test_ingest.py`.
+  - **Depends:** P07-T02.01.
+  - **Change:** Enable graph only as declared treatment; required-backend set/status markers reflect graph on/off; optional outage falls back explicitly through hybrid reader.
+  - **Proof:** INTEGRATION; [G-GRAPH](TESTING_GATES.md#g-graph-task-coverage), [G-SOURCE](TESTING_GATES.md#g-source-task-coverage); graph-off reconciles, required-relation failure unavailable, graph hit cannot bypass canonical resolver.
+
+#### P07-T03 execution tasks
+
+<a id="p07-t03-01"></a>
+
+- [ ] **P07-T03.01 — Measure graph's incremental evidence against B2**
+  - **Files:** `palladion/scripts/evaluate.py`, `palladion/tests/test_goldens.py`, `palladion/docs/development/EVIDENCE_LOG.md`, `palladion/docs/development/ADR_LOG.md`.
+  - **Depends:** P07-T02.02.
+  - **Change:** Run paired frozen B2/B3 queries; record exception recall, identity/review effort, latency/cost and retained/disabled decision for later treatment reader.
+  - **Proof:** MEASUREMENT; [G-RESEARCH](TESTING_GATES.md#g-research-task-coverage); selected missed appendix recovered and aggregate negatives retained; no benefit permits disable decision, never fabricated win.
+
+### Atomic tasks — P08
+
+#### P08-T01 execution tasks
+
+<a id="p08-t01-01"></a>
+
+- [ ] **P08-T01.01 — Freeze labels, splits and research acceptance choices**
+  - **Files:** `palladion/data/demo/goldens.jsonl`, `palladion/docs/development/RESEARCH_PROTOCOL.md`, `palladion/docs/development/ADR_LOG.md`, `palladion/docs/development/RISKS_AND_OPEN_QUESTIONS.md`.
+  - **Depends:** P07-T03.01.
+  - **Change:** Resolve Q08 annotators/adjudication, family-disjoint splits, repetition/uncertainty and calibrated targets before held-out evaluator runs.
+  - **Proof:** DOC; [G-RESEARCH](TESTING_GATES.md#g-research-task-coverage); owner-approved manifest predates final run, absent independent labels stay pilot-only, near-duplicate split leakage detected.
+
+<a id="p08-t01-02"></a>
+
+- [ ] **P08-T01.02 — Persist reproducible manifests and scorer inputs**
+  - **Files:** `palladion/scripts/evaluate.py`, `palladion/tests/test_goldens.py`.
+  - **Depends:** P08-T01.01.
+  - **Change:** Capture revision/dirty hash, corpus/gold/split hashes, models/prompts/pins/config/generations, scope/randomness/cache/hardware beside actual outputs.
+  - **Proof:** UNIT; [G-RESEARCH](TESTING_GATES.md#g-research-task-coverage); replay scorer consumes recorded output, rejects missing hashes/denominators, unavailable measurement never becomes zero.
+
+#### P08-T02 execution tasks
+
+<a id="p08-t02-01"></a>
+
+- [ ] **P08-T02.01 — Execute declared B0–B9 and memory-vector controls**
+  - **Files:** `palladion/scripts/evaluate.py`, `palladion/tests/test_goldens.py`.
+  - **Depends:** P08-T01.02, P08-T02.03, P08-T02.04, P08-T02.05, P08-T02.06.
+  - **Change:** Implement declared treatment/parent switches and repeated model/frozen retrieval controls; isolate raw ablations from operational release and account every call.
+  - **Proof:** MEASUREMENT; [G-RESEARCH](TESTING_GATES.md#g-research-task-coverage); manifests disclose parent/capability differences and one fusion stage; no hidden critic searches, planner cost or default adaptive bypass.
+
+<a id="p08-t02-02"></a>
+
+- [ ] **P08-T02.02 — Compute support, utility and sliced cost metrics**
+  - **Files:** `palladion/scripts/evaluate.py`, `palladion/tests/test_goldens.py`.
+  - **Depends:** P08-T02.01.
+  - **Change:** Calculate raw numerator/denominator, case-clustered uncertainty and retrieval/support/disposition/abstention/false-veto/latency/cost slices for report reader.
+  - **Proof:** UNIT; [G-RESEARCH](TESTING_GATES.md#g-research-task-coverage); known scorer cases cover wrong citation, safe refusal and zero denominator; refusal-only cannot appear perfect through omitted utility.
+
+<a id="p08-t02-03"></a>
+
+- [ ] **P08-T02.03 — Implement the isolated adaptive-critic treatment**
+  - **Files:** `palladion/src/evidence_agent/agent/critic.py`, `palladion/src/evidence_agent/agent/loop.py`, `palladion/config/settings.yaml`, `palladion/tests/test_critic.py`, `palladion/docs/development/ADR_LOG.md`.
+  - **Depends:** P08-T01.02.
+  - **Change:** Use always-on labels to propose Q10 risk criteria and explicitly enable B7 in synthetic evaluation; default normative review remains mandatory.
+  - **Proof:** UNIT; [G-CRITIC](TESTING_GATES.md#g-critic-task-coverage), [G-RESEARCH](TESTING_GATES.md#g-research-task-coverage); risk false-skip fixture detected, B7 flag cannot change default release behavior; missing owner acceptance leaves treatment NOT_RUN, not a claimed result.
+
+<a id="p08-t02-04"></a>
+
+- [ ] **P08-T02.04 — Implement the optional nonexclusive planner treatment**
+  - **Files:** `palladion/src/evidence_agent/agent/preflight.py`, `palladion/src/evidence_agent/agent/llm.py`, `palladion/config/settings.yaml`, `palladion/tests/test_agent_budget.py`, `palladion/docs/development/ADR_LOG.md`.
+  - **Depends:** P08-T01.02.
+  - **Change:** Add explicitly enabled B8 small-model planner after model/budget direction; runtime treats its result as nonexclusive hints and accounts the extra model attempt.
+  - **Proof:** UNIT; [G-BUDGET](TESTING_GATES.md#g-budget-task-coverage), [G-RESEARCH](TESTING_GATES.md#g-research-task-coverage); disabled path has zero planner calls, failure cannot hard-route or grant scope; planner cost/attempt appears in run manifest.
+
+<a id="p08-t02-05"></a>
+
+- [ ] **P08-T02.05 — Implement a controlled alternative fusion treatment**
+  - **Files:** `palladion/src/evidence_agent/retrieval/hybrid.py`, `palladion/src/evidence_agent/storage/qdrant.py`, `palladion/config/settings.yaml`, `palladion/tests/test_retrieval.py`, `palladion/docs/development/ADR_LOG.md`.
+  - **Depends:** P08-T01.02.
+  - **Change:** Select and record Q10 alternative for B9; reuse fixed candidate rankings and ensure treatment consumer performs only the declared single fusion stage.
+  - **Proof:** INTEGRATION; [G-RETRIEVAL](TESTING_GATES.md#g-retrieval-task-coverage), [G-RESEARCH](TESTING_GATES.md#g-research-task-coverage); known ranked fixtures distinguish methods, native fusion is disabled when alternative owns it; no double RRF or hidden candidate change.
+
+<a id="p08-t02-06"></a>
+
+- [ ] **P08-T02.06 — Implement optional vector-memory augmentation**
+  - **Files:** `palladion/src/evidence_agent/memory/store.py`, `palladion/src/evidence_agent/storage/schema.sql`, `palladion/pyproject.toml`, `palladion/config/settings.yaml`, `palladion/tests/test_memory.py`, `palladion/docs/development/ADR_LOG.md`.
+  - **Depends:** P08-T01.02.
+  - **Change:** Obtain dependency direction for Q10 sqlite-vec experiment; add only needed derived memory index with scoped canonical revalidation; evaluator compares the same structured/FTS baseline.
+  - **Proof:** INTEGRATION; [G-MEMORY](TESTING_GATES.md#g-memory-task-coverage), [G-RESEARCH](TESTING_GATES.md#g-research-task-coverage); disabled path unchanged, cross-case/stale vector hit rejected, index update/readback verified; no extension install or existing-data migration without authorization.
+
+#### P08-T03 execution tasks
+
+<a id="p08-t03-01"></a>
+
+- [ ] **P08-T03.01 — Run cross-boundary injection and revocation cases**
+  - **Files:** `palladion/tests/test_security.py`, `palladion/tests/test_end_to_end.py`.
+  - **Depends:** P08-T02.02.
+  - **Change:** Run T01–T24 with source/tool/memory/graph poisoning, role/source revocation between search and release, packet tampering and privileged traces.
+  - **Proof:** INTEGRATION; [G-SECURITY](TESTING_GATES.md#g-security-task-coverage), [G-E2E](TESTING_GATES.md#g-e2e-task-coverage); authorized positives work, restricted canary absent from prompt/cache/response/trace and no denied-path existence leak.
+
+<a id="p08-t03-02"></a>
+
+- [ ] **P08-T03.02 — Inject dependency, retry, deadline and recovery failures**
+  - **Files:** `palladion/tests/test_agent_budget.py`, `palladion/tests/test_end_to_end.py`, `palladion/tests/test_live.py`, `palladion/tests/test_ingest.py`.
+  - **Depends:** P08-T03.01.
+  - **Change:** Exercise sparse/graph/live/model/critic outages, interrupted ingest, malformed results, parallel retries and cancellation on isolated resources.
+  - **Proof:** SMOKE; [G-E2E](TESTING_GATES.md#g-e2e-task-coverage), [G-BUDGET](TESTING_GATES.md#g-budget-task-coverage); typed partial/unavailable preserves events and counts, no detached work/unbounded retry; task listeners verified stopped.
+
+<a id="p08-t03-03"></a>
+
+- [ ] **P08-T03.03 — Reconcile trace and source artifacts through real readers**
+  - **Files:** `palladion/scripts/reconcile.py`, `palladion/src/evidence_agent/telemetry/audit.py`, `palladion/tests/test_end_to_end.py`.
+  - **Depends:** P08-T03.02.
+  - **Change:** Read source manifests, policy/live/gate IDs and sanitized audit through production readers; verify failure metrics/cost match actual consumed attempts.
+  - **Proof:** INTEGRATION; [G-SOURCE](TESTING_GATES.md#g-source-task-coverage), [G-E2E](TESTING_GATES.md#g-e2e-task-coverage); deliberate index gap/missing correlation detected, valid trace reconstructs disposition without secrets or omitted failure cost.
+
+#### P08-T04 execution tasks
+
+<a id="p08-t04-01"></a>
+
+- [ ] **P08-T04.01 — Export the reproducible result set and honest conclusion**
+  - **Files:** `palladion/scripts/evaluate.py`, `palladion/docs/development/EVIDENCE_LOG.md`, `palladion/docs/development/PROJECT_LEARNING.md`, `palladion/docs/development/GOAL.md`, `palladion/docs/development/PROGRESS.md`.
+  - **Depends:** P08-T03.03.
+  - **Change:** Export pinned manifests, scored outputs/failures and redacted summary with artifact hashes; report null/adverse findings and prototype limits.
+  - **Proof:** SMOKE; [G-RESEARCH](TESTING_GATES.md#g-research-task-coverage); independent reader reconstructs metrics/cost from retained artifacts; missing/failed runs visible, no unsupported production/superiority claim.
 
 ## Definition of done
 

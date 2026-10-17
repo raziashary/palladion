@@ -17,7 +17,7 @@ C:/palladion/                         Git root, main; initial revision 9b167a2
       vision/
         palladion-blueprint-v2.md     User's unchanged master vision
       development/                   One canonical agent working-document folder
-        MASTER_DEV_PLAN.md           Task protocol and P00–P08 / X01
+        MASTER_DEV_PLAN.md           Task protocol, packages, atomic file-specific cards
         GOAL.md                      Checkable outcomes
         ADR_LOG.md                   Decisions
         TESTING_GATES.md             Proof obligations
@@ -29,7 +29,7 @@ C:/palladion/                         Git root, main; initial revision 9b167a2
         PROGRESS.md                  Task/gate states
         RISKS_AND_OPEN_QUESTIONS.md   Decisions not yet made
         EVIDENCE_LOG.md              Verification records
-        check_docs.py               Documentation-only structural validator
+        check_docs.py               Links/IDs, atomic metadata/dependencies, planned-file coverage
 ```
 
 ## Planned runtime ownership
