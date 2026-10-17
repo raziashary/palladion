@@ -15,7 +15,7 @@ and test Palladion without reconstructing the vision or mistaking planned code f
 | D04: Hypothesis protocol preserves negative results and fair deferred comparisons | RESEARCH_PROTOCOL; ADR-0002; audit, E-DOC-001 | DONE |
 | D05: Documentation validates; scoped diff reviewed and preserved | G-DOC, E-DOC-001; documentation checkpoint containing this record | DONE |
 | D06: Master plan contains atomic file-specific tasks with dependencies, readers and proof; useful Arcana rules tailored into AGENTS | P00-T04; ADR-0009/ADR-0010; G-DOC; E-DOC-002 | DONE |
-| D07: Owner answers and uv/Groq choice recorded in editable ADRs; mandatory phase reviews and GO hold applied; coordinator and auditor verify every development document against full vision | P00-T05; ADR-0011–ADR-0023; G-DOC; E-DOC-003 | DONE |
+| D07: Owner answers and uv/Groq choice recorded in editable ADRs; mandatory phase reviews and GO hold applied; coordinator and auditor verify every development document against full vision | P00-T05; ADR-0011–ADR-0023; E-DOC-003 and final E-DOC-004 audit/resolution | DONE |
 
 Documentation completion does not close any system gate or establish the research hypothesis.
 
@@ -56,8 +56,12 @@ System-first modular Python prototype, FastAPI API, SQLite canonical registry an
 Qdrant discovery, optional Neo4j, typed JSON policies, mock live adapters, pluggable models.
 uv and Groq `qwen/qwen3.8-27b` are selected; compatible package selection is delegated
 for P01/P02 after GO. Exact pins/embedding model and behavior still require verification;
-none is installed by this task. Runtime model access needs explicit command enablement,
+no app dependency is installed by this task. The user-created app .venv exists and is
+ignored; package compatibility/locked sync still require P01 proof. Runtime model access needs explicit command enablement,
 not merely credentials. User's root `.env` and `.gitignore` are preserved.
+
+The current user authorizes publishing verified documentation to main, then WAIT_FOR_GO
+for P01. Both future review roles must read the full blueprint and report traceable coverage.
 
 Excluded now: product implementation, UI, actual payments or mutations, private data,
 real enterprise connectors, production signoff, and comparator implementations. Later
@@ -65,7 +69,7 @@ system work follows the plan; later external comparisons require their own concr
 
 ## Phase checklist
 
-- [x] P00 — initial suite, atomic refinement and answered-ADR/review/full-vision checks verified (E-DOC-001–E-DOC-003)
+- [x] P00 — suite, atomic refinement, owner answers, full-vision checks and final reviewer-contract audit/resolution verified (E-DOC-001–E-DOC-004)
 - [ ] P01 — corpus, contracts, adversarial fixtures (Slice 0)
 - [ ] P02 — provenance-first retrieval (Slice 1)
 - [ ] P03 — temporal policy and mock observations (Slice 2)

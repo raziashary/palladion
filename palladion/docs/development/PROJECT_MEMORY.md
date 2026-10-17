@@ -22,6 +22,8 @@ Updated 2026-10-17. Navigation aid only; user/vision/source/ADRs retain authorit
 - Every development subagent: **GPT 6 Luna High**. Every phase requires one pre-phase
   adversary and, after tests/gates, one post-phase work auditor. Current whole-suite
   restructure also needs coordinator and auditor checks against the entire blueprint.
+  Both future reviewer roles directly read the complete blueprint and follow MASTER_DEV_PLAN
+  “Blueprint review contract for both reviewers”; task-card-only review is insufficient.
 - Canonical development folder is this folder; exactly one working memory. `baseline/`
   remains reserved and empty for later standard RAG/LangChain/provider comparisons.
 
@@ -34,21 +36,29 @@ Read root AGENTS → [master plan task protocol](MASTER_DEV_PLAN.md#task-reading
 
 ## Current state and next action
 
-Earlier verified checkpoints `26015fd`/`bc44932`; current P00-T05 records all accepted
+Final E-DOC-004 amendment is DONE: full-blueprint future-review contract, fresh full-vision
+pre/post review and same-auditor verified status resolution; current G-DOC PASS with
+93 cards/20 negative controls. Original completion below is historical; no P01 task is active.
+
+Earlier verified checkpoints `26015fd`/`bc44932`; original P00-T05 records all accepted
 answers, structured editable ADRs and uv/Groq/review changes (ADR-0011–ADR-0023).
-G-DOC PASS at E-DOC-003: 23 structured ADRs, 93 cards, 18 negative controls, coordinator
+Historical G-DOC PASS at E-DOC-003: 23 structured ADRs, 93 cards, 18 negative controls, coordinator
 and single post-auditor full-vision reviews complete with all findings resolved. Nine
 documentation children checked, 84 system children planned. Current docs checkpoint is
 the commit containing this record. No active implementation; WAIT_FOR_GO.
 All Q01–Q12 recommendation directions answered; verification and deferred work remain.
 No product code/research result exists; system gates NOT_RUN, X01 DEFERRED.
 
-After docs closure: **WAIT_FOR_GO**, including no installation, venv creation, provider
-call, implementation or push. User may manage uv setup independently. Intended app venv:
-`C:/palladion/palladion/.venv` via uv venv; later baseline has a separate environment.
+Current amendment: user explicitly approves verified docs publishing to existing origin/main,
+then **WAIT_FOR_GO** for P01; no app dependency setup, provider call or implementation.
+Separate authorized machine repair installed working pip/uv; the user created
+`C:/palladion/palladion/.venv`. Its interpreter exists and root ignore rules protect it
+(E-DOC-004). P01 verifies/reuses the environment and proves compatible locked packages;
+baseline later has a separate environment. Setup alone does not close P01-T01.02.
 Credential file stays at repository-root `.env`, ignored and unread by this task; never
 copy it into the app/agents. At initial check root `.gitignore` was user-owned/untracked;
-uv was not found on shell PATH. Recheck actual state after GO; don't assume installation.
+uv was not found on shell PATH at the initial check; later repair supersedes that observation.
+Publish the owner's existing root ignore rules unchanged; leave unrelated local editor files alone.
 
 ## Open risks to retain
 

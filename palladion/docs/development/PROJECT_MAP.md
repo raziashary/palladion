@@ -11,9 +11,10 @@ C:/palladion/                         Git root, main; initial revision 9b167a2
   AGENTS.md                          Project entry instructions
   README.md                          Project introduction and navigation
   .env                               User-supplied ignored credential file; not read/copied
-  .gitignore                         User-owned/untracked at this task's initial inspection
+  .gitignore                         Owner-provided .env/.venv exclusions, published unchanged
   baseline/                          Existing empty directory; reserved, not tracked as a directory
   palladion/
+    .venv/                           User-created ignored environment; no app dependency proof
     docs/
       README.md                      Documentation index
       vision/
@@ -64,8 +65,8 @@ Current owner choices: uv venv lives inside `C:/palladion/palladion`; later base
 dependencies are isolated. Main/critic initial runtime uses actual Groq
 `qwen/qwen3.8-27b`, independent contexts with shared model, not independent ground truth.
 Root `.env` is loaded only for an enabled future command; package/model execution waits
-for GO. The `.venv`/lock/manifest here are planned unless observed later; no provider
-or environment setup was performed by this documentation task.
+for GO. The user-created `.venv` now exists and is ignored. Manifest/lock and runtime
+components remain planned; this documentation closeout made no provider call or app install.
 
 ## Planned request and evidence flow
 

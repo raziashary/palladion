@@ -197,6 +197,116 @@ descriptive body; this record is part of that commit (git history provides its h
 No push. Result: P00-T05/D07/G-DOC complete; implementation WAIT_FOR_GO.
 No provider call, install, product code, UI, baseline, service or listener started.
 
+## E-DOC-004 — Final blueprint review contract and authorized P00 publishing
+
+- Date/scope: 2026-10-17; amendment of P00-T05.02–P00-T05.04, D07, G-DOC. Starting
+  revision 6df8d1f, one main worktree, three unpublished documentation commits.
+  User explicitly requests verified docs pushed to main, then WAIT_FOR_GO for P01.
+- Read-only baseline checks: both documentation CLI commands exit 0; 16 Markdown files,
+  93 atomic cards and 18 negative controls. No runtime gate executed.
+- Fresh pre-phase adversary: `blueprint_closeout_precheck`, gpt-6-luna/high, read-only,
+  fresh context. It read all 1,784 blueprint lines, all twelve development Markdown docs,
+  check_docs.py, AGENTS and both README navigation files; ran only the two allowed
+  document checks. No credentials, provider/live resources, writes or git mutations.
+- Confirmed finding: future phase reviews referred to the vision without explicitly
+  requiring the fresh reviewer to read the whole blueprint. Coordinator verified the
+  narrow wording in AGENTS/MASTER_DEV_PLAN/TESTING_GATES. Corrected with the canonical
+  “Blueprint review contract for both reviewers,” direct full-read dispatch, runtime
+  invariants and traceable task/consumer/proof/deferred-obligation receipts.
+- Coordinator recheck: full blueprint §1–§18 reread, including representative-code
+  warnings. MASTER_DEV_PLAN/TESTING_GATES/REQUIREMENTS_TRACEABILITY retain §3/§11/§13.5
+  zero-LLM deterministic nonexclusive preflight, four tools, ≤5 main including final,
+  ≤3 critic normally one, separately bounded tool/search/retry/time accounting and
+  draft→critic→finalization→deterministic gate→persistence. P04 safely represents missing
+  mandatory critic review until P06; P05 completes continuity; graph stays optional P07.
+- Companion recheck against that vision: ADR_LOG preserves owner overrides/history;
+  GOAL separates documentation and system outcomes; RESEARCH_PROTOCOL retains B0–B9,
+  paired controls/held-out discipline/negative results; PROJECT_MAP keeps planned/runtime
+  ownership and flows distinct; PROJECT_MEMORY/PROGRESS retain GO hold; risk register
+  keeps compatibility/labels/freshness/real deployment as evidence obligations; learning
+  preserves corrected claims; this log records observations, not experiment success.
+  Prior full per-document coverage is E-DOC-003; fresh adversary reports no other material gap.
+- Environment metadata only: app .venv/Scripts/python.exe exists; git check-ignore maps
+  it to root .gitignore line 2 `.venv/`, and .env to line 1 `.env`. Root .env not read or
+  copied. Owner-created ignore file is published unchanged with this scoped checkpoint;
+  unrelated .vscode remains untouched. No app dependencies installed. P01 verifies/reuses
+  the environment and proves compatibility/lock reproducibility after GO.
+- Final local validation before post-audit: both exact CLI commands using
+  C:/Python314/python.exe exit 0; 16 Markdown files, 93 atomic cards, 18 sections,
+  15 invariants, 24 hard cases and 20 in-memory negative controls. Standard-library
+  ast.parse of check_docs.py and git diff --check exit 0. Structural validation/smoke
+  does not prove semantic or runtime correctness. Publication follows the explicit
+  user approval; this record covers the verified documentation checkpoint, with remote
+  main/local HEAD equality providing publication evidence rather than a prefilled push PASS.
+- Single post-phase auditor `blueprint_closeout_work_audit`, gpt-6-luna/high, fresh/read-only,
+  read all twelve development documents and the complete 1,784-line blueprint plus
+  checker/AGENTS/README navigation. Both exact checker commands exit 0 (93 cards,
+  20 controls); git diff --check reports no whitespace errors. It confirmed the runtime
+  flow/invariants above, P04-before-P06 safety, synthetic scope and deferred X01. No
+  material blueprint drift found. No provider/model compatibility or runtime proof claimed.
+- Auditor finding: GOAL/ADR wording could imply E-DOC-004 completion while PROGRESS/log
+  still said pending; G-DOC's displayed PASS referred to E-DOC-003. Coordinator verified
+  the cited lines, recorded this receipt and made current D07/P00 IN_PROGRESS and G-DOC
+  PARTIAL during resolution. Same auditor verified the correction and preservation of
+  historical E-DOC-003 results. Its residual request to rename PROGRESS's old “Current”
+  paragraph “Original” and add E-DOC-004 card evidence is applied in the final sync.
+  Coordinator verified the exact text, aligned D07/P00/G-DOC and retained prior checks.
+  Finding RESOLVED; no remaining material blueprint drift or owner ADR blocker.
+
+### Independent auditor coverage receipt
+
+The same auditor returned this per-document content coverage after its full blueprint read;
+its resolution snapshot preceded the coordinator's final atomic status synchronization.
+
+| Development document | Blueprint coverage checked by auditor |
+|---|---|
+| MASTER_DEV_PLAN.md | §1–§18; runtime budgets/order §3/§11/§13.5, slices §15, invariants §17 and walkthrough §18 |
+| ADR_LOG.md | §1/§17 authority/answers; recorded uv/Groq and mandatory review amendments, deferred implementation proof |
+| TESTING_GATES.md | §3/§11–§16 tools/budgets, failures/security, hard cases, consumers and partial evidence |
+| GOAL.md | §1.1 objective, §14 acceptance limits, §15 progression and original/current completion separation |
+| PROJECT_MEMORY.md | §1/§2/§11/§12 authority/ownership; historical versus current evidence |
+| PROJECT_MAP.md | §2/§12 ownership, §3/§18 flow; actual docs/environment versus planned runtime |
+| PROGRESS.md | §15 phase state, P01 GO hold and status-drift correction |
+| RISKS_AND_OPEN_QUESTIONS.md | §17.2 issues and Q01–Q12 accepted direction versus remaining/deferred verification |
+| RESEARCH_PROTOCOL.md | §5/§14 B0–B9, paired controls, held-out discipline, denominators/costs/negative results |
+| REQUIREMENTS_TRACEABILITY.md | §1–§18, I01–I15, T01–T24 and owner amendments/task/gate links |
+| PROJECT_LEARNING.md | §13 snippet warnings, §14 evidence limits and explicit process correction |
+| EVIDENCE_LOG.md | §14/§16 reproducibility/redaction/status discipline and current audit/resolution |
+
+Confirmed: locked flow/tools/authority/budgets, synthetic scope, safe pre-P06 behavior,
+slice sequence and X01 deferral are represented. Refuted: structural checks/review receipts
+prove runtime correctness. Partial: all actual product consumers/gates are unbuilt; for
+example P04-T02 loop accounting→G-BUDGET/T16, with P06-T01 critic limits→T17 remaining
+phase-owned proof. Uncertain/deferred: provider/account compatibility, pins and empirical
+research outcomes. The audit's temporary partial documentation state is closed only by
+the coordinator's verified status sync, not by an unbuilt system assertion.
+
+### Verified documentation closeout
+
+All current D07/P00/G-DOC records now refer to E-DOC-004, with original E-DOC-003
+observations explicitly historical. Plan amendment evidence is attached to P00-T05.02–.04.
+All nine documentation children remain complete; 84 system children remain unchecked.
+No new owner ADR answer is required. Publishing is authorized only for this documentation
+checkpoint; inspect all outgoing commit subjects/bodies, scan the scoped staged diff,
+push existing main to its established origin/main and verify remote/local ref equality.
+This committed receipt covers documentation proof; the remote ref is publication proof.
+Next state after publishing: WAIT_FOR_GO for P01, not an automatic phase start.
+
+Final prepublication observations: git fetch origin showed 0 remote-only/3 local-only
+commits before this closeout commit. All three full commit messages have descriptive
+bodies; their diffs and the current staged diff passed credential-pattern scans. Sixteen
+explicitly staged paths were reviewed; git diff --cached --check passed. No unstaged
+tracked changes, no staged .env/.venv/.vscode content; root ignore bytes and vision hash
+are unchanged. The final closeout commit also requires a descriptive body before pushing.
+No task-owned server/listener was started, so no process/port cleanup was required.
+
+- Retained intermediate failure: checker rejected README/.gitignore ownership on P00's
+  updated card. Its original allowlist allowed only AGENTS at root. Corrected for these
+  two existing artifacts in P00 only; added unrelated-root and runtime-root ownership
+  negative controls. This is a documentation instrument correction, not a product change.
+- No application process, container, provider request or listener started by this closeout.
+  Blueprint SHA-256 remains 911003f72b909e4e473cde917c872c022bf1332440fade1c97dce8ecf7af2b9c.
+
 ## Future evidence record template
 
 ```text

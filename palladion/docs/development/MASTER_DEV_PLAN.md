@@ -1,11 +1,13 @@
 # Palladion master development plan
 
-Version 3, 2026-10-17. Scope anchor: [blueprint v0.2](../vision/palladion-blueprint-v2.md),
+Version 4, 2026-10-17. Scope anchor: [blueprint v0.2](../vision/palladion-blueprint-v2.md),
 especially “Locked decisions,” “Build plan,” “System invariants,” and the full walkthrough.
 The current user mandate is **P00 only**: create this development suite. P01–P08 describe
 future system work. Current refinement P00-T05 records the user's answers and review
-protocol. After documentation closure: **WAIT_FOR_GO**. No implementation, dependency
-installation, venv creation, provider calls or push until explicit GO. X01 remains deferred;
+protocol. The user now authorizes verified documentation publishing to existing `origin/main`,
+then **WAIT_FOR_GO** for P01. Separately authorized machine repair and the user-created
+app `.venv` do not start P01. No product implementation, further app dependency setup or
+provider calls until explicit implementation GO. X01 remains deferred;
 no UI phase is authorized. ADR-0011 governs; ADR-0013 selects uv and real Groq generation.
 
 ## Document authority and ownership
@@ -57,6 +59,40 @@ High adversary to challenge the task/dependency/file/proof assumptions. The coor
 verifies findings, corrects the plan/gates and records the preflight receipt before work.
 Recheck materially changed phase premises; an old receipt does not authorize a new scope.
 
+### Blueprint review contract for both reviewers
+
+Every pre-phase adversary and the single post-phase work auditor must read the complete
+[blueprint v0.2](../vision/palladion-blueprint-v2.md) (§1–§18) directly in a fresh context.
+The dispatch names that exact file, current user amendments/accepted ADRs, phase tasks and
+exits, gates, traceability and live source/test/evidence paths. A coordinator summary or
+task-card-only review cannot replace this read. Reviewers remain read-only, GPT 6 Luna
+High, without credential/live-resource access or git mutations.
+
+The adversary checks whether tasks, dependencies, files and proof can fulfill the vision.
+The auditor checks the actual diff, intended consumers, executed checks and remaining
+obligations against that same vision. Both explicitly assess:
+
+- §1/§17 locked decisions, authority boundaries and invariants, including recorded owner
+  overrides; representative snippets do not override their surrounding warnings.
+- §3/§11/§13.5 flow: deterministic nonexclusive preflight with zero LLM calls; exactly
+  four authorized read tools; main calls ≤5 total including finalization; critic calls
+  ≤3, normally one; separately bounded tools/prefetch/counter-search/retries and global
+  deadline. Failed/malformed attempts still count; no sixth main repair call.
+- Draft → advisory critic and any authorized bounded counter-search → reserved main
+  finalization → deterministic final gate → safe rendering and persisted continuity.
+  New evidence requires revalidation. Before P06, missing mandatory review cannot yield
+  supported normative guidance. Optional planner/graph/vector/adaptive treatments remain
+  controlled experiments, not implicit base-architecture changes.
+- Applicable source/ACL/time/policy/live/memory contracts, §14 hard cases and research
+  controls, §15 build sequence, §16 security/observability and §18 walkthrough.
+
+Each EVIDENCE_LOG receipt names full-read coverage, relevant blueprint headings/invariants,
+task → consumer → gate/evidence links, and confirmed/refuted/partial/uncertain claims.
+Unbuilt later capabilities retain an explicit owning task, never an early PASS. Findings
+record consequence, disposition and verification. The coordinator checks load-bearing
+findings; material unresolved drift or missing coverage keeps the affected phase open.
+A review receipt cannot substitute for behavioral evidence.
+
 ### During the task
 
 Implement the smallest consumer-backed slice. Record progress at coherent checkpoints.
@@ -74,7 +110,8 @@ live resources or git changes. Only the coordinator closes tasks/gates. No overl
 Run stack validation, the owning gates, and a representative entry-point smoke; record
 exact commands, environment, observed results and limitations in [EVIDENCE_LOG](EVIDENCE_LOG.md).
 After stack validation, smoke and owning gates, dispatch one GPT 6 Luna High work auditor
-to inspect the completed phase and actual evidence. Resolve material findings or keep
+to inspect the completed phase and actual evidence using the blueprint review contract
+above. Resolve material findings or keep
 the task open. Update progress, affected goal
 checkboxes, map/memory, learning and ADR/risk records. Run the docs checker and a no-stale
 sweep. Stop task-owned processes and verify their ports are free; leave pre-existing services alone.
@@ -84,7 +121,9 @@ user's explicit approval rules; current branch is `main`, so do not push without
 At a phase boundary, report and continue only within the current authorized scope.
 For P00-T05, coordinator and that one post-phase auditor each check all development
 Markdown documents against the complete 18-section blueprint; check_docs.py supports
-structure only. Preserve per-document coverage and findings in E-DOC-003. Then WAIT_FOR_GO.
+structure only. Preserve per-document coverage/findings in E-DOC-003 and final E-DOC-004.
+Publish only verified documentation under the user's explicit main-push approval,
+then WAIT_FOR_GO for P01.
 
 ## Baseline and path interpretation
 
@@ -364,20 +403,22 @@ order. Shared-file tasks are sequential. Each proof names the observation that c
 <a id="p00-t05-02"></a>
 
 - [x] **P00-T05.02 — Align instructions, atomic tasks and goals with the current mandate**
-  - **Files:** `AGENTS.md`, `palladion/docs/development/MASTER_DEV_PLAN.md`, `palladion/docs/development/GOAL.md`, `palladion/docs/development/TESTING_GATES.md`, `palladion/docs/development/RESEARCH_PROTOCOL.md`, `palladion/docs/development/PROJECT_MAP.md`.
+  - **Files:** `AGENTS.md`, `README.md`, `.gitignore`, `palladion/docs/development/MASTER_DEV_PLAN.md`, `palladion/docs/development/GOAL.md`, `palladion/docs/development/TESTING_GATES.md`, `palladion/docs/development/RESEARCH_PROTOCOL.md`, `palladion/docs/development/PROJECT_MAP.md`.
   - **Depends:** P00-T05.01.
   - **Change:** Require real Groq integration and app-local uv setup after GO; mandate independent pre-phase adversary and one post-phase auditor; preserve operational mocks, budgets and synthetic data.
-  - **Proof:** DOC; [G-DOC](TESTING_GATES.md#g-doc-task-coverage); current task/gate paths do not require fake-first runtime or optional phase review; no setup/provider calls/push authorized before GO.
+  - **Proof:** DOC; [G-DOC](TESTING_GATES.md#g-doc-task-coverage); no fake-first runtime or optional phase review; both reviewers require the full blueprint and traceable coverage. Product setup/provider calls remain held; only explicitly approved documentation publishing and separate owner/toolchain setup are exceptions. Publish the owner's existing .env/.venv ignore rules unchanged.
   - **Evidence:** E-DOC-003; Groq/uv atomic cards, mandatory reviews and WAIT_FOR_GO propagated.
+  - **Amendment evidence:** E-DOC-004; every future reviewer directly reads the full blueprint; owner-authorized docs publishing is distinct from P01 GO. Existing ignored user environment is verified, not a closed package-setup task.
 
 <a id="p00-t05-03"></a>
 
 - [x] **P00-T05.03 — Validate ADR answer structure and synchronize all development records**
   - **Files:** `palladion/docs/development/check_docs.py`, `palladion/docs/README.md`, `palladion/docs/development/REQUIREMENTS_TRACEABILITY.md`, `palladion/docs/development/PROGRESS.md`, `palladion/docs/development/PROJECT_MEMORY.md`, `palladion/docs/development/PROJECT_LEARNING.md`, `palladion/docs/development/EVIDENCE_LOG.md`.
   - **Depends:** P00-T05.02.
-  - **Change:** Check structured ADR fields and accepted answers, Q/ADR links, atomic metadata and mandatory review protocol; preserve historical evidence and explicit WAIT_FOR_GO state.
+  - **Change:** Check structured ADR fields and accepted answers, Q/ADR links, atomic metadata and mandatory review protocol; preserve historical evidence and explicit WAIT_FOR_GO state. P00 alone may own existing root README/.gitignore publishing artifacts; negative controls reject unrelated root paths and runtime ownership of root navigation.
   - **Proof:** DOC; [G-DOC](TESTING_GATES.md#g-doc-task-coverage); positive checker and deliberately missing question/impact/answer tests pass/fail correctly; all doc links and file owners resolve.
   - **Evidence:** E-DOC-003; both checker commands pass, including 17 negative controls and current link/file coverage.
+  - **Amendment evidence:** E-DOC-004; final checker/CLI passes 20 negative controls, narrow P00 root-file ownership, current records reconciled and historical results retained.
 
 <a id="p00-t05-04"></a>
 
@@ -387,6 +428,7 @@ order. Shared-file tasks are sequential. Each proof names the observation that c
   - **Change:** After document gates, coordinator and one GPT 6 Luna High work auditor each check every development document against the full blueprint and user amendments; resolve findings, record evidence, checkpoint docs and stop for GO.
   - **Proof:** DOC; [G-DOC](TESTING_GATES.md#g-doc-task-coverage); per-document coverage/full-vision audit receipts, findings and resolutions retained; no product/research gate or live account success claimed.
   - **Evidence:** E-DOC-003; coordinator and single Luna High auditor checked all twelve development docs/full blueprint; all three audit findings resolved and rechecked; 18 negative controls pass. Documentation checkpoint only; WAIT_FOR_GO.
+  - **Amendment evidence:** E-DOC-004; fresh pre/post full-blueprint reviews and same-auditor status-resolution verification complete. Coordinator clarified residual historical wording and synchronized D07/P00/G-DOC. Documentation-only main publishing approved; P01 remains WAIT_FOR_GO.
 
 ### Atomic tasks — P01
 
@@ -405,8 +447,8 @@ order. Shared-file tasks are sequential. Each proof names the observation that c
 - [ ] **P01-T01.02 — Establish the uv environment, package and validation tooling**
   - **Files:** `palladion/.gitignore`, `palladion/pyproject.toml`, `palladion/uv.lock`, `palladion/src/evidence_agent/__init__.py`, `palladion/docs/development/ADR_LOG.md`.
   - **Depends:** P00-T05.04.
-  - **Change:** After explicit GO, locate/install uv, run uv venv inside C:/palladion/palladion, select compatible Python/tooling/packages under delegated authority, pin uv.lock, and expose package version. Before uv venv, write/verify .venv/ protection in the owned app-local .gitignore; preserve the user root ignore file. Baseline gets a separate environment later.
-  - **Proof:** SMOKE; [G-CONTRACT](TESTING_GATES.md#g-contract-task-coverage); uv version, app-local environment/import and configured validation commands run; git check-ignore proves app .venv protection before creation and locked sync is reproducible; no secret needed for setup.
+  - **Change:** After explicit GO, verify uv and the existing user-created .venv inside C:/palladion/palladion; reuse it when compatible rather than recreate it. Select compatible Python/tooling/packages under delegated authority, pin uv.lock, and expose package version. Verify .venv/ protection before reuse or creation; own app-local .gitignore protection and preserve the root ignore rules. If absent, create the environment with uv venv only after protection is proven. Baseline gets a separate environment later.
+  - **Proof:** SMOKE; [G-CONTRACT](TESTING_GATES.md#g-contract-task-coverage); uv version, app-local environment/import and configured validation commands run; git check-ignore proves app .venv protection before reuse or creation and locked sync is reproducible; no secret needed for setup.
 
 <a id="p01-t01-03"></a>
 

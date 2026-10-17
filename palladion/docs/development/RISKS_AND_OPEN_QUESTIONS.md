@@ -12,7 +12,7 @@ This register tracks remaining evidence and deferred scope, not a competing answ
 | ID | Question / accepted direction | Decision and state | Remaining evidence / owning phase |
 |---|---|---|---|
 | Q01 | Synthetic approval authority | [ADR-0012](ADR_LOG.md#adr-0012--q01--synthetic-approval-authority) ACCEPTED: authenticated administrator events; separate upload/approval grants | P01/P02 implement registry and reject self-approval/unauthorized grants; G-SOURCE/G-SECURITY |
-| Q02 | Python packages, environment and model | [ADR-0013](ADR_LOG.md#adr-0013--q02--uv-and-real-groq-runtime-generation) ACCEPTED: uv, app-local uv venv, delegated package choices, actual Groq qwen/qwen3.8-27b; fake-first overridden | uv not found on current PATH; setup after GO, pin packages/uv.lock, probe actual model/tool/schema/quota. Embeddings remain a measured compatible selection. No provider call now. |
+| Q02 | Python packages, environment and model | [ADR-0013](ADR_LOG.md#adr-0013--q02--uv-and-real-groq-runtime-generation) ACCEPTED: uv, app-local uv venv, delegated package choices, actual Groq qwen/qwen3.8-27b; fake-first overridden | Working uv installed separately; user-created ignored app .venv exists (E-DOC-004). After GO verify/reuse it, pin packages/uv.lock and probe actual model/tool/schema/quota. Embeddings remain a measured compatible selection. No provider call now. |
 | Q03 | Qdrant native RRF/BM25 compatibility | [ADR-0014](ADR_LOG.md#adr-0014--q03--qdrant-hybrid-compatibility) ACCEPTED_DIRECTION; VERIFY_AT_IMPLEMENTATION | P02 compatible server/client probe, same-point dense/bm25, one RRF k=60, matched ingest/query weighting. Pin actual supported mode/version. |
 | Q04 | English/Indonesian processing | [ADR-0015](ADR_LOG.md#adr-0015--q04--english-and-indonesian-retrieval) ACCEPTED_DIRECTION; VERIFY_AT_IMPLEMENTATION | P02/P08 record language mix, compare tokenizer/stemming variants on development labels, pin winner and report per-language metrics. No claimed improvement yet. |
 | Q05 | Historical audits and time-basis migrations | [ADR-0016](ADR_LOG.md#adr-0016--q05--historical-audit-and-time-basis-migration) ACCEPTED_DIRECTION: minimal valid/record-time plus knowledge_cutoff, mixed-basis conflict unless explicit precedence | P03 define/review synthetic historical query fixtures and replay traces; no inferred migration or real-business retention rule. |
@@ -43,6 +43,11 @@ read, copied, printed or staged. That `.gitignore` is user-owned/untracked at ta
 and is preserved. At that observation it listed `.env` and `venv`; the latter does not
 cover `.venv`. User was advised to add `.venv/` before manually running `uv venv` inside
 `C:/palladion/palladion`. Recheck ignore behavior at setup; do not relocate/copy secrets.
+
+Current correction (E-DOC-004): the owner updated root ignore rules to `.env` and `.venv/`
+and created the app environment. Interpreter existence and git check-ignore are verified;
+publish those existing ignore rules unchanged. The earlier observation above is historical,
+not a current missing-environment blocker. App packages/locked sync still await P01 GO.
 
 ## Updating this register
 

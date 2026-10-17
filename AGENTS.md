@@ -17,9 +17,10 @@ repository from the blueprint's illustrative tree.
 
 ## Scope and integrity
 
-- Current mandate: development documentation suite only. Product implementation begins
-  only after the user's explicit GO. Until GO: no installation, venv creation, application
-  implementation, provider calls or push. No UI work. `baseline/` is reserved for
+- Current mandate: finish and publish verified documentation to existing `origin/main`,
+  explicitly authorized by the user, then WAIT_FOR_GO for P01. Separately authorized
+  machine-toolchain repair and the user-created app `.venv` do not authorize product
+  implementation, further app dependency setup or provider calls. No UI work. `baseline/` is reserved for
   later comparator implementations; do not populate it as part of this setup.
 - Preserve the [vision](palladion/docs/vision/palladion-blueprint-v2.md). Do not silently
   change locked decisions or treat representative code as complete production code.
@@ -74,6 +75,11 @@ and architecture are not imported.
    validation, smoke and testing gates, dispatch one GPT 6 Luna High work auditor to
    inspect implementation, consumers, test evidence and doc consistency. The post-phase
    work audit is a separate single-agent step; neither review replaces the other.
+   Both reviewers must read the complete [blueprint](palladion/docs/vision/palladion-blueprint-v2.md)
+   directly in fresh context, rather than rely on a coordinator summary. Every dispatch
+   follows the master plan's “Blueprint review contract for both reviewers.” Receipts
+   name blueprint headings/invariants, phase-local obligations, deferred consumers,
+   findings and evidence. Missing coverage keeps the review incomplete.
 4. **Prove the actual path.** Exercise the entry point and production consumer, including
    persistence reopen/readback where relevant. A helper with no caller, a test of a dead
    entry point, a matching source string or a passing import does not prove integration.

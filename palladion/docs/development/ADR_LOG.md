@@ -451,7 +451,17 @@ records executed proof. Current documentation conformity is checked by G-DOC/E-D
 
 **My answer (editable):** User explicitly requested this structure and review sequence, and said to restructure the docs and wait for GO. The latest user additionally requires coordinator plus subagent whole-development/full-vision audits.
 
-**Verification:** PLANNED; pre-phase receipt is E-DOC-003, final whole-suite audit must finish before closure.
+**Verification:** E-DOC-003 completed the original whole-suite review. E-DOC-004 records
+the fresh pre/post reviews of the final amendment and the same auditor's resolution
+recheck. Documentation review is complete; runtime remains unverified.
+
+**Amendment history (2026-10-17):** The original answer above required docs-only
+WAIT_FOR_GO and no push. The user now requires both future review roles to consider the
+blueprint, authorizes publishing verified documentation to main, and retains the P01 GO
+hold. Apply MASTER_DEV_PLAN “Blueprint review contract for both reviewers”: both read
+the complete blueprint and report phase-local coverage/findings. Separately authorized
+machine repair and the user-created .venv do not grant product implementation GO.
+Original answers/authority remain above; this amendment records the newer instruction.
 
 ## ADR-0012 — Q01 — Synthetic approval authority
 
@@ -491,7 +501,11 @@ records executed proof. Current documentation conformity is checked by G-DOC/E-D
 
 **My answer (editable):** User: use Groq, model qwen/qwen3.8-27b, Python via uv/uv venv; free to select/install other packages. Root .env/key and gitignore were user-prepared. User asks documentation only until GO.
 
-**Verification:** VERIFY_AT_IMPLEMENTATION; exact model is publicly listed, but account access, tool/schema behavior, quota and actual call are not tested. uv is not on the current shell PATH. Deterministic unit input/error fixtures do not substitute for real-model integration.
+**Verification:** VERIFY_AT_IMPLEMENTATION for account access, tool/schema behavior,
+quota and actual call. Correction: ~~uv is not on the current shell PATH~~ was the initial
+observation. Separate authorized machine repair installed working uv; the user created
+the app .venv and E-DOC-004 verifies existence/ignore protection. Pins/locked sync remain
+P01 proof. Deterministic fixtures do not substitute for real-model integration.
 
 ## ADR-0014 — Q03 — Qdrant hybrid compatibility
 

@@ -93,7 +93,8 @@ def validate_atomic_register(plan: str, vision: str, parents: set[str]) -> list[
         if not files:
             errors.append(f"{ident}: no exact owning file paths")
         for path in files:
-            if ".." in Path(path).parts or not (path.startswith("palladion/") or path == "AGENTS.md"):
+            root_doc = ident.startswith("P00-") and path in {"README.md", ".gitignore"}
+            if ".." in Path(path).parts or not (path.startswith("palladion/") or path == "AGENTS.md" or root_doc):
                 errors.append(f"{ident}: owning file outside planned project scope: {path}")
             owned_files.add(path)
         if not re.match(r"(?:DOC|UNIT|INTEGRATION|SMOKE|MEASUREMENT);", fields["Proof"]):
@@ -284,6 +285,11 @@ def self_test(documents: dict[str, str]) -> int:
             r"(?m)^\*\*My answer \(editable\):\*\*[^\n]*", "**My answer (editable):**", ledger, count=1)),
         "unanswered risk decision": (DEV + "RISKS_AND_OPEN_QUESTIONS.md", documents[
             DEV + "RISKS_AND_OPEN_QUESTIONS.md"].replace("ADR-0012", "ADR-0099", 1)),
+        "unapproved root file owner": (plan_key, plan.replace(
+            "`AGENTS.md`, `README.md`, `.gitignore`", "`AGENTS.md`, `unrelated.txt`, `.gitignore`", 1)),
+        "runtime task owning root navigation": (plan_key, plan.replace(
+            "`palladion/.gitignore`, `palladion/pyproject.toml`",
+            "`README.md`, `palladion/pyproject.toml`", 1)),
     }
     for label, (path, replacement) in mutations.items():
         altered = dict(documents)

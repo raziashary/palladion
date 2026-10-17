@@ -30,6 +30,11 @@ Read source and test fixtures before running anything with stateful-resource acc
 - Every phase has a recorded GPT 6 Luna High adversarial task/contract review before work.
   After validation, smoke and required gates, one GPT 6 Luna High work auditor checks the
   result/evidence/consumers. Findings must be resolved or keep the affected phase open.
+  Both reviewers read the entire blueprint and apply the master plan's
+  [blueprint review contract](MASTER_DEV_PLAN.md#blueprint-review-contract-for-both-reviewers),
+  including preflight, four tools, complete attempt budgets and draft/critic/finalization/gate
+  ordering. Receipts name blueprint headings/invariants and task/consumer/proof coverage;
+  later obligations remain explicit. Missing coverage means the review is incomplete.
   For current P00-T05 the coordinator and that single post-auditor additionally inspect
   every development document against the complete blueprint; structural checks alone
   cannot pass that semantic audit. E-DOC-003 records both independent review receipts.
@@ -179,8 +184,8 @@ and log redaction. These extend the 24 cases without renumbering them.
 Now, from repository root:
 
 These documentation-only commands use the existing Python interpreter, without creating
-the application environment. The uv setup and all package/model execution remain held
-until GO; uv was not found on the task's shell PATH at the initial observation.
+the application environment. Separate machine repair installed uv and the user created
+the ignored app .venv (E-DOC-004); further app package/model setup remains held until GO.
 
 ```powershell
 python palladion/docs/development/check_docs.py
@@ -188,8 +193,9 @@ python palladion/docs/development/check_docs.py --self-test
 git diff --check
 ```
 
-Later Python tasks, from `palladion/`: after GO use `uv venv` for the app-local `.venv`,
-pin dependencies with `uv.lock`, and document actual interpreter/tool commands. Package
+Later Python tasks, from `palladion/`: after GO verify/reuse the app-local `.venv`;
+use `uv venv` only if absent and after ignore protection is verified. Pin dependencies
+with `uv.lock` and document actual interpreter/tool commands. Package
 choices are delegated within blueprint scope. Expected tooling is pytest plus configured
 lint/type/build checks. A planned targeted example is
 `uv run --locked pytest tests/test_policy_temporal.py tests/test_policy_engine.py`.

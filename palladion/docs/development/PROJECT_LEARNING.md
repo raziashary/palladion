@@ -149,6 +149,22 @@ or copied research reference into a Palladion result. Preserve failed experiment
   too late. Explicit Authority fields/checks and an ignore-before-create owned-file proof
   now close those gaps. E-DOC-003 preserves findings, earlier red output and resolutions.
 
+## L014 — A stateless reviewer needs the governing source explicitly
+
+- Date/type: 2026-10-17; fresh pre-phase adversary finding and owner instruction.
+- Prior wording required reviews against the vision, but reserved the explicit full-read
+  requirement for P00. A future stateless reviewer could receive only a phase task card.
+- Correction: every pre-adversary and single post-work auditor directly reads the full
+  blueprint and reports relevant headings/invariants, tasks, consumers, proof and deferred
+  obligations. Explicitly include zero-call nonexclusive preflight, four tools, main/critic/
+  tool attempt budgets and draft→critic→finalization→gate ordering. E-DOC-004 records review.
+- Limit: review coverage is process evidence, not proof of unbuilt runtime behavior.
+
+The final checker first rejected root README/.gitignore task ownership: its allowlist
+recognized AGENTS only despite these being existing repository navigation/protection
+artifacts. Narrowly permit those two files for P00 only, preserving all other ownership
+bounds; negative controls reject unrelated root files and runtime ownership of root README.
+
 ## New learning entry template
 
 ```text

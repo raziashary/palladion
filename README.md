@@ -8,8 +8,10 @@ documents and read-only mock operational systems.
 **Current state:** development documentation established; the system is not implemented.
 There is no application, UI, dependency manifest, or benchmark result yet.
 User selected uv and actual Groq `qwen/qwen3.8-27b` for future implementation. All
-recommendation directions are answered in the editable ADR log; setup and execution
-remain **WAIT_FOR_GO**. No API call or package installation is part of this docs task.
+recommendation directions are answered in the editable ADR log. The user created the
+ignored app `.venv` after separate toolchain repair; product dependency setup and execution
+remain **WAIT_FOR_GO** for P01. Verified documentation publishing to `main` is now
+explicitly authorized. No provider call is part of this documentation closeout.
 
 - [Documentation entry point](palladion/docs/README.md)
 - [Master vision](palladion/docs/vision/palladion-blueprint-v2.md)
