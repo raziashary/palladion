@@ -1,52 +1,53 @@
-# Risks and open questions
+# Risks, accepted answers and verification obligations
 
-All rows OPEN unless explicitly closed with an ADR and evidence. These are nonblocking
-for P00 documentation. Do not invent business rules or silently select new dependencies.
-The coordinator proposes grounded options; the user/policy owner approves escalated choices.
+Updated 2026-10-17. The user read and accepted all recommendation directions, except
+fake-first runtime: use Groq `qwen/qwen3.8-27b`. uv and package-selection authority are
+explicitly approved. **No unanswered owner decision blocks this documentation task.**
+Implementation is nevertheless **WAIT_FOR_GO**. Acceptance does not invent compatibility,
+thresholds, fixture values, reviewer availability, completeness or production signoff.
 
-| ID | Unknown / risk and governing source | Owner / resolve before | Safe treatment and evidence needed |
+Owner answers live once in [ADR_LOG](ADR_LOG.md); edit **My answer (editable)** there.
+This register tracks remaining evidence and deferred scope, not a competing answer inbox.
+
+| ID | Question / accepted direction | Decision and state | Remaining evidence / owning phase |
 |---|---|---|---|
-| Q01 | Approval record simulation; blueprint Remaining open issues | User/design owner; P01-T01 | Propose simplest authenticated synthetic admin approval event vs simulated signatures/management metadata; select explicitly, never trust document prose. Test unauthorized/self approval. |
-| Q02 | Exact Python tooling, packages, provider/embedding model and pins not chosen | User/coordinator; P01-T01 and P02-T02, paid calls only after enablement | Inspect available tools; propose minimal dependencies in blueprint stack; approve new dependencies per universal rules. Use fake LLM first, record installed versions. No default runtime model inferred from Luna development-agent instruction. |
-| Q03 | Qdrant/client native parameterized RRF and sparse BM25 mode compatibility | Coordinator; P02-T02 | Verify official pinned-version APIs at implementation time and run an integration probe. Decide server/client BM25 mode; keep ingest/query model/tokenizer identical and one fusion stage. Do not silently copy SDK illustration. |
-| Q04 | English/Indonesian tokenization, stemming and corpus distribution | Research owner; P02-T02 then P08-T01 | Record language mix, compare processing variants on development labels and pin manifest. No unmeasured language-quality claim. |
-| Q05 | Time-basis migration, retroactive corrections and audit retention scope | Policy/user owner; P03-T01 | Default ambiguous incompatible timelines to conflict. Need explicit migration/precedence semantics and required knowledge-cutoff audit queries. Never invent a signed business rule. |
-| Q06 | External inventory attestation/change feed interface and trust | User/application owner; before completeness claims or X01 | Keep supplied-source reconciliation separate; define attester/scope/time/change handling. Neither recall nor critic certifies unsupplied documents. |
-| Q07 | Action-specific freshness, reported-fact validity and live operation limits | Synthetic policy/adapter owner; P03-T03/P05-T01 | Fixture values explicitly synthetic and sourced to owner; no model TTL. Decide permitted age by fact and use, preserving all timestamp meanings. |
-| Q08 | Gold size, two annotators, adjudication, splits/seeds/repetitions, metrics/targets and cost/latency tradeoffs | Research/user owner; pilot before meaningful quantitative claims, freeze by P08-T01 | Establish B0/B1 observations first, then preregister numerical targets before held-out. If independent annotations unavailable, label pilot-only. Keep failure denominators. |
-| Q09 | Natural-language entailment, exception sufficiency, critical challenge resolution and escalation owner | User/domain owner; before consequential supported demonstrations | Necessary-condition gate isn't a proof solver. Define supported-claim rubric and human escalation; insufficient adequacy stays qualified. Independently labeled support precision required. |
-| Q10 | Graph, vector memory, planner, reranker/fusion and adaptive critic value | Research owner; owning experiment before enable/retention | Disabled/controlled feature flags; paired parent-treatment evidence, measured harms and costs. Always-on normative critic data before adaptive bypass. |
-| Q11 | Exact external comparator versions, capabilities, adapter contract and resource tracks | User/research owner; X01 only | Keep baseline/ empty now. Later distinguish standard pipeline/library/provider product and capability gaps, matching corpus/access/budget where possible; no hidden privileged inputs. |
-| Q12 | Real identity integration, source approval security, privacy/retention and production operations | User/security/policy owners; before any real data/connector deployment | Synthetic-only prototype; no production-ready claim. Require legitimate access, real threat review, retention and audit protections. SQLite append-only events are not automatically tamper-evident. |
+| Q01 | Synthetic approval authority | [ADR-0012](ADR_LOG.md#adr-0012--q01--synthetic-approval-authority) ACCEPTED: authenticated administrator events; separate upload/approval grants | P01/P02 implement registry and reject self-approval/unauthorized grants; G-SOURCE/G-SECURITY |
+| Q02 | Python packages, environment and model | [ADR-0013](ADR_LOG.md#adr-0013--q02--uv-and-real-groq-runtime-generation) ACCEPTED: uv, app-local uv venv, delegated package choices, actual Groq qwen/qwen3.8-27b; fake-first overridden | uv not found on current PATH; setup after GO, pin packages/uv.lock, probe actual model/tool/schema/quota. Embeddings remain a measured compatible selection. No provider call now. |
+| Q03 | Qdrant native RRF/BM25 compatibility | [ADR-0014](ADR_LOG.md#adr-0014--q03--qdrant-hybrid-compatibility) ACCEPTED_DIRECTION; VERIFY_AT_IMPLEMENTATION | P02 compatible server/client probe, same-point dense/bm25, one RRF k=60, matched ingest/query weighting. Pin actual supported mode/version. |
+| Q04 | English/Indonesian processing | [ADR-0015](ADR_LOG.md#adr-0015--q04--english-and-indonesian-retrieval) ACCEPTED_DIRECTION; VERIFY_AT_IMPLEMENTATION | P02/P08 record language mix, compare tokenizer/stemming variants on development labels, pin winner and report per-language metrics. No claimed improvement yet. |
+| Q05 | Historical audits and time-basis migrations | [ADR-0016](ADR_LOG.md#adr-0016--q05--historical-audit-and-time-basis-migration) ACCEPTED_DIRECTION: minimal valid/record-time plus knowledge_cutoff, mixed-basis conflict unless explicit precedence | P03 define/review synthetic historical query fixtures and replay traces; no inferred migration or real-business retention rule. |
+| Q06 | External inventory attestation/change feed | [ADR-0017](ADR_LOG.md#adr-0017--q06--external-inventory-boundary) ACCEPTED_DIRECTION; external integration DEFERRED | Distinguish INDEX_COVERAGE from INVENTORY_ATTESTED now; later owner-provided attester/scope/change contract. T12 preserves uncertainty. |
+| Q07 | Reported validity and live freshness | [ADR-0018](ADR_LOG.md#adr-0018--q07--fact-validity-and-observation-freshness) ACCEPTED_DIRECTION: use-specific owner/config values, separate timestamps, no model expiry | P03/P05 record explicit synthetic fixture values/owner/rule, test stale BI and UNSPECIFIED lifetime; no numerical company policy invented. |
+| Q08 | Labels, targets, splits and repetitions | [ADR-0019](ADR_LOG.md#adr-0019--q08--honest-research-acceptance) ACCEPTED_DIRECTION: two annotators/adjudication, B0/B1 development calibration, freeze before held-out | P02 pilots/P08 preregistration; actual annotator availability, case counts, repetitions and thresholds remain measured/recorded prerequisites to quantitative claims. |
+| Q09 | Semantic support and escalation | [ADR-0020](ADR_LOG.md#adr-0020--q09--claim-support-and-human-escalation) ACCEPTED_DIRECTION: independent support/exception rubric, named authorized human escalation, qualify insufficient adequacy | P04 record actual rubric/reviewer assignment and gold support labels; valid citation alone is not proof. No imaginary reviewer/signoff. |
+| Q10 | Optional graph/vector/planner/fusion/adaptive review | [ADR-0021](ADR_LOG.md#adr-0021--q10--optional-complexity-needs-controlled-evidence) ACCEPTED_DIRECTION: controlled flags, paired parent ablations, always-on critic labels first | Owning experiments measure incremental value/harm/cost; initially selected Groq model, no silent provider switch or default normative critic bypass. |
+| Q11 | External standard RAG/LangChain/provider comparisons | [ADR-0022](ADR_LOG.md#adr-0022--q11--later-external-comparator-systems) ACCEPTED_DIRECTION; implementation DEFERRED to X01 | baseline/ isolated later; exact versions/capability tracks/shared evaluator and cost disclosures remain future evidence. No comparator built. |
+| Q12 | Real identity, data privacy and production | [ADR-0023](ADR_LOG.md#adr-0023--q12--real-data-and-production-boundary) ACCEPTED_DIRECTION: synthetic-only until legitimate access/security/retention approvals | Real connectors/deployment DEFERRED; actual signoff required then, prototype test-set success cannot imply production readiness. |
 
-## Escalation and conflict handling
+## Owner decision inbox
 
-### Owner decision inbox
+All twelve recommendation directions are now answered in ADR-0012–ADR-0023. The
+current exceptions/explicit choices are Groq runtime, exact model, uv and delegated
+package selection. ADR-0011 records the editable answer format, mandatory pre-phase
+adversary, single post-phase work auditor, full-vision audit and explicit GO hold.
 
-The documentation decisions ADR-0009/ADR-0010 are accepted from the user's explicit
-requests. The implementation choices below remain **proposals**, not silently made ADRs.
-They do not block finishing this documentation revision. The user asked to make needed
-ADRs before a push if everything is resolved, so retain this inbox and report it at closeout.
+No repeat approval is required for the accepted directions or compatible packages within
+that scope after GO. Record concrete technical choices, fixture assumptions and results
+when known. Material departures, new shipped-contract changes or real-data access still
+follow universal escalation rules; package authority does not waive those boundaries.
 
-| When / owner decision | Recommendation to consider | Exact execution card |
-|---|---|---|
-| Before P01, Q01: how synthetic approval becomes trusted | Start with authenticated administrator approval events and separate upload/approval grants; simulate signatures only if they test a needed hypothesis. | [P01-T01.01](MASTER_DEV_PLAN.md#p01-t01-01) |
-| Before package setup, Q02: approve concrete dependencies/tooling and model execution scope | Keep fake LLMs first. Propose compatible Python/tooling/client/model pins after source/API checks; hosted/local generation and spending require explicit enablement. Development-agent Luna choice does not select runtime models. | [P01-T01.02](MASTER_DEV_PLAN.md#p01-t01-02), [P01-T01.03](MASTER_DEV_PLAN.md#p01-t01-03) |
-| Before temporal implementation, Q05: audit reconstruction scope and any time-basis migration | Use declared basis and knowledge_cutoff; incompatible timelines remain conflict unless owner supplies approved migration/precedence. Define retained historical queries rather than build a full temporal database. | [P03-T01.04](MASTER_DEV_PLAN.md#p03-t01-04) |
-| Before live fixtures, Q07: synthetic observation freshness/validity values | Let each synthetic policy/adapter owner declare use-specific limits; preserve historical observation separately. Do not invent universal TTL or treat reported validity as freshness. | [P03-T03.01](MASTER_DEV_PLAN.md#p03-t03-01) |
-| Before consequential supported demonstrations, Q09: claim adequacy and escalation owner | Approve a support/exception rubric and designated human escalation when necessary-condition checks cannot establish adequacy; preserve qualified outcomes. | [P04-T03.04](MASTER_DEV_PLAN.md#p04-t03-04) |
-| Before held-out research, Q08: annotation resources, splits, repetitions, numerical acceptance and tradeoffs | Two independent annotators plus adjudication; calibrate on B0/B1 development data and freeze criteria before held-out. Label earlier evidence pilot-only if resources unavailable. | [P08-T01.01](MASTER_DEV_PLAN.md#p08-t01-01) |
+## Credential and environment observation
 
-Q03/Q04 primarily require implementation-time API/language compatibility evidence and
-may lead to a dependency decision; Q06/Q11/Q12 concern later inventory/comparator/real
-deployment scope. Q10 optional treatments need their declared owner/dependency choices
-before enablement. These are not requests to decide every future detail now.
+Root `.env` exists and is ignored by the user's current root `.gitignore`; it was not
+read, copied, printed or staged. That `.gitignore` is user-owned/untracked at task start
+and is preserved. At that observation it listed `.env` and `venv`; the latter does not
+cover `.venv`. User was advised to add `.venv/` before manually running `uv venv` inside
+`C:/palladion/palladion`. Recheck ignore behavior at setup; do not relocate/copy secrets.
 
-A missing future choice is not a reason to stop unrelated documentation or mock-only work.
-At the owning implementation task, present the decision, evidenced options, recommendation
-and required direction before dependent changes. A conflict with locked blueprint/user
-constraints is surfaced explicitly; do not redefine the rule through an implementation shortcut.
+## Updating this register
 
-Risks found later receive new stable IDs. Close a row only with owner, date, ADR/evidence,
-remaining scope and revisit condition. Material newly discovered bugs follow universal
-in-scope-fix versus out-of-scope-record rules.
+Keep stable Q IDs. When evidence arrives, cite the actual run/test and limits; accepted
+recommendation is not completion. New unresolved decisions get a structured ADR with
+an empty owner answer; do not silently infer approval. Maintain deferred rows until
+that scope is explicitly invoked. Source evidence and current owner answers outrank
+historical task wording. After this docs task, wait for explicit GO before P01.

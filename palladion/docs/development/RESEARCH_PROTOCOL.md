@@ -21,9 +21,30 @@ without unacceptable latency, cost, excessive abstention or lost investigation u
 | H07: adaptive review can retain critical detection | B7 vs always-on B6 after risk labels collected | Important false skips, worse action support or savings below frozen target |
 | H08: planner/fusion/vector memory are worth adding | B8/B9 and isolated memory-vector arm vs exact declared parent | No measurable benefit after accounting for added work and reliability risks |
 
-Targets and sampling remain undecided (Q08). Derive effect sizes and budgets from B0/B1
+The Q08 method is accepted in ADR-0019; actual numerical targets and sampling require
+development evidence. Derive effect sizes and budgets from B0/B1
 development data, then preregister numerical criteria before held-out runs. Until then,
 these hypotheses have direction and instruments but no invented success threshold.
+
+## Selected runtime and approved setup
+
+ADR-0013 selects uv (`uv venv` in `C:/palladion/palladion`, app-local `.venv`, pinned
+`uv.lock`) and real Groq `qwen/qwen3.8-27b` for initial generative runs. Main and critic
+use separate contexts; a shared provider/model is not independent truth. Runtime choice
+does not constrain development subagents, which remain GPT 6 Luna High, or prescribe
+an embedding model. Actual embedding/tokenizer selection follows the compatibility task.
+
+No installation or model request occurs in this docs phase; implementation is WAIT_FOR_GO.
+After GO, run enabled provider experiments under explicit quotas/call/token/time budgets,
+record actual model ID and structured/tool behavior, and load only the existing root
+`.env` for the specific command. No fake runtime result may replace failed model proof.
+Deterministic scorer/guard input fixtures remain distinct from actual model outputs.
+
+The [Groq model page](https://console.groq.com/docs/model/qwen/qwen3.8-27b) lists the
+selected model, and [free-plan rate limits](https://console.groq.com/docs/rate-limits)
+are documented (checked 2026-10-17). This does not verify account access or unlimited
+capacity. Report actual billing if any, zero billed only when evidenced, and separately
+estimated list-price resource cost if useful; never assume all inference is cost-free.
 
 ## Internal treatments B0–B9
 

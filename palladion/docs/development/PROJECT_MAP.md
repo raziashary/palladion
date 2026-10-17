@@ -10,6 +10,8 @@ architecture.” No diagram node below implies shipped code.
 C:/palladion/                         Git root, main; initial revision 9b167a2
   AGENTS.md                          Project entry instructions
   README.md                          Project introduction and navigation
+  .env                               User-supplied ignored credential file; not read/copied
+  .gitignore                         User-owned/untracked at this task's initial inspection
   baseline/                          Existing empty directory; reserved, not tracked as a directory
   palladion/
     docs/
@@ -19,7 +21,7 @@ C:/palladion/                         Git root, main; initial revision 9b167a2
       development/                   One canonical agent working-document folder
         MASTER_DEV_PLAN.md           Task protocol, packages, atomic file-specific cards
         GOAL.md                      Checkable outcomes
-        ADR_LOG.md                   Decisions
+        ADR_LOG.md                   Structured questions/recommendations/editable owner answers
         TESTING_GATES.md             Proof obligations
         RESEARCH_PROTOCOL.md         Experiments and honest comparison rules
         REQUIREMENTS_TRACEABILITY.md Blueprint/user requirement coverage
@@ -27,7 +29,7 @@ C:/palladion/                         Git root, main; initial revision 9b167a2
         PROJECT_MAP.md               This map
         PROJECT_LEARNING.md          Lessons and corrections
         PROGRESS.md                  Task/gate states
-        RISKS_AND_OPEN_QUESTIONS.md   Decisions not yet made
+        RISKS_AND_OPEN_QUESTIONS.md   Accepted directions, pending evidence and deferred scope
         EVIDENCE_LOG.md              Verification records
         check_docs.py               Links/IDs, atomic metadata/dependencies, planned-file coverage
 ```
@@ -39,7 +41,7 @@ blueprint's illustrative `evidence-agent/` root here; do not create a duplicate 
 
 | Planned area | Owns | Producers / consumers | Build phase |
 |---|---|---|---|
-| `pyproject.toml`, config, compose | Validated pins, feature flags, budgets, local services | Settings → application and evaluator | P01/P02 |
+| `pyproject.toml`, `uv.lock`, config, compose | uv-managed app environment, pins, flags/budgets and local services | Settings → application and evaluator | P01/P02 |
 | `src/evidence_agent/core/` | Versioned typed contracts, IDs and errors | All modules share these; no storage→agent dependency | P01 |
 | `security/access.py` | Principal authentication and tenant/case/role/source permissions | Request context → every domain/source boundary | P01 onward |
 | `storage/` and immutable originals | SQLite registry/schema/exact IDs, source bytes, Qdrant/Neo4j adapters | Ingest writes; resolver and domain readers consume | P01/P02/P07 |
@@ -57,6 +59,13 @@ blueprint's illustrative `evidence-agent/` root here; do not create a duplicate 
 Do not create all 74 proposed files as empty placeholders. Check named APIs/dependencies
 at implementation time. No frontend, autonomous financial actions, event broker or extra
 agent role is required by the prototype.
+
+Current owner choices: uv venv lives inside `C:/palladion/palladion`; later baseline
+dependencies are isolated. Main/critic initial runtime uses actual Groq
+`qwen/qwen3.8-27b`, independent contexts with shared model, not independent ground truth.
+Root `.env` is loaded only for an enabled future command; package/model execution waits
+for GO. The `.venv`/lock/manifest here are planned unless observed later; no provider
+or environment setup was performed by this documentation task.
 
 ## Planned request and evidence flow
 

@@ -145,10 +145,39 @@ def load_documents() -> dict[str, str]:
             for path in paths}
 
 
+def validate_decisions(documents: dict[str, str]) -> list[str]:
+    errors = []
+    ledger = prose(documents[DEV + "ADR_LOG.md"])
+    records = re.findall(r"^## (ADR-\d{4}) — [^\n]+\n(.*?)(?=^## |\Z)", ledger, re.M | re.S)
+    fields = ("Status", "Authority", "Question", "Why", "Options", "Recommendation",
+              "What affects what", "My answer (editable)", "Verification")
+    answers: dict[str, str] = {}
+    for ident, body in records:
+        values = {}
+        for field in fields:
+            found = re.findall(rf"^\*\*{re.escape(field)}:\*\*[ \t]*([^\n]*)$", body, re.M)
+            if len(found) != 1 or not found[0].strip():
+                errors.append(f"{ident}: missing, duplicate or empty ADR field: {field}")
+            else:
+                values[field] = found[0].strip()
+        if values.get("Status", "").startswith("ACCEPTED") and not values.get("My answer (editable)"):
+            errors.append(f"{ident}: accepted decision has no owner answer")
+        answers[ident] = values.get("My answer (editable)", "")
+    if not records:
+        errors.append("ADR ledger has no structured decision records")
+    for row in documents[DEV + "RISKS_AND_OPEN_QUESTIONS.md"].splitlines():
+        if re.match(r"^\| Q\d{2} \|", row):
+            linked = re.findall(r"\bADR-\d{4}\b", row)
+            if not linked or not all(answers.get(ident) for ident in linked):
+                errors.append("Risk row lacks an answered decision: " + row.split("|")[1].strip())
+    return errors
+
+
 def validate(documents: dict[str, str]) -> list[str]:
     errors = [f"Missing required document: {path}" for path in REQUIRED if path not in documents]
     if errors:
         return errors
+    errors.extend(validate_decisions(documents))
     for name, body in documents.items():
         for raw in LINK.findall(prose(body)):
             target = raw.strip().strip("<>")
@@ -226,6 +255,8 @@ def self_test(documents: dict[str, str]) -> int:
     key = DEV + "TESTING_GATES.md"
     plan_key = DEV + "MASTER_DEV_PLAN.md"
     plan = documents[plan_key]
+    adr_key = DEV + "ADR_LOG.md"
+    ledger = documents[adr_key]
     mutations = {
         "broken local link": (key, documents[key] + "\n[bad](missing-proof.md)\n"),
         "broken heading": (key, documents[key] + "\n[bad](GOAL.md#absent-heading)\n"),
@@ -246,6 +277,13 @@ def self_test(documents: dict[str, str]) -> int:
             "**Depends:** P00-T03.", "**Depends:** P99-T99.99.", 1)),
         "missing atomic proof kind": (plan_key, plan.replace("**Proof:** DOC;", "**Proof:** unexplained;", 1)),
         "undefined numeric gate": (key, documents[key] + "\nG-MISSING2\n"),
+        "missing ADR question": (adr_key, ledger.replace("**Question:**", "**Omitted question:**", 1)),
+        "missing ADR authority": (adr_key, ledger.replace("**Authority:**", "**Omitted authority:**", 1)),
+        "missing ADR impact": (adr_key, ledger.replace("**What affects what:**", "**Omitted impact:**", 1)),
+        "empty accepted ADR answer": (adr_key, re.sub(
+            r"(?m)^\*\*My answer \(editable\):\*\*[^\n]*", "**My answer (editable):**", ledger, count=1)),
+        "unanswered risk decision": (DEV + "RISKS_AND_OPEN_QUESTIONS.md", documents[
+            DEV + "RISKS_AND_OPEN_QUESTIONS.md"].replace("ADR-0012", "ADR-0099", 1)),
     }
     for label, (path, replacement) in mutations.items():
         altered = dict(documents)

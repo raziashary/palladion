@@ -1,9 +1,12 @@
 # Palladion master development plan
 
-Version 2, 2026-10-17. Scope anchor: [blueprint v0.2](../vision/palladion-blueprint-v2.md),
+Version 3, 2026-10-17. Scope anchor: [blueprint v0.2](../vision/palladion-blueprint-v2.md),
 especially “Locked decisions,” “Build plan,” “System invariants,” and the full walkthrough.
 The current user mandate is **P00 only**: create this development suite. P01–P08 describe
-future system work. X01 is deferred comparison work. No UI phase is authorized.
+future system work. Current refinement P00-T05 records the user's answers and review
+protocol. After documentation closure: **WAIT_FOR_GO**. No implementation, dependency
+installation, venv creation, provider calls or push until explicit GO. X01 remains deferred;
+no UI phase is authorized. ADR-0011 governs; ADR-0013 selects uv and real Groq generation.
 
 ## Document authority and ownership
 
@@ -19,8 +22,9 @@ future system work. X01 is deferred comparison work. No UI phase is authorized.
 | PROJECT_MEMORY + PROJECT_MAP | Recovery and navigation, not substitutes for source or vision |
 | PROJECT_LEARNING + RISKS_AND_OPEN_QUESTIONS | Lessons with evidence, uncertain hypotheses and pending owner decisions |
 
-All working documents are in this folder. The root README and AGENTS and docs README
-only point here. Preserve the vision in `docs/vision/`. New facts that stale a document
+All working documents are in this folder. Root README and docs README provide entry
+points; root AGENTS governs the workflow and links here. Preserve the vision in
+`docs/vision/`. New facts that stale a document
 must update it in the same unit, or be explicitly queued for the user's decision.
 
 ## Task reading and execution protocol
@@ -46,6 +50,13 @@ must update it in the same unit, or be explicitly queued for the user's decision
    Seek direction where universal decision rules require it; no new architectural choice is
    implicitly approved by a task ID. Continue independent authorized work while waiting.
 
+### Before each phase
+
+Before each phase (including a newly scoped documentation phase), dispatch a GPT 6 Luna
+High adversary to challenge the task/dependency/file/proof assumptions. The coordinator
+verifies findings, corrects the plan/gates and records the preflight receipt before work.
+Recheck materially changed phase premises; an old receipt does not authorize a new scope.
+
 ### During the task
 
 Implement the smallest consumer-backed slice. Record progress at coherent checkpoints.
@@ -53,7 +64,8 @@ Derive negative tests from the contract, check valid cases still pass, and test 
 their actual readers. Use synthetic isolated resources; inspect destructive test behavior
 before running it. Credentials are command-local; do not copy them into worktrees.
 
-Delegate read-heavy/fresh review only when useful. All subagents use `gpt-6-luna`, `high`;
+Additional research delegation remains proportionate. Required pre/post phase reviews
+are mandatory, not discretionary. All subagents use `gpt-6-luna`, `high`;
 dispatch exact inputs, allowed read/write paths, commands and prohibitions. Do not grant
 live resources or git changes. Only the coordinator closes tasks/gates. No overlapping writers.
 
@@ -61,13 +73,18 @@ live resources or git changes. Only the coordinator closes tasks/gates. No overl
 
 Run stack validation, the owning gates, and a representative entry-point smoke; record
 exact commands, environment, observed results and limitations in [EVIDENCE_LOG](EVIDENCE_LOG.md).
-Resolve material review findings or keep the task open. Update progress, affected goal
+After stack validation, smoke and owning gates, dispatch one GPT 6 Luna High work auditor
+to inspect the completed phase and actual evidence. Resolve material findings or keep
+the task open. Update progress, affected goal
 checkboxes, map/memory, learning and ADR/risk records. Run the docs checker and a no-stale
 sweep. Stop task-owned processes and verify their ports are free; leave pre-existing services alone.
 Deliberately stage reviewed files, scan for secrets, and commit a verified logical unit
 with a Conventional Commit subject and descriptive body. Remote publishing follows the
 user's explicit approval rules; current branch is `main`, so do not push without approval.
 At a phase boundary, report and continue only within the current authorized scope.
+For P00-T05, coordinator and that one post-phase auditor each check all development
+Markdown documents against the complete 18-section blueprint; check_docs.py supports
+structure only. Preserve per-document coverage and findings in E-DOC-003. Then WAIT_FOR_GO.
 
 ## Baseline and path interpretation
 
@@ -127,7 +144,7 @@ is adopted (ADR-0009).
 
 ## P00 — Development suite
 
-Goal D01–D06. Inputs: entire blueprint, current request, Arcana documentation reference
+Goal D01–D07. Inputs: entire blueprint, current request, Arcana documentation reference
 and repository inspection. D01–D05 cover initial setup; D06 covers the atomic-plan/rules refinement.
 
 | Task | Work and producer → consumer | Acceptance / proof |
@@ -136,6 +153,7 @@ and repository inspection. D01–D05 cover initial setup; D06 covers the atomic-
 | P00-T02 | Create linked plan, goal, gates, ADR, learning, memory, map, risks and research records | Every document has a distinct owner/function and task-start navigation |
 | P00-T03 | Validate references/IDs, independently audit blueprint fidelity, fix findings | G-DOC; positive and deliberate-failure validator checks; E-DOC-001; reviewed commit |
 | P00-T04 | Refine the suite into atomic file-specific work using the requested Arcana documentation reference | Atomic cards, file/dependency coverage, synced companion records, independent audit; E-DOC-002; G-DOC |
+| P00-T05 | Record accepted answers, use editable ADR format, select uv/Groq, require phase reviews, and verify full vision fidelity | E-DOC-003; mandatory pre-adversary and single post-auditor; coordinator and auditor check every development doc; WAIT_FOR_GO |
 
 Exit: documentation is usable by the next session; no system gate or hypothesis declared passed.
 
@@ -148,7 +166,7 @@ storage schema/settings, synthetic corpus. No model calls needed.
 
 | Task | Work and producer → consumer | Acceptance / proof |
 |---|---|---|
-| P01-T01 | Establish Python packaging/tooling and mock-first validated config; decide approval fixture trust model and dependency pins | ADRs close Q01/Q02; no secrets; explicit paid-call enable flag; documented runnable commands; G-CONTRACT |
+| P01-T01 | Apply accepted approval direction, uv packaging/tooling and explicit Groq runtime configuration | ADRs ADR-0012/ADR-0013 govern; no repeated owner vote; no secrets; explicit live-call enablement; documented uv commands; G-CONTRACT |
 | P01-T02 | Typed schema-versioned Principal, Evidence, Claim, Observation, PolicyDecision, Packet, review/gate and errors; case memberships and immutable source IDs | Reject unknown/invalid fields; schema round trips; identity injected by backend; G-CONTRACT, G-SECURITY |
 | P01-T03 | SQLite schema, transaction/migration strategy and synthetic approval/case registry | WAL/FK checks; original bytes immutable; event/ACL producer read by resolver; isolated fixtures; G-SOURCE |
 | P01-T04 | Fictional approved old/current SOP, exceptions, drafts, two tenants and cases, policies/timestamps; gold annotation schema | Each golden names required refs/slots/time basis, allowed hypotheses, forbidden actions and disposition; T01–T24 fixtures catalogued; G-CONTRACT |
@@ -196,12 +214,12 @@ Owner modules: agent excluding full critic, API, ledger, packet skeleton and aud
 
 | Task | Work and producer → consumer | Acceptance / proof |
 |---|---|---|
-| P04-T01 | Provider-neutral deterministic fake LLM, four authorized tool facades, nonexclusive preflight and canonical evidence ledger | Server identity cannot be overridden; tools don't bypass domain ACL; multi-tool question stays possible; G-SECURITY, G-BUDGET |
+| P04-T01 | Provider-neutral real Groq runtime boundary, four authorized tool facades, nonexclusive preflight and canonical evidence ledger | Server identity cannot be overridden; tools don't bypass domain ACL; multi-tool question stays possible; G-SECURITY, G-BUDGET |
 | P04-T02 | Investigation→draft→review boundary→finalization state machine with pre-reserved accounting and global deadline | ≤5 main incl failed/malformed calls, reserve final; tools/retries/cancellation capped; no sixth repair; G-BUDGET |
 | P04-T03 | Typed claims, requirement origins, deterministic per-claim eligibility and five dispositions; safe renderer and protected rejected diagnostics | Model answer-kind/hypothesis labels cannot evade risk/requirements; unknown refs and unsupported directives blocked; G-GATE |
 | P04-T04 | Message API, citation API, timeline/trace, health/ready, persisted tool failures; synthetic vertical smoke | Authenticated message→verified refs→reader; 5 dispositions; no evidence/tool/conflict paths; G-E2E, G-SECURITY |
 
-Exit: fake-model end-to-end path and correct abstention proven. Until P06 real critic exists,
+Exit: actual Groq end-to-end path and correct abstention proven, under explicit call budgets. Until P06 real critic exists,
 normative released outputs use unavailable/non-actionable partial safety behavior; a mock
 review is test plumbing, not evidence that mandatory review has occurred. Gate adequacy is
 necessary-condition checking, never a complete semantic proof system.
@@ -332,40 +350,78 @@ order. Shared-file tasks are sequential. Each proof names the observation that c
   - **Proof:** DOC; [G-DOC](TESTING_GATES.md#g-doc-task-coverage); source headings/selection recorded; independent review checks no imported UI/runtime/score/approval assumptions or new contradiction.
   - **Evidence:** E-DOC-002; selected Arcana methods tailored into AGENTS and rationale retained in ADR-0010.
 
+#### P00-T05 execution tasks
+
+<a id="p00-t05-01"></a>
+
+- [x] **P00-T05.01 — Record all owner answers in the editable ADR structure**
+  - **Files:** `palladion/docs/development/ADR_LOG.md`, `palladion/docs/development/RISKS_AND_OPEN_QUESTIONS.md`.
+  - **Depends:** P00-T04.04.
+  - **Change:** Preserve earlier decisions/history, use Question/Why/Options/Recommendation/What affects what/My answer/Verification, record all accepted directions and exact uv/Groq override without fabricating evidence.
+  - **Proof:** DOC; [G-DOC](TESTING_GATES.md#g-doc-task-coverage); twelve Q rows resolve to answered ADRs, historical records remain, implementation checks and deferred scope distinguished from owner decisions.
+  - **Evidence:** E-DOC-003; all twelve directions recorded, 23 structured ADR records and historical decisions retained.
+
+<a id="p00-t05-02"></a>
+
+- [x] **P00-T05.02 — Align instructions, atomic tasks and goals with the current mandate**
+  - **Files:** `AGENTS.md`, `palladion/docs/development/MASTER_DEV_PLAN.md`, `palladion/docs/development/GOAL.md`, `palladion/docs/development/TESTING_GATES.md`, `palladion/docs/development/RESEARCH_PROTOCOL.md`, `palladion/docs/development/PROJECT_MAP.md`.
+  - **Depends:** P00-T05.01.
+  - **Change:** Require real Groq integration and app-local uv setup after GO; mandate independent pre-phase adversary and one post-phase auditor; preserve operational mocks, budgets and synthetic data.
+  - **Proof:** DOC; [G-DOC](TESTING_GATES.md#g-doc-task-coverage); current task/gate paths do not require fake-first runtime or optional phase review; no setup/provider calls/push authorized before GO.
+  - **Evidence:** E-DOC-003; Groq/uv atomic cards, mandatory reviews and WAIT_FOR_GO propagated.
+
+<a id="p00-t05-03"></a>
+
+- [x] **P00-T05.03 — Validate ADR answer structure and synchronize all development records**
+  - **Files:** `palladion/docs/development/check_docs.py`, `palladion/docs/README.md`, `palladion/docs/development/REQUIREMENTS_TRACEABILITY.md`, `palladion/docs/development/PROGRESS.md`, `palladion/docs/development/PROJECT_MEMORY.md`, `palladion/docs/development/PROJECT_LEARNING.md`, `palladion/docs/development/EVIDENCE_LOG.md`.
+  - **Depends:** P00-T05.02.
+  - **Change:** Check structured ADR fields and accepted answers, Q/ADR links, atomic metadata and mandatory review protocol; preserve historical evidence and explicit WAIT_FOR_GO state.
+  - **Proof:** DOC; [G-DOC](TESTING_GATES.md#g-doc-task-coverage); positive checker and deliberately missing question/impact/answer tests pass/fail correctly; all doc links and file owners resolve.
+  - **Evidence:** E-DOC-003; both checker commands pass, including 17 negative controls and current link/file coverage.
+
+<a id="p00-t05-04"></a>
+
+- [x] **P00-T05.04 — Complete coordinator and independent whole-suite vision audits**
+  - **Files:** `palladion/docs/development/EVIDENCE_LOG.md`, `palladion/docs/development/PROJECT_LEARNING.md`, `palladion/docs/development/PROGRESS.md`, `palladion/docs/development/PROJECT_MEMORY.md`, `palladion/docs/development/GOAL.md`, `palladion/docs/development/MASTER_DEV_PLAN.md`.
+  - **Depends:** P00-T05.03.
+  - **Change:** After document gates, coordinator and one GPT 6 Luna High work auditor each check every development document against the full blueprint and user amendments; resolve findings, record evidence, checkpoint docs and stop for GO.
+  - **Proof:** DOC; [G-DOC](TESTING_GATES.md#g-doc-task-coverage); per-document coverage/full-vision audit receipts, findings and resolutions retained; no product/research gate or live account success claimed.
+  - **Evidence:** E-DOC-003; coordinator and single Luna High auditor checked all twelve development docs/full blueprint; all three audit findings resolved and rechecked; 18 negative controls pass. Documentation checkpoint only; WAIT_FOR_GO.
+
 ### Atomic tasks — P01
 
 #### P01-T01 execution tasks
 
 <a id="p01-t01-01"></a>
 
-- [ ] **P01-T01.01 — Resolve the synthetic approval fixture trust boundary**
+- [ ] **P01-T01.01 — Apply the accepted synthetic approval contract**
   - **Files:** `palladion/docs/development/ADR_LOG.md`, `palladion/docs/development/RISKS_AND_OPEN_QUESTIONS.md`.
-  - **Depends:** P00-T04.04.
-  - **Change:** Present Q01 options and record the owner's selected approver identity/event model before implementing its registry consumer.
-  - **Proof:** DOC; [G-DOC](TESTING_GATES.md#g-doc-task-coverage); accepted decision names who can approve and how; document self-approval remains rejected.
+  - **Depends:** P00-T05.04.
+  - **Change:** Read accepted ADR-0012 and map authenticated synthetic administrator events, separate uploader/approver grants and source checks into the implementation contract; do not reopen the answered choice.
+  - **Proof:** DOC; [G-DOC](TESTING_GATES.md#g-doc-task-coverage); source metadata/registry/access consumers and negative self-approval case are specified under the accepted answer.
 
 <a id="p01-t01-02"></a>
 
-- [ ] **P01-T01.02 — Establish the Python package and validation tooling**
-  - **Files:** `palladion/pyproject.toml`, `palladion/src/evidence_agent/__init__.py`, `palladion/docs/development/ADR_LOG.md`.
-  - **Depends:** P00-T04.04.
-  - **Change:** Resolve Q02 tooling/dependency choices, declare Python compatibility and test/lint/type/build commands, expose package version for app wiring.
-  - **Proof:** SMOKE; [G-CONTRACT](TESTING_GATES.md#g-contract-task-coverage); isolated install/import and actual check entry points run without provider keys; unsupported environment fails visibly.
+- [ ] **P01-T01.02 — Establish the uv environment, package and validation tooling**
+  - **Files:** `palladion/.gitignore`, `palladion/pyproject.toml`, `palladion/uv.lock`, `palladion/src/evidence_agent/__init__.py`, `palladion/docs/development/ADR_LOG.md`.
+  - **Depends:** P00-T05.04.
+  - **Change:** After explicit GO, locate/install uv, run uv venv inside C:/palladion/palladion, select compatible Python/tooling/packages under delegated authority, pin uv.lock, and expose package version. Before uv venv, write/verify .venv/ protection in the owned app-local .gitignore; preserve the user root ignore file. Baseline gets a separate environment later.
+  - **Proof:** SMOKE; [G-CONTRACT](TESTING_GATES.md#g-contract-task-coverage); uv version, app-local environment/import and configured validation commands run; git check-ignore proves app .venv protection before creation and locked sync is reproducible; no secret needed for setup.
 
 <a id="p01-t01-03"></a>
 
-- [ ] **P01-T01.03 — Validate mock-first settings and explicit model enablement**
+- [ ] **P01-T01.03 — Validate Groq settings and explicit model enablement**
   - **Files:** `palladion/src/evidence_agent/settings.py`, `palladion/config/settings.yaml`, `palladion/.env.example`, `palladion/.gitignore`, `palladion/tests/test_goldens.py`.
   - **Depends:** P01-T01.02.
-  - **Change:** Load typed budgets/flags and placeholder inputs; exclude databases/traces/secrets; settings consumer cannot enable paid calls merely from a key.
-  - **Proof:** UNIT; [G-CONTRACT](TESTING_GATES.md#g-contract-task-coverage); valid mock config loads, invalid budget/unknown config fails, credential-only configuration still denies generation.
+  - **Change:** Load typed budgets and explicit live-call flags; select provider groq/model qwen/qwen3.8-27b per ADR-0013. Provide non-secret root .env loading instructions and ignore .venv/databases/traces. Key presence alone never enables requests.
+  - **Proof:** UNIT; [G-CONTRACT](TESTING_GATES.md#g-contract-task-coverage); valid selected-model config loads; invalid/unknown config fails, disabled live flag denies dispatch despite credentials; root key never copied into app env/template.
 
 <a id="p01-t01-04"></a>
 
 - [ ] **P01-T01.04 — Document runnable development commands and safety boundaries**
   - **Files:** `palladion/README.md`.
   - **Depends:** P01-T01.03.
-  - **Change:** Publish actual environment/check commands and synthetic-only setup for the implementer; distinguish app startup from provider evaluation.
+  - **Change:** Publish actual uv venv, locked install/check/start commands from the app directory, repository-root credential loading and explicit Groq enablement; distinguish synthetic operational fixtures from the real model API.
   - **Proof:** SMOKE; [G-CONTRACT](TESTING_GATES.md#g-contract-task-coverage); run documented package/check commands in isolated environment; no absent secret or unavailable entry point assumed.
 
 #### P01-T02 execution tasks
@@ -614,10 +670,10 @@ order. Shared-file tasks are sequential. Each proof names the observation that c
 
 <a id="p03-t01-04"></a>
 
-- [ ] **P03-T01.04 — Decide historical-audit and time-basis migration policy**
+- [ ] **P03-T01.04 — Apply accepted historical-audit and migration semantics**
   - **Files:** `palladion/docs/development/ADR_LOG.md`, `palladion/docs/development/RISKS_AND_OPEN_QUESTIONS.md`, `palladion/tests/test_policy_temporal.py`.
   - **Depends:** P03-T01.02.
-  - **Change:** Resolve Q05 owner requirements for knowledge-cutoff reconstruction and time-basis migration; temporal implementation consumes explicit precedence or conflict semantics.
+  - **Change:** Apply accepted ADR-0016/Q05: record concrete synthetic knowledge-cutoff audit fixtures and trace-retention scope; incompatible time-basis migration remains conflict unless explicit approved precedence exists. No repeated policy vote or invented real-business rule.
   - **Proof:** DOC; [G-TEMPORAL](TESTING_GATES.md#g-temporal-task-coverage); accepted decision and boundary fixtures distinguish historical knowledge/current revocation; no inferred retroactive authorization.
 
 #### P03-T02 execution tasks
@@ -645,7 +701,7 @@ order. Shared-file tasks are sequential. Each proof names the observation that c
 - [ ] **P03-T03.01 — Define named operation and timestamp contracts**
   - **Files:** `palladion/src/evidence_agent/live/contracts.py`, `palladion/config/adapters.yaml`, `palladion/tests/test_live.py`, `palladion/docs/development/ADR_LOG.md`.
   - **Depends:** P03-T01.03.
-  - **Change:** Resolve Q07 synthetic owner values; validate operation versions, request/response bounds, errors and observed/event/data-as-of semantics for gateway.
+  - **Change:** Apply ADR-0018/Q07; record explicit synthetic owner/rule freshness limits, validate operation versions/bounds/errors and all three timestamp meanings; values are fixture assumptions, not inferred company policy.
   - **Proof:** UNIT; [G-LIVE](TESTING_GATES.md#g-live-task-coverage); valid envelope preserves three times; unknown operation/extra URL/invalid identifier/schema rejected before adapter call.
 
 <a id="p03-t03-02"></a>
@@ -678,11 +734,11 @@ order. Shared-file tasks are sequential. Each proof names the observation that c
 
 <a id="p04-t01-01"></a>
 
-- [ ] **P04-T01.01 — Create provider-neutral structured model boundary**
+- [ ] **P04-T01.01 — Implement and probe the real Groq model boundary**
   - **Files:** `palladion/src/evidence_agent/agent/llm.py`, `palladion/tests/test_agent_budget.py`.
   - **Depends:** P03-T03.04.
-  - **Change:** Implement fake structured responses and provider-neutral errors/results/usage; configuration explicitly decides whether hosted calls are enabled.
-  - **Proof:** UNIT; [G-BUDGET](TESTING_GATES.md#g-budget-task-coverage); fake tool/draft/final replay works; malformed/timeout attempts observable, no key-only live call or implicit repair loop.
+  - **Change:** Implement provider-neutral result/error/usage handling backed by Groq qwen/qwen3.8-27b. Explicitly enabled commands load the existing root .env without exposing it; verify tool/schema/account capabilities before downstream live integration. No fake runtime or silent alternate model.
+  - **Proof:** INTEGRATION; [G-BUDGET](TESTING_GATES.md#g-budget-task-coverage); a bounded real Groq request proves tool/draft/final transport capabilities as applicable; malformed/timeout data fixtures exercise accounting separately. Rate/access failure blocks provider proof, not a substituted success.
 
 <a id="p04-t01-02"></a>
 
@@ -723,7 +779,7 @@ order. Shared-file tasks are sequential. Each proof names the observation that c
 - [ ] **P04-T02.02 — Wire investigation, draft and unavailable-review boundary**
   - **Files:** `palladion/src/evidence_agent/agent/loop.py`, `palladion/src/evidence_agent/agent/draft.py`, `palladion/tests/test_agent_budget.py`.
   - **Depends:** P04-T02.01.
-  - **Change:** Drive fake model→tools→ledger→draft→review boundary→reserved final; P06 critic absence has explicit unavailable handling, never simulated normative approval.
+  - **Change:** Drive actual Groq model to tools, ledger, draft, review boundary and reserved final. Until P06 the critic absence is explicitly unavailable; deterministic invalid-result fixtures only test failure guards, never substitute runtime proof.
   - **Proof:** INTEGRATION; [G-BUDGET](TESTING_GATES.md#g-budget-task-coverage), [G-GATE](TESTING_GATES.md#g-gate-task-coverage); normal draft finalizes, absent draft yields safe partial, unavailable review cannot authorize operational answer.
 
 <a id="p04-t02-03"></a>
@@ -762,10 +818,10 @@ order. Shared-file tasks are sequential. Each proof names the observation that c
 
 <a id="p04-t03-04"></a>
 
-- [ ] **P04-T03.04 — Define claim-support rubric and escalation ownership**
+- [ ] **P04-T03.04 — Apply the accepted support rubric and escalation boundary**
   - **Files:** `palladion/docs/development/ADR_LOG.md`, `palladion/docs/development/RISKS_AND_OPEN_QUESTIONS.md`, `palladion/data/demo/goldens.jsonl`.
   - **Depends:** P04-T03.01.
-  - **Change:** Resolve Q09 with the owner before consequential supported demonstrations; gold scorer/gate consume a defined support/exception-sufficiency rubric and escalation boundary.
+  - **Change:** Apply ADR-0020/Q09: record concrete independently reviewed support/exception rubric and authorized human escalation assignment before consequential supported demonstrations. If assignment/labels unavailable, adequacy remains qualified rather than imaginary approval.
   - **Proof:** DOC; [G-GATE](TESTING_GATES.md#g-gate-task-coverage); authorized criteria distinguish valid but irrelevant citation, unsupported operational directive and unresolved critical challenge; no claim of complete semantic proof.
 
 #### P04-T04 execution tasks
@@ -788,10 +844,10 @@ order. Shared-file tasks are sequential. Each proof names the observation that c
 
 <a id="p04-t04-03"></a>
 
-- [ ] **P04-T04.03 — Prove the full fake-model answer walkthrough**
+- [ ] **P04-T04.03 — Prove the real Groq answer walkthrough**
   - **Files:** `palladion/tests/test_end_to_end.py`, `palladion/tests/test_goldens.py`, `palladion/docs/development/EVIDENCE_LOG.md`.
   - **Depends:** P04-T04.02.
-  - **Change:** Exercise supported information, missing-settlement partial, conflict, scoped no-evidence and unavailable paths through HTTP and evidence reader.
+  - **Change:** Exercise actual Groq-backed supported information, missing-settlement partial, conflict, scoped no-evidence and unavailable paths through HTTP and real evidence reader. Keep deterministic pure guard tests separate from real-provider smoke records.
   - **Proof:** SMOKE; [G-E2E](TESTING_GATES.md#g-e2e-task-coverage), [G-GATE](TESTING_GATES.md#g-gate-task-coverage); T09/T22 never authorize reversal; no-tool/invalid-model paths retain useful gaps; task processes/ports verified stopped.
 
 ### Atomic tasks — P05
@@ -976,10 +1032,10 @@ order. Shared-file tasks are sequential. Each proof names the observation that c
 
 <a id="p08-t01-01"></a>
 
-- [ ] **P08-T01.01 — Freeze labels, splits and research acceptance choices**
+- [ ] **P08-T01.01 — Apply approved labels and freeze empirical research choices**
   - **Files:** `palladion/data/demo/goldens.jsonl`, `palladion/docs/development/RESEARCH_PROTOCOL.md`, `palladion/docs/development/ADR_LOG.md`, `palladion/docs/development/RISKS_AND_OPEN_QUESTIONS.md`.
   - **Depends:** P07-T03.01.
-  - **Change:** Resolve Q08 annotators/adjudication, family-disjoint splits, repetition/uncertainty and calibrated targets before held-out evaluator runs.
+  - **Change:** Apply accepted ADR-0019/Q08: evidence two annotators/adjudication or label pilot-only, record disjoint splits, repetitions/uncertainty and B0/B1-calibrated targets before held-out. No new owner vote on the already accepted method or invented numerical outcome.
   - **Proof:** DOC; [G-RESEARCH](TESTING_GATES.md#g-research-task-coverage); owner-approved manifest predates final run, absent independent labels stay pilot-only, near-duplicate split leakage detected.
 
 <a id="p08-t01-02"></a>
@@ -1021,7 +1077,7 @@ order. Shared-file tasks are sequential. Each proof names the observation that c
 - [ ] **P08-T02.04 — Implement the optional nonexclusive planner treatment**
   - **Files:** `palladion/src/evidence_agent/agent/preflight.py`, `palladion/src/evidence_agent/agent/llm.py`, `palladion/config/settings.yaml`, `palladion/tests/test_agent_budget.py`, `palladion/docs/development/ADR_LOG.md`.
   - **Depends:** P08-T01.02.
-  - **Change:** Add explicitly enabled B8 small-model planner after model/budget direction; runtime treats its result as nonexclusive hints and accounts the extra model attempt.
+  - **Change:** Add explicitly enabled B8 nonexclusive planner treatment using selected Groq model initially. Any different/smaller model needs a recorded treatment decision; preserve existing scope grants and account the extra model attempt.
   - **Proof:** UNIT; [G-BUDGET](TESTING_GATES.md#g-budget-task-coverage), [G-RESEARCH](TESTING_GATES.md#g-research-task-coverage); disabled path has zero planner calls, failure cannot hard-route or grant scope; planner cost/attempt appears in run manifest.
 
 <a id="p08-t02-05"></a>

@@ -103,7 +103,53 @@ or copied research reference into a Palladion result. Preserve failed experiment
   goal header to include D06 and recorded current checker results.
 - Evidence: E-DOC-002; independent review found the mismatch before any application code.
 
-## Future learning entry
+## Current owner-answer refinement
+
+## L010 — Accepting a method does not manufacture its empirical answer
+
+- Date/type: 2026-10-17; user answers and mandatory pre-phase review.
+- User accepted all twelve recommendation directions, except fake-first runtime; selected
+  uv and Groq qwen/qwen3.8-27b, delegated compatible package choice and requested GO hold.
+- Applied: ADR-0011–ADR-0023 and risk register distinguish accepted direction, technical
+  verification and deferred scope. No tokenization win, fixture age, sample size, human
+  reviewer availability or production signoff is invented. Do not re-ask an answered
+  direction merely because its implementation proof has not happened.
+- Pre-phase adversary identified stale fake-first, unselected-provider, optional-review
+  and completed-phase wording before edits. E-DOC-003 records the receipt and corrections.
+
+## L011 — Decision documents must expose the owner's editable answer
+
+- Date/type: 2026-10-17; explicit user instruction and live reference read.
+- Arcana's vision “Cross-cutting architecture” uses The call/Why it matters/Options/
+  Couples with/My recommendation/owner decision. Its runtime ADR log uses a different
+  format; the user's specified question/impact/editable-answer workflow governs here.
+- Applied: all existing decisions restructured with original records preserved, new
+  decisions use the same fields, and accepted/empty-answer negative checks added.
+  Later owner edits require preserving prior answer/date and updating affected consumers.
+
+## L012 — Real generation and deterministic fault testing are different proof
+
+- Date/type: 2026-10-17; user override with blueprint boundary retained.
+- Applied: actual Groq is required for generative end-to-end proof. Typed/error/transport
+  fixtures can test budgets and malformed-output guards, but cannot claim a provider call
+  or replace failed access/rate proof with fake success. Mock operational data remains
+  synthetic and read-only. No account request was made during documentation setup.
+- Official listing/quota pages confirm published model/free-plan documentation, not this
+  account's access or free/unlimited capacity. Future runs record actual usage and bounds.
+
+## Post-audit corrections
+
+## L013 — Keep negative-control mutations attached to the current document shape
+
+- Date/type: 2026-10-17; full-vision post-audit and executable check.
+- After Q/ADR links were added, an old literal mutation no longer changed its fixture.
+  The self-test correctly reported failure rather than treating no mutation as success.
+  Changed the target to the actual ID; preserved the unchanged-fixture guard and reran.
+- Auditor also exposed implicit Authority metadata and venv ignore ownership occurring
+  too late. Explicit Authority fields/checks and an ignore-before-create owned-file proof
+  now close those gaps. E-DOC-003 preserves findings, earlier red output and resolutions.
+
+## New learning entry template
 
 ```text
 LNNN — title

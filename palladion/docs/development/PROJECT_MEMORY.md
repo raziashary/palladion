@@ -14,11 +14,14 @@ Updated 2026-10-17. Navigation aid only; user/vision/source/ADRs retain authorit
   investigation; no UI or real payment action. Four read tools and bounded investigation.
 - Planned stack: Python 3.11+, FastAPI, SQLite canonical registry/memory, Qdrant dense/BM25,
   optional Neo4j source graph, safe JSON policy evaluator, read-only mock adapters.
-  No runtime dependencies, models or versions have been selected/installed by this task.
+  User selected uv and real Groq `qwen/qwen3.8-27b`; package choices are delegated after GO.
+  No app dependencies are installed by this task; exact pins/embedding model remain to verify.
 - Evidence authority belongs to authenticated immutable sources, valid executed policy
   traces and scoped observations. Model/critic/search/graph/memory are not new authority.
 - User validity for reported facts differs from owner-defined observation freshness.
-- Every development subagent: **GPT 6 Luna High**. Eventual runtime model is undecided.
+- Every development subagent: **GPT 6 Luna High**. Every phase requires one pre-phase
+  adversary and, after tests/gates, one post-phase work auditor. Current whole-suite
+  restructure also needs coordinator and auditor checks against the entire blueprint.
 - Canonical development folder is this folder; exactly one working memory. `baseline/`
   remains reserved and empty for later standard RAG/LangChain/provider comparisons.
 
@@ -31,23 +34,27 @@ Read root AGENTS → [master plan task protocol](MASTER_DEV_PLAN.md#task-reading
 
 ## Current state and next action
 
-Initial P00 suite committed at `26015fd` (E-DOC-001). P00-T04 refinement is verified:
-89 atomic cards (five documentation tasks complete, 84 system tasks planned), adapted
-Arcana methods in AGENTS (ADR-0009/ADR-0010), all 74 blueprint-file owners covered.
-Work packages retain original IDs; child checkboxes own task state and PROGRESS summarizes
-phase/active task. G-DOC PASS including 13 negative controls and independent review with
-all findings resolved. Current checkpoint is the commit containing this record; no push
-while user's conditional ADR decision inbox remains open. No product code/experiment
-exists. P01–P08 remain PLANNED, X01 DEFERRED, all system gates NOT_RUN; E-DOC-002 holds proof.
-The next implementation unit is **P01-T01.01**: owner approval-trust decision, followed
-by explicit tooling/dependency choices for the contracts/corpus foundation.
-This setup task does not authorize starting it automatically. User requests needed ADRs
-before publishing if everything is resolved; owner implementation choices stay open.
+Earlier verified checkpoints `26015fd`/`bc44932`; current P00-T05 records all accepted
+answers, structured editable ADRs and uv/Groq/review changes (ADR-0011–ADR-0023).
+G-DOC PASS at E-DOC-003: 23 structured ADRs, 93 cards, 18 negative controls, coordinator
+and single post-auditor full-vision reviews complete with all findings resolved. Nine
+documentation children checked, 84 system children planned. Current docs checkpoint is
+the commit containing this record. No active implementation; WAIT_FOR_GO.
+All Q01–Q12 recommendation directions answered; verification and deferred work remain.
+No product code/research result exists; system gates NOT_RUN, X01 DEFERRED.
+
+After docs closure: **WAIT_FOR_GO**, including no installation, venv creation, provider
+call, implementation or push. User may manage uv setup independently. Intended app venv:
+`C:/palladion/palladion/.venv` via uv venv; later baseline has a separate environment.
+Credential file stays at repository-root `.env`, ignored and unread by this task; never
+copy it into the app/agents. At initial check root `.gitignore` was user-owned/untracked;
+uv was not found on shell PATH. Recheck actual state after GO; don't assume installation.
 
 ## Open risks to retain
 
-Q01 approval simulation; Q02 tooling/model pins and cost enablement; Q03/Q04 Qdrant BM25/RRF
-compatibility and language; Q05 temporal migration/history; Q06 inventory contract;
-Q07 owner freshness; Q08 labels/splits/targets/repetitions; Q09 entailment/escalation;
-Q10 optional feature value; Q11 future external comparison; Q12 production retention/auth.
+Accepted directions and remaining evidence are separate: Q03/Q04 compatibility/language,
+Q05 audit fixtures, Q07 configured synthetic freshness values, Q08 labels/calibration,
+Q09 actual rubric/escalation assignment, Q10 optional-feature value; Q06/Q11/Q12 external
+inventory/comparators/real deployment remain deferred. No unanswered recommendation is
+silently promoted into empirical success.
 No performance, completeness or production-readiness claim has been established.

@@ -14,7 +14,11 @@ Read source and test fixtures before running anything with stateful-resource acc
 - Multi-phase gates accumulate evidence. Use PARTIAL with explicit covered/uncovered
   obligations until the whole contract passes. Phase exits require that phase's acceptance
   and tests, not unbuilt later capabilities; an early unit check never closes the full gate.
-- Default tests use synthetic temporary directories/databases and fake LLM/mock adapters.
+- Default pure/domain tests use synthetic temporary directories/databases and mock
+  operational adapters. Deterministic tests may inject typed inputs, errors or transport
+  results to exercise guards; they do not establish runtime model behavior. The user's
+  ADR-0013 override requires actual Groq `qwen/qwen3.8-27b` for generative integration,
+  with explicit enablement after GO. No fake-first runtime acceptance path.
   Inspect downgrade/drop/truncate/reset/reseed/teardown paths first. No ambient live credentials.
   Persistent Compose volumes are state, not disposable by assumption; backup/approval before destruction.
 - Bound and pin tests. No unbounded model spend. Explicit enablement, recorded budget,
@@ -23,12 +27,18 @@ Read source and test fixtures before running anything with stateful-resource acc
   result, pass/fail counts, evidence path, reviewer, limitations, cleanup and next action.
 - Retry only classified transient I/O under a single retry owner. Preserve original failures;
   a rerun does not erase flakiness. Never lower a gate after seeing a failure to obtain green.
+- Every phase has a recorded GPT 6 Luna High adversarial task/contract review before work.
+  After validation, smoke and required gates, one GPT 6 Luna High work auditor checks the
+  result/evidence/consumers. Findings must be resolved or keep the affected phase open.
+  For current P00-T05 the coordinator and that single post-auditor additionally inspect
+  every development document against the complete blueprint; structural checks alone
+  cannot pass that semantic audit. E-DOC-003 records both independent review receipts.
 
 ## Gate catalog
 
 | Gate | Owner phases / blueprint source | Falsifiable proof and required negative cases |
 |---|---|---|
-| G-DOC | P00 and every doc-affecting task; user suite request | `python palladion/docs/development/check_docs.py` and `--self-test`; local links/anchors, numeric/child IDs, required docs, section/invariant/case mappings, atomic card fields/parents/acyclic dependencies and blueprint file ownership resolve. Deliberate malformed metadata, missing file/ID, duplicate, unknown gate and cycle mutants rejected. Independent content/rule audit; checker cannot prove semantic fidelity or task size. |
+| G-DOC | P00 and every doc-affecting task; user suite request | `python palladion/docs/development/check_docs.py` and `--self-test`; local links/anchors, numeric/child IDs, required docs, section/invariant/case mappings, atomic fields/parents/acyclic dependencies and blueprint file ownership resolve. All ADRs have status/authority/question/why/options/recommendation/impact/editable answer/verification; accepted answers cannot be empty. Missing authority/question/impact/answer, metadata/ID, duplicate, unknown gate and cycle mutants rejected. Required pre-adversary/single post-auditor and coordinator whole-suite vision audit complete; checker cannot prove semantic fidelity or task size. |
 | G-CONTRACT | P01; Core typed contracts, Test corpus | Planned `tests/test_goldens.py` plus typed schema tests: every case has scope, refs, required slots, policy basis/outcome, permitted hypotheses, forbidden claims and disposition. Invalid enums/unknown fields/naive times rejected; persisted envelopes schema-versioned; valid round trips pass. |
 | G-SOURCE | P01/P02/P07; Ingestion and revocation | Planned `tests/test_ingest.py`: exact immutable bytes/spans/hash, authenticated approval separate from READY, failed/partial generations unpublishable, manifest exact IDs/counts, idempotency/recovery, revocation after cache/search and before release. Real citation API consumes original bytes; no source self-approval. Optional graph configuration changes required-index set explicitly. |
 | G-RETRIEVAL | P02; Hybrid document retrieval | Planned `tests/test_retrieval.py`: actual Qdrant same-point dense/bm25, pinned compatible API/native RRF k=60 exactly once, exact-ID union, correct canonical filtering and post-expansion checks. Near IDs, opposite clauses, old/draft/restricted hits, missing exceptions, sparse outage and English/Indonesian fixtures. Measure stages/ANN-vs-exact; quality target calibrated later, not assumed. |
@@ -41,14 +51,14 @@ Read source and test fixtures before running anything with stateful-resource acc
 | G-CRITIC | P06; Structured reviewer contract | Planned `tests/test_critic.py`: normally one review, structured known claim/evidence refs, bounded scoped counter-search, revalidate new sources, invented challenge ≠ established conflict, supported exception revises claims. Required-review outage safely unavailable/partial; false-veto measurement and same-blind-spot fixture. |
 | G-GRAPH | P07; Knowledge graph | Planned `tests/test_graph_identity.py`: real Neo4j constraints with concurrent duplicate verified identity; distinct IDs/similar names remain separate; provisional ID and reviewed merge trace. Allowed edge types, source-backed paths, hop/fan-out/node/time bounds, scope before exposure and after source resolution, graph-off/outage explicit. |
 | G-SECURITY | Every runtime phase; Trust boundaries, Threat model | Planned `tests/test_security.py`: tenant/case/role/target scope at every boundary, source/graph/memory/tool prompt injection and poisoned approval, denied citation and mid-session revocation, tampered packet/arguments. Inspect prompts/responses/cache/diagnostics/audit for leaked content/existence; trace endpoint role-gated/redacted; zero unapproved operational side effects in written tests. |
-| G-E2E | P04 onward, final P08; Full lifecycle, Walkthrough | Planned `tests/test_end_to_end.py`: authenticated message endpoint to actual domain tools/ledger/gate, evidence GET and next-session timeline/packet. Supported, partial, conflict, not-established, verification-unavailable fixtures. No evidence, no tools, model format failure, critical outage and deadline all useful safe outcomes. Health/ready and resource cleanup smoke. |
+| G-E2E | P04 onward, final P08; Full lifecycle, Walkthrough and ADR-0013 override | Planned `tests/test_end_to_end.py`: actual Groq-backed authenticated message endpoint to domain tools/ledger/gate, evidence GET and next-session packet. Supported informational, partial, conflict, not-established and unavailable cases; normative support still requires P06 critic. No evidence/tools, malformed results, outage/deadline yield useful safe outcomes. Deliberate deterministic failure tests are separate evidence and cannot replace actual-provider HTTP proof. Record model/quota/attempts; health/ready and cleanup smoke. |
 | G-RESEARCH | P02/P06/P07/P08; Research evaluation | Planned `tests/test_goldens.py`, `scripts/evaluate.py`, `scripts/reconcile.py`: frozen run manifests, split integrity, metric denominator checks, reproducible retrieval, repeated stochastic runs, annotation adjudication, paired ablations, full failures/false vetoes, per-slice metrics and cost/tail latency. Scorer reads actual output artifacts, not model self-grades; missing measurements cannot become zero. |
 
 ## Atomic task coverage
 
 Gate rows above own the assertions. Links below route to exact file-specific tasks in
-the master plan; these links are planned obligations, not passing evidence. Parent work
-packages retain their original full acceptance.
+the master plan; these are planned obligations, not passing evidence. Parent work
+packages retain their original acceptance.
 
 ### G-BUDGET task coverage
 
@@ -64,7 +74,7 @@ packages retain their original full acceptance.
 
 ### G-DOC task coverage
 
-[P00-T04.01](MASTER_DEV_PLAN.md#p00-t04-01), [P00-T04.02](MASTER_DEV_PLAN.md#p00-t04-02), [P00-T04.03](MASTER_DEV_PLAN.md#p00-t04-03), [P00-T04.04](MASTER_DEV_PLAN.md#p00-t04-04), [P00-T04.05](MASTER_DEV_PLAN.md#p00-t04-05), [P01-T01.01](MASTER_DEV_PLAN.md#p01-t01-01).
+[P00-T04.01](MASTER_DEV_PLAN.md#p00-t04-01), [P00-T04.02](MASTER_DEV_PLAN.md#p00-t04-02), [P00-T04.03](MASTER_DEV_PLAN.md#p00-t04-03), [P00-T04.04](MASTER_DEV_PLAN.md#p00-t04-04), [P00-T04.05](MASTER_DEV_PLAN.md#p00-t04-05), [P00-T05.01](MASTER_DEV_PLAN.md#p00-t05-01), [P00-T05.02](MASTER_DEV_PLAN.md#p00-t05-02), [P00-T05.03](MASTER_DEV_PLAN.md#p00-t05-03), [P00-T05.04](MASTER_DEV_PLAN.md#p00-t05-04), [P01-T01.01](MASTER_DEV_PLAN.md#p01-t01-01).
 
 ### G-E2E task coverage
 
@@ -168,16 +178,21 @@ and log redaction. These extend the 24 cases without renumbering them.
 
 Now, from repository root:
 
+These documentation-only commands use the existing Python interpreter, without creating
+the application environment. The uv setup and all package/model execution remain held
+until GO; uv was not found on the task's shell PATH at the initial observation.
+
 ```powershell
 python palladion/docs/development/check_docs.py
 python palladion/docs/development/check_docs.py --self-test
 git diff --check
 ```
 
-Later Python tasks, from `palladion/`: establish and document interpreter/env/tool pins
-in P01 before selecting commands. Expected tooling is pytest plus project-configured
-lint/type/build checks; exact configuration is not invented here. A planned targeted
-example is `python -m pytest tests/test_policy_temporal.py tests/test_policy_engine.py`.
+Later Python tasks, from `palladion/`: after GO use `uv venv` for the app-local `.venv`,
+pin dependencies with `uv.lock`, and document actual interpreter/tool commands. Package
+choices are delegated within blueprint scope. Expected tooling is pytest plus configured
+lint/type/build checks. A planned targeted example is
+`uv run --locked pytest tests/test_policy_temporal.py tests/test_policy_engine.py`.
 Run the manifest's actual lint/test/build commands as applicable; no product manifest exists yet.
 
 For runnable API slices: start an isolated application using its documented entry point;
@@ -185,7 +200,10 @@ check health/readiness without leaking internals; authenticate synthetic princip
 and approve a fixture under separate roles; submit case message; read every returned
 citation back; change/revoke fixture scope and repeat the forbidden path; make a follow-up
 request and inspect its persisted state. Record five dispositions in the full P04/P08 suite.
-Mock LLMs prove mechanics; provider runs separately assess model quality.
+Actual Groq runs prove generative integration and supply model-quality observations;
+pure deterministic guard tests prove only their checked mechanics. Free-plan rate/access
+failure is a recorded blocker/degradation, never substituted successful model evidence.
+Load the repository-root `.env` only for explicit enabled commands, never print/copy it.
 
 Record process IDs/ports and fixture directories before starting. Stop only task-owned
 processes and verify their recorded ports have no listeners. Do not use destructive

@@ -24,7 +24,7 @@ than fragile line numbers. A row is a coverage obligation, not proof of behavior
 | §14 Research evaluation | B0–B9, annotated gold, metric denominators, T01–T24, fixed integrity targets | P02-T04, P06-T03, P07-T03, P08-T01–P08-T04; G-RESEARCH |
 | §15 Build plan | Preserve Slice 0–7 sequence with consumer-backed exits | P01–P08 in MASTER_DEV_PLAN; phase exits and PROGRESS |
 | §16 Security/observability/deployment | Synthetic-only, pin versions, redact trace, limits and fault injection | P01-T01, P03-T03, P04-T04, P08-T03; G-SECURITY, G-E2E |
-| §17 Design rules and remaining decisions | Invariants I01–I15 below, unresolved owners and implementation-time API verification | ADR_LOG, RISKS_AND_OPEN_QUESTIONS; owning gates |
+| §17 Design rules and remaining decisions | Invariants I01–I15 below; answered recommendation directions separated from implementation-time API/measurement evidence | ADR-0012–ADR-0023; RISKS_AND_OPEN_QUESTIONS; owning gates |
 | §18 Synthetic walkthrough | Full path with settlement timeout, partial response, cited observation and safe next session | P04-T04, P05-T03, P06-T02; G-E2E |
 
 ## Fifteen system invariants
@@ -60,6 +60,9 @@ IDs preserve the order of blueprint “System invariants.”
 | Later honest comparison under baseline/ | X01 deferred; RESEARCH_PROTOCOL capability/resource tracks |
 | All subagents GPT 6 Luna High | ADR-0008; scoped dispatch metadata; no silent fallback |
 | Dev suite is this task's endpoint | P00 closure only; all system tasks remain PLANNED and gates NOT_RUN |
+| Current ADR answers and uv/Groq override | P00-T05; ADR-0011–ADR-0023; real Groq integration replaces only fake-first suggestion, all invariants retained |
+| Mandatory phase reviews and explicit implementation GO | AGENTS; MASTER_DEV_PLAN task protocol; pre-phase Luna High adversary and one post-phase Luna High work auditor; WAIT_FOR_GO |
+| Coordinator and subagent inspect all development docs against full vision | P00-T05.04; per-document/whole-blueprint audit evidence in E-DOC-003; structural checker alone insufficient |
 
 The detailed T01–T24 mapping lives once in [TESTING_GATES](TESTING_GATES.md#hard-case-coverage-from-the-blueprint).
 Work-package IDs in these coverage tables retain their meaning. Their executable file
@@ -71,5 +74,12 @@ acceptance remains required; child checkboxes do not waive the blueprint invaria
 The follow-up user requirements are P00-T04: atomic file-specific checkbox tasks based
 on the requested Arcana reference, plus selected useful development rules tailored to
 Palladion AGENTS. ADR-0009/ADR-0010 and E-DOC-002 govern and prove that adaptation.
+
+Current P00-T05 amendments accept every recommendation direction, use editable owner
+answers, select uv and real Groq generation and mandate reviews. The only blueprint
+build-method override is Slice 3's suggested mock-LLM-first path: real Groq now proves
+generative integration. P01/P03 deterministic contracts and policy evaluation still need
+no generative call; operational APIs remain read-only mocks. No source/model score creates
+authority, no new fifth tool, no unlocked budget or synthetic-data exception is implied.
 When requirements change, update task, gate, traceability, ADR/risk and affected source/tests
 together. Add IDs; do not silently renumber stable references.

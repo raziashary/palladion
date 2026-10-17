@@ -18,7 +18,8 @@ repository from the blueprint's illustrative tree.
 ## Scope and integrity
 
 - Current mandate: development documentation suite only. Product implementation begins
-  in a subsequent task against the master plan. No UI work. `baseline/` is reserved for
+  only after the user's explicit GO. Until GO: no installation, venv creation, application
+  implementation, provider calls or push. No UI work. `baseline/` is reserved for
   later comparator implementations; do not populate it as part of this setup.
 - Preserve the [vision](palladion/docs/vision/palladion-blueprint-v2.md). Do not silently
   change locked decisions or treat representative code as complete production code.
@@ -30,6 +31,19 @@ repository from the blueprint's illustrative tree.
   the required measurements. Test-set integrity gates are not universal guarantees.
 - Log material decisions immediately in `ADR_LOG.md`; unresolved choices stay in
   `RISKS_AND_OPEN_QUESTIONS.md`. Update affected records in the same logical unit.
+- Every ADR uses Question, Why, Options, Recommendation, What affects what, and My answer
+  (editable), with status, authority and verification. Read the owner's answer before
+  each affected task. Empty/proposed answers do not grant approval; preserve prior answers
+  when the user changes one. Accepted direction is not verified behavior.
+- User selected uv (`uv venv`) and authorized package selection within the blueprint
+  architecture after GO. Initial runtime generation uses Groq `qwen/qwen3.8-27b`, not a
+  fake-first runtime. Main and critic use independent contexts; provider/model is shared
+  initially, not independent ground truth. Secrets stay in repository-root `.env`, loaded
+  only by an explicitly enabled command. Never print, commit or dispatch those secrets.
+- Require actual Groq entry-point proof for generative integration. Deterministic unit
+  tests may inject data/errors to exercise guards but cannot substitute for that proof.
+  Mock operational adapters and synthetic business data remain required. Free-plan intent
+  does not waive quota, attempt/time budgets, explicit enablement or failure accounting.
 - Every subagent must use **GPT 6 Luna, High effort** (`gpt-6-luna`, `high`), per the user.
   If unavailable, report that limitation; do not substitute another model silently.
   Scope each dispatch, remove live-resource credentials, prohibit git/external mutations,
@@ -51,11 +65,15 @@ and architecture are not imported.
    ownership. Verify prerequisites, named producers/readers and required proof before
    editing. Update the checkbox and PROGRESS together; a parent closes only after every
    child and its own acceptance are proven. A list of files is not implementation evidence.
-3. **Try to refute substantial phase premises before building.** Check that named APIs,
-   sources, permissions and consumer paths really exist. For a substantial phase use a
-   scoped independent Luna High review where it adds coverage. Record confirmed, refuted,
+3. **Require a pre-phase adversary before every phase starts.** Dispatch one independent
+   GPT 6 Luna High subagent to refute the phase tasks, sources, dependencies, trust boundaries,
+   consumer paths and proof against the vision and current source. Record confirmed, refuted,
    partial and uncertain claims; verify load-bearing findings in the main session and
-   correct the plan/gates before dependent code. Post-build review serves a different purpose.
+   correct the plan/gates before dependent work. Record the receipt in EVIDENCE_LOG;
+   existing historical audits do not satisfy a newly changed phase. After the phase's
+   validation, smoke and testing gates, dispatch one GPT 6 Luna High work auditor to
+   inspect implementation, consumers, test evidence and doc consistency. The post-phase
+   work audit is a separate single-agent step; neither review replaces the other.
 4. **Prove the actual path.** Exercise the entry point and production consumer, including
    persistence reopen/readback where relevant. A helper with no caller, a test of a dead
    entry point, a matching source string or a passing import does not prove integration.
@@ -94,12 +112,16 @@ and architecture are not imported.
 ## Phase closeout order
 
 Build the bounded task → stack validation → actual entry-point smoke → owning integrity
-gates → independent review where warranted and resolution of findings → learning and
+gates → one mandatory GPT 6 Luna High work auditor and resolution of findings → learning and
 status/evidence updates → no-stale sweep including README/navigation → process/port
 cleanup → scoped staged-diff/secret review → verified commit → continue authorized work.
 Skipped checks are not PASS. PARTIAL evidence does not close a later consumer obligation.
 For documentation-only work, the document checker CLI is the runnable entry point;
 application gates remain NOT_RUN. A checkpoint never expands the user's current mandate.
+The mandatory pre-phase adversary precedes this sequence. For the current restructuring,
+the coordinator and the single post-phase auditor must each check every development
+document against the complete blueprint, record coverage/findings and resolve material
+drift before closure. Finish the documentation checkpoint, then WAIT_FOR_GO.
 
 ## Close every task
 

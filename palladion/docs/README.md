@@ -11,7 +11,7 @@ Begin with the master plan's reading protocol and the current progress record.
 |---|---|
 | [MASTER_DEV_PLAN.md](development/MASTER_DEV_PLAN.md) | Per-task rules, work packages, atomic file-specific checkbox cards, dependencies, proof, phase exits |
 | [GOAL.md](development/GOAL.md) | Checkable current setup goal and longer-term system outcomes |
-| [ADR_LOG.md](development/ADR_LOG.md) | Accepted decisions, reasons, consequences, supersession |
+| [ADR_LOG.md](development/ADR_LOG.md) | Questions, reasons, recommendations, impact and editable owner answers; accepted versus verified state |
 | [TESTING_GATES.md](development/TESTING_GATES.md) | Integrity gates, hard cases, validation and smoke procedures |
 | [RESEARCH_PROTOCOL.md](development/RESEARCH_PROTOCOL.md) | Hypotheses, metrics, ablations, honest later comparisons |
 | [REQUIREMENTS_TRACEABILITY.md](development/REQUIREMENTS_TRACEABILITY.md) | Blueprint-to-task-to-proof coverage |
@@ -19,9 +19,15 @@ Begin with the master plan's reading protocol and the current progress record.
 | [PROJECT_MEMORY.md](development/PROJECT_MEMORY.md) | Compact recovery/navigation facts |
 | [PROJECT_LEARNING.md](development/PROJECT_LEARNING.md) | Evidence-backed lessons, experiments, corrections |
 | [PROGRESS.md](development/PROGRESS.md) | Current task/gate status, checkpoint and next action |
-| [RISKS_AND_OPEN_QUESTIONS.md](development/RISKS_AND_OPEN_QUESTIONS.md) | Unresolved decisions, owners, resolution deadlines |
+| [RISKS_AND_OPEN_QUESTIONS.md](development/RISKS_AND_OPEN_QUESTIONS.md) | All accepted Q01–Q12 directions, remaining verification and deferred scope |
 | [EVIDENCE_LOG.md](development/EVIDENCE_LOG.md) | Verification records and evidence format |
 | [check_docs.py](development/check_docs.py) | Dependency-free structural documentation check |
 
 Authority, update rules, and conflict handling are defined once in the master plan.
 Do not create competing plans, memories, or unlinked status files elsewhere.
+
+Current scope is documentation restructuring; implementation is **WAIT_FOR_GO**. User
+selected uv and real Groq `qwen/qwen3.8-27b` and authorized compatible package choices
+after GO. Every phase requires a pre-phase Luna High adversary and, after tests/gates,
+one Luna High work auditor. Current final gate additionally checks all development docs
+against the entire blueprint by both coordinator and that single auditor.

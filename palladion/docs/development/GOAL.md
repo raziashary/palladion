@@ -15,6 +15,7 @@ and test Palladion without reconstructing the vision or mistaking planned code f
 | D04: Hypothesis protocol preserves negative results and fair deferred comparisons | RESEARCH_PROTOCOL; ADR-0002; audit, E-DOC-001 | DONE |
 | D05: Documentation validates; scoped diff reviewed and preserved | G-DOC, E-DOC-001; documentation checkpoint containing this record | DONE |
 | D06: Master plan contains atomic file-specific tasks with dependencies, readers and proof; useful Arcana rules tailored into AGENTS | P00-T04; ADR-0009/ADR-0010; G-DOC; E-DOC-002 | DONE |
+| D07: Owner answers and uv/Groq choice recorded in editable ADRs; mandatory phase reviews and GO hold applied; coordinator and auditor verify every development document against full vision | P00-T05; ADR-0011–ADR-0023; G-DOC; E-DOC-003 | DONE |
 
 Documentation completion does not close any system gate or establish the research hypothesis.
 
@@ -29,7 +30,7 @@ A null or adverse result is a valid research outcome.
 |---|---|---|
 | O01: Attributable source discovery | No ingest/search code exists; approved synthetic MD/TXT only | P01–P02; G-CONTRACT, G-SOURCE, G-RETRIEVAL; original bytes read through citation API |
 | O02: Correct policy and live evidence | No policy/live code exists | P03; G-TEMPORAL, G-POLICY, G-LIVE; trusted time/facts plus replayable rule trace |
-| O03: Bounded, honestly qualified answers | No agent/gate exists | P04; G-BUDGET, G-GATE, G-SECURITY; real message API with deterministic fake model |
+| O03: Bounded, honestly qualified answers | No agent/gate exists | P04; G-BUDGET, G-GATE, G-SECURITY; actual Groq qwen/qwen3.8-27b message API and canonical citation readback |
 | O04: Safe continuity | No runtime memory exists; developer memory is a separate document | P05; G-MEMORY; second authorized request consumes persisted state |
 | O05: Measured self-challenge | No critic exists | P06; G-CRITIC; frozen-draft paired evaluation, correction and false-veto rates |
 | O06: Tested graph value | No graph exists; optional discovery layer | P07; G-GRAPH; graph-on/off paired evidence and cost; disable if unjustified |
@@ -53,8 +54,10 @@ and retain the original failure results if a target is missed.
 
 System-first modular Python prototype, FastAPI API, SQLite canonical registry and memory,
 Qdrant discovery, optional Neo4j, typed JSON policies, mock live adapters, pluggable models.
-Dependencies and versions must be selected and verified at P01/P02; none are installed by
-this documentation task. Providers need explicit enablement, not merely credentials.
+uv and Groq `qwen/qwen3.8-27b` are selected; compatible package selection is delegated
+for P01/P02 after GO. Exact pins/embedding model and behavior still require verification;
+none is installed by this task. Runtime model access needs explicit command enablement,
+not merely credentials. User's root `.env` and `.gitignore` are preserved.
 
 Excluded now: product implementation, UI, actual payments or mutations, private data,
 real enterprise connectors, production signoff, and comparator implementations. Later
@@ -62,7 +65,7 @@ system work follows the plan; later external comparisons require their own concr
 
 ## Phase checklist
 
-- [x] P00 — initial suite (E-DOC-001) and atomic-plan/rules refinement (E-DOC-002) verified
+- [x] P00 — initial suite, atomic refinement and answered-ADR/review/full-vision checks verified (E-DOC-001–E-DOC-003)
 - [ ] P01 — corpus, contracts, adversarial fixtures (Slice 0)
 - [ ] P02 — provenance-first retrieval (Slice 1)
 - [ ] P03 — temporal policy and mock observations (Slice 2)

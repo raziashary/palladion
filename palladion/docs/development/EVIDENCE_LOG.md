@@ -92,11 +92,110 @@ Do not include credentials, private source text or hidden reasoning in evidence.
   with descriptive body; this record is contained in that checkpoint (git history supplies
   its hash). Five P00 child tasks checked, 84 future system children unchecked. D06 and
   G-DOC complete; every application/research gate remains NOT_RUN.
-- Owner decisions/push: implementation choices Q01/Q02/Q05/Q07/Q08/Q09 remain unresolved;
+- Owner decisions/push at this historical checkpoint: implementation choices Q01/Q02/Q05/Q07/Q08/Q09 remained unresolved;
   no decision is silently accepted. User conditions push on absence of needed ADRs;
   prepare the verified local checkpoint and report decisions before publishing.
+  Later amendment: the user accepted all recommendation directions with the Groq/uv
+  overrides recorded at ADR-0011–ADR-0023 and E-DOC-003; current hold is explicit GO,
+  not an unanswered recommendation inbox.
 - Cleanup/limits: no product services, container, watcher, live model request or listener
   started; no runtime or research gate run; no Arcana files modified.
+
+## E-DOC-003 — Answered ADRs, Groq/uv, mandatory reviews and full-vision audit
+
+- Date/scope: 2026-10-17; P00-T05, D07, G-DOC. Baseline `bc44932`, one main worktree.
+  User-created root `.gitignore` was untracked at start; preserve it and ignored `.env`.
+  Current instruction is docs-only, then WAIT_FOR_GO; no installation/model call/push.
+- Accepted owner decisions: all Q01–Q12 recommendation directions; override fake-first
+  with actual Groq `qwen/qwen3.8-27b`; uv (`uv venv` inside app folder); package choice
+  delegated within blueprint scope after GO. New editable ADR records retain previous
+  history and distinguish acceptance from verification/deferred execution.
+- **Pre-phase adversary receipt:** `adr_restructure_precheck`, GPT 6 Luna High, fresh
+  context/read-only, before edits. Forbidden `.env`/credential access, writes, network,
+  services, git mutations and tests. Five issue groups: fake-first drift, absent provider/
+  uv choices, missing active task/GO hold, optional versus required reviews, stale completion
+  state. Coordinator verified against source and updated instructions, cards/gates and records.
+  The broad suggestion that P01's no-model foundation conflicts with Groq was narrowed:
+  pure contracts/policy still need no generation; actual Groq is mandatory for generative
+  integration rather than every unit test (blueprint Slice 0/2 and deterministic ownership).
+- Source/reference reads: all twelve prior question rows; Arcana vision “Cross-cutting
+  architecture” question/reason/options/recommendation/coupling/editable decision format;
+  active blueprint contracts, Slice 0–7, system invariants and full walkthrough. Original
+  blueprint was previously read in full and remains unchanged; review covers all 18 sections.
+- Public documentation checks, without credentials: exact Groq model publicly listed,
+  free-plan limits published; uv environment docs confirm `uv venv`. See ADR source links.
+  This does not verify this account, request capability, quota or free/unlimited operation.
+  `uv --version` was unavailable on initial shell PATH; setup is after GO/user-managed.
+- Credential metadata checks: `.env` exists; `git check-ignore -v .env` resolves the
+  user's root `.gitignore`; no tracked `.env`. Never read/copied/printed the key.
+  Current task did not modify or stage the user's `.gitignore`. Future `.venv` ignore
+  requirement recorded; user advised the exact app-directory `uv venv` command.
+- Changes: all 23 ADRs use question/why/options/recommendation/impact/editable answer/
+  verification; Q register now tracks accepted directions/evidence; actual Groq/uv plans;
+  mandatory one pre-adversary and one post-work auditor each phase; explicit hold and
+  whole-development/full-blueprint checks. Four new P00-T05 cards retain existing task IDs.
+- Structural checks so far: checker CLI/self-test PASS, 93 atomic cards and 17 negative
+  controls, including missing ADR question/impact, empty accepted answer and unanswered
+  risk decision; every original blueprint responsibility-table file still has an owner.
+  Final checks and post-audit results recorded below when observed.
+
+### Coordinator whole-development conformity check
+
+The coordinator checked each document's current role, active requirements, cross-document
+consumers and status against the full blueprint and current user amendments. This is
+a content review, distinct from automated link/ID checks or future runtime behavior proof.
+
+| Development document | Blueprint authorities and coordinator observation | State |
+|---|---|---|
+| MASTER_DEV_PLAN.md | §1–§18 coverage, §12 paths/§15 slices; all stable tasks remain, actual Groq explicitly amends only fake-first build suggestion, budgets/tools/policy/memory boundaries retained | CHECKED |
+| ADR_LOG.md | §1/§17 locked/open decisions and declared provider choice; all recommendation directions accepted without inventing empirical values; original history preserved and owner fields editable | CHECKED |
+| TESTING_GATES.md | §3/§11–§14/§16; claim-level source/time/ACL/slots, five dispositions, caps, hard cases, real-provider versus pure-test distinction and mandatory audit receipts | CHECKED |
+| GOAL.md | §1.1 research question, §14 acceptance/negative results, §15 progression; doc-only outcome separated from unbuilt system and WAIT_FOR_GO | CHECKED |
+| PROJECT_MEMORY.md | §1/§2 authority, §11/§12 ownership; actual selected model/uv and next-state pointers match canonical answers without secrets or runtime claims | CHECKED |
+| PROJECT_MAP.md | §2/§12 ownership/producer→consumer directions, §3/§18 flow; actual docs and ignored user setup distinguished from planned runtime/uv artifacts | CHECKED |
+| PROGRESS.md | §15 and user GO boundary; earlier proofs historical, current phase open until audit, all system gates NOT_RUN and external comparison deferred | CHECKED |
+| RISKS_AND_OPEN_QUESTIONS.md | §17.2 all remaining issues; accepted direction distinct from verification, measurement, configured synthetic values and real-deployment deferral | CHECKED |
+| RESEARCH_PROTOCOL.md | §5/§14 B0–B9, gold/held-out, critic paired controls, uncertainty/usefulness and actual cost; Groq free-tier intent not a capacity guarantee | CHECKED |
+| REQUIREMENTS_TRACEABILITY.md | All §1–§18, I01–I15 and T01–T24 mappings retained; explicit user overrides do not introduce a fifth tool, model authority or real operational mutations | CHECKED |
+| PROJECT_LEARNING.md | §13 representative-code limits and §14 honest claims; distinguishes inherited design from measured results and preserves corrected mistakes | CHECKED |
+| EVIDENCE_LOG.md | §14/§16 reproducibility, redaction and honest status; records observed metadata/checks, not model calls or experiment success; this table is a review receipt, not executable proof | CHECKED |
+
+Supporting check_docs.py reviewed for actual structure validation and deliberate negative
+controls; root AGENTS and both README entry points checked for authority/GO/review drift.
+No unresolved coordinator finding at this checkpoint; independent full-scope audit follows.
+
+### Single post-phase work auditor
+
+`whole_vision_work_audit`, GPT 6 Luna High, fresh-context/read-only, dispatched only after
+the executable documentation checks. It read the complete 1,784-line blueprint (§1–§18),
+all twelve development Markdown documents, check_docs.py, AGENTS and both README entry
+points. It independently confirmed the same per-document coverage above: slices, budgets,
+tools, canonical authority, policy/time/live/memory, critic/graph, scientific controls,
+status and GO boundaries. No other material vision omission was found beyond these issues:
+
+| Finding | Coordinator verification and fix | State |
+|---|---|---|
+| Risk-answer negative mutation became a no-op after adding ADR links | Prior literal `ADR-0012 ACCEPTED` no longer matched `[ADR-0012](...) ACCEPTED`. Target the actual ID, retain unchanged-mutation rejection, rerun. Auditor's earlier red output retained; newer verified run passes. | RESOLVED; same auditor rechecked |
+| ADR authority was implicit and not required by the checker | Add explicit Authority to all 23 ADRs and future template, preserve historical authority, require the field and add missing-authority negative test. | RESOLVED; same auditor rechecked |
+| Venv task lacked ownership of its pre-creation ignore protection | P01-T01.02 now owns app-local .gitignore and proves .venv ignore before uv venv; user root file untouched. Later P01-T01.03 may extend app ignore settings. | RESOLVED; same auditor rechecked |
+
+This is the single post-phase auditor; resolution verification uses the same agent, not
+an additional work-audit dispatch. Latest executable check now covers 18 negative controls.
+Targeted resolution receipt: same auditor reran both exact commands (exit 0; 93 cards,
+18 negative controls), confirmed all three fixes and no resulting material vision drift.
+It did not change files or close gates; coordinator verified closure and updated records.
+
+### Final closeout
+
+All review findings resolved; coordinator and independent content checks complete.
+`git diff --check`/`git diff --cached --check` PASS; sixteen explicitly staged docs/rule/
+checker files reviewed and credential-pattern scan PASS. Root `.gitignore` remains the
+user's untracked file; ignored `.env` excluded from index and never read. Original vision
+hash unchanged and baseline/ empty. Syntax check and 18 negative controls PASS.
+Local checkpoint: `docs: record owner decisions and require phase audits`, with a
+descriptive body; this record is part of that commit (git history provides its hash).
+No push. Result: P00-T05/D07/G-DOC complete; implementation WAIT_FOR_GO.
+No provider call, install, product code, UI, baseline, service or listener started.
 
 ## Future evidence record template
 
@@ -116,5 +215,5 @@ Limitations / next action:
 ```
 
 Do not prefill PASS for planned commands. Record an unavailable check as NOT_RUN/BLOCKED
-and explain why; unit fake-model results, real service integrations and model-quality
+and explain why; pure deterministic guard tests, actual Groq integrations and model-quality
 experiments are different evidence classes.
