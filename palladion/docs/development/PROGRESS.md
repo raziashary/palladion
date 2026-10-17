@@ -1,75 +1,56 @@
 # Current progress
 
-Updated 2026-10-17. Phase/gate summary and active-task pointer; atomic child state lives
-in MASTER_DEV_PLAN checkboxes. Detailed proof lives in
-[EVIDENCE_LOG](EVIDENCE_LOG.md). No runtime behavior or performance has been measured.
+Updated 2026-10-17 (Asia/Bangkok). Atomic task state lives in MASTER_DEV_PLAN;
+command observations and review receipts live in EVIDENCE_LOG.
 
 ## Current checkpoint
 
-Final P00 amendment E-DOC-004 is DONE: user requested explicit full-blueprint
-coverage for every future reviewer and authorized verified documentation publishing to
-existing origin/main. Fresh Luna High pre-adversary completed; its reviewer-read gap
-is corrected. Final validation and the single post-auditor are complete; its status-drift
-finding is corrected and verified by the same auditor, with residual historical wording
-clarified in this final sync. G-DOC PASS: 93 cards, 20 negative controls and full-vision
-content audit/resolution. P00 is complete; P01 still awaits explicit GO. Documentation
-publishing to existing origin/main is explicitly authorized; remote ref equality is its proof.
+P01 is DONE under explicit user GO, baseline 12dfc3f. All fourteen atomic
+foundation tasks, package isolation proof and the single post-phase work audit with
+resolution of all three findings are verified at E-P01-001. No P02 work or provider calls occurred. P00 is complete
+at E-DOC-001–E-DOC-004; its former WAIT_FOR_GO is historical, superseded for P01.
 
-Earlier suite/refinement checkpoints: `26015fd` (E-DOC-001) and `bc44932` (E-DOC-002).
-Original P00-T05 completion at E-DOC-003: accepted Q01–Q12 answers, editable ADR structure,
-uv/Groq selection, mandatory phase reviews and full-vision conformity checks. E-DOC-003
-records the completed pre-phase adversary, coordinator whole-suite conformity table,
-single post-phase auditor/full-blueprint coverage and verified resolution of all three
-findings. Both document commands PASS, including 18 negative controls and all 93 cards.
-All nine P00 atomic documentation children are checked; 84 system children remain planned.
-No active implementation task; local documentation checkpoint is the commit containing
-this record. Its G-DOC PASS is historical; current final proof is E-DOC-004 above.
-Every product/research gate remains NOT_RUN.
+Executed: 75 pytest cases pass; Ruff and strict mypy pass; optimized offline CLI
+validates exact T01–T24 PILOT catalog and real persisted readers (3 approved source
+readbacks, 9 denied reads, close/reopen and revocation). Initial sdist/wheel build
+passed with pinned Hatchling and schema.sql; fresh locked/non-editable and exact built-wheel
+installation smokes passed. The final independent work audit is tracked in E-P01-001.
+Human gold-label adjudication, retrieval, citation API and model behavior are not proven.
 
-**Implementation hold: WAIT_FOR_GO for P01.** User-created ignored app .venv verified;
-separate machine-toolchain repair is complete. This does not close package/locked-sync
-proof. Verified documentation publishing to main is now explicitly approved; no app
-dependency setup, implementation or provider call by this closeout. All owner recommendation directions
-are answered; technical/measurement/deferred obligations are not fabricated as completed.
-Current runtime target: Groq `qwen/qwen3.8-27b`; project setup: uv inside `palladion/`.
-User-managed `.env`/`.gitignore` are preserved; operational mocks/no UI/baseline deferral remain.
+## Phase state
 
 | Phase | State | Evidence / next action |
 |---|---|---|
-| P00 | DONE | E-DOC-004 final blueprint review contract, full audit and verified resolution; earlier E-DOC-001–E-DOC-003 preserved |
-| P01 | PLANNED | WAIT_FOR_GO; P01-T01.01 applies accepted approval contract; P01-T01.02 executes authorized uv/package setup after GO |
-| P02 | PLANNED | Depends P01; no source ingestion/index/retrieval yet |
-| P03 | PLANNED | Depends P02; no policy/live system yet |
-| P04 | PLANNED | Depends P03; no runtime/gate/API yet |
-| P05 | PLANNED | Depends P04; no runtime memory yet |
-| P06 | PLANNED | Depends P05; no critic yet |
-| P07 | PLANNED | Depends P06 and measured retrieval baseline; no graph yet |
-| P08 | PLANNED | Depends prior exits; no scientific results yet |
-| X01 | DEFERRED | Later external comparator scope; baseline/ reserved |
-
-Every P01–P08 atomic checkbox is unchecked/PLANNED. Update the plan's child checkboxes
-and this phase/active-task summary together; parent completion requires all children plus
-original acceptance. A file list never establishes implementation or readiness.
+| P00 | DONE | E-DOC-001–E-DOC-004, published checkpoint 12dfc3f |
+| P01 | DONE | E-P01-001; all 14 children, gates, wheel smoke and single audit/resolution |
+| P02 | PLANNED | Ingest/retrieval/index/citation API; outside current mandate |
+| P03 | PLANNED | Temporal policy execution and mock live gateway |
+| P04 | PLANNED | Groq boundary, four tools, bounded loop/gate/message API |
+| P05 | PLANNED | Runtime memory/continuity beyond P01 contracts |
+| P06 | PLANNED | Runtime adversarial critic and experiments |
+| P07 | PLANNED | Optional graph implementation and measurements |
+| P08 | PLANNED | Scientific runs, scorer, fault injection and reports |
+| X01 | DEFERRED | External comparators; baseline/ remains empty |
 
 ## Gate state
 
-| Gate | State | Evidence |
+| Gate | State | Evidence and limits |
 |---|---|---|
-| G-DOC | PASS | E-DOC-004: 23 ADRs, 93 cards/20 negative controls; fresh full-vision pre/post reviews and same-auditor resolution verification |
-| G-CONTRACT | NOT_RUN | Product code/tests absent |
-| G-SOURCE | NOT_RUN | Product code/tests absent |
-| G-RETRIEVAL | NOT_RUN | Product code/tests absent |
-| G-TEMPORAL | NOT_RUN | Product code/tests absent |
-| G-POLICY | NOT_RUN | Product code/tests absent |
-| G-LIVE | NOT_RUN | Product code/tests absent |
-| G-BUDGET | NOT_RUN | Product code/tests absent |
-| G-GATE | NOT_RUN | Product code/tests absent |
-| G-MEMORY | NOT_RUN | Product code/tests absent |
-| G-CRITIC | NOT_RUN | Product code/tests absent |
-| G-GRAPH | NOT_RUN | Product code/tests absent |
-| G-SECURITY | NOT_RUN | Product code/tests absent |
-| G-E2E | NOT_RUN | Product code/tests absent |
-| G-RESEARCH | NOT_RUN | No corpus/run/scorer yet |
+| G-DOC | PASS | 17 Markdown files, 93 cards, 20 negative controls; semantic audit/resolution verified |
+| G-CONTRACT | PASS | 75 tests, strict typing/lint, exact fixture inventory, offline and installed-wheel readers; independent review resolved |
+| G-SOURCE | PARTIAL | Fresh/populated/rollback/foreign DB checks, immutable bytes, persisted source reader pass; P02/P07 index/API/revocation obligations remain |
+| G-SECURITY | PARTIAL | Stored identity/grants/membership/source ACL and revocation/self-approval controls pass; later prompt/API/tool/graph boundaries remain |
+| G-RETRIEVAL | NOT_RUN | No retrieval subsystem |
+| G-TEMPORAL | NOT_RUN | Contracts/fixtures only; no resolver |
+| G-POLICY | NOT_RUN | Policy fixtures only; no execution engine |
+| G-LIVE | NOT_RUN | Observation fixtures only; no adapter gateway |
+| G-BUDGET | NOT_RUN | Settings/contracts only; no runtime attempt accounting |
+| G-GATE | NOT_RUN | Typed dispositions only; no release gate |
+| G-MEMORY | NOT_RUN | Contracts/schema only; no continuity runtime |
+| G-CRITIC | NOT_RUN | Contracts only; no critic runtime |
+| G-GRAPH | NOT_RUN | Identity helpers only; no graph store/traversal |
+| G-E2E | NOT_RUN | Offline foundation smoke is not message/provider end-to-end proof |
+| G-RESEARCH | NOT_RUN | PILOT corpus only; no experiments or scientific scoring |
 
 ## Checkpoint history
 
@@ -87,17 +68,12 @@ original acceptance. A file list never establishes implementation or readiness.
   Luna High auditor checked all development docs against full blueprint; three findings
   fixed and rechecked. E-DOC-003/D07 complete, G-DOC PASS, WAIT_FOR_GO.
 
+
 ## Next-session handoff
 
-Use MASTER_DEV_PLAN's reading protocol. Verify live git state; do not trust this record
-over code. P00-T05 and final E-DOC-004 amendment complete; remain at WAIT_FOR_GO for P01.
-The current explicit main-push approval applies to verified docs only. Do not reinterpret acceptance of
-recommendations, a credential file or package-selection authority as current execution GO.
-After GO, run the mandatory pre-phase adversary before P01 tasks, apply accepted ADR
-answers and record concrete compatible dependency pins instead of re-asking settled choices.
-Every future adversary and single post-auditor must directly read the full blueprint,
-apply MASTER_DEV_PLAN's review contract and retain traceable coverage. Verify/reuse the
-user's existing .venv; do not recreate it merely because the original setup card predates it.
-Keep Luna High restriction, no UI, synthetic-only, and deferred comparator boundary.
-No owner-answer blocker remains for this docs task. Evidence obligations remain in the
-risk register; no system gate is passed until its actual proof exists.
+P01 is complete at E-P01-001; 23 of 93 atomic cards are verified (9 P00, 14 P01),
+70 future cards remain planned. This is task accounting, not system readiness.
+Wait for explicit P02 scope authorization; do not enter retrieval or call Groq.
+Preserve root .env/.gitignore and unrelated .vscode. The verified local P01 checkpoint
+requires explicit new approval before publishing to main. No new main-push approval
+is inferred from the P01 GO.

@@ -1,7 +1,8 @@
 # Requirements traceability
 
 Scope: blueprint v0.2 and user's 2026-10-17 suite request. All system coverage below
-is **planned**, with gates NOT_RUN. References use stable heading/section names rather
+mixes implemented P01 foundations and planned later consumers; PROGRESS and E-P01-001
+identify phase-local evidence and still-unrun obligations. References use stable heading/section names rather
 than fragile line numbers. A row is a coverage obligation, not proof of behavior.
 
 ## All blueprint sections
@@ -59,10 +60,10 @@ IDs preserve the order of blueprint “System invariants.”
 | No UI; build system/hypothesis first | ADR-0002; GOAL exclusions and P01–P08 order |
 | Later honest comparison under baseline/ | X01 deferred; RESEARCH_PROTOCOL capability/resource tracks |
 | All subagents GPT 6 Luna High | ADR-0008; scoped dispatch metadata; no silent fallback |
-| Dev suite is this task's endpoint | P00 closure only; all system tasks remain PLANNED and gates NOT_RUN |
+| Dev suite is this task's endpoint | Historical P00 endpoint complete; current explicit P01 GO and phase-local proofs recorded separately |
 | Current ADR answers and uv/Groq override | P00-T05; ADR-0011–ADR-0023; real Groq integration replaces only fake-first suggestion, all invariants retained |
 | Mandatory phase reviews and explicit implementation GO | AGENTS; MASTER_DEV_PLAN task protocol; pre-phase Luna High adversary and one post-phase Luna High work auditor; WAIT_FOR_GO |
-| Every future adversary/auditor considers the grand vision; publish P00 then wait for P01 | MASTER_DEV_PLAN blueprint review contract: both read full §1–§18, report headings/invariants and phase-local task/consumer/proof coverage; ADR-0011 amendment and E-DOC-004; current explicit main-push approval does not grant P01 GO |
+| Every future adversary/auditor considers the grand vision; publish P00 then wait for P01 | MASTER_DEV_PLAN blueprint review contract: both read full §1–§18, report headings/invariants and phase-local task/consumer/proof coverage; ADR-0011 amendment and E-DOC-004; historical P00 main-push approval is separate from the subsequently given P01 GO |
 | Coordinator and subagent inspect all development docs against full vision | P00-T05.04; per-document/whole-blueprint audit evidence in E-DOC-003; structural checker alone insufficient |
 
 The detailed T01–T24 mapping lives once in [TESTING_GATES](TESTING_GATES.md#hard-case-coverage-from-the-blueprint).

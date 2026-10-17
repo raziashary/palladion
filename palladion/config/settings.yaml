@@ -1,0 +1,12 @@
+schema_version: "1.0"
+provider: groq
+model: qwen/qwen3.8-27b
+enable_live_llm: false
+main_max_calls: 5
+critic_max_calls: 3
+tool_max_calls: 8
+critic_search_max_calls: 2
+graph_max_hops: 2
+max_draft_revisions: 1
+max_source_passages: 12
+request_timeout_seconds: 60

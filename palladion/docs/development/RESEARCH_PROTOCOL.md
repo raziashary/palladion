@@ -34,7 +34,9 @@ use separate contexts; a shared provider/model is not independent truth. Runtime
 does not constrain development subagents, which remain GPT 6 Luna High, or prescribe
 an embedding model. Actual embedding/tokenizer selection follows the compatibility task.
 
-No installation or model request occurs in this docs phase; implementation is WAIT_FOR_GO.
+P01 package setup is authorized and deterministic foundation fixtures are validated;
+no model experiment or research result exists. The corpus remains PILOT without two
+independent human annotators/adjudication. P01 makes no provider request.
 After GO, run enabled provider experiments under explicit quotas/call/token/time budgets,
 record actual model ID and structured/tool behavior, and load only the existing root
 `.env` for the specific command. No fake runtime result may replace failed model proof.

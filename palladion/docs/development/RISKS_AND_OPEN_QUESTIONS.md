@@ -1,9 +1,11 @@
 # Risks, accepted answers and verification obligations
 
+Current authority amendment: user explicitly authorized P01 end-to-end. Earlier implementation hold below is historical; package setup is authorized, no provider request needed.
+
 Updated 2026-10-17. The user read and accepted all recommendation directions, except
 fake-first runtime: use Groq `qwen/qwen3.8-27b`. uv and package-selection authority are
-explicitly approved. **No unanswered owner decision blocks this documentation task.**
-Implementation is nevertheless **WAIT_FOR_GO**. Acceptance does not invent compatibility,
+explicitly approved. **No unanswered owner decision blocks P01 foundations.**
+P01 is explicitly authorized; later implementation remains phase-scoped. Acceptance does not invent compatibility,
 thresholds, fixture values, reviewer availability, completeness or production signoff.
 
 Owner answers live once in [ADR_LOG](ADR_LOG.md); edit **My answer (editable)** there.
@@ -12,7 +14,7 @@ This register tracks remaining evidence and deferred scope, not a competing answ
 | ID | Question / accepted direction | Decision and state | Remaining evidence / owning phase |
 |---|---|---|---|
 | Q01 | Synthetic approval authority | [ADR-0012](ADR_LOG.md#adr-0012--q01--synthetic-approval-authority) ACCEPTED: authenticated administrator events; separate upload/approval grants | P01/P02 implement registry and reject self-approval/unauthorized grants; G-SOURCE/G-SECURITY |
-| Q02 | Python packages, environment and model | [ADR-0013](ADR_LOG.md#adr-0013--q02--uv-and-real-groq-runtime-generation) ACCEPTED: uv, app-local uv venv, delegated package choices, actual Groq qwen/qwen3.8-27b; fake-first overridden | Working uv installed separately; user-created ignored app .venv exists (E-DOC-004). After GO verify/reuse it, pin packages/uv.lock and probe actual model/tool/schema/quota. Embeddings remain a measured compatible selection. No provider call now. |
+| Q02 | Python packages, environment and model | [ADR-0013](ADR_LOG.md#adr-0013--q02--uv-and-real-groq-runtime-generation) ACCEPTED: uv, app-local uv venv, delegated package choices, actual Groq qwen/qwen3.8-27b; fake-first overridden | Working uv installed separately; user-created ignored app .venv exists (E-DOC-004). P01 verified reuse, package pins/locked sync and installed-wheel smoke (E-P01-001); actual model/tool/schema/quota remains P04 proof. Embeddings remain a measured compatible selection. No provider call now. |
 | Q03 | Qdrant native RRF/BM25 compatibility | [ADR-0014](ADR_LOG.md#adr-0014--q03--qdrant-hybrid-compatibility) ACCEPTED_DIRECTION; VERIFY_AT_IMPLEMENTATION | P02 compatible server/client probe, same-point dense/bm25, one RRF k=60, matched ingest/query weighting. Pin actual supported mode/version. |
 | Q04 | English/Indonesian processing | [ADR-0015](ADR_LOG.md#adr-0015--q04--english-and-indonesian-retrieval) ACCEPTED_DIRECTION; VERIFY_AT_IMPLEMENTATION | P02/P08 record language mix, compare tokenizer/stemming variants on development labels, pin winner and report per-language metrics. No claimed improvement yet. |
 | Q05 | Historical audits and time-basis migrations | [ADR-0016](ADR_LOG.md#adr-0016--q05--historical-audit-and-time-basis-migration) ACCEPTED_DIRECTION: minimal valid/record-time plus knowledge_cutoff, mixed-basis conflict unless explicit precedence | P03 define/review synthetic historical query fixtures and replay traces; no inferred migration or real-business retention rule. |
@@ -47,7 +49,8 @@ cover `.venv`. User was advised to add `.venv/` before manually running `uv venv
 Current correction (E-DOC-004): the owner updated root ignore rules to `.env` and `.venv/`
 and created the app environment. Interpreter existence and git check-ignore are verified;
 publish those existing ignore rules unchanged. The earlier observation above is historical,
-not a current missing-environment blocker. App packages/locked sync still await P01 GO.
+not a current missing-environment blocker. P01 GO was subsequently given; locked sync
+and installed-wheel compatibility now pass at E-P01-001.
 
 ## Updating this register
 
@@ -55,4 +58,5 @@ Keep stable Q IDs. When evidence arrives, cite the actual run/test and limits; a
 recommendation is not completion. New unresolved decisions get a structured ADR with
 an empty owner answer; do not silently infer approval. Maintain deferred rows until
 that scope is explicitly invoked. Source evidence and current owner answers outrank
-historical task wording. After this docs task, wait for explicit GO before P01.
+historical task wording. P01 is verified complete at E-P01-001; P02 and later
+implementation require their own scope authorization.

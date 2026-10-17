@@ -17,10 +17,10 @@ repository from the blueprint's illustrative tree.
 
 ## Scope and integrity
 
-- Current mandate: finish and publish verified documentation to existing `origin/main`,
-  explicitly authorized by the user, then WAIT_FOR_GO for P01. Separately authorized
-  machine-toolchain repair and the user-created app `.venv` do not authorize product
-  implementation, further app dependency setup or provider calls. No UI work. `baseline/` is reserved for
+- Current mandate: explicit user GO for P01 end-to-end. Build and verify contracts,
+  uv/settings, persisted authorization/approval, immutable originals and synthetic fixtures.
+  The earlier P00 WAIT_FOR_GO is historical. No provider call, P02 implementation or UI.
+  `baseline/` is reserved for
   later comparator implementations; do not populate it as part of this setup.
 - Preserve the [vision](palladion/docs/vision/palladion-blueprint-v2.md). Do not silently
   change locked decisions or treat representative code as complete production code.
@@ -122,12 +122,13 @@ gates → one mandatory GPT 6 Luna High work auditor and resolution of findings 
 status/evidence updates → no-stale sweep including README/navigation → process/port
 cleanup → scoped staged-diff/secret review → verified commit → continue authorized work.
 Skipped checks are not PASS. PARTIAL evidence does not close a later consumer obligation.
-For documentation-only work, the document checker CLI is the runnable entry point;
-application gates remain NOT_RUN. A checkpoint never expands the user's current mandate.
-The mandatory pre-phase adversary precedes this sequence. For the current restructuring,
-the coordinator and the single post-phase auditor must each check every development
-document against the complete blueprint, record coverage/findings and resolve material
-drift before closure. Finish the documentation checkpoint, then WAIT_FOR_GO.
+For documentation-only work, the document checker CLI is the runnable entry point.
+For P01, use the offline foundation CLI and foundation tests; multi-phase source/security
+gates remain PARTIAL until their later runtime/API/index obligations pass. A checkpoint never expands the user's current mandate.
+The mandatory pre-phase adversary precedes this sequence. The P00 full-suite review is
+historical. Every future pre-adversary and post-auditor still reads the complete blueprint
+and applies the canonical review contract. Complete P01 only under the current mandate;
+P02 requires its own scope authorization. Do not infer new main-push approval from P01 GO.
 
 ## Close every task
 

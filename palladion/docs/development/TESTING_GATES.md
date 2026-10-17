@@ -1,7 +1,8 @@
 # Testing gates
 
-Gates specify proof to implement; **only G-DOC is runnable in this documentation phase**.
-All system tests/files/commands below are planned, not present or executed. Gate states
+P01 contracts, fixture, storage and access tests plus the offline foundation CLI are
+runnable. Later index/API/agent/research obligations remain planned. Gate catalog rows
+describe full obligations; current phase-local results never imply full runtime proof. Gate states
 and evidence are recorded in [PROGRESS](PROGRESS.md) and [EVIDENCE_LOG](EVIDENCE_LOG.md).
 Read source and test fixtures before running anything with stateful-resource access.
 
@@ -38,6 +39,16 @@ Read source and test fixtures before running anything with stateful-resource acc
   For current P00-T05 the coordinator and that single post-auditor additionally inspect
   every development document against the complete blueprint; structural checks alone
   cannot pass that semantic audit. E-DOC-003 records both independent review receipts.
+
+## P01 phase-local evidence boundary
+
+P01 checks strict contracts and every exact T01–T24 catalog ID, positive/negative fixture
+labels and original spans; independent annotations remain PILOT. G-SOURCE P01 subset:
+fresh schema, populated upgrades, rollback and unknown-schema preservation; persisted
+approval/membership readers and immutable byte/range reads. G-SECURITY P01 subset:
+backend identity/grants/case/tenant/source ACL, self-approval and revocation denials.
+Index publication/reconciliation, citation API, live tools, model prompt exposure, graph
+and full gate behavior belong to later phases. G-SOURCE/G-SECURITY stay PARTIAL.
 
 ## Gate catalog
 
@@ -199,7 +210,9 @@ with `uv.lock` and document actual interpreter/tool commands. Package
 choices are delegated within blueprint scope. Expected tooling is pytest plus configured
 lint/type/build checks. A planned targeted example is
 `uv run --locked pytest tests/test_policy_temporal.py tests/test_policy_engine.py`.
-Run the manifest's actual lint/test/build commands as applicable; no product manifest exists yet.
+Run the actual manifest checks. P01 commands from palladion/: uv sync --locked;
+uv run --locked --no-env-file pytest; ruff check .; mypy; python -m build;
+python scripts/validate_foundation.py. Use the uv run prefix for each tool as in README.
 
 For runnable API slices: start an isolated application using its documented entry point;
 check health/readiness without leaking internals; authenticate synthetic principal; upload

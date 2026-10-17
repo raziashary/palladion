@@ -1,0 +1,289 @@
+{
+  "schema_version": 1,
+  "policy_family_id": "DEMO.REVERSAL.CHECK",
+  "description": "Synthetic decision-support rule; it never authorizes a payment mutation.",
+  "allowed_time_bases": [
+    "TRANSACTION_OCCURRED_AT",
+    "EVALUATION_AT"
+  ],
+  "allowed_timestamp_sources": [
+    "verified_live.transaction_occurred_at",
+    "server_clock.evaluation_time"
+  ],
+  "allowed_fact_sources": [
+    "verified_live.state",
+    "verified_live.settlement_state"
+  ],
+  "versions": [
+    {
+      "policy_version_id": "demo-reversal-2025-a",
+      "state": "APPROVED",
+      "source_clauses": [
+        {
+          "source_id": "SOP-2025-A",
+          "clause_id": "S25-REVERSAL",
+          "source_sha256": "2ea695f6358c6ebbd808b0234743a80d5d6cd6e1721904cfbe79944d3deed708",
+          "span_start": 745,
+          "span_end": 1098,
+          "text_sha256": "00671046b02b2f6511f97dcdc284d87db10fbf32686116751152b7f68a5b76ef"
+        }
+      ],
+      "applicability": {
+        "tenant_id": "tenant-a",
+        "product": "QR_DEMO",
+        "transaction_class": "DEMO_STANDARD",
+        "time_basis": "TRANSACTION_OCCURRED_AT",
+        "timestamp_source": "verified_live.transaction_occurred_at",
+        "valid_from": "2025-01-01T00:00:00Z",
+        "valid_to": "2026-07-01T00:00:00Z",
+        "supersedes": []
+      },
+      "required_facts": [
+        {
+          "name": "transaction_state",
+          "type": "enum",
+          "source": "verified_live.state",
+          "allowed_values": [
+            "FAILED",
+            "PENDING",
+            "SUCCEEDED"
+          ],
+          "max_age_seconds": 300
+        },
+        {
+          "name": "settlement_state",
+          "type": "enum",
+          "source": "verified_live.settlement_state",
+          "allowed_values": [
+            "UNSETTLED",
+            "PENDING",
+            "SETTLED"
+          ],
+          "max_age_seconds": 300
+        }
+      ],
+      "rule_rows": [
+        {
+          "id": "historical-investigate",
+          "all": [
+            {
+              "field": "transaction_state",
+              "operator": "eq",
+              "value": "FAILED"
+            },
+            {
+              "field": "settlement_state",
+              "operator": "eq",
+              "value": "UNSETTLED"
+            }
+          ],
+          "outcome": "FOLLOW_INVESTIGATION_SOP",
+          "source_clause": {
+            "source_id": "SOP-2025-A",
+            "clause_id": "S25-REVERSAL",
+            "source_sha256": "2ea695f6358c6ebbd808b0234743a80d5d6cd6e1721904cfbe79944d3deed708",
+            "span_start": 745,
+            "span_end": 1098,
+            "text_sha256": "00671046b02b2f6511f97dcdc284d87db10fbf32686116751152b7f68a5b76ef"
+          }
+        }
+      ],
+      "default_outcome": "NO_DECISION_REQUIRES_REVIEW"
+    },
+    {
+      "policy_version_id": "demo-reversal-2026-b",
+      "state": "APPROVED",
+      "source_clauses": [
+        {
+          "source_id": "SOP-2026-B",
+          "clause_id": "S26-REVERSAL",
+          "source_sha256": "54b50ef2280f9f4e227ec544718b336e354101b60b06556feee1a5e9510e6110",
+          "span_start": 705,
+          "span_end": 1124,
+          "text_sha256": "dd46151594d70dec8ad612f71e20e423731ffa95dce716400261dd53ccc6c64f"
+        },
+        {
+          "source_id": "EX-2026-04",
+          "clause_id": "EX-SETTLEMENT-DELAY",
+          "source_sha256": "2f895805f288b7b89fd1aaec0edf0d3d4a60a69a37890b3d39dfa17dfd6fd075",
+          "span_start": 224,
+          "span_end": 516,
+          "text_sha256": "e232f8971590ead6a3cf30f8b53e2b83cd49c5ab618d95b0fece26efe4b6ed8a"
+        }
+      ],
+      "applicability": {
+        "tenant_id": "tenant-a",
+        "product": "QR_DEMO",
+        "transaction_class": "DEMO_STANDARD",
+        "time_basis": "TRANSACTION_OCCURRED_AT",
+        "timestamp_source": "verified_live.transaction_occurred_at",
+        "valid_from": "2026-07-01T00:00:00Z",
+        "valid_to": null,
+        "supersedes": [
+          "demo-reversal-2025-a"
+        ]
+      },
+      "required_facts": [
+        {
+          "name": "transaction_state",
+          "type": "enum",
+          "source": "verified_live.state",
+          "allowed_values": [
+            "FAILED",
+            "PENDING",
+            "SUCCEEDED"
+          ],
+          "max_age_seconds": 300
+        },
+        {
+          "name": "settlement_state",
+          "type": "enum",
+          "source": "verified_live.settlement_state",
+          "allowed_values": [
+            "UNSETTLED",
+            "PENDING",
+            "SETTLED"
+          ],
+          "max_age_seconds": 300
+        }
+      ],
+      "rule_rows": [
+        {
+          "id": "current-investigate",
+          "all": [
+            {
+              "field": "transaction_state",
+              "operator": "eq",
+              "value": "FAILED"
+            },
+            {
+              "field": "settlement_state",
+              "operator": "eq",
+              "value": "UNSETTLED"
+            }
+          ],
+          "outcome": "FOLLOW_INVESTIGATION_SOP",
+          "source_clause": {
+            "source_id": "SOP-2026-B",
+            "clause_id": "S26-REVERSAL",
+            "source_sha256": "54b50ef2280f9f4e227ec544718b336e354101b60b06556feee1a5e9510e6110",
+            "span_start": 705,
+            "span_end": 1124,
+            "text_sha256": "dd46151594d70dec8ad612f71e20e423731ffa95dce716400261dd53ccc6c64f"
+          }
+        },
+        {
+          "id": "settlement-not-confirmed",
+          "any": [
+            {
+              "field": "settlement_state",
+              "operator": "eq",
+              "value": "PENDING"
+            }
+          ],
+          "outcome": "INCOMPLETE_INPUT",
+          "source_clause": {
+            "source_id": "EX-2026-04",
+            "clause_id": "EX-SETTLEMENT-DELAY",
+            "source_sha256": "2f895805f288b7b89fd1aaec0edf0d3d4a60a69a37890b3d39dfa17dfd6fd075",
+            "span_start": 224,
+            "span_end": 516,
+            "text_sha256": "e232f8971590ead6a3cf30f8b53e2b83cd49c5ab618d95b0fece26efe4b6ed8a"
+          }
+        }
+      ],
+      "default_outcome": "NO_DECISION_REQUIRES_REVIEW"
+    }
+  ],
+  "evaluation_policy": {
+    "policy_version_id": "demo-handling-2026-a",
+    "state": "APPROVED",
+    "source_clauses": [
+      {
+        "source_id": "SOP-2026-B",
+        "clause_id": "S26-REVERSAL",
+        "source_sha256": "54b50ef2280f9f4e227ec544718b336e354101b60b06556feee1a5e9510e6110",
+        "span_start": 705,
+        "span_end": 1124,
+        "text_sha256": "dd46151594d70dec8ad612f71e20e423731ffa95dce716400261dd53ccc6c64f"
+      }
+    ],
+    "applicability": {
+      "tenant_id": "tenant-a",
+      "product": "QR_DEMO",
+      "transaction_class": "DEMO_STANDARD",
+      "time_basis": "EVALUATION_AT",
+      "timestamp_source": "server_clock.evaluation_time",
+      "valid_from": "2026-01-01T00:00:00Z",
+      "valid_to": null,
+      "supersedes": []
+    },
+    "required_facts": [],
+    "rule_rows": [],
+    "default_outcome": "FOLLOW_CURRENT_HANDLING_SOP"
+  },
+  "conflict_fixture": {
+    "description": "Synthetic registry scenario with two known approved candidates and no applicable precedence. This override is isolated from the adjacent historical/current base versions.",
+    "candidates": [
+      {
+        "policy_version_id": "demo-overlap-a",
+        "state": "APPROVED",
+        "approved_by": "admin-a",
+        "source_clauses": [
+          {
+            "source_id": "SOP-2026-B",
+            "clause_id": "S26-REVERSAL",
+            "source_sha256": "54b50ef2280f9f4e227ec544718b336e354101b60b06556feee1a5e9510e6110",
+            "span_start": 705,
+            "span_end": 1124,
+            "text_sha256": "dd46151594d70dec8ad612f71e20e423731ffa95dce716400261dd53ccc6c64f"
+          }
+        ],
+        "approval_record_id": "policy-approval-overlap-a",
+        "approved_at": "2026-07-01T00:00:00Z",
+        "registered_at": "2026-07-01T00:00:00Z",
+        "applicability": {
+          "tenant_id": "tenant-a",
+          "product": "QR_DEMO",
+          "transaction_class": "DEMO_STANDARD",
+          "time_basis": "TRANSACTION_OCCURRED_AT",
+          "timestamp_source": "verified_live.transaction_occurred_at",
+          "valid_from": "2026-07-01T00:00:00Z",
+          "valid_to": "2026-10-01T00:00:00Z",
+          "supersedes": [],
+          "precedence": null
+        }
+      },
+      {
+        "policy_version_id": "demo-overlap-b",
+        "state": "APPROVED",
+        "approved_by": "admin-a",
+        "source_clauses": [
+          {
+            "source_id": "SOP-2026-B",
+            "clause_id": "S26-REVERSAL",
+            "source_sha256": "54b50ef2280f9f4e227ec544718b336e354101b60b06556feee1a5e9510e6110",
+            "span_start": 705,
+            "span_end": 1124,
+            "text_sha256": "dd46151594d70dec8ad612f71e20e423731ffa95dce716400261dd53ccc6c64f"
+          }
+        ],
+        "approval_record_id": "policy-approval-overlap-b",
+        "approved_at": "2026-08-01T00:00:00Z",
+        "registered_at": "2026-08-01T00:00:00Z",
+        "applicability": {
+          "tenant_id": "tenant-a",
+          "product": "QR_DEMO",
+          "transaction_class": "DEMO_STANDARD",
+          "time_basis": "TRANSACTION_OCCURRED_AT",
+          "timestamp_source": "verified_live.transaction_occurred_at",
+          "valid_from": "2026-08-01T00:00:00Z",
+          "valid_to": null,
+          "supersedes": [],
+          "precedence": null
+        }
+      }
+    ],
+    "expected_outcome": "POLICY_CONFLICT"
+  }
+}

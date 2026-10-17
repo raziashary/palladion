@@ -1,0 +1,2 @@
+# Preserve exact original bytes: source hashes and byte spans must survive checkout.
+data/demo/*.md -text

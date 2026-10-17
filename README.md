@@ -5,13 +5,15 @@ recognizes insufficient evidence, preserves case context, and challenges its con
 The initial research domain is internal support investigation using synthetic payment
 documents and read-only mock operational systems.
 
-**Current state:** development documentation established; the system is not implemented.
-There is no application, UI, dependency manifest, or benchmark result yet.
+**Current state:** P01 foundation is implemented, tested and independently audited: strict
+contracts, persisted synthetic access/approval, SQLite/originals and 24 pilot fixtures.
+The uv package/lock and offline validation entry point exist. Retrieval, message API,
+agent loop, UI and benchmark results remain absent.
 User selected uv and actual Groq `qwen/qwen3.8-27b` for future implementation. All
 recommendation directions are answered in the editable ADR log. The user created the
 ignored app `.venv` after separate toolchain repair; product dependency setup and execution
-remain **WAIT_FOR_GO** for P01. Verified documentation publishing to `main` is now
-explicitly authorized. No provider call is part of this documentation closeout.
+are authorized by the explicit P01 GO. Current evidence is in the development suite;
+no provider call is needed for this deterministic phase. P02 remains future scope.
 
 - [Documentation entry point](palladion/docs/README.md)
 - [Master vision](palladion/docs/vision/palladion-blueprint-v2.md)

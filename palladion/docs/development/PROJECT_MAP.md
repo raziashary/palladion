@@ -14,7 +14,15 @@ C:/palladion/                         Git root, main; initial revision 9b167a2
   .gitignore                         Owner-provided .env/.venv exclusions, published unchanged
   baseline/                          Existing empty directory; reserved, not tracked as a directory
   palladion/
-    .venv/                           User-created ignored environment; no app dependency proof
+    .venv/                           Reused ignored environment; locked P01 dependencies verified
+    pyproject.toml, uv.lock          Package metadata and locked dependencies
+    README.md, .gitignore            Runnable foundation instructions and local exclusions
+    .env.example                     Non-secret future command enablement template
+    config/                          Typed settings and fictional policy fixture
+    data/demo/                       Four originals, synthetic case/observation/gold catalog
+    src/evidence_agent/              core/, security/access, storage/, settings, version
+    scripts/validate_foundation.py    Offline actual-domain consumer smoke
+    tests/                           Contract, fixture, settings, access and persistence checks
     docs/
       README.md                      Documentation index
       vision/
@@ -35,9 +43,18 @@ C:/palladion/                         Git root, main; initial revision 9b167a2
         check_docs.py               Links/IDs, atomic metadata/dependencies, planned-file coverage
 ```
 
-## Planned runtime ownership
+## Foundation now implemented (P01)
 
-All paths here are relative to `palladion/` and **not implemented**. ADR-0001 maps the
+The app package/uv.lock/settings, core models/errors/IDs/fixtures, security access,
+SQLite schema/migrations/registry/originals, synthetic data/policy, tests and offline
+scripts/validate_foundation.py now exist. Offline flow: typed fixtures → trusted bootstrap
+profiles/memberships → Registry upload/independent approval → OriginalStore exact bytes →
+close/reopen Database → current stored ACL and approved-source reader → byte/range proof.
+CLI state is temporary and cleaned; no API/search/provider process is started.
+
+## Runtime ownership and later planned components
+
+Paths are relative to `palladion/`; only the P01 foundation subset above is implemented. ADR-0001 maps the
 blueprint's illustrative `evidence-agent/` root here; do not create a duplicate project.
 
 | Planned area | Owns | Producers / consumers | Build phase |
@@ -64,9 +81,9 @@ agent role is required by the prototype.
 Current owner choices: uv venv lives inside `C:/palladion/palladion`; later baseline
 dependencies are isolated. Main/critic initial runtime uses actual Groq
 `qwen/qwen3.8-27b`, independent contexts with shared model, not independent ground truth.
-Root `.env` is loaded only for an enabled future command; package/model execution waits
-for GO. The user-created `.venv` now exists and is ignored. Manifest/lock and runtime
-components remain planned; this documentation closeout made no provider call or app install.
+Root `.env` is loaded only for an explicitly enabled future provider command. P01 package
+setup is authorized and verified; model integration remains P04 work. The user-created `.venv` now exists and is ignored. Manifest/lock and P01 foundation now exist; retrieval/agent runtime remains planned.
+P01 package installation succeeded in the existing environment; no provider call occurred.
 
 ## Planned request and evidence flow
 

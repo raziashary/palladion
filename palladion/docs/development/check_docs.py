@@ -12,7 +12,6 @@ import sys
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
-
 REPO = Path(__file__).resolve().parents[3]
 DEV = "palladion/docs/development/"
 VISION = "palladion/docs/vision/palladion-blueprint-v2.md"
@@ -141,7 +140,8 @@ def validate_atomic_register(plan: str, vision: str, parents: set[str]) -> list[
 
 
 def load_documents() -> dict[str, str]:
-    paths = list(REPO.glob("*.md")) + list((REPO / "palladion/docs").rglob("*.md"))
+    paths = (list(REPO.glob("*.md")) + list((REPO / "palladion").glob("*.md"))
+             + list((REPO / "palladion/docs").rglob("*.md")))
     return {path.relative_to(REPO).as_posix(): path.read_text(encoding="utf-8-sig")
             for path in paths}
 

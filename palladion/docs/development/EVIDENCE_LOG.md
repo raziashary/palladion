@@ -307,6 +307,171 @@ No task-owned server/listener was started, so no process/port cleanup was requir
 - No application process, container, provider request or listener started by this closeout.
   Blueprint SHA-256 remains 911003f72b909e4e473cde917c872c022bf1332440fade1c97dce8ecf7af2b9c.
 
+## E-P01-001 — P01 foundation implementation and proof
+
+- Explicit user GO for P01; baseline main 12dfc3f; unrelated .vscode preserved.
+- Pre-adversary p01_pre_adversary, gpt-6-luna/high, fresh/read-only; full blueprint
+  sections 1–18 and governing P01 docs/gates reviewed. Five confirmed gaps: stale GO,
+  missing offline real consumer, vague P01 partial gate subset, missing fresh/populated
+  upgrade proof and incomplete-catalog risk. Coordinator verified and amended plan.
+- P01 proves schema/contracts, persisted identity/membership/approval readers, SQLite
+  lifecycle and immutable bytes. G-SOURCE/G-SECURITY broader consumers remain PARTIAL.
+  Labels pilot-only until independent human annotation/adjudication for research.
+- Refuted: helper/import/reopen alone establishes integration. Partial: source unbuilt.
+  Uncertain: compatible pins/provider behavior/empirical results; no provider call needed.
+- Pre-implementation note: Windows default cp1252 rejected a UTF-8 documentation read;
+  no files changed by that failed command. Explicit UTF-8 is now used for record edits.
+- Implementation: 14 P01 atomic foundation tasks implemented. Dependencies installed in
+  existing app .venv via uv sync, then uv sync --locked passed; uv lock --check passed.
+  Actual Python 3.14.7, uv 0.13.1; runtime/dev pins in uv.lock. Pydantic 2.14.1,
+  PyYAML 6.0.3, pytest 9.1.1, Ruff 0.17.1, mypy 1.20.2; Hatchling 1.32.4 builder.
+- Exact commands from C:/palladion/palladion: .venv/Scripts/python.exe -m pytest --tb=short -q
+  -> 61 passed; .venv/Scripts/ruff.exe check . -> PASS; .venv/Scripts/mypy.exe -> PASS
+  (10 modules), additional mypy scripts/validate_foundation.py -> PASS. Runtime credentials
+  removed from command environments; no root .env read. All tests use synthetic temp state.
+- Optimized actual entry point .venv/Scripts/python.exe -O scripts/validate_foundation.py
+  -> PASS: 4 sources/3 approved, 3 cases/7 principals, 7 observations, exact 24 catalog
+  cases, 3 approved readbacks, 9 denied reads, close/reopen, source ACL and membership
+  revocation. Uses Registry/AccessController/OriginalStore domain methods, no CLI raw SQL;
+  temporary state cleaned, no server/listener/provider call. Checks still run under -O.
+- Intermediate failures retained: invalid BI trusted envelope field blocked five gold tests;
+  temporal T01 mismatch blocked three; metadata/source model split briefly caused one
+  valid-bundle failure. Workers repaired owning data/types; later 61-test run passes.
+  Storage tests corrected stale principal snapshots/expected audit counts/bool-offset
+  exception expectations without weakening actual guards; stored membership callback is
+  authoritative. Pre-review also corrected enum drift and foreign WAL mutation ordering.
+- Initial python -m build -> sdist/wheel PASS; wheel schema.sql presence verified. Builder
+  pinned to observed 1.32.4; final rebuild passed. Temporary UV_PROJECT_ENVIRONMENT with
+  uv sync --locked --no-editable, isolated Python -I import and the actual offline CLI
+  passed; __file__ proved site-packages import, not source editable fallback. Second
+  temp env installed the exact dist wheel via uv pip install --no-deps --reinstall,
+  then passed the same CLI/SQLite schema readback. Both temp environments cleaned.
+  Documented uv run --locked --no-env-file package version command passed.
+- Built artifacts retained ignored in palladion/dist/: wheel SHA-256
+  800bd255c091550daaec73ab4514648e395bec3d1b027dc45aebf856d4c60e1a;
+  sdist SHA-256 e2a20edb89c20b584d20c4ec538ce1feb3ca422a3daa78ef8f9408b62e4230cc.
+  Build metadata/source records may change during final audit; updated builds will be
+  separately recorded if required. Docs checker now reads app README as well: 17 Markdown
+  files, 93 atomic cards and 20 negative controls PASS. Mandatory single work audit pending. No later consumer/research result is passed by this evidence.
+
+### Single post-phase audit — findings under resolution
+
+Reviewer p01_work_auditor (GPT 6 Luna High), read-only, directly read full blueprint
+sections 1–18, all fourteen P01 cards and all twelve development Markdown records.
+Confirmed foundation consumer/readback and deferred runtime boundaries; three findings:
+
+1. P2: T03 conflict validator checked labels/counts without actual applicability overlap.
+   Fixture owner is repairing semantic candidate checks and negative controls.
+2. P2: EvidenceRecord kind could disagree with SourceRef source_kind. Contract owner is
+   adding the explicit blueprint mapping and positive/negative pair coverage.
+3. P3: two risk-register statements still awaited already-given P01 GO. Coordinator
+   corrected them to current P01 and future P02 scope.
+
+Coordinator inspected the reported validator and risk statements. Intermediate rerun
+caught six strict-mypy issues in the new fixture validation (optional values and reused
+local types); these are retained as failed checks until corrected and rerun. Phase remains open
+until fixes, repeated checks and the same auditor's resolution review. No second auditor
+is substituted. No provider, retrieval, policy engine or research success is claimed.
+
+### P01 task-to-consumer proof index
+
+Each row links the atomic task to its actual P01 reader and phase-local proof. Later
+runtime consumers remain owned by P02–P08; this index grants no later gate PASS.
+
+| Atomic task | Producer → actual consumer | Check / gate |
+|---|---|---|
+| P01-T01.01 | Accepted approval direction → Registry approval/read path | test_ingest self-approval/admin controls; G-DOC |
+| P01-T01.02 | uv.lock/package → existing and fresh installed environment | locked sync, version import, wheel smoke; G-CONTRACT |
+| P01-T01.03 | YAML config → typed settings/offline CLI | test_settings positive/invalid/disabled guards; G-CONTRACT |
+| P01-T01.04 | README commands → invoked app entry point | actual uv commands, installed-wheel smoke; G-CONTRACT |
+| P01-T02.01 | Versioned evidence/errors → serialized typed readers | test_contracts round trips and rejected invalid inputs; G-CONTRACT |
+| P01-T02.02 | Claim/policy/live/packet/review contracts → typed fixture/test readers | test_contracts provenance/status/time constraints; G-CONTRACT |
+| P01-T02.03 | Canonical namespace digests → Registry IDs and identity readers | test_graph_identity, test_ingest; G-SOURCE subset |
+| P01-T02.04 | Stored profiles/memberships → AccessController and Registry | test_security, registry/CLI denied reads; G-SECURITY subset |
+| P01-T03.01 | SQL relationships → real Registry persistence/readback | test_ingest FK/status/approval and CLI reopen; G-SOURCE subset |
+| P01-T03.02 | Transactional migrations → reopened Database | test_ingest fresh/populated/rollback/foreign preservation; G-SOURCE subset |
+| P01-T03.03 | Write-once original objects → verified byte/range reads | test_ingest corruption/escape/ranges, CLI readback; G-SOURCE subset |
+| P01-T04.01 | Four fictional originals → exact clause fixture reader | test_goldens span/hash checks and reviewer; G-CONTRACT |
+| P01-T04.02 | Cases/policies/observations → validated FixtureBundle | test_goldens trusted-time/scope/conflict mutations; G-CONTRACT |
+| P01-T04.03 | Exact T01–T24 labels → fixture validator and offline CLI | test_goldens inventory/label negatives, CLI persisted consumers; G-CONTRACT |
+
+### Post-audit corrective checks
+
+- Kind/source mapping now rejects contradictory EvidenceRecord envelopes, with four
+  positive pair tests and four mismatched-pair negatives (test_contracts: 21 passed).
+- T03 declares two separately approved injected policy records, source clauses, exact
+  matching scope/time basis, real overlapping half-open intervals and no precedence.
+  Setup references those known IDs and a same-case/tenant trusted OK observation.
+  Base historical/current windows remain adjacent; conflict injection is T03-only.
+  The summary now includes all five known policy IDs (three base/evaluation, two injected).
+- test_goldens: 21 passed, including disjoint windows, exclusive-end event, scope mismatch,
+  unapproved candidate, unknown setup version and cross-case observation negatives.
+- Final stable source run: .venv/Scripts/python.exe -m pytest --tb=short -q -> 75 passed;
+  .venv/Scripts/ruff.exe check . -> PASS;
+  .venv/Scripts/mypy.exe src scripts/validate_foundation.py -> PASS (11 source files).
+  Earlier six mypy failures are corrected with typed values/checks, without ignores.
+- Optimized offline CLI rerun -> PASS, 3 approved readbacks/9 denied reads/reopen,
+  revocation/zero model calls/temp cleanup. Installed artifact refresh and same-auditor
+  resolution remain pending at this entry.
+
+### Rebuilt artifact verification after corrective source changes
+
+python -m build completed sdist and wheel with Hatchling 1.32.4. New ignored artifacts:
+wheel SHA-256 e303d9ba1b62b218dd51afb625328f4b903262204a4d1da66fa5745af65bb9c3;
+sdist SHA-256 7a0b4f5c855df13123edb78747cc82eba2cf027747cff8a481e2c3448a672005.
+The earlier hashes above identify pre-audit builds, not these final corrected sources.
+
+An initial isolated-sync command used --no-env-file (supported by uv run, not uv sync)
+and failed argument parsing before environment setup. Removed that unsupported flag;
+credentials and UV_ENV_FILE remained absent. Actual final proof used TemporaryDirectory,
+UV_PROJECT_ENVIRONMENT, uv sync --locked --no-editable --no-python-downloads, followed by
+uv pip install --python <temporary>/Scripts/python.exe --reinstall --no-deps <exact-wheel>.
+Isolated Python -I confirmed import from temporary site-packages, package/metadata version
+0.1.0 and schema.sql, then ran the actual validate_foundation.py against app fixtures.
+Result: PASS, exact T01–T24/five policy IDs, 3 approved reads/9 denials/reopen/revocation,
+zero model calls. Temporary environment removal verified; no server/listener started.
+uv lock --check also passed (21 resolved packages). No root .env read or credential use.
+
+### Final review receipt and P01 closure
+
+The same p01_work_auditor (GPT 6 Luna High, read-only) rechecked all three original
+findings and reports each RESOLVED, with no additional material defect. Direct review
+covered the affected blueprint evidence/policy/T03/invariant sections and retained its
+original full §1–§18 read. Confirmed the fourteen-row task/consumer/proof index and all
+later preflight/tool/budget/critic/gate/memory/graph obligations remain assigned to P02–P08.
+Reviewer executed the exact focused contracts+golden tests (42 passed), Ruff, strict mypy,
+optimized offline CLI and documentation checker/self-test; all passed. Reviewed the rebuilt
+artifact isolation evidence. Coordinator inspected changes and ran the full 75-test suite,
+lint/typing/smoke and exact-wheel proof above. Source/security remain PARTIAL intentionally;
+contract and documentation gates PASS. P01 exit is met; P02 is not authorized.
+
+All twelve development records and README/navigation were checked for current P01 state;
+historical P00 receipts/owner answers remain historical. GOAL, atomic evidence, progress,
+map/memory, risks, ADR verification and learning are synchronized. No new owner ADR answer
+is required. No task-owned listener/server/watch process was started. Temporary DBs and
+isolated environments are closed/removed. Original vision and root ignore bytes remain
+unchanged; baseline remains empty; unrelated .vscode and root .env remain untouched.
+The scoped local commit containing this receipt is the P01 checkpoint. Publishing it to
+main requires separate explicit approval; Phase 1 GO did not grant that approval.
+
+### Final staged review correction
+
+Staged whitespace check found one extra test-file EOF blank line; removed. Git warned
+that core.autocrlf=true would convert fictional Markdown originals on later checkout,
+breaking exact-byte fixture hashes/spans. App .gitattributes now marks data/demo/*.md
+as -text, preserving original bytes without git-config changes. P01-T01.02 ownership,
+ADR-0024 and learning updated. Fresh index checkout via git checkout-index --all --prefix=<owned temporary>/
+proved all four originals byte-identical. Optimized actual CLI against that checkout
+passed (3 reads/9 denials/reopen/zero calls), temporary checkout removed, and staged
+whitespace check passed. No unrelated files or persistent resources were removed.
+
+Final same-auditor closeout review confirms attributes scope/checkout proof and current
+phase/gate status. Its remaining minor GOAL package-authority wording was verified and
+clarified: P01 package selection complete; P02 package selection awaits P02 authorization.
+Final structural checker passes 17 documents/93 cards; 20 negative controls passed in the
+closeout run. Forty-eight scoped staged paths passed whitespace/credential-pattern review;
+no unstaged tracked changes, preserved original vision/root ignore and empty baseline.
+
 ## Future evidence record template
 
 ```text

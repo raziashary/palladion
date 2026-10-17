@@ -1,13 +1,11 @@
 # Palladion master development plan
 
-Version 4, 2026-10-17. Scope anchor: [blueprint v0.2](../vision/palladion-blueprint-v2.md),
+Version 5, 2026-10-17. Scope anchor: [blueprint v0.2](../vision/palladion-blueprint-v2.md),
 especially “Locked decisions,” “Build plan,” “System invariants,” and the full walkthrough.
-The current user mandate is **P00 only**: create this development suite. P01–P08 describe
-future system work. Current refinement P00-T05 records the user's answers and review
-protocol. The user now authorizes verified documentation publishing to existing `origin/main`,
-then **WAIT_FOR_GO** for P01. Separately authorized machine repair and the user-created
-app `.venv` do not start P01. No product implementation, further app dependency setup or
-provider calls until explicit implementation GO. X01 remains deferred;
+Current mandate: explicit user GO for **P01 end-to-end**, including compatible package
+setup and deterministic foundation proof. P00's earlier hold/publishing approval is
+historical; no new main push is inferred. P02–P08 and X01 remain future scope.
+P01 needs no provider call. E-P01-001 records pre-phase findings and implementation proof;
 no UI phase is authorized. ADR-0011 governs; ADR-0013 selects uv and real Groq generation.
 
 ## Document authority and ownership
@@ -159,7 +157,7 @@ phase exit retains its original acceptance; completing children alone cannot wai
 
 Each atomic card specifies exact repository-relative **Files**, explicit **Depends**,
 bounded **Change** with its reader, and **Proof** (kind, gate, positive/negative observation).
-Paths are planned unless already in this documentation suite. No product file exists yet.
+Paths are planned unless already in this documentation suite. P01 foundation files now exist; later-phase paths remain planned until proved.
 Evidence kind means: DOC = structural/content check; UNIT = deterministic isolated behavior;
 INTEGRATION = actual local store/domain boundary; SMOKE = real API/script entry point;
 MEASUREMENT = recorded comparative result. These are proof requirements, not earned badges.
@@ -210,7 +208,10 @@ storage schema/settings, synthetic corpus. No model calls needed.
 | P01-T03 | SQLite schema, transaction/migration strategy and synthetic approval/case registry | WAL/FK checks; original bytes immutable; event/ACL producer read by resolver; isolated fixtures; G-SOURCE |
 | P01-T04 | Fictional approved old/current SOP, exceptions, drafts, two tenants and cases, policies/timestamps; gold annotation schema | Each golden names required refs/slots/time basis, allowed hypotheses, forbidden actions and disposition; T01–T24 fixtures catalogued; G-CONTRACT |
 
-Exit: deterministic corpus/contracts validated without LLMs; hand-authored labels reviewed.
+Exit: deterministic corpus/contracts and exact T01–T24 inventory validated without LLMs;
+fixture consistency reviewed and annotation status pilot-only. Offline foundation smoke
+uses actual persisted identity/membership/approval and original readers after reopen.
+P01 G-SOURCE/G-SECURITY are PARTIAL: indexing/citation API/revocation-after-search remain later.
 Meaningful research labels later require two annotators and adjudication; automation is not independent truth.
 
 ## P02 — Provenance-first retrieval (Slice 1)
@@ -436,121 +437,135 @@ order. Shared-file tasks are sequential. Each proof names the observation that c
 
 <a id="p01-t01-01"></a>
 
-- [ ] **P01-T01.01 — Apply the accepted synthetic approval contract**
+- [x] **P01-T01.01 — Apply the accepted synthetic approval contract**
   - **Files:** `palladion/docs/development/ADR_LOG.md`, `palladion/docs/development/RISKS_AND_OPEN_QUESTIONS.md`.
   - **Depends:** P00-T05.04.
   - **Change:** Read accepted ADR-0012 and map authenticated synthetic administrator events, separate uploader/approver grants and source checks into the implementation contract; do not reopen the answered choice.
   - **Proof:** DOC; [G-DOC](TESTING_GATES.md#g-doc-task-coverage); source metadata/registry/access consumers and negative self-approval case are specified under the accepted answer.
+  - **Evidence:** E-P01-001; Stored trusted administrator approval, separate actors/grants and negative self-approval are exercised through Registry; ADR-0012 direction unchanged. Single work audit and resolution verified at E-P01-001; broader multi-phase gates remain partial.
 
 <a id="p01-t01-02"></a>
 
-- [ ] **P01-T01.02 — Establish the uv environment, package and validation tooling**
-  - **Files:** `palladion/.gitignore`, `palladion/pyproject.toml`, `palladion/uv.lock`, `palladion/src/evidence_agent/__init__.py`, `palladion/docs/development/ADR_LOG.md`.
+- [x] **P01-T01.02 — Establish the uv environment, package and validation tooling**
+  - **Files:** `palladion/.gitignore`, `palladion/.gitattributes`, `palladion/pyproject.toml`, `palladion/uv.lock`, `palladion/src/evidence_agent/__init__.py`, `palladion/docs/development/ADR_LOG.md`, `palladion/docs/development/check_docs.py`.
   - **Depends:** P00-T05.04.
-  - **Change:** After explicit GO, verify uv and the existing user-created .venv inside C:/palladion/palladion; reuse it when compatible rather than recreate it. Select compatible Python/tooling/packages under delegated authority, pin uv.lock, and expose package version. Verify .venv/ protection before reuse or creation; own app-local .gitignore protection and preserve the root ignore rules. If absent, create the environment with uv venv only after protection is proven. Baseline gets a separate environment later.
+  - **Change:** After explicit GO, verify uv and the existing user-created .venv inside C:/palladion/palladion; reuse it when compatible rather than recreate it. Select compatible Python/tooling/packages under delegated authority, pin uv.lock, and expose package version. Preserve original fixture bytes across Git checkouts using app .gitattributes. Verify .venv/ protection before reuse or creation; own app-local .gitignore protection and preserve the root ignore rules. If absent, create the environment with uv venv only after protection is proven. Baseline gets a separate environment later.
   - **Proof:** SMOKE; [G-CONTRACT](TESTING_GATES.md#g-contract-task-coverage); uv version, app-local environment/import and configured validation commands run; git check-ignore proves app .venv protection before reuse or creation and locked sync is reproducible; no secret needed for setup.
+  - **Evidence:** E-P01-001; Existing uv environment reused; locked sync, version import, sdist/wheel and fresh non-editable/exact-wheel reader smoke pass. Single work audit and resolution verified at E-P01-001; broader multi-phase gates remain partial.
 
 <a id="p01-t01-03"></a>
 
-- [ ] **P01-T01.03 — Validate Groq settings and explicit model enablement**
-  - **Files:** `palladion/src/evidence_agent/settings.py`, `palladion/config/settings.yaml`, `palladion/.env.example`, `palladion/.gitignore`, `palladion/tests/test_goldens.py`.
+- [x] **P01-T01.03 — Validate Groq settings and explicit model enablement**
+  - **Files:** `palladion/src/evidence_agent/settings.py`, `palladion/config/settings.yaml`, `palladion/.env.example`, `palladion/.gitignore`, `palladion/tests/test_goldens.py`, `palladion/tests/test_settings.py`.
   - **Depends:** P01-T01.02.
   - **Change:** Load typed budgets and explicit live-call flags; select provider groq/model qwen/qwen3.8-27b per ADR-0013. Provide non-secret root .env loading instructions and ignore .venv/databases/traces. Key presence alone never enables requests.
   - **Proof:** UNIT; [G-CONTRACT](TESTING_GATES.md#g-contract-task-coverage); valid selected-model config loads; invalid/unknown config fails, disabled live flag denies dispatch despite credentials; root key never copied into app env/template.
+  - **Evidence:** E-P01-001; Twelve settings checks verify selected Groq config, unknown/type/budget rejection and disabled dispatch despite credential availability flag; no key loaded. Single work audit and resolution verified at E-P01-001; broader multi-phase gates remain partial.
 
 <a id="p01-t01-04"></a>
 
-- [ ] **P01-T01.04 — Document runnable development commands and safety boundaries**
+- [x] **P01-T01.04 — Document runnable development commands and safety boundaries**
   - **Files:** `palladion/README.md`.
   - **Depends:** P01-T01.03.
   - **Change:** Publish actual uv venv, locked install/check/start commands from the app directory, repository-root credential loading and explicit Groq enablement; distinguish synthetic operational fixtures from the real model API.
   - **Proof:** SMOKE; [G-CONTRACT](TESTING_GATES.md#g-contract-task-coverage); run documented package/check commands in isolated environment; no absent secret or unavailable entry point assumed.
+  - **Evidence:** E-P01-001; README commands and offline entry point run from the app directory; isolated installed-wheel reader proves packaged schema resource consumption. Single work audit and resolution verified at E-P01-001; broader multi-phase gates remain partial.
 
 #### P01-T02 execution tasks
 
 <a id="p01-t02-01"></a>
 
-- [ ] **P01-T02.01 — Define identity, evidence and typed error envelopes**
-  - **Files:** `palladion/src/evidence_agent/core/models.py`, `palladion/src/evidence_agent/core/errors.py`, `palladion/tests/test_goldens.py`.
+- [x] **P01-T02.01 — Define identity, evidence and typed error envelopes**
+  - **Files:** `palladion/src/evidence_agent/core/models.py`, `palladion/src/evidence_agent/core/errors.py`, `palladion/tests/test_goldens.py`, `palladion/tests/test_contracts.py`.
   - **Depends:** P01-T01.02.
   - **Change:** Define Principal, EvidenceRecord, source references and result/error envelopes with schema versions; store/tool readers retain types and provenance.
   - **Proof:** UNIT; [G-CONTRACT](TESTING_GATES.md#g-contract-task-coverage); valid round-trip preserves fields; invalid enums/extras and naive required timestamps rejected.
+  - **Evidence:** E-P01-001; Strict versioned envelope round trips and invalid enum/extra/naive-time rejection pass in test_contracts. Single work audit and resolution verified at E-P01-001; broader multi-phase gates remain partial.
 
 <a id="p01-t02-02"></a>
 
-- [ ] **P01-T02.02 — Define claims, decisions, observations, packets and reviews**
-  - **Files:** `palladion/src/evidence_agent/core/models.py`, `palladion/tests/test_goldens.py`.
+- [x] **P01-T02.02 — Define claims, decisions, observations, packets and reviews**
+  - **Files:** `palladion/src/evidence_agent/core/models.py`, `palladion/tests/test_goldens.py`, `palladion/tests/test_contracts.py`.
   - **Depends:** P01-T02.01.
   - **Change:** Add typed ClaimDraft, requirement origins, PolicyDecision, LiveObservation, packet, CriticReview and GateDecision shapes for later domain consumers.
   - **Proof:** UNIT; [G-CONTRACT](TESTING_GATES.md#g-contract-task-coverage); observed/reported/hypothesis distinctions survive serialization; missing provenance and invalid dispositions fail.
+  - **Evidence:** E-P01-001; Blueprint status/time-basis vocabulary, policy selection/trace prerequisites, reported/observed/hypothesis and packet/gate shapes verified by contract tests; later engines remain unbuilt. Single work audit and resolution verified at E-P01-001; broader multi-phase gates remain partial.
 
 <a id="p01-t02-03"></a>
 
-- [ ] **P01-T02.03 — Implement canonical source and namespace-scoped IDs**
+- [x] **P01-T02.03 — Implement canonical source and namespace-scoped IDs**
   - **Files:** `palladion/src/evidence_agent/core/ids.py`, `palladion/tests/test_ingest.py`, `palladion/tests/test_graph_identity.py`.
   - **Depends:** P01-T02.01.
   - **Change:** Derive stable revision/chunk/reference IDs from explicit identity and namespace; registry/search/graph later consume the same IDs.
   - **Proof:** UNIT; [G-SOURCE](TESTING_GATES.md#g-source-task-coverage); same immutable inputs repeat IDs, changed tenant/revision does not collide, label similarity cannot determine identity.
+  - **Evidence:** E-P01-001; Stable tenant/revision/span and verified/provisional identity tests pass; Registry consumes canonical digest/revision helpers. Single work audit and resolution verified at E-P01-001; broader multi-phase gates remain partial.
 
 <a id="p01-t02-04"></a>
 
-- [ ] **P01-T02.04 — Establish backend principal and case authorization**
+- [x] **P01-T02.04 — Establish backend principal and case authorization**
   - **Files:** `palladion/src/evidence_agent/security/access.py`, `palladion/tests/test_security.py`.
   - **Depends:** P01-T02.01.
   - **Change:** Implement synthetic principal/membership/grant checks for domain callers; model and packet identity fields cannot widen request scope.
   - **Proof:** UNIT; [G-SECURITY](TESTING_GATES.md#g-security-task-coverage); authorized operation passes; wrong tenant/case/role, swapped identity and revoked grants denied without existence leak.
+  - **Evidence:** E-P01-001; Current stored profile/membership callbacks consumed by Registry/CLI; tampered identity, wrong scope/grants/roles and revocation denied. Single work audit and resolution verified at E-P01-001; broader multi-phase gates remain partial.
 
 #### P01-T03 execution tasks
 
 <a id="p01-t03-01"></a>
 
-- [ ] **P01-T03.01 — Define registry, case-membership and audit persistence**
-  - **Files:** `palladion/src/evidence_agent/storage/schema.sql`, `palladion/tests/test_ingest.py`.
+- [x] **P01-T03.01 — Define registry, case-membership and audit persistence**
+  - **Files:** `palladion/src/evidence_agent/storage/schema.sql`, `palladion/src/evidence_agent/storage/registry.py`, `palladion/tests/test_ingest.py`.
   - **Depends:** P01-T01.01, P01-T02.02, P01-T02.03.
   - **Change:** Define blueprint registry/chunk/policy/event/memory/manifest/audit tables plus memberships/keys; store schema versions and consistent UTC semantics.
   - **Proof:** INTEGRATION; [G-SOURCE](TESTING_GATES.md#g-source-task-coverage); temporary SQLite accepts valid references and rejects invalid FK/status relationships; no existing database reset.
+  - **Evidence:** E-P01-001; Temporary SQLite enforces registry/status/FK/approval relationships; domain Registry consumes persisted principals/memberships/approvals. Single work audit and resolution verified at E-P01-001; broader multi-phase gates remain partial.
 
 <a id="p01-t03-02"></a>
 
-- [ ] **P01-T03.02 — Own SQLite connections, transactions and upgrades**
+- [x] **P01-T03.02 — Own SQLite connections, transactions and upgrades**
   - **Files:** `palladion/src/evidence_agent/storage/sqlite.py`, `palladion/tests/test_ingest.py`.
   - **Depends:** P01-T03.01.
   - **Change:** Apply WAL/FK and transactional initialization/upgrades under approved migration strategy; production connection reader reopens stored data.
-  - **Proof:** INTEGRATION; [G-SOURCE](TESTING_GATES.md#g-source-task-coverage); close/reopen preserves fixture rows, failed upgrade rolls back; migration tests use isolated temporary files.
+  - **Proof:** INTEGRATION; [G-SOURCE](TESTING_GATES.md#g-source-task-coverage); fresh schema initializes, successful populated upgrade preserves rows, close/reopen preserves fixture rows, failed upgrade rolls back; all tests use isolated temporary files.
+  - **Evidence:** E-P01-001; Fresh initialization, populated upgrade, failed transactional upgrade rollback, reopen and unchanged foreign/newer rejection tested on isolated files. Single work audit and resolution verified at E-P01-001; broader multi-phase gates remain partial.
 
 <a id="p01-t03-03"></a>
 
-- [ ] **P01-T03.03 — Implement write-once originals and verified range reads**
+- [x] **P01-T03.03 — Implement write-once originals and verified range reads**
   - **Files:** `palladion/src/evidence_agent/storage/originals.py`, `palladion/tests/test_ingest.py`.
   - **Depends:** P01-T03.02, P01-T02.03.
   - **Change:** Store immutable content-addressed bytes and exact range reads consumed later by citation resolver rather than model summaries.
   - **Proof:** INTEGRATION; [G-SOURCE](TESTING_GATES.md#g-source-task-coverage); readback hash/bytes match, overwrite/path escape/corrupt range fails without replacing previously cited content.
+  - **Evidence:** E-P01-001; Write-once SHA objects and exact byte/range readers pass corruption/escape/invalid-range/idempotency tests; approved CLI readbacks survive reopen. Single work audit and resolution verified at E-P01-001; broader multi-phase gates remain partial.
 
 #### P01-T04 execution tasks
 
 <a id="p01-t04-01"></a>
 
-- [ ] **P01-T04.01 — Author synthetic SOP revisions, exception and draft**
+- [x] **P01-T04.01 — Author synthetic SOP revisions, exception and draft**
   - **Files:** `palladion/data/demo/sop_2025.md`, `palladion/data/demo/sop_2026.md`, `palladion/data/demo/exception_appendix.md`, `palladion/data/demo/draft_memo.md`.
   - **Depends:** P01-T01.01, P01-T02.03.
   - **Change:** Write consistent fictional historical/current clauses, explicit exception and persuasive unapproved memo; approval remains outside document prose.
   - **Proof:** DOC; [G-CONTRACT](TESTING_GATES.md#g-contract-task-coverage); reviewer traces expected clauses; draft/old-only text cannot receive a gold current-authorization label.
+  - **Evidence:** E-P01-001; Four fictional source originals have validated clause byte spans/hashes and external approval metadata; draft remains unapproved. Single work audit and resolution verified at E-P01-001; broader multi-phase gates remain partial.
 
 <a id="p01-t04-02"></a>
 
-- [ ] **P01-T04.02 — Author case, policy and changing-observation fixtures**
+- [x] **P01-T04.02 — Author case, policy and changing-observation fixtures**
   - **Files:** `palladion/data/demo/sample_cases.json`, `palladion/config/policies/demo_reversal_v2.json`, `palladion/tests/test_goldens.py`.
   - **Depends:** P01-T04.01, P01-T02.02.
   - **Change:** Define two tenants/roles/cases, trusted/untrusted times, synthetic policy and mock snapshots for policy/live readers.
   - **Proof:** UNIT; [G-CONTRACT](TESTING_GATES.md#g-contract-task-coverage); valid fixtures resolve intended clauses; unknown source/time field and contradictory fixture assumptions fail validation.
+  - **Evidence:** E-P01-001; Two tenants, three cases/seven principals and seven timestamped/changing observations resolve valid policy/source references; malformed fields and impossible expectations rejected. Single work audit and resolution verified at E-P01-001; broader multi-phase gates remain partial.
 
 <a id="p01-t04-03"></a>
 
-- [ ] **P01-T04.03 — Validate gold labels and adversarial fixture inventory**
-  - **Files:** `palladion/data/demo/goldens.jsonl`, `palladion/tests/test_goldens.py`.
+- [x] **P01-T04.03 — Validate gold labels and adversarial fixture inventory**
+  - **Files:** `palladion/data/demo/goldens.jsonl`, `palladion/src/evidence_agent/core/fixtures.py`, `palladion/scripts/validate_foundation.py`, `palladion/tests/test_goldens.py`.
   - **Depends:** P01-T04.02.
   - **Change:** Encode scope, exact clauses, slots/time basis, policy/disposition, hypotheses and forbidden actions; catalog T01–T24 for evaluator.
-  - **Proof:** UNIT; [G-CONTRACT](TESTING_GATES.md#g-contract-task-coverage); every gold reference resolves, missing labels/impossible expected answers/duplicate IDs fail; annotation limits recorded.
+  - **Proof:** UNIT; [G-CONTRACT](TESTING_GATES.md#g-contract-task-coverage); every gold reference resolves, exact T01–T24 occur once; missing cases/labels, impossible expected answers and duplicate IDs fail. Offline CLI consumes real registry/source readers; annotation limits recorded.
+  - **Evidence:** E-P01-001; Exact T01–T24 once; missing/duplicate cases, wrong references/scopes/times and impossible answer labels rejected. PILOT only; independent research adjudication deferred. Single work audit and resolution verified at E-P01-001; broader multi-phase gates remain partial.
 
 ### Atomic tasks — P02
 

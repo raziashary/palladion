@@ -3,7 +3,9 @@
 Updated 2026-10-17. This is the canonical owner-answer record. All twelve Q01–Q12
 recommendation directions are accepted by the user's current instruction, with the
 explicit override: real Groq `qwen/qwen3.8-27b` instead of a fake-first runtime. Technical
-verification, measured values and deferred work remain unexecuted; approval is not proof.
+verification is recorded per phase: P01 foundation compatibility/consumers are now tested
+(E-P01-001); provider, retrieval and empirical research obligations remain unexecuted.
+Approval alone is not proof.
 
 ## How to read and edit decisions
 
@@ -481,7 +483,9 @@ Original answers/authority remain above; this amendment records the newer instru
 
 **My answer (editable):** Accept the recommendation, as part of the user's approval of all open-question recommendations.
 
-**Verification:** PLANNED; G-SOURCE/G-SECURITY must reject self-approval and unauthorized approvers.
+**Verification:** P01 subset verified at E-P01-001: persisted approval/readers reject
+self-approval and unauthorized approvers. Full G-SOURCE/G-SECURITY retain later P02/API/index
+obligations and remain PARTIAL.
 
 ## ADR-0013 — Q02 — uv and real Groq runtime generation
 
@@ -504,8 +508,9 @@ Original answers/authority remain above; this amendment records the newer instru
 **Verification:** VERIFY_AT_IMPLEMENTATION for account access, tool/schema behavior,
 quota and actual call. Correction: ~~uv is not on the current shell PATH~~ was the initial
 observation. Separate authorized machine repair installed working uv; the user created
-the app .venv and E-DOC-004 verifies existence/ignore protection. Pins/locked sync remain
-P01 proof. Deterministic fixtures do not substitute for real-model integration.
+the app .venv and E-DOC-004 verifies existence/ignore protection. E-P01-001 now verifies
+P01 pins, locked sync and installed-wheel compatibility on Python 3.14.7. Actual model
+integration remains P04 proof; deterministic fixtures cannot substitute for it.
 
 ## ADR-0014 — Q03 — Qdrant hybrid compatibility
 
@@ -723,6 +728,33 @@ Free-tier intent is not unlimited/guaranteed-zero-cost capacity. Before any enab
 verify account/model access and quotas, bound calls/tokens/time and record actual usage;
 never auto-upgrade billing or silently substitute a model. No live access checked here.
 
+## ADR-0024 — P01 deterministic foundation implementation
+
+**Status:** ACCEPTED; implementation details within explicit P01 GO.
+**Authority:** User delegates compatible packages and P01 implementation; blueprint permits Pydantic/SQLite and plan requires lifecycle/consumer proof.
+**Question:** How will P01 contracts, persistence and authorization be testable?
+**Why:** Pre-adversary found helper-only proof and missing lifecycle/catalog cases.
+**Options:** Pydantic versioned models and stdlib SQLite, or handwritten validation/custom persistence layers.
+**Recommendation:** Pydantic v2, safe PyYAML config, pytest/Ruff/mypy/build, uv locked dependencies and existing Python 3.14 if compatible. SQLite user_version and explicit transactional forward migrations, never reset/downgrade. Offline CLI consumes real registry/authorization/original methods.
+**What affects what:** P01 models/settings/storage/fixtures/CLI; no new agent tool, network model call, retrieval or HTTP API. Trusted stored profiles/memberships own access. Separate uploader/approver actors and grants; prose cannot approve itself. uv.lock records resolved pins.
+**My answer (editable):** Coordinator applies delegated compatible-package and P01 authority; no additional owner architectural choice inferred.
+**Verification:** E-P01-001 records 75 passing tests, strict typing/lint and offline
+consumer proof. Python 3.14.7 compatibility is observed; uv.lock pins runtime/dev tools,
+Hatchling 1.32.4 pins the builder. Corrected artifact and same-auditor resolution pass;
+P01 is complete. Explicit kind/source matching and T03 applicability consistency were
+added after review with failing negative controls; no new owner ADR decision is needed.
+
+**Amendment history:** Current explicit user GO authorizes P01 implementation and package
+setup; earlier P00 hold remains historical. Typed schema corrections align exact evidence,
+policy and live status vocabularies with blueprint contracts; no generic incomplete/unavailable
+collapse. Tool/time starting limits are explicit prototype config, not measured business policy.
+Final staged review found core.autocrlf=true; app .gitattributes marks original fixture
+Markdown as -text so Git preserves exact hashes/spans across checkout. This implements
+the existing immutable-source invariant, without changing global/repository git config.
+Sources: [Pydantic strict mode](https://docs.pydantic.dev/latest/concepts/strict_mode/),
+[uv locked sync](https://docs.astral.sh/uv/concepts/projects/sync/) and Python SQLite docs.
+All provider-specific compatibility remains deferred to enabled P04 proof.
+
 ## Future decision template
 
 ```text
@@ -739,4 +771,4 @@ Verification: planned proof, result, evidence and execution/deferred state
 Amendment history: old answer/date/reason and superseding decision
 ```
 
-Next free ADR number: 0024. Accepted directions do not grant implementation GO.
+Next free ADR number: 0025. Accepted directions do not grant implementation GO.

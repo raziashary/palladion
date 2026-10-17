@@ -165,6 +165,37 @@ recognized AGENTS only despite these being existing repository navigation/protec
 artifacts. Narrowly permit those two files for P00 only, preserving all other ownership
 bounds; negative controls reject unrelated root files and runtime ownership of root README.
 
+## L015 — P01 integration needs a production reader and failing negative controls
+
+- Pre-phase audit found no concrete fixture/registry consumer or exact catalog completeness
+  guard. Added offline CLI using real stored authorization/approval/bytes after reopen;
+  no P02 ingestion/API shortcut. Multi-phase G-SOURCE/G-SECURITY remain PARTIAL.
+- Integration checks caught evidence/policy status vocabulary drift, naive/lexical timestamp
+  handling and idempotent metadata aliases. Aligned blueprint enums and UTC metadata;
+  source ACL and grant/membership revocation are read from actual stored state.
+- Initial fixtures failed because BI data_as_of is an envelope timestamp, not a data
+  payload field; later split metadata/source models briefly failed typed bundle assembly.
+  Worker corrected source-vs-envelope validation and constructed computed typed sources.
+  T01/T02 now distinguish current event time from historical event/current handling.
+- SQLite rejection initially enabled WAL before establishing DB ownership. Preflight now
+  rejects foreign/newer/incomplete DBs first; byte hashes and no-sidecar tests verify this.
+- Windows UTF-8 reads are explicit. Ruff exposed one pre-existing checker blank-line issue;
+  corrected without changing checker semantics, and expanded navigation read to app README.
+- Latest phase suite: 75 tests pass; no claim of human-annotated gold, model quality or
+  future temporal/gate/graph behavior is inferred. E-P01-001 retains observations and limits.
+
+## L016 — Count and label checks do not establish semantic consistency
+
+The single P01 work auditor found that two approved-candidate labels did not prove
+policy overlap, and individually valid evidence/source enums could disagree. Fixture
+validation must check applicability relationships and trusted instants; evidence envelopes
+must bind their kind to the source reference kind. Positive controls must still accept
+the four intended pairs and the deliberately injected overlapping policy fixture.
+E-P01-001 records fixes, deliberate failing mutations and final resolution evidence.
+Two stale GO statements also demonstrated why current status needs a full document sweep.
+Final staging exposed a Windows autocrlf risk for hashed source originals. App attributes
+now preserve those bytes; a fresh index checkout must pass actual fixture/CLI reads.
+
 ## New learning entry template
 
 ```text

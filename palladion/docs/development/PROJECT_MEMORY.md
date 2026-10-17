@@ -15,7 +15,7 @@ Updated 2026-10-17. Navigation aid only; user/vision/source/ADRs retain authorit
 - Planned stack: Python 3.11+, FastAPI, SQLite canonical registry/memory, Qdrant dense/BM25,
   optional Neo4j source graph, safe JSON policy evaluator, read-only mock adapters.
   User selected uv and real Groq `qwen/qwen3.8-27b`; package choices are delegated after GO.
-  No app dependencies are installed by this task; exact pins/embedding model remain to verify.
+  P01 dependencies are installed/locked; embedding and retrieval pins remain P02 work.
 - Evidence authority belongs to authenticated immutable sources, valid executed policy
   traces and scoped observations. Model/critic/search/graph/memory are not new authority.
 - User validity for reported facts differs from owner-defined observation freshness.
@@ -36,29 +36,23 @@ Read root AGENTS → [master plan task protocol](MASTER_DEV_PLAN.md#task-reading
 
 ## Current state and next action
 
-Final E-DOC-004 amendment is DONE: full-blueprint future-review contract, fresh full-vision
-pre/post review and same-auditor verified status resolution; current G-DOC PASS with
-93 cards/20 negative controls. Original completion below is historical; no P01 task is active.
+P01 is complete under explicit GO from 12dfc3f; package isolation proof and the single
+post-audit resolution pass at E-P01-001. Existing Python 3.14.7 environment is reused;
+uv.lock pins dependencies (Pydantic 2.14.1, PyYAML 6.0.3, pytest 9.1.1,
+Ruff 0.17.1, mypy 1.20.2); build backend is pinned Hatchling 1.32.4.
+Source: strict contracts/errors/IDs/fixture loader, settings, trusted access callbacks,
+SQLite migrations/registry and content-addressed originals. Offline CLI uses actual
+persisted authorization/approval and byte readers, not SQL-only helper assertions.
+75 tests, strict typing/lint and optimized smoke pass; all three audit findings resolved.
+Exact installed-wheel/locked isolated smoke passes. Wait for P02 authorization.
+PILOT fixtures: 4 sources, 3 cases/7 principals, 7 observations and exact T01–T24.
+No provider call, P02 subsystem, human gold adjudication or research result exists.
 
-Earlier verified checkpoints `26015fd`/`bc44932`; original P00-T05 records all accepted
-answers, structured editable ADRs and uv/Groq/review changes (ADR-0011–ADR-0023).
-Historical G-DOC PASS at E-DOC-003: 23 structured ADRs, 93 cards, 18 negative controls, coordinator
-and single post-auditor full-vision reviews complete with all findings resolved. Nine
-documentation children checked, 84 system children planned. Current docs checkpoint is
-the commit containing this record. No active implementation; WAIT_FOR_GO.
-All Q01–Q12 recommendation directions answered; verification and deferred work remain.
-No product code/research result exists; system gates NOT_RUN, X01 DEFERRED.
-
-Current amendment: user explicitly approves verified docs publishing to existing origin/main,
-then **WAIT_FOR_GO** for P01; no app dependency setup, provider call or implementation.
-Separate authorized machine repair installed working pip/uv; the user created
-`C:/palladion/palladion/.venv`. Its interpreter exists and root ignore rules protect it
-(E-DOC-004). P01 verifies/reuses the environment and proves compatible locked packages;
-baseline later has a separate environment. Setup alone does not close P01-T01.02.
-Credential file stays at repository-root `.env`, ignored and unread by this task; never
-copy it into the app/agents. At initial check root `.gitignore` was user-owned/untracked;
-uv was not found on shell PATH at the initial check; later repair supersedes that observation.
-Publish the owner's existing root ignore rules unchanged; leave unrelated local editor files alone.
+P00 completion/old hold is historical at E-DOC-001–E-DOC-004. P01 GO supersedes only
+that hold for this phase. Source/security gates remain PARTIAL until later consumers;
+no P01 check establishes full message/runtime behavior. Root .env was never read or
+copied; app .venv is reused/ignored. Unrelated .vscode remains untouched. New main
+publishing requires explicit user approval; P02 is outside current scope.
 
 ## Open risks to retain
 

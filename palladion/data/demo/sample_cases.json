@@ -1,0 +1,402 @@
+{
+  "schema_version": 1,
+  "annotation_status": "PILOT",
+  "annotation_note": "Synthetic blueprint inventory only. No independent human ratification or adjudication is claimed.",
+  "principals": [
+    {
+      "principal_id": "admin-a",
+      "tenant_id": "tenant-a",
+      "roles": [
+        "admin"
+      ],
+      "allowed_case_ids": [
+        "case-42",
+        "case-43"
+      ],
+      "grants": [
+        "case:read",
+        "document:approve",
+        "source:read"
+      ]
+    },
+    {
+      "principal_id": "uploader-a",
+      "tenant_id": "tenant-a",
+      "roles": [
+        "uploader"
+      ],
+      "allowed_case_ids": [
+        "case-42",
+        "case-43"
+      ],
+      "grants": [
+        "case:read",
+        "document:upload",
+        "source:read"
+      ]
+    },
+    {
+      "principal_id": "reader-a",
+      "tenant_id": "tenant-a",
+      "roles": [
+        "reader"
+      ],
+      "allowed_case_ids": [
+        "case-42"
+      ],
+      "grants": [
+        "case:read",
+        "source:read"
+      ]
+    },
+    {
+      "principal_id": "reader-a-limited",
+      "tenant_id": "tenant-a",
+      "roles": [
+        "reader"
+      ],
+      "allowed_case_ids": [
+        "case-42"
+      ],
+      "grants": [
+        "case:read",
+        "source:read"
+      ]
+    },
+    {
+      "principal_id": "admin-b",
+      "tenant_id": "tenant-b",
+      "roles": [
+        "admin"
+      ],
+      "allowed_case_ids": [
+        "case-88"
+      ],
+      "grants": [
+        "case:read",
+        "document:approve",
+        "source:read"
+      ]
+    },
+    {
+      "principal_id": "uploader-b",
+      "tenant_id": "tenant-b",
+      "roles": [
+        "uploader"
+      ],
+      "allowed_case_ids": [
+        "case-88"
+      ],
+      "grants": [
+        "case:read",
+        "document:upload",
+        "source:read"
+      ]
+    },
+    {
+      "principal_id": "reader-b",
+      "tenant_id": "tenant-b",
+      "roles": [
+        "reader"
+      ],
+      "allowed_case_ids": [
+        "case-88"
+      ],
+      "grants": [
+        "case:read",
+        "source:read"
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "case_id": "case-42",
+      "tenant_id": "tenant-a",
+      "product": "QR_DEMO",
+      "transaction_class": "DEMO_STANDARD",
+      "transaction_id": "TX-DEMO-102",
+      "opened_at": "2026-10-17T06:00:00Z",
+      "allowed_principal_ids": [
+        "admin-a",
+        "uploader-a",
+        "reader-a",
+        "reader-a-limited"
+      ]
+    },
+    {
+      "case_id": "case-43",
+      "tenant_id": "tenant-a",
+      "product": "QR_DEMO",
+      "transaction_class": "DEMO_STANDARD",
+      "transaction_id": "TX-DEMO-143",
+      "opened_at": "2026-10-17T06:20:00Z",
+      "allowed_principal_ids": [
+        "admin-a",
+        "uploader-a"
+      ]
+    },
+    {
+      "case_id": "case-88",
+      "tenant_id": "tenant-b",
+      "product": "QR_DEMO",
+      "transaction_class": "DEMO_STANDARD",
+      "transaction_id": "TX-DEMO-288",
+      "opened_at": "2026-10-17T06:30:00Z",
+      "allowed_principal_ids": [
+        "admin-b",
+        "uploader-b",
+        "reader-b"
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "source_id": "SOP-2025-A",
+      "path": "data/demo/sop_2025.md",
+      "family_id": "DEMO.DISPUTE.SOP",
+      "tenant_id": "tenant-a",
+      "revision": "2025.1",
+      "approval_state": "APPROVED",
+      "approval_record_id": "approval-admin-a-2025",
+      "approved_by": "admin-a",
+      "approved_at": "2025-01-01T00:00:00Z",
+      "valid_from": "2025-01-01T00:00:00Z",
+      "valid_to": "2026-07-01T00:00:00Z",
+      "case_ids": [
+        "case-42",
+        "case-43"
+      ],
+      "supersedes": [],
+      "visibility": "tenant"
+    },
+    {
+      "source_id": "SOP-2026-B",
+      "path": "data/demo/sop_2026.md",
+      "family_id": "DEMO.DISPUTE.SOP",
+      "tenant_id": "tenant-a",
+      "revision": "2026.2",
+      "approval_state": "APPROVED",
+      "approval_record_id": "approval-admin-a-2026",
+      "approved_by": "admin-a",
+      "approved_at": "2026-06-20T12:00:00Z",
+      "valid_from": "2026-07-01T00:00:00Z",
+      "valid_to": null,
+      "case_ids": [
+        "case-42",
+        "case-43"
+      ],
+      "supersedes": [
+        "SOP-2025-A"
+      ],
+      "visibility": "tenant"
+    },
+    {
+      "source_id": "EX-2026-04",
+      "path": "data/demo/exception_appendix.md",
+      "family_id": "DEMO.DISPUTE.SOP.EXCEPTIONS",
+      "tenant_id": "tenant-a",
+      "revision": "2026.04",
+      "approval_state": "APPROVED",
+      "approval_record_id": "approval-admin-a-ex-2026-04",
+      "approved_by": "admin-a",
+      "approved_at": "2026-06-25T09:00:00Z",
+      "valid_from": "2026-06-25T09:00:00Z",
+      "valid_to": null,
+      "case_ids": [
+        "case-42"
+      ],
+      "allowed_principal_ids": [
+        "admin-a",
+        "uploader-a",
+        "reader-a"
+      ],
+      "supersedes": [],
+      "visibility": "case"
+    },
+    {
+      "source_id": "MEMO-DRAFT-1",
+      "path": "data/demo/draft_memo.md",
+      "family_id": "DEMO.DISPUTE.SOP.PROPOSALS",
+      "tenant_id": "tenant-a",
+      "revision": "draft-1",
+      "approval_state": "DRAFT",
+      "approval_record_id": null,
+      "approved_by": null,
+      "approved_at": null,
+      "valid_from": null,
+      "valid_to": null,
+      "case_ids": [
+        "case-42",
+        "case-43"
+      ],
+      "supersedes": [],
+      "visibility": "tenant"
+    }
+  ],
+  "observations": [
+    {
+      "observation_id": "obs-transaction-102-v1",
+      "case_id": "case-42",
+      "tenant_id": "tenant-a",
+      "operation": "get_transaction_status",
+      "status": "OK",
+      "source_system": "mock_transaction_api",
+      "data": {
+        "transaction_id": "TX-DEMO-102",
+        "state": "FAILED",
+        "transaction_occurred_at": "2026-08-15T10:20:00Z"
+      },
+      "source_event_at": "2026-08-15T10:20:00Z",
+      "observed_at": "2026-10-17T06:42:00Z",
+      "data_as_of": null,
+      "trusted_fields": [
+        "transaction_occurred_at",
+        "state"
+      ],
+      "sequence": 1
+    },
+    {
+      "observation_id": "obs-settlement-102-v1",
+      "case_id": "case-42",
+      "tenant_id": "tenant-a",
+      "operation": "get_settlement_status",
+      "status": "TIMEOUT",
+      "source_system": "mock_settlement_service",
+      "data": {},
+      "source_event_at": null,
+      "observed_at": "2026-10-17T06:43:00Z",
+      "data_as_of": null,
+      "trusted_fields": [],
+      "sequence": 1
+    },
+    {
+      "observation_id": "obs-settlement-102-v2",
+      "case_id": "case-42",
+      "tenant_id": "tenant-a",
+      "operation": "get_settlement_status",
+      "status": "OK",
+      "source_system": "mock_settlement_service",
+      "data": {
+        "settlement_state": "UNSETTLED"
+      },
+      "source_event_at": "2026-10-17T06:44:00Z",
+      "observed_at": "2026-10-17T06:44:10Z",
+      "data_as_of": null,
+      "trusted_fields": [
+        "settlement_state"
+      ],
+      "sequence": 2
+    },
+    {
+      "observation_id": "obs-bi-143-old",
+      "case_id": "case-43",
+      "tenant_id": "tenant-a",
+      "operation": "get_merchant_summary",
+      "status": "OK",
+      "source_system": "mock_curated_bi",
+      "data": {
+        "transaction_id": "TX-DEMO-143",
+        "result": "NOT_FOUND"
+      },
+      "source_event_at": null,
+      "observed_at": "2026-10-17T06:45:00Z",
+      "data_as_of": "2026-10-16T00:00:00Z",
+      "trusted_fields": [
+        "result",
+        "data_as_of"
+      ],
+      "sequence": 1
+    },
+    {
+      "observation_id": "obs-transaction-143-timeout",
+      "case_id": "case-43",
+      "tenant_id": "tenant-a",
+      "operation": "get_transaction_status",
+      "status": "TIMEOUT",
+      "source_system": "mock_transaction_api",
+      "data": {},
+      "source_event_at": null,
+      "observed_at": "2026-10-17T06:45:05Z",
+      "data_as_of": null,
+      "trusted_fields": [],
+      "sequence": 1
+    },
+    {
+      "observation_id": "obs-transaction-102-untrusted-time",
+      "case_id": "case-42",
+      "tenant_id": "tenant-a",
+      "operation": "user_report",
+      "status": "REPORTED",
+      "source_system": "customer_text",
+      "data": {
+        "transaction_occurred_at": "2025-06-20T11:30:00Z"
+      },
+      "source_event_at": null,
+      "observed_at": "2026-10-17T06:40:00Z",
+      "data_as_of": null,
+      "trusted_fields": [],
+      "sequence": 0
+    },
+    {
+      "observation_id": "obs-transaction-143-historical",
+      "case_id": "case-43",
+      "tenant_id": "tenant-a",
+      "operation": "get_transaction_status",
+      "status": "OK",
+      "source_system": "mock_transaction_api",
+      "data": {
+        "transaction_id": "TX-DEMO-143",
+        "state": "FAILED",
+        "transaction_occurred_at": "2025-06-20T11:30:00Z"
+      },
+      "source_event_at": "2025-06-20T11:30:00Z",
+      "observed_at": "2025-06-20T11:31:00Z",
+      "data_as_of": null,
+      "trusted_fields": [
+        "transaction_id",
+        "state",
+        "transaction_occurred_at"
+      ],
+      "sequence": 0
+    }
+  ],
+  "mock_snapshots": {
+    "case-42": {
+      "versions": [
+        {
+          "snapshot_id": "case-42-v1",
+          "transaction": "obs-transaction-102-v1",
+          "settlement": "obs-settlement-102-v1",
+          "recorded_at": "2026-10-17T06:43:00Z"
+        },
+        {
+          "snapshot_id": "case-42-v2",
+          "transaction": "obs-transaction-102-v1",
+          "settlement": "obs-settlement-102-v2",
+          "recorded_at": "2026-10-17T06:44:10Z"
+        }
+      ],
+      "changing": true
+    },
+    "case-43": {
+      "versions": [
+        {
+          "snapshot_id": "case-43-v0",
+          "transaction": "obs-transaction-143-historical",
+          "recorded_at": "2025-06-20T11:31:00Z"
+        },
+        {
+          "snapshot_id": "case-43-v1",
+          "bi": "obs-bi-143-old",
+          "transaction": "obs-transaction-143-timeout",
+          "recorded_at": "2026-10-17T06:45:05Z"
+        }
+      ],
+      "changing": true
+    },
+    "case-88": {
+      "versions": [],
+      "changing": false
+    }
+  }
+}

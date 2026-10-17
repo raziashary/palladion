@@ -26,10 +26,7 @@ Begin with the master plan's reading protocol and the current progress record.
 Authority, update rules, and conflict handling are defined once in the master plan.
 Do not create competing plans, memories, or unlinked status files elsewhere.
 
-Current scope is verified documentation closeout/publishing; implementation is **WAIT_FOR_GO**. User
-selected uv and real Groq `qwen/qwen3.8-27b` and authorized compatible package choices
-after GO. Every phase requires a pre-phase Luna High adversary and, after tests/gates,
-one Luna High work auditor. Both reviewers must read the complete blueprint and report
-coverage using the master plan's [blueprint review contract](development/MASTER_DEV_PLAN.md#blueprint-review-contract-for-both-reviewers).
-The current final gate checks all development docs against the entire blueprint by both
-coordinator and that single auditor. Main publishing is approved; P01 still requires GO.
+Current scope is P01 end-to-end under explicit GO. Foundation code/locked packaging,
+contracts/access/storage and synthetic fixtures are verified complete, with 75 tests,
+installed-wheel smoke and single independent audit/resolution at E-P01-001. P02 and provider calls are outside this phase.
+Both phase reviewers read the full blueprint under the master review contract.
