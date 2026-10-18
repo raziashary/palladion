@@ -54,11 +54,11 @@ Unanswered: failover and pairing rule (OQ02), credentials (OQ01) and the other r
 
 ## Blocked or waiting cards (the checker prints these as notices)
 
-B01-T05.01 waits on BADR-0008 and OQ02; B01-T05.02 on OQ01; B02-T07.02 on OQ08; B04-T01.02 on OQ04; B04-T02.02 on OQ05;
-B04-T03.01 on OQ03; B06-T01.01 to B06-T03.01 on OQ06; B07-T03.01 on OQ07; B07-T04.01 on OQ11; B08-T03.01 on OQ10;
+B01-T05.01 needs the model-selection rule implemented per BADR-0008 (answered); B01-T05.02 on OQ01; B02-T07.02 on OQ08; B04-T01.02 on OQ04; B04-T02.02 on OQ05;
+B04-T03.01 on OQ03; B06-T01.01 to B06-T03.01 on OQ06; B07-T03.01 on OQ07; B07-T04.01 on Palladion shipping a critic switch (OQ11 answered: FEATURE_NOT_SUPPORTED until then); B08-T03.01 on OQ10;
 B08-T07.01 on OQ09; B08-T01.02 on the paraphrase gate. Phase B01 does not start until the owner says GO.
 
 ## Next action
 
-Report to the owner and wait for GO on B01. B01 starts with the pre-phase Haiku 5.5 adversary. Open decisions
-OQ01, OQ02 and OQ11 are the most consequential for the first measurements.
+Report to the owner and wait for GO on B01. B01 starts with the pre-phase Haiku 5.5 adversary. Of the open decisions,
+OQ01 (credentials) is the most consequential for the first measurements.

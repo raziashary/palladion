@@ -52,7 +52,7 @@ show the decision working, and is kept separate from acceptance.
 
 **What affects what:** B04-T03.01, B06-T04.01, B07-T04.01; BG-ADAPTER and BG-SECURITY static import check; risk BR01.
 
-**My answer (editable):** Accepted as stated; Palladion is developed by another contributor and changes concurrently.
+**My answer (editable):** Accepted as stated; Palladion is developed by another contributor and changes concurrently. Amendment 2026-10-18 (OQ11): E3, E4 and critic-dependent ablations stay FEATURE_NOT_SUPPORTED until Palladion documents a critic-off switch and a real critic; the benchmark never edits Palladion to obtain one.
 
 **Verification:** A static scan in the adapter tests finds no import of the Palladion package; run artifacts contain no gold fields (BG-ADAPTER, BG-TRACKA).
 
@@ -158,9 +158,9 @@ show the decision working, and is kept separate from acceptance.
 
 ## BADR-0008 — Failover and pairing policy for the generator pool
 
-**Status:** PROPOSED; 2026-10-18.
+**Status:** ACCEPTED; 2026-10-18.
 
-**Authority:** Coordinator proposal derived from protocol §3.1 and §14.2; not yet answered by the owner.
+**Authority:** Owner answer in chat, 2026-10-18, accepting the coordinator's recommendation (derived from protocol §3.1 and §14.2).
 
 **Question:** When a rate limit forces a model switch, how do we keep paired arm comparisons valid?
 
@@ -172,7 +172,7 @@ show the decision working, and is kept separate from acceptance.
 
 **What affects what:** B01-T05.01, B05-T05.01, B08-T03.01; statistics clustering; risk BR04; question OQ02.
 
-**My answer (editable):** OPEN — not yet answered. Until answered, development pilots record the model per call and make no paired claims across differing models.
+**My answer (editable):** One model per question across all arms, chosen before any arm runs (2026-10-18). Mixed-model pairs, if they still occur, stay in the analysis with the model as a stratum; none are excluded.
 
 **Verification:** Track B and C tests show a mixed-model pair is flagged and retained, with the model recorded as a stratum (BG-TRACKB, BG-TRACKC, BG-FAIR).
 

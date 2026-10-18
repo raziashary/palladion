@@ -9,7 +9,7 @@ questions need the owner's answer before the named task. Decisions are recorded 
 | ID | Question and why it matters | Needed before | Linked decision | State |
 |---|---|---|---|---|
 | OQ01 | How will the Groq key reach the benchmark (benchmark-local `.env`, per-command variable)? No provider call happens until this is answered | B01-T05.02 | BADR-0013 | OPEN |
-| OQ02 | Failover and pairing rule when a Groq model is rate limited (one model per question across all arms is recommended) | B01-T05.01 | BADR-0008 | OPEN |
+| OQ02 | Failover and pairing rule when a Groq model is rate limited (one model per question across all arms is recommended) | B01-T05.01 | BADR-0008 | ANSWERED 2026-10-18: one model per question across all arms, fixed before arms run |
 | OQ03 | Which Palladion interface does the R7a/E3/E4 adapter call, and is it stable enough to pin? Read Palladion's live source when B04 starts; its API is still changing | B04-T03.01 | BADR-0002 | OPEN |
 | OQ04 | Embedding model for R1–R3: use Palladion's pinned embeddings for parity, or an independent model? The protocol asks for parity where possible | B04-T01.02 | BADR-0002 | OPEN |
 | OQ05 | Which cross-encoder is the frozen R3 reranker, and may it be downloaded (size and source stated first)? | B04-T02.02 | BADR-0005 | OPEN |
@@ -18,7 +18,7 @@ questions need the owner's answer before the named task. Decisions are recorded 
 | OQ08 | Who are the two human annotators for the stratified label audit and the claim-level audits? Automation alone is not independent truth | B02-T07.02 | BADR-0006 | OPEN |
 | OQ09 | Dataset license for the synthetic fixtures and the generator code | B08-T07.01 | BADR-0006 | OPEN |
 | OQ10 | Primary confirmatory pairings (protocol suggests R7 vs R3 and E4 vs E3), equivalence margin and multiplicity procedure | B08-T03.01 | BADR-0012 | OPEN |
-| OQ11 | Palladion's settings cannot turn the critic off (minimum one call), its independent critic is a later phase of its own plan, and it exposes no switch for the gate, preflight, authority check, parser or temporal resolver. Will its contributor add documented switches, or are E3/E4 and most ablations FEATURE_NOT_SUPPORTED? The benchmark does not edit Palladion | B07-T04.01 | BADR-0002 | OPEN |
+| OQ11 | Palladion's settings cannot turn the critic off (minimum one call), its independent critic is a later phase of its own plan, and it exposes no switch for the gate, preflight, authority check, parser or temporal resolver. Will its contributor add documented switches, or are E3/E4 and most ablations FEATURE_NOT_SUPPORTED? The benchmark does not edit Palladion | B07-T04.01 | BADR-0002 | ANSWERED 2026-10-18: FEATURE_NOT_SUPPORTED until Palladion documents the switch and a real critic |
 
 ## Risks
 

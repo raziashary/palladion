@@ -454,9 +454,10 @@ def main() -> int:
     print(f"PASS: {len(documents)} Markdown files; local links, anchors and stable IDs resolve; "
           + ", ".join(f"{n} {k}" for k, n in counts.items()) + " mapped")
     statuses = dict(re.findall(r"^## (BADR-\d{4}) [^\n]*\n\n\*\*Status:\*\* (\w+)", documents[DEV + "ADR_LOG.md"], re.MULTILINE))
+    answered = set(re.findall(r"^\| (OQ\d{2}) \|.*\| ANSWERED", documents[DEV + "RISKS_AND_OPEN_QUESTIONS.md"], re.M))
     for ident, fields in atomic_tasks(plan).items():
         blockers = sorted({d for d in re.findall(r"\b(?:BADR-\d{4}|OQ\d{2})\b", fields.get("Depends", ""))
-                           if d.startswith("OQ") or statuses.get(d) != "ACCEPTED"})
+                           if (d.startswith("OQ") and d not in answered) or (d.startswith("BADR") and statuses.get(d) != "ACCEPTED")})
         if blockers and not state.get(ident):
             print(f"NOTICE: {ident} waits on unanswered {', '.join(blockers)}")
     print(f"PASS: {len(state)} atomic tasks ({sum(state.values())} checked); fields, acyclic dependencies and "

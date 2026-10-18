@@ -20,8 +20,7 @@ Updated 2026-10-18. Navigation aid only; the user, the protocol, source and ADRs
 
 ## Locked decisions and open items
 
-Accepted: BADR-0001–0005, 0007, 0009–0012. Proposed and unanswered: BADR-0006 (phase breakdown), BADR-0008 (failover and pairing),
-BADR-0013 (credentials). Open questions OQ01–OQ10 in [risks and open questions](RISKS_AND_OPEN_QUESTIONS.md).
+Accepted: BADR-0001–0005, 0007–0012. Proposed and unanswered: BADR-0006 (phase breakdown), BADR-0013 (credentials). BADR-0008 accepted 2026-10-18 (one model per question). Open questions OQ01–OQ11 in [risks and open questions](RISKS_AND_OPEN_QUESTIONS.md).
 
 ## Reading order for a fresh session
 
