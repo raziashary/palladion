@@ -1,0 +1,20 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+
+# Environments and caches
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Generated data and run outputs live outside git (see docs/development/PROJECT_MAP.md)
+artifacts/
+
+# Build output
+dist/
+build/
+*.egg-info/
