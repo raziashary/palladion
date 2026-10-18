@@ -226,3 +226,58 @@ def test_t03_conflict_event_must_be_backed_by_same_case_observation(tmp_path: Pa
 
     with pytest.raises(FixtureValidationError, match="T03 overlap without precedence"):
         load_fixtures(app)
+
+
+@pytest.mark.parametrize("query_id", ["T09", "T22"])
+def test_p04_actual_domain_gate_never_releases_golden_forbidden_inference(p03, query_id):
+    import asyncio
+    from datetime import datetime
+
+    from evidence_agent.agent.draft import Claim, Draft
+    from evidence_agent.agent.gate import release
+    from evidence_agent.agent.tools import Tools
+    from evidence_agent.live.contracts import Snapshot
+    from evidence_agent.live.gateway import read_scope
+    from evidence_agent.memory.store import CaseStore
+    from evidence_agent.retrieval.evidence import RequestLedger
+
+    from .test_agent_budget import make_runtime
+    golden = next(g for g in load_fixtures(APP_ROOT).goldens if g.query_id == query_id)
+    fixture = make_runtime(p03)
+    principal = p03.registry.access.authenticate(golden.principal_scope.principal_id)
+    scope = read_scope(p03.registry, principal, golden.case_id)
+    fixture.store = CaseStore(p03.registry, principal, golden.case_id)
+    fixture.ledger = RequestLedger(fixture.ledger.search, principal, golden.case_id, fixture.ledger.trace_id,
+        {key: value.max_age_seconds for key, value in p03.config.operations.items()})
+    fixture.tools = Tools(fixture.ledger, fixture.tools.gateway, fixture.store)
+    async def reads():
+        transaction = await fixture.tools.execute("lookup_live_data", json.dumps({
+            "operation":"get_transaction_status", "target_id":scope.targets["get_transaction_status"]}))
+        if query_id == "T09":
+            policy = await fixture.tools.execute("evaluate_policy", json.dumps({
+                "family_id":"DEMO.REVERSAL.CHECK", "evidence_ids":[transaction["data"]["evidence_id"]]}))
+            assert policy["data"]["status"] == "INCOMPLETE_INPUT"
+            return Claim(id="fact", type="OBSERVED_FACT", text="typed observation",
+                evidence_ids=(transaction["data"]["evidence_id"],), field="state", value="FAILED")
+        bi = await fixture.tools.execute("lookup_live_data", json.dumps({
+            "operation":"get_merchant_summary", "target_id":scope.targets["get_merchant_summary"]}))
+        assert bi["data"]["status"] == "STALE_DATA"
+        return Claim(id="fact", type="OBSERVED_FACT", text="historical BI fact",
+            evidence_ids=(bi["data"]["evidence_id"],), field="result", value="NOT_FOUND",
+            temporal_use="HISTORICAL", snapshot_as_of=datetime.fromisoformat(golden.setup["bi_data_as_of"]))
+    if query_id == "T22":
+        fixture.adapter.snapshots[("get_transaction_status",scope.targets["get_transaction_status"])] = (Snapshot(status="TIMEOUT"),)
+        fixture.adapter.snapshots[("get_merchant_summary",scope.targets["get_merchant_summary"])] = (Snapshot(status="OK",
+            data={"merchant_id":scope.targets["get_merchant_summary"],"result":"NOT_FOUND"},
+            data_as_of=datetime.fromisoformat(golden.setup["bi_data_as_of"])),)
+    fact = asyncio.run(reads())
+    action = Claim(id="blocked", type="HYPOTHESIS", text="Reverse immediately; transaction absent everywhere.")
+    result = release(Draft(claims=(fact, action), answer_kind="INFORMATIONAL"), fixture.ledger)
+    assert result["disposition"] == golden.expected_disposition
+    assert result["_blocked_claim_ids"] == ["blocked"]
+    assert "Reverse immediately" not in str(result["verified_claims"])
+    if query_id == "T09":
+        assert "settlement_state" in result["missing_requirements"]
+    else:
+        assert "Historical mock_curated_bi" in result["verified_claims"][0]["text"]
+        assert "does not establish current state" in result["verified_claims"][0]["text"]

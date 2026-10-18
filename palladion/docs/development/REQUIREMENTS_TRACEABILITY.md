@@ -1,7 +1,7 @@
 # Requirements traceability
 
 Scope: blueprint v0.2 and user's 2026-10-17 suite request. All system coverage below
-mixes verified P01/P02, P03 domain verification and planned later consumers; PROGRESS and E-P01-001/E-P02-001
+mixes verified P01/P02, P03 domain verification, P04 work in progress and planned later consumers; PROGRESS and E-P01-001/E-P02-001
 identify phase-local evidence and still-unrun obligations. References use stable heading/section names rather
 than fragile line numbers. A row is a coverage obligation, not proof of behavior.
 
@@ -85,3 +85,9 @@ no generative call; operational APIs remain read-only mocks. No source/model sco
 authority, no new fifth tool, no unlocked budget or synthetic-data exception is implied.
 When requirements change, update task, gate, traceability, ADR/risk and affected source/tests
 together. Add IDs; do not silently renumber stable references.
+
+P04 phase-local consumer receipt E-P04-001 now covers runtime preflight→native tool
+handler→canonical evidence/policy/live/memory→reserved final→necessary-condition gate→
+message/citation/trace readers. Cross-cutting obligations remain split: P05 full memory,
+P06 mandatory critic/semantic challenge, P07 graph and P08 scientific scoring. Actual
+provider/model and failure history are explicit; P04 end review and resolution are complete; later phase consumers remain deferred.

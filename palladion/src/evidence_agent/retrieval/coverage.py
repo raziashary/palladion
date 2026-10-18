@@ -2,10 +2,18 @@
 from __future__ import annotations
 
 import json
+import re
+from collections.abc import Iterable
 from datetime import datetime, timezone
+from typing import Any
 
 from evidence_agent.core.errors import DependencyUnavailable
-from evidence_agent.core.models import Principal, VersionedModel
+from evidence_agent.core.models import (
+    InvestigationRequirement,
+    Principal,
+    RequirementOrigin,
+    VersionedModel,
+)
 from evidence_agent.core.retrieval import SearchIndex
 from evidence_agent.storage.catalog import Catalog
 from evidence_agent.storage.registry import Registry
@@ -18,6 +26,54 @@ class Coverage(VersionedModel):
     accepted_source_count: int
     indexed_source_count: int
     warnings: tuple[str, ...] = ()
+
+
+def claim_requirements(records: Iterable[dict[str, Any]], suggested: tuple[str, ...] = ()) -> tuple[InvestigationRequirement, ...]:
+    """Approved schema fields cannot be erased or replaced by model suggestions."""
+    origins: dict[str, InvestigationRequirement] = {}
+    for record in records:
+        if record.get("kind") == "POLICY_DECISION":
+            for name in record["required_fields"]:
+                origins[name] = InvestigationRequirement(slot=name, origin=RequirementOrigin.POLICY_SCHEMA)
+    for name in suggested[:32]:
+        if re.fullmatch(r"[a-z][a-z0-9_]{0,63}", name) and name not in origins:
+            origins[name] = InvestigationRequirement(slot=name, origin=RequirementOrigin.MODEL_SUGGESTION, required=False)
+    return tuple(origins.values())
+
+
+def quote_policy_families(registry: Registry, principal: Principal, case_id: str,
+                           passage: dict[str, Any], quote: str) -> set[str]:
+    """Risk follows approved clause bindings, never a model's answer-kind label."""
+    from evidence_agent.core.errors import PermissionDenied
+    from evidence_agent.live.gateway import read_scope
+    from evidence_agent.policy.registry import PolicyRegistry, PolicySpec
+    scope = read_scope(registry, principal, case_id)
+    position = str(passage["text"]).find(quote)
+    if position < 0:
+        return set()
+    start = int(passage["start_byte"]) + len(str(passage["text"])[:position].encode())
+    end = start + len(quote.encode())
+    rows = registry.database.connection.execute(
+        "SELECT DISTINCT p.decision_table_json FROM policy_versions p JOIN policy_source_clauses c "
+        "ON p.tenant_id=c.tenant_id AND p.version_id=c.version_id "
+        "WHERE p.tenant_id=? AND p.status='APPROVED' AND c.revision_id=? LIMIT 129",
+        (principal.tenant_id, passage["revision_id"])).fetchall()
+    if len(rows) > 128:
+        return {"UNRESOLVED_POLICY_SCOPE"}
+    families = set()
+    for row in rows:
+        spec = PolicySpec.model_validate_json(row[0])
+        if (case_id not in spec.allowed_case_ids or spec.product != scope.product or
+                spec.transaction_class != scope.transaction_class):
+            continue
+        for clause in spec.clauses:
+            if clause.revision_id == passage["revision_id"] and clause.start_byte < end and start < clause.end_byte:
+                try:
+                    PolicyRegistry(registry).clause(principal, clause)
+                except PermissionDenied:
+                    continue
+                families.add(spec.family_id)
+    return families
 
 
 def source_coverage(registry: Registry, principal: Principal, case_id: str,

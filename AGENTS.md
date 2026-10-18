@@ -17,9 +17,9 @@ repository from the blueprint's illustrative tree.
 
 ## Scope and integrity
 
-- Current mandate: explicit user GO for P03 end-to-end: temporal policy, safe rule
-  execution and scoped read-only mock observations. P02 is published at f48ad05.
-  No generative provider call, P04+ or UI.
+- Current checkpoint: P04 verified complete (E-P04-001): real Groq bounded runtime,
+  four read tools, evidence gate and authenticated messages. P03 is published at64d2066.
+  Explicit enabled commands may use Groq; P05+, UI and enterprise writes remain excluded.
   `baseline/` is reserved for
   later comparator implementations; do not populate it as part of this setup.
 - Preserve the [vision](palladion/docs/vision/palladion-blueprint-v2.md). Do not silently
@@ -38,7 +38,8 @@ repository from the blueprint's illustrative tree.
   when the user changes one. Accepted direction is not verified behavior.
 - User selected uv (`uv venv`) and authorized package selection within the blueprint
   architecture after GO. Initial runtime generation uses Groq `qwen/qwen3.8-27b`, not a
-  fake-first runtime. Main and critic use independent contexts; provider/model is shared
+  fake-first runtime. Owner-approved alternatives are Groq openai/gpt-oss-120b and
+  openai/gpt-oss-20b (ADR-0036); selection is explicit and recorded, never hidden fallback. Main and critic use independent contexts; provider/model is shared
   initially, not independent ground truth. Secrets stay in repository-root `.env`, loaded
   only by an explicitly enabled command. Never print, commit or dispatch those secrets.
 - Require actual Groq entry-point proof for generative integration. Deterministic unit
@@ -127,12 +128,12 @@ status/evidence updates → no-stale sweep including README/navigation → proce
 cleanup → scoped staged-diff/secret review → verified commit → continue authorized work.
 Skipped checks are not PASS. PARTIAL evidence does not close a later consumer obligation.
 For documentation-only work, the document checker CLI is the runnable entry point.
-For P03, exercise persisted policy selection/decision replay and mock gateway consumers;
+For P04, exercise real Groq messages, four domain tools, final gate and citation readback;
 multi-phase source/security gates remain PARTIAL until later runtime/graph obligations pass. A checkpoint never expands the user's current mandate.
 The mandatory pre-phase adversary precedes this sequence. The P00 full-suite review is
 historical. Every future pre-adversary and post-auditor still reads the complete blueprint
-and applies the canonical review contract. Complete P03 under the current mandate; P04 requires its own scope authorization.
-Do not infer new main-push approval from P03 GO.
+and applies the canonical review contract. P04 is complete under its mandate; P05 requires its own scope authorization.
+P03 push approval was fulfilled at64d2066; P04 GO does not authorize a new main push.
 
 ## Close every task
 

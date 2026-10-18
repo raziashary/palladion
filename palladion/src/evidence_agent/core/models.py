@@ -281,6 +281,7 @@ class PolicyDecision(VersionedModel):
     matched_rules: tuple[str, ...] = ()
     rule_trace: tuple[str, ...] = ()
     input_evidence_refs: tuple[str, ...] = ()
+    temporal_input_refs: tuple[str, ...] = Field(default=(), max_length=32)
     source_clauses: tuple[SourceRef, ...] = ()
     missing_fields: tuple[str, ...] = ()
     audit_id: str = Field(min_length=1)

@@ -1,5 +1,5 @@
 """Bounded synthetic source/search HTTP inputs; identity is server supplied."""
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -30,3 +30,32 @@ class Search(RequestModel):
 
 class Approval(RequestModel):
     supersedes_revision_id: str | None = Field(default=None, max_length=100)
+
+
+class Message(RequestModel):
+    query: str = Field(min_length=1, max_length=2048)
+
+
+class ReleasedClaim(RequestModel):
+    claim_id: str
+    text: str
+    evidence_ids: list[str]
+
+
+class MessageResponse(RequestModel):
+    case_id: str
+    trace_id: str
+    disposition: Literal["SUPPORTED", "PARTIALLY_SUPPORTED", "CONFLICT", "NOT_ESTABLISHED", "VERIFICATION_UNAVAILABLE"]
+    answer: str
+    verified_claims: list[ReleasedClaim]
+    hypotheses: list[dict[str, str]]
+    missing_requirements: list[str]
+    requirement_origins: dict[str, str]
+    citations: list[dict[str, Any]]
+    tool_status: dict[str, str]
+    searched_scope: str
+    inventory_attested: Literal[False]
+    review_status: Literal["UNAVAILABLE_UNTIL_P06"]
+    next_steps: list[str]
+    budget: dict[str, int]
+    verification_failures: list[str]

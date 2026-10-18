@@ -6,7 +6,10 @@ from pathlib import Path
 
 import uvicorn
 
+from evidence_agent.agent.llm import GroqModel
+from evidence_agent.agent.services import configure_agent, fixture_adapter
 from evidence_agent.core.bootstrap import load_demo_tokens
+from evidence_agent.live.gateway import load_config
 from evidence_agent.main import create_app
 from evidence_agent.retrieval.rerank import FastEmbedReranker
 from evidence_agent.settings import load_settings
@@ -21,10 +24,17 @@ def main() -> None:
     parser.add_argument("--collection", default=settings.qdrant_collection)
     parser.add_argument("--port", type=int, default=18080)
     parser.add_argument("--rerank", action="store_true")
+    parser.add_argument("--model", choices=GroqModel.allowed_models, default=settings.model)
+    parser.add_argument("--enable-live-llm", action="store_true", help="Explicitly load root .env and enable real Groq messages")
     args = parser.parse_args()
     index = QdrantIndex(url=args.url, collection_name=args.collection, bm25_profile=settings.bm25_profile)
-    app = create_app(args.root, index, load_demo_tokens(args.root), FastEmbedReranker(enabled=args.rerank))
     try:
+        app = create_app(args.root, index, load_demo_tokens(args.root), FastEmbedReranker(enabled=args.rerank))
+        if args.enable_live_llm:
+            app_root = Path(__file__).resolve().parents[1]
+            configure_agent(app, model=GroqModel.from_env_file(app_root.parent / ".env", enabled=True, model=args.model),
+                adapter=fixture_adapter(app_root), config=load_config(app_root / "config/adapters.yaml"),
+                settings=settings.model_copy(update={"enable_live_llm": True, "model": args.model}))
         uvicorn.run(app, host="127.0.0.1", port=args.port, log_level="warning")
     finally:
         index.close()

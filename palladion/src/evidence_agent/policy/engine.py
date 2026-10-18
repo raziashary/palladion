@@ -114,6 +114,7 @@ class PolicyEngine:
             else:
                 spec = selected.spec
                 common: dict[str, Any] = dict(policy_family_id=family_id, audit_id=audit_id, evaluated_at=now,
+                    temporal_input_refs=tuple(observation.lookup_id for observation in observations),
                     evaluation_mode="historical_audit" if knowledge_cutoff else "current",
                     knowledge_cutoff=knowledge_cutoff, selection_trace=selected.trace,
                     version_id=spec.version_id if spec else None,
@@ -209,6 +210,8 @@ class PolicyEngine:
         if decision.evaluation_mode == "historical_audit":
             self.registry.access.authorize(principal, tenant_id=principal.tenant_id,
                                             role="admin", grant="document:approve")
+        for evidence_id in decision.temporal_input_refs:
+            read_observation(self.registry, principal, case_id, evidence_id)
         if decision.version_id:
             record = self.registry.database.connection.execute(
                 "SELECT decision_table_json FROM policy_versions WHERE tenant_id=? AND version_id=?",

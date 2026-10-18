@@ -54,6 +54,12 @@ class FastEmbedReranker:
         self._manifest: dict[str, object] | None = None
 
     @property
+    def worker_configuration(self) -> dict[str, str | int | bool]:
+        """Non-secret reconstruction settings for the owned runtime search process."""
+        return {"enabled": self.enabled, "cache_dir": str(self._cache_dir),
+                "max_candidates": self.max_candidates}
+
+    @property
     def manifest(self) -> dict[str, object]:
         if not self.enabled:
             return {"enabled": False}

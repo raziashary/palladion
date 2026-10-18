@@ -6,8 +6,12 @@ import json
 from pathlib import Path
 
 from evidence_agent.core.bootstrap import seed
+from evidence_agent.policy.bootstrap import seed_policy_fixture
 from evidence_agent.settings import load_settings
+from evidence_agent.storage.originals import OriginalStore
 from evidence_agent.storage.qdrant import QdrantIndex
+from evidence_agent.storage.registry import Registry
+from evidence_agent.storage.sqlite import Database
 
 
 def main() -> None:
@@ -17,10 +21,15 @@ def main() -> None:
     parser.add_argument("--url", default=settings.qdrant_url)
     parser.add_argument("--collection", default=settings.qdrant_collection)
     parser.add_argument("--bm25-profile", choices=["english", "no_stemming"], default=settings.bm25_profile)
+    parser.add_argument("--policies", action="store_true", help="Explicit trusted fictional policy/case-scope seed")
     args = parser.parse_args()
     index = QdrantIndex(url=args.url, collection_name=args.collection, bm25_profile=args.bm25_profile)
     try:
         revisions = seed(args.root, Path(__file__).resolve().parents[1], index)
+        if args.policies:
+            with Database(args.root / "registry.sqlite") as database:
+                seed_policy_fixture(Registry(database, OriginalStore(args.root / "originals")),
+                                    Path(__file__).resolve().parents[1])
         print(json.dumps({"revisions": revisions, "synthetic_auth_file": str(args.root / "demo_auth.json"),
                           "representation": index.representation_manifest}, indent=2))
     finally:

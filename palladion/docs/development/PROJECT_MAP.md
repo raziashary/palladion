@@ -1,6 +1,6 @@
 # Project map
 
-Verified 2026-10-17. **Actual documentation is distinct from planned runtime components.**
+Updated 2026-10-19; current P04 proof is E-P04-001. **Actual documentation is distinct from planned runtime components.**
 Source: blueprint “Concrete prototype repository,” “Directory responsibilities,” and “System
 architecture.” No diagram node below implies shipped code.
 
@@ -10,7 +10,7 @@ architecture.” No diagram node below implies shipped code.
 C:/palladion/                         Git root, main; initial revision 9b167a2
   AGENTS.md                          Project entry instructions
   README.md                          Project introduction and navigation
-  .env                               User-supplied ignored credential file; not read/copied
+  .env                               Ignored credentials; read only by explicitly enabled commands, never copied/exported
   .gitignore                         Owner-provided .env/.venv exclusions, published unchanged
   baseline/                          Existing empty directory; reserved, not tracked as a directory
   palladion/
@@ -52,7 +52,7 @@ ACL/approval/time/generation and supports bounded learned rerank/context expansi
 `api/` and main factory expose authenticated source/search/citations; telemetry has an
 internal correlated reader. Seed/reconcile/serve/evaluate scripts use those actual owners.
 WSL standalone launcher verifies Qdrant release hashes and preserves Linux-owned storage.
-Compose is optional. P03 now implements the policy/live domain path below; message/LLM/critic/graph runtime remains future.
+Compose is optional. P03 now implements the policy/live domain path below; P04 message/LLM/gate runtime is implemented and verified pending end review; critic/graph remain future.
 
 ## Foundation now implemented (P01)
 
@@ -65,10 +65,10 @@ CLI state is temporary and cleaned; no API/search/provider process is started.
 
 ## Runtime ownership and later planned components
 
-Paths are relative to `palladion/`; P01/P02 and the P03 domain path are implemented; later agent/gate/memory/critic/graph components remain planned. ADR-0001 maps the
+Paths are relative to `palladion/`; P01/P02 and the P03 domain path are implemented; P04 agent/gate/minimal memory are implemented with phase proof pending end review; full memory/critic/graph remain planned. ADR-0001 maps the
 blueprint's illustrative `evidence-agent/` root here; do not create a duplicate project.
 
-| Planned area | Owns | Producers / consumers | Build phase |
+| Area and phase ownership | Owns | Producers / consumers | Build phase |
 |---|---|---|---|
 | `pyproject.toml`, `uv.lock`, config, compose | uv-managed app environment, pins, flags/budgets and local services | Settings → application and evaluator | P01/P02 |
 | `src/evidence_agent/core/` | Versioned typed contracts, IDs and errors | All modules share these; no storage→agent dependency | P01 |
@@ -89,12 +89,12 @@ Do not create all 74 proposed files as empty placeholders. Check named APIs/depe
 at implementation time. No frontend, autonomous financial actions, event broker or extra
 agent role is required by the prototype.
 
-Current owner choices: uv venv lives inside `C:/palladion/palladion`; later baseline
-dependencies are isolated. Main/critic initial runtime uses actual Groq
-`qwen/qwen3.8-27b`, independent contexts with shared model, not independent ground truth.
-Root `.env` is loaded only for an explicitly enabled future provider command. P01 package
-setup is authorized and verified; model integration remains P04 work. The user-created `.venv` now exists and is ignored. Manifest/lock and P01 foundation now exist; retrieval/agent runtime remains planned.
-P01 package installation succeeded in the existing environment; no provider call occurred.
+Current owner choices: uv environment remains inside the application. Explicit Groq
+commands select Qwen3.8-27B, GPT-OSS120B or GPT-OSS20B (ADR-0036); no hidden fallback.
+Transport→loop→Tools.execute handles native calls with server identity and persisted
+results. Root .env is read only by enabled commands. P01/P02/P03 and current P04
+engineering proofs exist; P06 independent critic and P08 scientific evaluation remain.
+The root also contains separately owned palladion-benchmark work; it is outside P04.
 
 ## Planned request and evidence flow
 
@@ -143,3 +143,22 @@ Dependency manifest ownership is checked by scripts/check_dependencies.py over s
 ## P03 domain path (implemented and phase-reviewed)
 
 Authenticated source-linked policy approval → policy_versions/source clauses plus append-only approval/revocation/supersession events → temporal resolver. Admin-registered case scope → named target-authorized mock gateway → minimized persisted LiveObservation events → PolicyEngine evidence-ID reader → normalized safe AST execution → persisted PolicyDecision → reopened replay/source reader. Policy/live modules share existing SQLite, original bytes and access checks; schema remains v3. scripts/validate_policy.py exercises the real path without Qdrant/network/provider. P04 owns gate/tool/API integration.
+
+## P04 implemented path (verified with end-review resolution)
+
+Explicit serve/validation command → actual Groq chat-completions transport → exactly
+four backend-scoped tools → existing canonical search/policy/live/case readers →
+current-request typed ledger → bounded draft/unavailable-review/finalization →
+necessary-condition gate → safe renderer → append-only request/attempt/release events.
+Authenticated /v1/cases/{case_id}/messages, /timeline and /v1/evidence/{evidence_id}
+consume that path; services own SQLite/gateway lifetime and close on application exit.
+Approved ADR-0031/0032 implemented: admin AND current-case developer trace; SQLite/
+Qdrant/config readiness (no provider call); bounded credential-free search_worker
+process invokes existing HybridSearch/Qdrant/canonical readers and is terminated/joined
+on cancellation/deadline. agent/llm.py transports; loop.py budgets/correlates native calls;
+tools.py handles validated dispatch and persists results. Explicit three-model Groq
+selection is ADR-0036; source presence alone does not prove all live behavior.
+P04 phase closure is evidenced at E-P04-001, including updated installed consumers and
+single end-review resolution. Public event/recall reads redact raw questions/prompts;
+internal packet reports are owner-scoped and UNVERIFIED. Search scope reflects executed
+retrieval. Semantic/critic/research success is not inferred from source presence.

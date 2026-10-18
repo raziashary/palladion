@@ -12,7 +12,7 @@ class Settings(BaseModel):
 
     schema_version: Literal["1.0"] = "1.0"
     provider: Literal["groq"] = "groq"
-    model: Literal["qwen/qwen3.8-27b"] = "qwen/qwen3.8-27b"
+    model: Literal["qwen/qwen3.8-27b", "openai/gpt-oss-120b", "openai/gpt-oss-20b"] = "qwen/qwen3.8-27b"
     enable_live_llm: StrictBool = False
     qdrant_url: str = Field(default="http://127.0.0.1:16333", pattern=r"^http://127\.0\.0\.1:[0-9]{4,5}$")
     qdrant_collection: str = Field(default="knowledge_chunks_v1", pattern=r"^[a-zA-Z0-9_]{1,100}$")

@@ -1,12 +1,12 @@
 # Palladion master development plan
 
-Version 6, 2026-10-18. Scope anchor: [blueprint v0.2](../vision/palladion-blueprint-v2.md),
+Version 7, 2026-10-19. Scope anchor: [blueprint v0.2](../vision/palladion-blueprint-v2.md),
 especially “Locked decisions,” “Build plan,” “System invariants,” and the full walkthrough.
-Current mandate: explicit user GO for **P03 end-to-end**; P02 is published at f48ad05.
-P03 includes approved temporal policies, bounded predicate execution and target-authorized
-mock observations; P02 retrieval remains a verified prerequisite. P04–P08/X01 remain future scope.
-No new main push or generative provider call is inferred. E-P03-001 records completed P03 work;
-no UI phase is authorized. ADR-0011 governs; ADR-0013 selects uv and real Groq generation.
+Current checkpoint: **P04 DONE**, authorized end-to-end from published64d2066; E-P04-001.
+P04 includes actual Groq, four tools, packet/ledger, bounded investigation/finalization,
+deterministic gate and authenticated message/citation/timeline/trace consumers.
+P03 push completed; no new main push inferred. P05–P08/X01/UI remain outside scope.
+ADR-0011 governs; ADR-0013 selects uv and real Groq generation. E-P04-001 records work.
 
 ## Document authority and ownership
 
@@ -264,7 +264,7 @@ Owner modules: agent excluding full critic, API, ledger, packet skeleton and aud
 | P04-T03 | Typed claims, requirement origins, deterministic per-claim eligibility and five dispositions; safe renderer and protected rejected diagnostics | Model answer-kind/hypothesis labels cannot evade risk/requirements; unknown refs and unsupported directives blocked; G-GATE |
 | P04-T04 | Message API, citation API, timeline/trace, health/ready, persisted tool failures; synthetic vertical smoke | Authenticated message→verified refs→reader; 5 dispositions; no evidence/tool/conflict paths; G-E2E, G-SECURITY |
 
-Exit: actual Groq end-to-end path and correct abstention proven, under explicit call budgets. Until P06 real critic exists,
+Exit verified at E-P04-001: all14 children, actual Groq/HTTP/citation consumers, updated exact-wheel tests and sole end-audit resolution. Passing and failed model runs are retained; no reliability estimate is inferred. Actual Groq end-to-end path and correct abstention proven, under explicit call budgets. Until P06 real critic exists,
 normative released outputs use unavailable/non-actionable partial safety behavior; a mock
 review is test plumbing, not evidence that mandatory review has occurred. Gate adequacy is
 necessary-condition checking, never a complete semantic proof system.
@@ -821,31 +821,31 @@ order. Shared-file tasks are sequential. Each proof names the observation that c
 
 <a id="p04-t01-01"></a>
 
-- [ ] **P04-T01.01 — Implement and probe the real Groq model boundary**
-  - **Files:** `palladion/src/evidence_agent/agent/llm.py`, `palladion/tests/test_agent_budget.py`.
+- [x] **P04-T01.01 — Implement and probe the real Groq model boundary**
+  - **Files:** `palladion/src/evidence_agent/agent/llm.py`, `palladion/tests/test_agent_budget.py`, `palladion/tests/test_llm_transport.py`, `palladion/scripts/validate_agent.py`.
   - **Depends:** P03-T03.04.
   - **Change:** Implement provider-neutral result/error/usage handling backed by Groq qwen/qwen3.8-27b. Explicitly enabled commands load the existing root .env without exposing it; verify tool/schema/account capabilities before downstream live integration. No fake runtime or silent alternate model.
   - **Proof:** INTEGRATION; [G-BUDGET](TESTING_GATES.md#g-budget-task-coverage); a bounded real Groq request proves tool/draft/final transport capabilities as applicable; malformed/timeout data fixtures exercise accounting separately. Rate/access failure blocks provider proof, not a substituted success.
 
 <a id="p04-t01-02"></a>
 
-- [ ] **P04-T01.02 — Hydrate minimal case state and current evidence ledger**
-  - **Files:** `palladion/src/evidence_agent/memory/store.py`, `palladion/src/evidence_agent/memory/packet.py`, `palladion/src/evidence_agent/retrieval/evidence.py`, `palladion/tests/test_memory.py`.
+- [x] **P04-T01.02 — Hydrate minimal case state and current evidence ledger**
+  - **Files:** `palladion/src/evidence_agent/memory/store.py`, `palladion/src/evidence_agent/memory/packet.py`, `palladion/src/evidence_agent/retrieval/evidence.py`, `palladion/tests/test_memory.py`, `palladion/tests/__init__.py`.
   - **Depends:** P04-T01.01.
   - **Change:** Read authorized events into packet skeleton/current-request ledger; preserve reported/observed distinction for preflight/four-tool readers.
   - **Proof:** INTEGRATION; [G-MEMORY](TESTING_GATES.md#g-memory-task-coverage); reopen hydrates same case, wrong case denied; old handle remains pointer until source revalidation.
 
 <a id="p04-t01-03"></a>
 
-- [ ] **P04-T01.03 — Define and dispatch exactly four read tools**
-  - **Files:** `palladion/src/evidence_agent/agent/tools.py`, `palladion/tests/test_security.py`, `palladion/tests/test_agent_budget.py`.
+- [x] **P04-T01.03 — Define and dispatch exactly four read tools**
+  - **Files:** `palladion/src/evidence_agent/agent/tools.py`, `palladion/src/evidence_agent/agent/services.py`, `palladion/src/evidence_agent/agent/search_worker.py`, `palladion/src/evidence_agent/storage/qdrant.py`, `palladion/src/evidence_agent/retrieval/rerank.py`, `palladion/tests/test_search_worker.py`, `palladion/tests/test_security.py`, `palladion/tests/test_agent_budget.py`.
   - **Depends:** P04-T01.02.
   - **Change:** Expose knowledge/policy/live/memory schemas only; inject server identity, validate limits and call implemented domain readers.
   - **Proof:** INTEGRATION; [G-SECURITY](TESTING_GATES.md#g-security-task-coverage), [G-BUDGET](TESTING_GATES.md#g-budget-task-coverage); four valid calls read domain results; arbitrary network/SQL/approval/payment/identity overrides rejected.
 
 <a id="p04-t01-04"></a>
 
-- [ ] **P04-T01.04 — Produce nonexclusive deterministic preflight hints**
+- [x] **P04-T01.04 — Produce nonexclusive deterministic preflight hints**
   - **Files:** `palladion/src/evidence_agent/agent/preflight.py`, `palladion/tests/test_agent_budget.py`.
   - **Depends:** P04-T01.03.
   - **Change:** Hydrate packet/detect IDs and optionally prefetch bounded authorized evidence; hints cannot restrict later authorized tool selection.
@@ -855,7 +855,7 @@ order. Shared-file tasks are sequential. Each proof names the observation that c
 
 <a id="p04-t02-01"></a>
 
-- [ ] **P04-T02.01 — Account model and tool attempts before dispatch**
+- [x] **P04-T02.01 — Account model and tool attempts before dispatch**
   - **Files:** `palladion/src/evidence_agent/agent/loop.py`, `palladion/tests/test_agent_budget.py`.
   - **Depends:** P04-T01.04.
   - **Change:** Atomically reserve/consume main/critic/tool attempts across parallel dispatch/retries/failures; keep one of five main slots for finalization.
@@ -863,7 +863,7 @@ order. Shared-file tasks are sequential. Each proof names the observation that c
 
 <a id="p04-t02-02"></a>
 
-- [ ] **P04-T02.02 — Wire investigation, draft and unavailable-review boundary**
+- [x] **P04-T02.02 — Wire investigation, draft and unavailable-review boundary**
   - **Files:** `palladion/src/evidence_agent/agent/loop.py`, `palladion/src/evidence_agent/agent/draft.py`, `palladion/tests/test_agent_budget.py`.
   - **Depends:** P04-T02.01.
   - **Change:** Drive actual Groq model to tools, ledger, draft, review boundary and reserved final. Until P06 the critic absence is explicitly unavailable; deterministic invalid-result fixtures only test failure guards, never substitute runtime proof.
@@ -871,7 +871,7 @@ order. Shared-file tasks are sequential. Each proof names the observation that c
 
 <a id="p04-t02-03"></a>
 
-- [ ] **P04-T02.03 — Stop and persist work on deadline or cancellation**
+- [x] **P04-T02.03 — Stop and persist work on deadline or cancellation**
   - **Files:** `palladion/src/evidence_agent/agent/loop.py`, `palladion/src/evidence_agent/memory/store.py`, `palladion/tests/test_agent_budget.py`.
   - **Depends:** P04-T02.02.
   - **Change:** Propagate deadline/cancellation to model/tools; persist completed results and explicit errors for next authorized request.
@@ -881,7 +881,7 @@ order. Shared-file tasks are sequential. Each proof names the observation that c
 
 <a id="p04-t03-01"></a>
 
-- [ ] **P04-T03.01 — Validate claim drafts and requirement origins**
+- [x] **P04-T03.01 — Validate claim drafts and requirement origins**
   - **Files:** `palladion/src/evidence_agent/agent/draft.py`, `palladion/src/evidence_agent/retrieval/coverage.py`, `palladion/tests/test_gate.py`.
   - **Depends:** P04-T02.02.
   - **Change:** Validate claim/evidence IDs and policy-required slots independently of model suggestions; preserve hypotheses and precise missing requirements for gate.
@@ -889,15 +889,15 @@ order. Shared-file tasks are sequential. Each proof names the observation that c
 
 <a id="p04-t03-02"></a>
 
-- [ ] **P04-T03.02 — Apply per-claim deterministic eligibility checks**
+- [x] **P04-T03.02 — Apply per-claim deterministic eligibility checks**
   - **Files:** `palladion/src/evidence_agent/agent/gate.py`, `palladion/tests/test_gate.py`.
   - **Depends:** P04-T03.01, P04-T03.04.
-  - **Change:** Revalidate evidence/source/time/ACL, rule trace, freshness and critical challenges under actual claims before release; semantic inadequacy stays qualified.
+  - **Change:** Revalidate evidence/source/time/ACL, rule trace, freshness and critical challenges under actual claims before release; semantic inadequacy stays qualified. Owner-approved ADR-0034 adds canonical temporal-input provenance in core/models.py and policy/engine.py; implement and verify the owning producer, not a second authority store.
   - **Proof:** INTEGRATION; [G-GATE](TESTING_GATES.md#g-gate-task-coverage); supported informational fixture passes; stale/revoked/wrong-scope/unrelated citation and missing rule input block material claim.
 
 <a id="p04-t03-03"></a>
 
-- [ ] **P04-T03.03 — Render five dispositions and deterministic fallback**
+- [x] **P04-T03.03 — Render five dispositions and deterministic fallback**
   - **Files:** `palladion/src/evidence_agent/agent/gate.py`, `palladion/src/evidence_agent/api/schemas.py`, `palladion/tests/test_gate.py`.
   - **Depends:** P04-T03.02.
   - **Change:** Render gate-owned verified claims, scoped gaps/conflicts/hypotheses/citations; malformed final output or budget exhaustion invokes safe template.
@@ -905,7 +905,7 @@ order. Shared-file tasks are sequential. Each proof names the observation that c
 
 <a id="p04-t03-04"></a>
 
-- [ ] **P04-T03.04 — Apply the accepted support rubric and escalation boundary**
+- [x] **P04-T03.04 — Apply the accepted support rubric and escalation boundary**
   - **Files:** `palladion/docs/development/ADR_LOG.md`, `palladion/docs/development/RISKS_AND_OPEN_QUESTIONS.md`, `palladion/data/demo/goldens.jsonl`.
   - **Depends:** P04-T03.01.
   - **Change:** Apply ADR-0020/Q09: record concrete independently reviewed support/exception rubric and authorized human escalation assignment before consequential supported demonstrations. If assignment/labels unavailable, adequacy remains qualified rather than imaginary approval.
@@ -915,24 +915,24 @@ order. Shared-file tasks are sequential. Each proof names the observation that c
 
 <a id="p04-t04-01"></a>
 
-- [ ] **P04-T04.01 — Wire authenticated messages into the runtime**
-  - **Files:** `palladion/src/evidence_agent/api/routes.py`, `palladion/src/evidence_agent/main.py`, `palladion/tests/test_end_to_end.py`.
+- [x] **P04-T04.01 — Wire authenticated messages into the runtime**
+  - **Files:** `palladion/src/evidence_agent/api/routes.py`, `palladion/src/evidence_agent/main.py`, `palladion/tests/test_end_to_end.py`, `palladion/tests/test_runtime_api.py`, `palladion/scripts/serve.py`, `palladion/scripts/seed.py`.
   - **Depends:** P04-T03.03, P04-T02.03.
   - **Change:** Inject real services into message endpoint and return gate-owned response; persist attempts/outcomes for later continuity reader.
   - **Proof:** SMOKE; [G-E2E](TESTING_GATES.md#g-e2e-task-coverage); synthetic HTTP request consumes real tools/ledger/gate and returned citations read back; denied case/tool failure safe.
 
 <a id="p04-t04-02"></a>
 
-- [ ] **P04-T04.02 — Expose authorized timeline, traces and health**
-  - **Files:** `palladion/src/evidence_agent/api/routes.py`, `palladion/src/evidence_agent/telemetry/audit.py`, `palladion/src/evidence_agent/main.py`, `palladion/tests/test_end_to_end.py`, `palladion/tests/test_security.py`.
+- [x] **P04-T04.02 — Expose authorized timeline, traces and health**
+  - **Files:** `palladion/src/evidence_agent/api/routes.py`, `palladion/src/evidence_agent/telemetry/audit.py`, `palladion/src/evidence_agent/main.py`, `palladion/tests/test_runtime_api.py`, `palladion/tests/test_end_to_end.py`, `palladion/tests/test_security.py`.
   - **Depends:** P04-T04.01, P02-T04.02.
   - **Change:** Read persisted case/audit events with role redaction; report health/readiness of required dependencies without conflating liveness and successful verification.
   - **Proof:** SMOKE; [G-E2E](TESTING_GATES.md#g-e2e-task-coverage), [G-SECURITY](TESTING_GATES.md#g-security-task-coverage); reader sees persisted result, ordinary operator denied developer trace, dependency outage leaks no config or false success.
 
 <a id="p04-t04-03"></a>
 
-- [ ] **P04-T04.03 — Prove the real Groq answer walkthrough**
-  - **Files:** `palladion/tests/test_end_to_end.py`, `palladion/tests/test_goldens.py`, `palladion/docs/development/EVIDENCE_LOG.md`.
+- [x] **P04-T04.03 — Prove the real Groq answer walkthrough**
+  - **Files:** `palladion/tests/test_end_to_end.py`, `palladion/tests/test_goldens.py`, `palladion/scripts/validate_agent.py`, `palladion/docs/development/EVIDENCE_LOG.md`.
   - **Depends:** P04-T04.02.
   - **Change:** Exercise actual Groq-backed supported information, missing-settlement partial, conflict, scoped no-evidence and unavailable paths through HTTP and real evidence reader. Keep deterministic pure guard tests separate from real-provider smoke records.
   - **Proof:** SMOKE; [G-E2E](TESTING_GATES.md#g-e2e-task-coverage), [G-GATE](TESTING_GATES.md#g-gate-task-coverage); T09/T22 never authorize reversal; no-tool/invalid-model paths retain useful gaps; task processes/ports verified stopped.

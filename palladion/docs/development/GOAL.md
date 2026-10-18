@@ -1,6 +1,6 @@
 # Project goal
 
-As of 2026-10-17 (Asia/Bangkok). Owner: user; coordinator maintains evidence.
+As of 2026-10-19 (Asia/Bangkok). Owner: user; coordinator maintains evidence.
 
 ## Development-suite outcomes
 
@@ -29,9 +29,9 @@ A null or adverse result is a valid research outcome.
 | Outcome | Scope and baseline | Proof and dependency |
 |---|---|---|
 | O01: Attributable source discovery | Immutable originals, ingestion, real Qdrant search and citation API exist; P02 audit/resolution verified; synthetic MD/TXT only | P01–P02; G-CONTRACT, G-SOURCE, G-RETRIEVAL; original bytes read through citation API |
-| O02: Correct policy and live evidence | P03 domain implementation, validation and audit complete; P04 final-gate integration remains | P03; G-TEMPORAL, G-POLICY, G-LIVE; trusted time/facts plus replayable rule trace |
-| O03: Bounded, honestly qualified answers | No agent/gate exists | P04; G-BUDGET, G-GATE, G-SECURITY; actual Groq qwen/qwen3.8-27b message API and canonical citation readback |
-| O04: Safe continuity | No runtime memory exists; developer memory is a separate document | P05; G-MEMORY; second authorized request consumes persisted state |
+| O02: Correct policy and live evidence | P03 domain implementation, validation and audit complete; P04 final-gate integration verified at E-P04-001; broader critic adequacy remains P06 | P03; G-TEMPORAL, G-POLICY, G-LIVE; trusted time/facts plus replayable rule trace |
+| O03: Bounded, honestly qualified answers | P04 agent/gate and selected actual Groq consumers exist; phase-local implementation/proof and single audit/resolution complete; model failures retained | P04; G-BUDGET, G-GATE, G-SECURITY; actual explicitly selected Groq three-model message API and canonical citation readback |
+| O04: Safe continuity | P04 minimal event/packet skeleton exists; P05 full memory remains; developer memory is separate | P05; G-MEMORY; second authorized request consumes persisted state |
 | O05: Measured self-challenge | No critic exists | P06; G-CRITIC; frozen-draft paired evaluation, correction and false-veto rates |
 | O06: Tested graph value | No graph exists; optional discovery layer | P07; G-GRAPH; graph-on/off paired evidence and cost; disable if unjustified |
 | O07: Reproducible conclusion | Retrieval-only pilot recorded; adjudicated/full-answer benchmark and general performance claims remain absent | P08; G-RESEARCH and G-E2E; pinned run manifest, held-out results and failure taxonomy |
@@ -60,9 +60,9 @@ compatibility is verified; P03 policy/live domain proof is at E-P03-001. Provide
 The existing app .venv is reused and ignored. Runtime model access needs explicit command enablement,
 not merely credentials. User's root `.env` and `.gitignore` are preserved.
 
-Current user instruction explicitly authorizes P03 end-to-end, following completed P00–P02. Both future review roles must read the full blueprint and report traceable coverage.
+Current user instruction explicitly authorizes P04 end-to-end, following completed P00–P03. Both future review roles must read the full blueprint and report traceable coverage.
 
-Excluded now: P04+ implementation, UI, actual payments or mutations, private data,
+Excluded now: P05+ implementation, UI, actual payments or mutations, private data,
 real enterprise connectors, production signoff, and comparator implementations. Later
 system work follows the plan; later external comparisons require their own concrete scope.
 
@@ -72,7 +72,7 @@ system work follows the plan; later external comparisons require their own concr
 - [x] P01 — corpus, contracts, adversarial fixtures (Slice 0); E-P01-001 tests, installed-wheel smoke and single audit/resolution
 - [x] P02 — provenance-first retrieval (Slice 1); E-P02-001 all15 tasks, real Qdrant/HTTP/pilot/wheel and audit resolution
 - [x] P03 — temporal policy and mock observations (Slice 2)
-- [ ] P04 — bounded runtime and gate (Slice 3)
+- [x] P04 — bounded runtime and gate (Slice 3); E-P04-001, phase-local proof and single audit/resolution
 - [ ] P05 — memory and continuity (Slice 4)
 - [ ] P06 — critic experiment (Slice 5)
 - [ ] P07 — optional graph experiment (Slice 6)

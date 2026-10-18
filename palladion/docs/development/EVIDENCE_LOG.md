@@ -887,3 +887,395 @@ removed only that blank line, then check passed. Actual validate_policy.py rerun
 with missing settlement INCOMPLETE_INPUT, expected event/current policies, executed
 FOLLOW_INVESTIGATION_SOP and reopened trace; zero provider calls/operational writes.
 Final documentation self-test passed again after all status corrections (exit0).
+
+## E-P04-001 — Bounded real Groq runtime and final gate (in progress)
+
+2026-10-18: explicit owner instruction to push P03 then implement P04 end-to-end.
+Verified main ahead one, reviewed full64d2066 message/body and scoped status; pushed
+origin main successfully f48ad05→64d2066. Only unrelated untracked.vscode preserved.
+Current mandate records updated; P05/UI/new main push excluded. Start adversary
+p04_pre_adversary uses GPT6LunaMedium/fresh/read-only/full-blueprint contract.
+Main reread P04 parent/all14 cards, runtime/ledger/gate/flow/invariants/walkthrough,
+ADRs0013/0020, suite and current API/domain/storage consumers. No new dependency
+planned: existing httpx supports official Groq chat-completions transport.
+
+Start adversary receipt: full blueprint1–18, review contract and14 P04 cards read
+(four T01, three T02, four T03, three T04); coordinator initially counted15, corrected
+against register before implementation. Confirmed gaps: trace authorization undefined,
+readiness index-only, stale scope records; semantic support remains conditional.
+Owner question pending for scoped admin traces/expanded readiness. Source confirms
+four existing grants only and internal unscoped AuditLog.read. No new grant/schema
+will be inferred. Current mandate updated; remaining no-stale sweep at closeout.
+No human labels/assignment invented: consequential guidance blocked until P06 review
+and evidenced human adequacy; source attribution and typed observed facts can be tested.
+Existing case_events/audit_events will store bounded versioned envelopes, with actual
+reopened reader tests. P05 memory promotion and P06 critic remain deferred.
+Official Groq API/model/tool/JSON docs consulted; runtime uses existing httpx, no SDK
+or new dependency. Provider transport errors/quota never count as successful proof.
+
+Initial real provider probes, explicit enabled root.env reader (key never printed/exported):
+JSON request qwen/qwen3.8-27b PASS, exact {probe:ok}, usage28 prompt/6 completion/34total.
+Native four-tool transport probe then FAILED HTTP429 (exit1); no tool proof claimed,
+no alternate model/fake substituted and no automatic retry. Further provider smoke
+will remain pending until actual successful native calls/HTTP consumers are observed.
+First strict typing run found4 local typing defects; corrected typed argument branch,
+ledger payload annotation and Claim list annotation; mypy53 files nowPASS/RuffPASS.
+A duplicate app-relative read path failed before source read; corrected working path.
+
+Native-tool retry PASS: actual lookup_live_data call, usage1017prompt/66completion/1083total.
+New isolated checks passed28 then41 cases, covering reservation, deadline/cancellation,
+four domain paths, injection, reopened packet, HTTP auth/timeline and explicit enablement.
+Diff review caught Add File replacing existing test_security.py; all5 original functions
+(8 parameterized cases) restored and new tests appended.18 security cases thenPASS.
+No original removal remains. Interim local typing/lint errors corrected and rerun.
+
+Owned Qdrant launcher session90266 on16333/16334 was confirmed ready from startup log
+before HTTP consumers. First live ASGI smoke failed cleanup: QdrantClient is not a context
+manager (TypeError exit1), obscuring its result. Fixed with contextlib.closing. Task-owned
+log identified only fresh disposable p04_smoke_8c33d1435bd44ffaacbd104552cab177; removed
+that collection, preserving other stores. No first-smoke success inferred. Later smokes
+clean their own fresh UUID collections. Readback list verification follows separately.
+
+Two supported-scenario runs degraded to PARTIALLY_SUPPORTED under HTTP429. The CLI now
+asserts expected dispositions and exits1 on mismatch; no failure becomes success merely
+because HTTP200. Provider failures stop exploration, not masquerade as schema repair.
+Combined JSON-object/native-tools probe FAILED HTTP400 invalid_request_error; plain JSON
+worked. Restored native-tool investigation and JSON-only finalization. Error diagnostics
+retain bounded code labels only, never raw prose/failed generation/keys.
+Packet hydration moved before current REQUEST append, avoiding query-as-prior-fact.
+Prompt/schema metadata shortened without removing tools;1200 completion tokens is an
+explicit prototype resource bound, not an empirical quality/performance claim.
+
+Actual validate_agent.py --enable-live-llm --scenario supported PASS exit0:
+qwen/qwen3.8-27b, SUPPORTED informational FAILED state,3main/1tool/0critic, no failures,
+1citation read back through /v1/evidence, persisted timeline reader;0operational writes.
+This proves only that scenario, not human semantics, other dispositions or P06 review.
+
+Recall correction: prior RELEASE text/verified prose no longer reenters context as current
+evidence. Only current-authorized REQUIRES_RECHECK handles survive; no promoted observations.
+Old-text-canary and reopened packet tests pass. Gate rechecks all ledger entries and actual
+policy-required fields regardless of model omissions; public citations omit hashes/decision
+internals and source passages are capped12. An interim docs-edit process hit cp1252 decoding
+before writing; rerun explicitly UTF8. All failed runs remain recorded rather than erased.
+
+Latest disjoint non-server regression: pytest --ignore=tests/test_end_to_end.py →196passed
+in14.14s (exit0), baseline security preserved. Focused guards later41passed in5.36s.
+Dependency checker initially rejected bare cross-test imports as undeclared; corrected
+with a local tests package and explicit relative imports, preserving all four negative
+controls. Checker now74 Python files/four controlsPASS. Docs17/93/20PASS; mypy55PASS.
+Current API/ledger/memory source has subsequent changes; final regressions remain due.
+
+Partial real-provider attempts: first did not reach policy consumer, later did reach
+INCOMPLETE_INPUT, settlement_state gap and2authorized citation readbacks. All strict
+CLI runs still exit1 due retained HTTP429 and/or verification failures, not a PASS for
+that scenario. Measured received-call token totals1327,1695,2209,1537 in the last run;
+additional failed attempt also counted within5. No quota/access repair loop or sixthcall.
+Fixed a separate bug: exact-identifier-not-found DEGRADED discovery is not automatically
+an index outage; only actual index/rerank-unavailable warnings set that failure label.
+Preflight now lists current-accessible approved families (no time-applicability claim),
+reducing model uncertainty without restricting any authorized tool or inventing facts.
+
+Strict actual partial probe subsequently PASS exit0:4main/2tools, policy INCOMPLETE_INPUT,
+settlement_state retained, actual final structured response, no verification failures,
+1policy citation read back; received token totals1350/1715/2469/1958. No operational action.
+Document probes FAILED under413/429, with measured repeated/full context; not PASS.
+Model now gets explicitly truncated document/policy previews and selected final document
+views; canonical full bytes remain in storage/ledger and HTTP readers. Bounds are explicit,
+not evidence of complete semantic coverage. Provider request bytes capped48KiB, completions1200.
+
+Real four-domain-tools/HTTP reader test PASS, then extended original policy-clause hash
+readback and unrelated-version denial also PASS (1test6.80s). Canonical content hashes
+match actual authorized source bytes, never preview text. Broad disjoint regression204
+non-server PASS19.17s and9real-Qdrant PASS54.86s;6live-provider cases deliberately deselected,
+not claimed passed. Subsequent source dispatch changes plus2new guards:15budget/transport
+PASS2.35s. No full-current all-green claim after the new contract-gap repro below.
+T09/T22 guards use actual golden case/principal scopes and pass; T22 allows only explicitly
+dated historical BI attribution, never current/universal absence or transaction-service state.
+
+Confirmed new P04 consumer finding: P03 conflict result drops observation IDs used for
+its temporal selection. A provisional P04 duplicate invocation log made a local reader
+work, but would compensate outside the owning producer. Removed that approach before
+commit; proper canonical fix is proposed ADR-0034, awaiting Rule4 owner approval.
+Current test_conflict_keeps_exact_invocation_and_candidate_sources_then_revalidates FAILS
+at SUCCEEDED assertion (actual PERMISSION_DENIED), reproducing the missing provenance.
+No shipped core/models.py or policy/engine.py change made. This supersedes any inference
+that current conflict revalidation is already complete. It is not an end-audit finding;
+main found it before the single end reviewer, which is not dispatched yet.
+
+Current quota probe (2026-10-18 around12:38UTC): HTTP429 rate_limit_exceeded, classified
+~~TOKENS_MINUTE~~ (direction was omitted; later identified as OUTPUT_TOKENS_MINUTE), provider-reported limit1000/requested1142, no retry-after supplied. Probe
+metadata retains only code/window/numbers, no provider prose, account IDs or key. Same-model
+~~quota question pending; no more impossible identical probes or alternate model substitution.~~ Superseded by owner replies and ADR-0035/0036: constrain output reservation, keep measured input/output quotas and allow three explicit models.
+Fresh Qdrant collection readback confirmed no p04_smoke UUID collections remain. Services
+cleanup and final pending-decision handoff follow; no P04 commit/push or phase completion.
+
+Additional independent checks before waiting: backend registered clause-span bindings now
+force policy context/mandatory review even if a normative quote is labeled INFORMATIONAL;
+exact quote bypass guard PASS1test0.44s. SQL join name checked against live schema and
+corrected to policy_source_clauses.version_id before the executable check. Resource/error
+metadata, duplicate native IDs and over-budget parallel proposal rejection are bounded;
+rejections/failures persist for next-case packet rather than disappearing. Latest targeted
+budget/transport suite16PASS2.30s, RuffPASS, mypy55PASS, dependencies75files/fourcontrolsPASS.
+This does not close the separate failing conflict-provenance regression.
+
+Task resource closeout: fresh server list compared against23task UUID identifiers from
+this task's launcher log found0remaining collections. Supported --wsl --stop terminated
+recorded Qdrant PID501; launcher session90266 exit0. Windows listeners check asserted0
+on16333/16334/18080. Persistent Linux storage retained. Blueprint/root ignore SHA256s
+remain911003f72b909e4e473cde917c872c022bf1332440fade1c97dce8ecf7af2b9c and
+785172bea621031b337e539d895c4769951121024f310f9f57892ac929a4683f.
+Current P04 remains IN_PROGRESS, local/unstaged with one known reproduced failing gate
+regression. No P04 commit/push, no end-review dispatch, no task/phase/goal completion.
+Pending: owner answers ADR-0031/0032/0034 plus same-model quota action; then remaining
+source fixes/live scenarios/artifact proof/final independent audit and scoped closeout.
+
+Continuation audit2: owner answers remain pending in ADR-0031/0032/0034; no new authority
+is inferred from automatic goal continuation. Previous goal turn made substantive source,
+push and verification progress. Current exact-source non-server regression:
+pytest --ignore=tests/test_end_to_end.py -q --tb=short →207passed/1failed in18.80s, exit1.
+The only observed failure is the already reproduced ADR-0034 conflict-provenance guard;
+no new failure found. Full phase remains unproven. No provider request or server restart
+performed because the documented approval/quota blockers have not been resolved.
+
+Blocked audit3: ADR-0031/0032/0034 freshly reread; all remain PROPOSED with pending
+owner answers. Shipped core/models.py and policy/engine.py have no P04 diff, confirming
+unapproved changes were not applied. The same Rule4 approval blockers persist across
+three consecutive goal turns. Last current-source result remains207PASS/1FAIL, with
+the canonical-provenance regression blocking closure. Required remaining implementation
+and phase gates cannot advance without owner input; no meaningful independent required
+work remains available. Mark thread goal BLOCKED, not complete or paused. Do not repeat
+provider probes/reviews/tests merely to keep the loop active. Resume after owner answers
+and revalidate provider quota before remaining real-Groq scenarios. P03 remains published;
+P04 changes remain local/unstaged, no service running, end reviewer not dispatched.
+
+
+P04 resumption2026-10-18: owner explicitly approves ADR-0031 scoped admin/current-case
+traces and SQLite/Qdrant/config readiness, ADR-0032 cancellable credential-free worker,
+and ADR-0034 canonical temporal-input refs. Prior blocked audits are historical.
+Owner keeps quota and supplies screenshot: Qwen30RPM/1000RPD/8000TPM/200000TPD.
+Two bounded explicitly enabled Groq checks: cap64 JSON HTTP200/probe_ok true,
+22prompt/6completion/28total; headers tokens8000/requests1000. Same tiny prompt cap1200
+HTTP429 rate_limit_exceeded, limit1000/requested1151, identifies output tokens while
+header still8000TPM. Prior1000-combined-TPM diagnosis is retracted: sanitized parser
+omitted direction. Separate output-minute constraint does not prove four-tool input
+cannot fit8000TPM. Official docs explain split ITPM/OTPM and hover breakdown:
+https://console.groq.com/docs/rate-limits . ADR-0035 bounds cap768/split diagnostics;
+no model/quota change or automatic retry. Remaining phase proof required; no P04 commit.
+
+Cap768 actual transport: native four-tool request received lookup_live_data
+(829prompt/82completion/911total); JSON final probe received valid JSON
+(21prompt/6completion/27total). Added bounded allowlisted rate-header retention on200
+and429 and CLI diagnostic reader; counters are RPD/TPM, absent/malformed remains absent.
+Fresh actual JSON readback reports limit-requests1000/remaining997 and limit-tokens8000/
+remaining7973, reset-requests4m19.2s/reset-tokens202ms. No credential/provider prose exposed.
+Focused budget/transport21PASS2.44s; RuffPASS, strict mypy55filesPASS. Earlier doc checker
+17MD/93cards/20negativecontrolsPASS, diff whitespacePASS; no service started/listener left.
+This proves header consumer/transport, not complete agent walkthrough or P04 gates.
+
+Approved ADR-0034 producer correction now implemented: optional bounded canonical
+PolicyDecision.temporal_input_refs defaults empty for old payloads. PolicyEngine records
+only scoped authenticated persisted observations after validation; replay rechecks their
+current access. Runtime reader re-resolves current selection using canonical time refs
+with legacy fact-ref fallback. Existing conflict regression now passes, including a fresh
+Database/Registry reader, candidate clauses, explicit supersession denial and release
+qualification. Focused54tests passed; initial import-sort lint failure fixed immediately.
+Final exact-source non-server suite213PASS/1existingwarning in16.79s; RuffPASS and strict
+mypy55PASS. Source integration/live Qdrant scenarios, worker, admin traces/readiness,
+artifact proof and single end review remain open. No P04 commit/push or phase closure.
+
+P04 approved trace/readiness and search-worker implementation: actual local processes
+prove cancellation/deadline terminate-and-join, credential/Python-injection environment
+removal, bounded output and nonzero failure. First oversized-output test incorrectly
+matched private exception prose; fixed to assert typed failure. Windows pipe resource
+warning exposed residual buffers: cleanup now closes stdin, drains/discards remaining
+stdout and awaits process termination; strict unraisable-warning run20PASS4.68s.
+Actual Qdrant four-domain/HTTP reader test with process search1PASS13.67s; no provider
+in that test. Trace read joins runtime/tool correlation to current case membership;
+readiness reads SQLite without creating/migrating and never probes provider.
+Actual cap768 Qwen document scenario: FAIL, VERIFICATION_UNAVAILABLE vsSUPPORTED,
+4main/2tools, knowledgeOK, onePROVIDER_HTTP_429, zeroadmittedclaims/citations. Received
+usage1279+75,2901+70,517+40; successful final does not erase earlier failed attempt.
+Source transport now retains latest failure across later successful calls; header snapshot
+remains latest response. Quota cap correction alone did not prove full document flow.
+Owner then approved three explicit Groq alternatives (ADR-0036) and requested all API
+route explanations. Route docstrings and transport/orchestrator/handler ownership docs
+added; GPT-OSS capability-specific requests use low reasoning/no parallel calls.
+Official sources: https://console.groq.com/docs/tool-use/overview and
+https://console.groq.com/docs/api-reference . No new dependency or hidden fallback.
+
+Three-model transport guards/worker/API suite25PASS2.42s; RuffPASS/mypy56PASS;
+direct dependency checker77files/fournegativecontrolsPASS. OpenAPI inspection confirms
+all15 API operations have route descriptions; no app/server/provider start in that check.
+Actual GPT-OSS120B probes: native lookup_live_data461prompt/49completion; JSON104/21,
+both successful and headers8000TPM/1000RPD. Strict document walkthrough thenPASS:
+SUPPORTED,5main/3tools,oneexactoriginalcitationAPIreadback,nofailures,nooperationalwrites.
+Received prompt/completion:895/66,1765/56,2635/70,3580/194,904/160. Latest headers
+remaining3097tokens/993dailyrequests,tokenreset36.772s. Model-specific proof only;
+no comparative model-quality/research claim. Current Qdrant launcher session38087
+owns resumed local test service; final supported stop/ports/UUID readback required.
+
+Actual GPT-OSS120B conflict: correctCONFLICT and5citation readbacks but strictFAIL
+because provider400/tool_use_failed occurred; do not count it as a passed walkthrough.
+Actual GPT-OSS20B conflict strictPASS:4main/2tools,lookupOK/policyPOLICY_CONFLICT,
+5citations,zeroverificationfailures. Prompt/completion908/50,1159/91,1872/127,1464/149.
+Actual120B partial strictFAIL:3main/1tool,observedstate only,provider400/tool_use_failed;
+canonicalmissing-settlement consumer not reached. Actual20B exact-no-evidence returned
+NOT_ESTABLISHED/noverificationfailures but strictFAIL because harness erroneously required
+searchOK. Existing HybridSearch deliberately returnsDEGRADED for unknown structured IDs
+with EXACT_IDENTIFIER_NOT_FOUND and auditfailureNONE. Correct the harness to admit only
+that exact warning plus successful tool/auditNONE (never dependency failure); old failed
+receipt retained. Runtime is unchanged by that assertion correction.
+Current full non-server run223PASS/1FAIL: injected unsupported index now fails closed
+under approved reconstructible-worker boundary, not prior successful-empty degradation.
+Updated security assertion to require explicitFAILED/UNAVAILABLE/no data and ledgerfailure;
+actual four-domain/Qdrant integration remains separately successful. No original case removed.
+Current real-Qdrant nonprovider suite9PASS/6live-deselected in63.47s. Build succeeded;
+fresh locked/noeditable environment installed exact wheel, but subsequent source changes
+require fresh rebuild/reinstall before final artifact proof. No all-green phase claim.
+
+Owner repeated P04 continuation and excludes concurrent palladion-benchmark work.
+Current shared main HEAD advanced to ea0b8de by benchmark worker; preserve its dirty/
+untracked files and do not stage them or .vscode. P04 GO remains unchanged/no new push.
+After interruption Qdrant was no longer listening; first diagnostic failed in connection/
+cleanup before any provider request. That is setup failure, not a model result. Restarted
+only owned supported launcher in session51264; /readyz confirmsallshardsready.
+Bounded diagnostic wrapper on actual120B partial thenstrictPASS: lookupOK and policy
+INCOMPLETE_INPUT, zeroverificationfailures. It made no request changes; no400 occurred,
+so no private provider prose/failed-generation content was retained. CLI receipts remain
+model-specific; earlier120B/20B malformed attempts and Qwen429 remain failures.
+Qwen partial cap768 failed with input-minute limit7000/used5223/requested1857/retry1s,
+separate from1000 output-minute limit. Actual20B partial reachedINCOMPLETE_INPUT but
+strictFAIL due malformed draft/mandatory-review qualification; no success substituted.
+ADR-0037 fixes exact-negative smoke predicates; actual20B no-evidence strictPASS after
+correction: NOT_ESTABLISHED,3main/1tool,DEGRADED exactmiss,healthy matching audit,no
+verificationfailures. Non-provider full regression224PASS22.01s; subsequent native shape/
+matching-name/id guards39PASS6.27s, RuffPASS. Final whole-tree run still required.
+Actual message/global-deadline→blocked search child→termination/join→persisted cancelled
+tool test plus real four-domain/trace/citation test2PASS19.89s; no unraisable warnings.
+Native malformed name/argument types now reject before dispatch, budgeted; tool results
+carry matching native name/id. No claim this alone fixes stochastic provider400 failures.
+
+
+### P04 pre-end-review verification checkpoint (2026-10-19 Asia/Bangkok)
+
+All source changes current; no P04 commit/push yet. Concurrent benchmark HEAD ea0b8de
+and dirty/untracked palladion-benchmark/.vscode are preserved, outside staging/review.
+Blueprint SHA256 remains911003f72b909e4e473cde917c872c022bf1332440fade1c97dce8ecf7af2b9c.
+
+- pytest --ignore=tests/test_end_to_end.py -q --tb=short -W error::pytest.PytestUnraisableExceptionWarning:228PASS34.09s, one existing Starlette/httpx deprecation warning.
+- Explicit local-Qdrant tests/test_end_to_end.py -k 'not p04_actual_groq_walkthrough' with same warning guard:10PASS/6deselected82.02s. Six opt-in provider pytest cases are not counted as passing tests. Total automated disjoint228+10=238.
+- Ruffsrc/tests/scriptsPASS; strict mypysrc/scripts56filesPASS; direct dependency checker77files/fournegativecontrolsPASS; docs17MD/93cards/20negativecontrolsPASS. No dependency or SQLite migration introduced by P04.
+- Build via pinned Hatchling/uvPASS. Wheel SHA017c46611c87e148e17867010245b1503d6681d8d553d6990c22d21dc4f09afa matches all47 packaged Python/schema source files. Fresh uv --locked --no-editable environment then exact-wheel --reinstall --no-deps; python -I resolves worker/schema only from site-packages. Installed real-Qdrant domain/trace/citation and message cancellation tests2PASS53.25s.
+- Installed-wheel actual Groq partial CLI: GPT-OSS120B PARTIALLY_SUPPORTED strictPASS,4main/2tools,transactionOK/policyINCOMPLETE_INPUT,settlement_state gap,3citation/clause readbacks,zeroverificationfailures. Prompt/completion921/115,1165/158,1840/133,1525/178. Full result runtime/p04-wheel-partial-120b.json. This is a real model/API/canonical consumer, not a scripted-model proof.
+- True TCP scripts/serve.py with explicit20B flag on fresh unique synthetic root: /health200,/ready200 (enabled),unauthenticated messages403,authenticated informational message200/SUPPORTED,3main/1tool,zeroverificationfailures,1citation readback. Result runtime/p04-http-result.json. Owned HTTP PID15676 stopped;18080 verifiedfree; only its exact UUID collection removed with absence readback.
+
+Actual named scenario path proofs (engineering smokes; not a model success-rate sample):
+
+| Scenario | Explicit Groq model | Actual outcome / receipt |
+|---|---|---|
+| supported typed fact | GPT-OSS20B (TCP) and120B diagnostic run | SUPPORTED;3main/1tool/1citation TCP; runtime/p04-http-result.json and p04-supported-diagnostic-result.json |
+| approved document attribution | GPT-OSS120B | SUPPORTED;5main/3tools/1citation; earlier complete CLI output retained above |
+| missing settlement input | GPT-OSS120B exact wheel | PARTIALLY_SUPPORTED;4main/2tools/3readbacks; p04-wheel-partial-120b.json |
+| overlapping versions | GPT-OSS20B | CONFLICT;4main/2tools/5readbacks; p04-conflict-20b.json |
+| unknown exact procedure | GPT-OSS20B | NOT_ESTABLISHED;3main/1tool; healthy exact-miss/audit proof; p04-no-evidence-20b-corrected.json |
+| intentionally unavailable live adapter | GPT-OSS20B | VERIFICATION_UNAVAILABLE;3main/1tool,only expectedLIVE_UNAVAILABLE,no claims; p04-unavailable-20b.json |
+
+Earlier400/tool_use_failed, malformed draft,429input/output and setup failures remain
+in this receipt and ignored raw outputs. No automatic fallback/retry or selective research
+reporting. Necessary-condition support rubric is ADR-0033; human semantic labels/escalation
+assignee remain unassigned, mandatory operational critic unavailable until P06. Research
+hypothesis, future full memory/graph, accuracy or production claims remain unproven.
+
+Fresh Qdrant readback before stop:0total collections (including0p04_smoke/0p02_test).
+Supported stop requested only recorded owned PID521; persistent Linux storage retained.
+Sole LunaMedium end audit has not yet started; phase/cards/gates await its findings/resolution.
+
+
+Sole P04 end review completed initial pass (GPT6LunaMedium, full18-section/15-invariant
+blueprint/all12docs/scopedsource read; allowed isolated137testsPASS, existingwarning).
+Confirmed findings: R1 raw REQUEST queries exposed through timeline eventID→evidence/
+recall despite metadata-only diagnostic boundary; R2 constant searched scope overstates
+no-search results; R3 rootREADME still labels implemented agent/generated answers future.
+Main verified actual producer/readers and accepts allthree. ADR-0038 records minimal
+owning fixes and owner-scoped continuity preservation. Phase/cards stay open until
+regressions, affected real consumers/artifact and same reviewer resolution pass.
+
+
+### End-review corrections and refreshed artifact (2026-10-19)
+
+R1: Public case-event projections now whitelist metadata for REQUEST/ATTEMPT and
+other event kinds; timeline IDs cannot retrieve raw queries/prompts through evidence
+or recall. Internal packet hydration reads only the current authenticated actor's
+last four reports, explicitly UNVERIFIED, from the canonical case_events table.
+Cross-member and same-owner evidence/recall canaries plus owner-only packet controls
+first failed for the intended leak; R2 no-search controls first failed for false scope
+(2FAIL/10PASS). The initial implementation then used nonexistent principal_id instead
+of schema actor_id (16FAIL/18PASS); main checked the schema and corrected that owning
+query. Focused suite34PASS6.17s; Ruff and mypy56PASS. No failure is erased.
+R2: Gate scope derives from executed search status: none, incomplete, degraded or OK;
+none/failed searches never imply a completed supplied-index search. validate_agent
+now reports searched_scope for consumer verification. R3: root README distinguishes
+implemented P04 from deferred P05 memory/P06 critic/P07 graph/P08 evaluation.
+
+Full source regression229PASS18.95s; one existing Starlette/httpx deprecation warning.
+RuffPASS, mypy56PASS, dependency77files/fournegativecontrolsPASS; documentation checker
+17MD/93cards/20negativecontrolsPASS. New artifact built via pinned Hatchling/uv and
+reinstalled into the already fresh locked/noeditable environment. Wheel SHA256
+**dce7afebb29d658719f3c303a6d964d2e5c995ef39ef69828380d036d248b60b** matches all47
+packaged Python/schema files; isolated -I imports worker/schema from site-packages.
+Earlier wheel proof is historical; refreshed consumer tests and same-reviewer resolution
+follow below. No dependency or schema migration added; benchmark files untouched.
+
+
+Affected actual-provider refresh on updated installed wheel: explicit GPT-OSS20B and
+separate GPT-OSS120B no_evidence commands both returned VERIFICATION_UNAVAILABLE,
+4main/1tool, MODEL_OR_SCHEMA_FAILURE; strict smoke exit1 in each. Both completed
+healthy exact-miss retrieval (consumer_proven true) and exposed the truthful degraded
+searched_scope without inventory attestation. Safe abstention under malformed model
+output is observed; neither run passes the no-evidence disposition scenario. Full raw
+receipts: runtime/p04-final-wheel-no-evidence-20b.json and
+runtime/p04-final-wheel-no-evidence-120b.json. Earlier actual five-disposition proof
+remains historical; these additional failures remain recorded, not replaced or retried
+inside a request. No model-quality reliability claim is made. The affected scope
+consumer is exercised despite the later model failure; deterministic no-search and
+owner/privacy API controls separately verify the changed paths.
+
+Same sole GPT6LunaMedium end reviewer independently rechecked R1/R2/R3 and reported
+all RESOLVED, no new material regression. Authorized isolated targeted suite20PASS,
+one existing Starlette/httpx warning. Complete initial18-section/I01–I15 blueprint
+coverage retained; correction consumers independently inspected. P05/P06/P07/P08/X01
+remain deferred. Main owns final task/gate closure after installed consumer checks,
+records and resource cleanup; reviewer did not mark phase/cards done.
+
+
+### P04 final closeout receipt (2026-10-19 Asia/Bangkok)
+
+Updated exact-wheel command (isolated -I, explicit local-Qdrant enablement):
+`python -I -m pytest tests/test_runtime_api.py tests/test_memory.py tests/test_gate.py tests/test_end_to_end.py -k 'not p04_actual_groq_walkthrough' -q --tb=short -W error::pytest.PytestUnraisableExceptionWarning`
+=>30PASS/6deselected196.45s, one existing Starlette/httpx deprecation warning, no
+unraisable warnings. This includes20 privacy/packet/gate/API tests and10 actual local
+Qdrant/HTTP/domain/cancellation tests. With229 non-server source tests, disjoint
+latest automated coverage is239 (the20 wheel controls overlap and are not double-counted).
+The six opt-in provider pytest scenarios are deselected, not PASS. Actual provider
+proofs and every failed separate CLI run are retained above, including both refreshed
+no-evidence failures. The updated scope consumer ran against real model results;
+no changed search/model/guard predicate was weakened to turn these failures green.
+
+Same-reviewer resolution completes the mandatory audit. Main closes all14 P04 child
+cards and phase-local acceptance based on the complete named source/HTTP/provider/
+wheel evidence, with reliability failures disclosed. Full semantic adequacy, hypothesis
+success, operational permission, complete memory, critic, graph and scientific score
+are not established and retain P05/P06/P07/P08 owners. No unresolved P04 architecture
+question or new owner ADR is needed for this checkpoint. P05 requires owner GO.
+
+Final collection readback:0total/0p04_smoke/0p02_test. Supported launcher stop requested
+only recorded owned Linux PID470; exec12345 exited0, persistent storage retained.
+Ports16333/16334/18080 have no listeners. Prior owned HTTP15676 remains stopped.
+Automatic approval review rejected recursive removal of the verified command-owned
+runtime/p04-wheel-env-20261018 environment, with no detailed reason. It is retained
+ignored for reproduction, with no running process; no alternate deletion attempted.
+Benchmark/.vscode edits remain outside scoped staging. Main push is not authorized.
+
+Final staged whitespace check exposed one extra blank EOF line in newly added tools.py. Removed only that whitespace, rebuilt/reinstalled artifact; all47 packaged files match current source bytes. Final wheel SHA256 **7be3caba6080d1fed754a1cfd535beed867a8e319b105c636c6d3922768bacc8**. Earlier30-test/artifact result remains historical for the prior byte-identical implementation apart from that EOF whitespace; final20 targeted installed-consumer result follows. No semantic change or repeated provider attempt.
+
+Final exact-wheel targeted HTTP/privacy/packet/gate regression20PASS5.61s, one existing Starlette/httpx deprecation warning. Final document checker and staged whitespace/credential/scope checks are required before the checkpoint commit; no new runtime change follows this receipt.

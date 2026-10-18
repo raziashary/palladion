@@ -1,6 +1,6 @@
 # Palladion working memory
 
-Updated 2026-10-18. Navigation aid only; user/vision/source/ADRs retain authority.
+Updated 2026-10-19. Navigation aid only; user/vision/source/ADRs retain authority.
 
 ## Stable facts
 
@@ -44,7 +44,26 @@ dependency change. Additive PolicyDecision extension approved/implemented (ADR-0
 remain recorded. Ruff, mypy45 files, docs/dependency controls and exact-wheel domain
 smoke pass. Reviewer status-drift finding corrected; no confirmed runtime defect.
 G-TEMPORAL/G-LIVE pass phase scope; G-POLICY remains PARTIAL for P04 gate consumer.
-P04 awaits owner GO. Generation/UI and a new main push remain excluded.
+P03 published64d2066; shared main later advanced to benchmark commit ea0b8de.
+Preserve all concurrent palladion-benchmark and .vscode changes; P04 scope is palladion.
+P04 DONE at E-P04-001: all14 children and sole end-audit resolution complete.
+Current229 non-server +10 real-Qdrant tests pass (239 disjoint; six provider pytest
+cases deselected). Installed wheel regression30PASS; final EOF-whitespace-only rebuild20PASS, overlapping
+the above. Ruff/mypy56/dependency77+4/doc17MD+93cards+20 controls pass. Wheel SHA256
+ 7be3caba6080d1fed754a1cfd535beed867a8e319b105c636c6d3922768bacc8
+matches47 files. Actual five dispositions/document/TCP proofs retained along with all
+failed runs; final20B/120B no-evidence refreshes failed strict scenario assertions due
+to malformed model output but safely abstained and exposed truthful executed scope.
+No model-quality/hypothesis success claim. R1 event privacy, R2 scope and R3 README
+resolved by same reviewer; actor_id owner hydration preserves UNVERIFIED reports.
+Canonical temporal refs, admin+membership traces/readiness and owned-process search
+are implemented under ADR-0031/0032/0034. ADR-0036 allows exactly three explicit models.
+No automatic fallback/retry. Measured8000combined TPM/Qwen7000input/1000output;
+requests counter1000RPD. No full memory/critic/graph/research or operational permission.
+All owned services stopped,0testcollections, ports16333/16334/18080 free. Automatic
+approval rejected deleting verified temporary wheel env; retained ignored without
+running processes. Preserve benchmark/.vscode. Wait for P05 GO; no new main push.
+
 
 Previous P02 state:
 
@@ -73,13 +92,13 @@ persisted authorization/approval and byte readers, not SQL-only helper assertion
 Exact installed-wheel/locked isolated smoke passes (P01 evidence). P02 GO is now given.
 PILOT fixtures: 4 sources, 3 cases/7 principals, 7 observations and exact T01–T24.
 At P01 close no P02 subsystem existed. P02 now has retrieval/API and pilot evidence;
-no provider call, human gold adjudication or full answer-system result exists.
+at that P01 checkpoint no provider call, human gold adjudication or full answer-system result existed.
 
 P00 completion/old hold is historical at E-DOC-001–E-DOC-004. P01 GO supersedes only
 that hold for this phase. Source/security gates remain PARTIAL until later consumers;
-no P01 check establishes full message/runtime behavior. Root .env was never read or
-copied; app .venv is reused/ignored. Unrelated .vscode remains untouched. New main
-publishing requires explicit user approval; P04+ is outside current scope.
+no P01 check establishes full message/runtime behavior. At P01 root .env was never read or
+copied; P04 explicit enabled commands now read only the selected Groq credential internally, never print/export it; app .venv is reused/ignored. Unrelated .vscode remains untouched. New main
+publishing requires explicit user approval; P05+ is outside current scope.
 
 ## Open risks to retain
 

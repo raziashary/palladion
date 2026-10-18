@@ -91,9 +91,10 @@ def test_legacy_policy_payload_remains_readable(p03):
     result = engine(p03).evaluate(p03.reader, "case-42", "DEMO.REVERSAL.CHECK",
                                   tuple(o.lookup_id for o in observations(p03)))
     old = result.model_dump(mode="json", exclude={"outcome", "normalized_inputs", "required_fields",
-        "selection_trace", "evaluation_mode", "knowledge_cutoff", "evaluated_at"})
+        "selection_trace", "evaluation_mode", "knowledge_cutoff", "evaluated_at", "temporal_input_refs"})
     parsed = PolicyDecision.model_validate_json(__import__("json").dumps(old))
     assert parsed.status is PolicyDecisionStatus.DETERMINED and parsed.outcome is None
+    assert parsed.temporal_input_refs == ()
 
 
 def test_conflicting_rows_no_priority_by_order_or_name(p03):

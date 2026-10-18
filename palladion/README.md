@@ -2,8 +2,8 @@
 
 P01 foundations and P02 ingestion/retrieval have real consumers: strict contracts,
 transactional SQLite, immutable originals, dense/BM25 Qdrant search and authenticated
-source/search/citation endpoints. P02 phase verification and audit resolution passed; no message API,
-agent loop or generated-answer result is claimed. P03 now adds approved temporal policy
+source/search/citation endpoints. P02 phase verification and audit resolution passed. P04 now has a message API,
+main loop and gate under verification; selected real Groq outputs are recorded, not phase completion. P03 now adds approved temporal policy
 execution and read-only mock operational observations; phase-local validation and single work review are complete (E-P03-001).
 
 Phase ownership and evidence are in the [development plan](docs/development/MASTER_DEV_PLAN.md)
@@ -109,18 +109,24 @@ The API listens on localhost:18080: GET `/health/live`, GET `/health/ready`, POS
 POST `/search`, GET `/evidence/{chunk_id}?case_id=...`, GET `/index-health?case_id=...`.
 Upload and approval require separate actors. Approval may provide a same-family scoped
 `supersedes_revision_id`. Search and citations recheck stored access, source approval,
-applicability and generation. No endpoint generates answers or calls a model provider.
+applicability and generation. These unversioned source/retrieval endpoints make no
+provider calls; the explicitly enabled versioned message endpoint below runs the agent.
 
 | Method | Route | Purpose |
 |---|---|---|
-| GET | `/health/live` | Application liveness |
-| GET | `/health/ready` | Qdrant availability and schema readiness |
+| GET | `/health/live` or `/health` | Application liveness |
+| GET | `/health/ready` or `/ready` | SQLite, Qdrant and explicit model-boundary readiness; no provider probe |
 | POST | `/sources` | Bounded Markdown/plain-text upload and metadata |
 | POST | `/sources/{revision_id}/approve` | Independent approval and indexing |
 | POST | `/sources/{revision_id}/revoke` | Immediate source authority revocation |
 | POST | `/search` | Authorized passages, citations and coverage warnings |
 | GET | `/evidence/{chunk_id}?case_id=...` | Original-byte citation readback |
 | GET | `/index-health?case_id=...` | Authorized supplied-source index coverage |
+| POST | `/v1/cases/{case_id}/messages` | Current case member: bounded investigation and qualified claims/citations |
+| GET | `/v1/evidence/{evidence_id}?case_id=...` | Current canonical document/live/policy/event evidence reader |
+| GET | `/v1/evidence/{evidence_id}/clauses/{clause_index}?version_id=...&case_id=...` | Exact approved policy clause bytes referenced by that decision |
+| GET | `/v1/cases/{case_id}/timeline` | Current case member: recent redacted runtime event metadata |
+| GET | `/v1/traces/{trace_id}?case_id=...` | Current admin AND current case member: bounded redacted developer diagnostics |
 
 Management, search and citation routes require `Authorization: Bearer <local-token>`.
 For a seeded case, the search JSON body is:
@@ -196,5 +202,35 @@ resolved from persisted observation IDs; a caller-supplied verified label is not
 Decision traces retain normalized inputs, source spans, selected version/time, row results
 and outcome. The replay reader rechecks access and source eligibility and recomputes matched
 rows. A stored decision is an audit artifact, not fresh permission to act. This is a direct
-domain interface: agent tool facades, policy HTTP/message integration and the final gate
-consumer belong to P04. No real enterprise connector or generated-answer benchmark is included.
+domain interface is consumed by P04 tool facades, policy HTTP/messages and final gate.
+No real enterprise connector or generated-answer research benchmark is included.
+
+P04 implementation and phase-local checks now cover real Groq transport, bounded loop,
+four scoped tools, request ledger, necessary-condition gate and message/timeline/citation
+readers. Scoped admin developer traces, dependency/config readiness and owned-process
+search cancellation are verified. Single end review and finding resolution are complete; full memory and
+critic remain later phases. Five dispositions and document citation paths have actual
+provider proofs, with every model/quota/schema failure retained (E-P04-001).
+Two final no-evidence refreshes failed strict assertions while safely abstaining;
+these engineering path checks do not establish model reliability. P05 requires GO.
+Use `python scripts/seed.py --policies` to explicitly seed trusted synthetic case/policy
+fixtures. After setup, `python scripts/serve.py --enable-live-llm` explicitly enables
+root .env credential loading and real model calls; omitting the flag disables messages.
+Actual-provider smoke: `python scripts/validate_agent.py --enable-live-llm --scenario supported`.
+Other scenarios are document/partial/conflict/no_evidence/unavailable; engineering checks
+are distinct from model-quality research. See E-P04-001 for passing and failed probes.
+
+
+The live server and walkthrough CLI accept explicit `--model qwen/qwen3.8-27b`,
+`--model openai/gpt-oss-120b` or `--model openai/gpt-oss-20b`. Qwen remains the default.
+All three run through Groq with the same four local read tools and release checks;
+no built-in web/code tools or automatic model fallback are enabled. Enablement still
+requires `--enable-live-llm`. CLI output names the actual model and includes bounded
+rate-limit headers (request counters are per day, token counters per minute).
+
+API route docstrings in `src/evidence_agent/api/routes.py` describe each endpoint's
+purpose, current authorization and response/failure behavior, and populate OpenAPI.
+The native-tool flow is `agent/llm.py` (transport) → `agent/loop.py` (budgeted native
+call handling) → `agent/tools.py:Tools.execute` (validated domain dispatch) → loop
+(matching tool-call results) → model → deterministic gate. Models never execute tools
+directly or supply their own identity/case authority.

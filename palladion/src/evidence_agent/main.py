@@ -1,8 +1,9 @@
 """Explicit application factory; imports load no credentials, models or services."""
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Mapping
+from typing import AsyncIterator, Mapping
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -15,9 +16,19 @@ from evidence_agent.core.retrieval import SearchIndex
 from evidence_agent.retrieval.hybrid import Ranker
 
 
+@asynccontextmanager
+async def lifecycle(app: FastAPI) -> AsyncIterator[None]:
+    try:
+        yield
+    finally:
+        runtime = getattr(app.state, "agent_services", None)
+        if runtime is not None:
+            runtime.close()
+
+
 def create_app(runtime_root: Path, index: SearchIndex, tokens: Mapping[str, str],
                ranker: Ranker | None = None) -> FastAPI:
-    app = FastAPI(title="Palladion retrieval prototype", docs_url=None, redoc_url=None)
+    app = FastAPI(title="Palladion evidence prototype", docs_url=None, redoc_url=None, lifespan=lifecycle)
     app.state.runtime_root = runtime_root.resolve()
     app.state.index = index
     app.state.tokens = dict(tokens)

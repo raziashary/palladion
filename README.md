@@ -10,14 +10,14 @@ fictional payment documents and read-only mock operational systems.
 The project is being built system-first, without a UI. Its research claims remain
 hypotheses until tested against controlled baselines and held-out cases.
 
-**Current state:** P01/P02 are verified; P03 temporal policy and scoped mock observations are verified for the phase-local domain: strict
-contracts, persisted synthetic access/approval, SQLite/originals and 24 pilot fixtures.
-The uv package/lock and offline validation entry point exist. Message API,
-agent loop, UI and full answer-system benchmark results remain absent.
-P02 includes real dense/BM25 Qdrant retrieval, source/search/citation API and retrieval-only
-pilots. Use the Docker-free WSL launcher documented in palladion/README.md.
-The future generative boundary uses Groq `qwen/qwen3.8-27b`; current retrieval needs no
-Groq API call. P04 agent/gate integration remains future scope.
+**Current state:** P01–P03 are verified. P04's bounded runtime, four read tools, claim
+gate, messages/citations, scoped developer traces/readiness and cancellable search worker
+are verified through actual provider/HTTP/wheel checks and independent end-review
+resolution. P04 is complete; P05 awaits authorization. No UI or research-hypothesis success is claimed. All passing and failed model
+checks and current gates are recorded in [progress](palladion/docs/development/PROGRESS.md).
+Retrieval uses real dense/BM25 Qdrant; the Docker-free WSL launcher is documented in the
+[application README](palladion/README.md). Generative commands explicitly enable Groq
+Qwen3.8-27B, GPT-OSS120B or GPT-OSS20B; retrieval-only checks need no provider call.
 
 ## What works today
 
@@ -30,6 +30,9 @@ Groq API call. P04 agent/gate integration remains future scope.
 - Retrieval-only pilot reports with representation identities, raw ranks and failure accounting.
 - Approved time-aware policy definitions, bounded predicate execution and persisted decision replay.
 - Four named mock operational reads with target authorization, explicit errors, deadlines and freshness.
+- Bounded real-Groq agent, four validated tool handlers and a deterministic claim gate.
+- Authenticated messages, current citation readback, redacted timelines and scoped admin traces.
+- Explicit dependency readiness, persisted failures and cancellable local search workers.
 
 Search results are discovery candidates. Before returning text, Palladion rechecks stored
 identity, scope, approval, applicability, generation and original bytes. Search scores and
@@ -46,10 +49,10 @@ flowchart LR
     C --> E[Passages + original-byte citations + warnings]
 ```
 
-Later phases add agent-facing bounded read tools and an agent loop,
-independent-context criticism, continuity memory and a final release gate. Enterprise
-identity integration, generated answers, graph traversal and full answer-system benchmarks
-are not implemented by the current retrieval prototype.
+P04 implements the bounded agent loop, four read-tool handlers, generated drafts and
+necessary-condition release gate. Later phases add full continuity memory,
+independent-context criticism, optional graph traversal and scientific answer-system
+evaluation. Enterprise identity integration remains outside this synthetic prototype.
 
 ## Run and explore
 
@@ -108,4 +111,4 @@ The current pilot has eight synthetic queries over a tiny corpus and lacks indep
 adjudicated labels. English/Indonesian query coverage does not establish general multilingual
 quality. Retrieval metrics do not establish answer correctness, production readiness or
 superiority. External comparator implementations and full answer-system experiments remain
-future work. P03 domain verification is recorded in the evidence log; Phase 4 awaits explicit GO.
+future work. P03 domain verification is recorded in the evidence log; Phase 4 is complete with recorded limits; Phase 5 awaits GO.

@@ -198,3 +198,19 @@ or baseline superiority is inferred. Mock operation freshness/deadline limits ar
 owner assumptions (ADR-0029), not measured business thresholds. Knowledge-cutoff audit is
 minimal registry reconstruction; input observation read times and actual evaluated-at remain
 explicit. Preserve current versus audit-mode outcomes and source/target-denial failures.
+
+## P04 runtime transport scope
+
+E-P04-001 contains actual selected Groq transport/HTTP/domain checks. These remain
+engineering smokes with PILOT fixtures, not an adjudicated B4 arm or quality estimate.
+Retain quota/transport/schema failures and all attempts. Human semantic support labels
+and escalation assignee remain unavailable; operational permission is not supported
+before P06 mandatory review. Current exact attribution/typed fact rubric is ADR-0033.
+
+P04 engineering results cover actual five dispositions and document citation consumers
+across explicit owner-approved Qwen/GPT-OSS120B/20B selections, including exact-wheel
+and real TCP entry points. These are path checks, not a success-rate sample: retain every
+failed run/model/attempt, do not turn selected passing reruns into model comparisons.
+Provider tokenizer revision is not disclosed here; actual provider token counts are
+recorded, without cross-model tokenizer equivalence claims. No benchmark dataset,
+license, arm implementation or confirmatory-run decision is supplied by this phase.

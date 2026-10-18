@@ -77,6 +77,11 @@ class QdrantIndex:
         if not collection_name:
             raise ValueError("collection_name must not be empty")
         self.collection_name = collection_name
+        # Non-secret reconstruction parameters for the approved runtime search worker.
+        self.worker_configuration = None if client is not None or encoder is not None else {
+            "url": url, "collection_name": collection_name,
+            "model_cache_dir": None if model_cache_dir is None else str(model_cache_dir),
+            "bm25_profile": bm25_profile, "active_generation": active_generation}
         self.bm25_profile = bm25_profile
         self.active_generation = active_generation
         self._client = client or QdrantClient(url=url, timeout=10)

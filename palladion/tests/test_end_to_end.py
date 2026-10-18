@@ -57,7 +57,8 @@ def test_actual_upload_approval_search_citation_and_revocation(runtime) -> None:
     root, index, _ = runtime
     with TestClient(create_app(root, index, TOKENS)) as client:
         assert client.get("/health/live").status_code == 200
-        assert client.get("/health/ready").status_code == 200
+        # Approved P04 readiness requires an explicitly configured model boundary.
+        assert client.get("/health/ready").status_code == 503
         body = {"case_id": "case-42", "family_id": "INTEGRATION.ONLY", "filename": "test.md",
                 "mime_type": "text/markdown", "owner_id": "admin-a",
                 "content": "# Synthetic citation\n\n[CLAUSE: TEST-ONLY]\nA violet demonstration requires a settlement recheck.\n"}
@@ -247,3 +248,137 @@ def test_reconcile_cli_reads_active_generation_after_profile_rollback(runtime) -
          "--collection", index.collection_name], cwd=APP, capture_output=True, text=True)
     assert completed.returncode == 0, completed.stdout + completed.stderr
     assert '"all_match": true' in completed.stdout
+
+
+@pytest.mark.skipif(os.environ.get("PALLADION_TEST_LIVE_LLM") != "1",
+                    reason="Explicit real Groq smoke enablement required")
+@pytest.mark.parametrize("scenario", ["supported", "document", "partial", "conflict", "no_evidence", "unavailable"])
+def test_p04_actual_groq_walkthrough_and_citation_reader(scenario):
+    assert URL and URL.startswith("http://127.0.0.1:")
+    # The CLI requires its explicit flag before reading root .env; no credential output.
+    environment = {key: value for key, value in os.environ.items()
+                   if not any(word in key.upper() for word in ("API_KEY", "TOKEN", "SECRET", "DATABASE_URL", "UV_ENV_FILE"))}
+    completed = subprocess.run([sys.executable, str(APP / "scripts/validate_agent.py"),
+        "--enable-live-llm", "--scenario", scenario, "--url", URL],
+        cwd=APP, env=environment, text=True, capture_output=True, timeout=180)
+    assert completed.returncode == 0, completed.stdout + completed.stderr
+
+
+def test_p04_four_domain_tools_and_original_reader_without_provider(runtime):
+    import asyncio
+    import hashlib
+    import json
+
+    from evidence_agent.agent.services import configure_agent
+    from evidence_agent.agent.tools import Tools
+    from evidence_agent.live.contracts import Snapshot
+    from evidence_agent.live.gateway import LiveGateway, load_config
+    from evidence_agent.live.mock import MockAdapter
+    from evidence_agent.memory.store import CaseStore
+    from evidence_agent.policy.bootstrap import seed_policy_fixture
+    from evidence_agent.retrieval.evidence import RequestLedger
+    from evidence_agent.retrieval.hybrid import HybridSearch
+    from evidence_agent.settings import Settings
+    root, index, _ = runtime
+    config = load_config(APP / "config/adapters.yaml")
+    adapter = MockAdapter({("get_transaction_status", "TX-DEMO-102"): (Snapshot(status="OK", data={
+        "transaction_id": "TX-DEMO-102", "state": "FAILED",
+        "transaction_occurred_at": "2026-08-15T10:20:00Z"}),)})
+    with Database(root / "registry.sqlite") as database:
+        registry = Registry(database, OriginalStore(root / "originals"))
+        seed_policy_fixture(registry, APP)
+        principal = registry.access.authenticate("reader-a")
+        store = CaseStore(registry, principal, "case-42")
+        ledger = RequestLedger(HybridSearch(Catalog(registry), index), principal, "case-42", "p04-domain-proof",
+            {key: value.max_age_seconds for key, value in config.operations.items()})
+        tools = Tools(ledger, LiveGateway(registry, adapter, config), store)
+        store.append("REQUEST", ledger.trace_id, {"query": "Synthetic reported context, not verified evidence"})
+        async def reads():
+            knowledge = await tools.execute("search_knowledge", '{"query":"investigation settlement","limit":2}')
+            assert knowledge["status"] == "SUCCEEDED" and knowledge["data"]
+            documents = knowledge["data"]
+            assert all("text_preview" in item and "text" not in item for item in documents)
+            live = await tools.execute("lookup_live_data", json.dumps({
+                "operation": "get_transaction_status", "target_id": "TX-DEMO-102"}))
+            policy = await tools.execute("evaluate_policy", json.dumps({
+                "family_id": "DEMO.REVERSAL.CHECK", "evidence_ids": [live["data"]["evidence_id"]]}))
+            assert policy["data"]["status"] == "INCOMPLETE_INPUT"
+            assert "settlement_state" in policy["data"]["missing_fields"]
+            memory = await tools.execute("recall_memory", '{"limit":4}')
+            assert memory["data"] and all(e["authority"] == "NONE" for e in memory["data"])
+            return documents
+        documents = asyncio.run(reads())
+        application = create_app(root, index, TOKENS)
+        configure_agent(application, model=None, adapter=adapter, config=config, settings=Settings())
+        with TestClient(application) as client:
+            from evidence_agent.policy.registry import PolicySpec
+            trace_route = "/v1/traces/" + ledger.trace_id
+            trace = client.get(trace_route, params={"case_id": "case-42"}, headers=auth("test-admin-a"))
+            assert trace.status_code == 200 and trace.json()["retrieval"]
+            assert "investigation settlement" not in trace.text
+            assert client.get(trace_route, params={"case_id": "case-42"},
+                              headers=auth("test-reader-a")).status_code == 403
+            policy_id = next(key for key, value in ledger.records.items() if value["kind"] == "POLICY_DECISION")
+            policy_read = client.get("/v1/evidence/"+policy_id, params={"case_id":"case-42"}, headers=auth("test-reader-a"))
+            assert policy_read.status_code == 200 and "rule_trace" not in policy_read.json()
+            for reference in policy_read.json()["clause_refs"]:
+                clause_read = client.get("/v1/evidence/"+policy_id+"/clauses/"+str(reference["clause_index"]),
+                    params={"case_id":"case-42", "version_id":reference["version_id"]}, headers=auth("test-reader-a"))
+                assert clause_read.status_code == 200
+                row = database.connection.execute("SELECT decision_table_json FROM policy_versions WHERE version_id=?",
+                                                   (reference["version_id"],)).fetchone()
+                expected = PolicySpec.model_validate_json(row[0]).clauses[reference["clause_index"]]
+                assert hashlib.sha256(clause_read.json()["text"].encode()).hexdigest() == expected.sha256
+            assert client.get("/v1/evidence/"+policy_id+"/clauses/0", params={"case_id":"case-42", "version_id":"unrelated"},
+                              headers=auth("test-reader-a")).status_code == 403
+            for item in documents:
+                identifier = item["evidence_id"]
+                read = client.get("/v1/evidence/"+identifier, params={"case_id":"case-42"},
+                                  headers=auth("test-reader-a"))
+                assert read.status_code == 200
+                assert hashlib.sha256(read.json()["text"].encode()).hexdigest() == ledger.envelopes[identifier].content_hash
+            revoked = ledger.records[documents[0]["evidence_id"]]["revision_id"]
+            registry.revoke_source(registry.access.authenticate("admin-a"), revoked)
+            assert client.get("/v1/evidence/"+documents[0]["evidence_id"], params={"case_id":"case-42"},
+                              headers=auth("test-reader-a")).status_code == 403
+        assert ledger.refresh() and documents[0]["evidence_id"] not in ledger.records
+
+
+def test_p04_message_deadline_stops_and_persists_blocked_search_process(runtime, monkeypatch):
+    import asyncio
+    import json
+
+    from evidence_agent.agent.services import configure_agent
+    from evidence_agent.live.gateway import load_config
+    from evidence_agent.live.mock import MockAdapter
+    from evidence_agent.policy.bootstrap import seed_policy_fixture
+    from evidence_agent.settings import Settings
+
+    from .test_agent_budget import ScriptedModel, tool_turn
+    root, index, _ = runtime
+    with Database(root / "registry.sqlite") as database:
+        seed_policy_fixture(Registry(database, OriginalStore(root / "originals")), APP)
+    captured = []
+    original = asyncio.create_subprocess_exec
+    async def blocked_child(*args, **kwargs):
+        process = await original(sys.executable, "-c", "import time; time.sleep(60)", **kwargs)
+        captured.append(process)
+        return process
+    monkeypatch.setattr(asyncio, "create_subprocess_exec", blocked_child)
+    model = ScriptedModel([tool_turn("search_knowledge", {"query": "investigation"})])
+    app = create_app(root, index, TOKENS)
+    configure_agent(app, model=model, adapter=MockAdapter({}),
+        config=load_config(APP / "config/adapters.yaml"), settings=Settings(request_timeout_seconds=1))
+    with TestClient(app) as client:
+        response = client.post("/v1/cases/case-42/messages", headers=auth("test-reader-a"),
+                               json={"query": "Read the approved investigation source"})
+        assert response.status_code == 200
+        data = response.json()
+        assert data["disposition"] == "VERIFICATION_UNAVAILABLE"
+        assert {"GLOBAL_DEADLINE", "TOOL_CANCELLED"}.issubset(data["verification_failures"])
+        assert data["budget"]["main_used"] == data["budget"]["tools_used"] == 1
+    assert len(captured) == 1 and captured[0].returncode is not None
+    with Database(root / "registry.sqlite") as database:
+        events = [json.loads(row[0]) for row in database.connection.execute(
+            "SELECT payload_json FROM case_events WHERE event_kind='RUNTIME_TOOL_RESULT'")]
+        assert any(e.get("status") == "CANCELLED" and e.get("tool") == "search_knowledge" for e in events)

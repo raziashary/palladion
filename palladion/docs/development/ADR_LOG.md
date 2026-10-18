@@ -834,6 +834,104 @@ All provider-specific compatibility remains deferred to enabled P04 proof.
 **My answer (editable):** User: Approve additive PolicyDecision extension (Recommended).
 **Verification:** PASS at E-P03-001: legacy compatible payload roundtrip and executed zero-input policy tests passed, including focused independent end-review checks. Approval remains the owner answer above.
 
+## ADR-0031 — P04 trace authorization and readiness
+
+**Status:** ACCEPTED; explicit owner reply2026-10-18 supersedes pending answer below. Owner: Approve scoped admin traces and expanded readiness (Recommended). Implementation and tests remain required.
+**Authority:** P04 GO; Rule4 for new authorization/readiness contract.
+**Question:** Who reads traces and which dependencies determine readiness?
+**Why:** Start review found no developer grant and index-only readiness.
+**Options:** Current admin plus current case membership with redacted metadata, or traces disabled; SQLite/Qdrant/configuration readiness without provider calls.
+**Recommendation:** Existing admin AND current case membership; no raw prompts/rejected text or other cases. Check SQLite, Qdrant and explicit agent configuration; keep liveness independent.
+**What affects what:** api/routes.py, main lifecycle, telemetry/audit.py, security/HTTP tests; no new grant/schema.
+**My answer (editable):** User: Approve scoped admin traces and expanded readiness (Recommended). Supersedes prior pending answer2026-10-18.
+**Verification:** E-P04-001: current-admin AND current-case allow/deny/revocation/canary tests pass; actual correlated retrieval/HTTP trace reader passes. SQLite read-only, Qdrant outage and explicit model-boundary checks pass without provider calls; real TCP health/ready pass. End audit pending.
+
+## ADR-0032 — P04 cancellable search boundary
+
+**Status:** ACCEPTED; explicit owner reply2026-10-18 supersedes pending answer below. Owner: Approve cancellable local search worker (Recommended). Implementation and strict cancellation proof remain required.
+**Authority:** P04 global deadline/cancellation requirement; existing P02 owned-process precedent.
+**Question:** How can cancellation stop synchronous Qdrant/model search?
+**Why:** asyncio timeout cannot stop synchronous code and abandoning a thread leaves work running.
+**Options:** Owned local subprocess using existing readers, or another owner-selected approach.
+**Recommendation:** Bounded credential-free search process; terminate and join on deadline/cancellation; no new package/service.
+**What affects what:** agent tools/services, P04-T01.03/P04-T02.03 cards and process/cancellation tests. Direct synchronous search does not meet strict cancellation proof.
+**My answer (editable):** User: Approve cancellable local search worker (Recommended). Supersedes prior pending answer2026-10-18.
+**Verification:** E-P04-001: real blocked-process cancellation/deadline/credential/IPC controls, actual message deadline→persisted tool cancellation, real Qdrant four-domain readback and isolated exact-wheel consumers pass. No detached thread/process fallback; Windows pipe cleanup verified without unraisable warnings.
+
+## ADR-0033 — P04 support rubric and unassigned human escalation
+
+**Status:** ACCEPTED implementation boundary within ADR-0020 and P04 phase exit.
+**Authority:** Owner-accepted ADR-0020; P04-T03.04 conditional adequacy rule; P06 owns critic.
+**Question:** What can be established without invented human labels or reviewer assignment?
+**Why:** A valid citation does not prove free-text entailment or complete exceptions.
+**Options:** Bounded attribution/typed facts and qualified consequential claims, or invented signoff (rejected).
+**Recommendation:** SOURCE_QUOTE must exactly match an authorized current passage and renders only as attribution. OBSERVED_FACT must match a typed fresh field/value and renders through a controlled template. RULE_REQUIREMENT must name an approved schema field. POLICY_RESULT never releases operational permission before P06. Unknown refs, mismatched/irrelevant associations and unrecognized free prose are blocked; hypotheses are explicitly unverified and non-authorizing. Model labels cannot suppress checks. Exact quotes overlapping registered policy-clause spans are independently recognized from backend metadata and require policy context/mandatory review even when labeled INFORMATIONAL.
+**What affects what:** draft/gate, evidence/coverage readers, gate/security tests and unchanged PILOT gold catalog. Human support/exception annotators and escalation assignee remain UNASSIGNED; consequential adequacy stays qualified. The development reviewer is not a human research annotator.
+**My answer (editable):** Inherits accepted ADR-0020/P04 conditional scope; coordinator supplies no human assignment or semantic gold approval.
+**Verification:** IN_PROGRESS E-P04-001; actual typed-information Groq/HTTP/citation path and action rejection tested. Human semantic adequacy remains deferred.
+
+## ADR-0034 — Canonical temporal-input provenance for non-determined decisions
+
+**Status:** ACCEPTED; explicit owner reply2026-10-18 supersedes pending answer below. Owner: Approve canonical temporal-input provenance extension (Recommended). Implementation and regression proof remain required.
+**Authority:** P04 consumer regression; shipped PolicyDecision/PolicyEngine contract requires owner approval under Rule4.
+**Question:** May the canonical decision add optional temporal_input_refs, populated by the owning PolicyEngine from authenticated persisted observations?
+**Why:** P03 conflict decisions have no normalized fact refs, so the current P04 reader cannot reconstruct the time-source selection. Historical replay alone must not assert a fresh conflict after supersession.
+**Options:** Add compatible canonical temporal-input provenance and tests, or another owner-selected contract. A duplicate authority log in P04 is rejected.
+**Recommendation:** Optional tuple default empty in core/models.py, produced in policy/engine.py after actual observation validation; current readers use canonical time-source refs. Preserve backward reading of stored old payloads and normalized fact refs; no schema migration. Older strict binaries may reject newly extended JSON, so forward compatibility is not promised. No public raw PolicyDecision endpoint existed before P04. Record failed observations as attempts without implying valid facts. Prove conflict current-read, later supersession invalidation and legacy roundtrip.
+**What affects what:** core/models.py, policy/engine.py, retrieval/evidence.py, tests/test_contracts.py, test_policy_engine.py and test_gate.py. Canonical implementation and local consumer proof now pass; full P04-T03.02 integration remains open.
+**My answer (editable):** User: Approve canonical temporal-input provenance extension (Recommended). Supersedes prior pending answer2026-10-18.
+**Verification:** Original reproduced FAIL is retained at E-P04-001. Approved owning producer now persists temporal_input_refs after scoped observation reads; replay rechecks their access, runtime reselects current policy. Legacy empty default and conflict/reopen/explicit-supersession tests pass;213 non-server tests, Ruff and strict mypy55PASS. No second authority log/schema migration. Full P04 live integration remains open.
+
+## ADR-0035 — Separate Groq output quota from combined TPM
+
+**Status:** ACCEPTED bounded P04 implementation choice;2026-10-18.
+**Authority:** Owner keeps free quota/current model and supplied rate-limit screenshot; P04-T01.01 bounded transport.
+**Question:** Why does8K TPM reject a tiny request with a1K limit?
+**Why:** Actual headers report8000 combined TPM. Cap1200 fails with output-minute limit1000/requested1151; cap64 succeeds with22prompt/6completion tokens. Earlier combined-TPM diagnosis omitted direction and is retracted.
+**Options:** Bound unshipped completion allowance and pace separate engineering checks, or change quota/model.
+**Recommendation:** Keep Qwen; cap768 below observed output-minute limit and distinguish input/output diagnostics. Subsequent calls can still exhaust remaining output capacity. Preserve counted429 and one attempt per invocation; no hidden retry or deadline-breaking sleep.
+**What affects what:** agent/llm.py, tests/test_llm_transport.py and live-check scheduling. No dependency, public API or shipped-default change. Full scenarios still need actual proof.
+**My answer (editable):** Coordinator implementation within existing P04 authority; no owner phase signoff inferred.
+**Verification:** E-P04-001: live cap64 success/cap1200 rejection, cap768 native four-tool and JSON success, actual allowlisted header readback;21 focused budget/transport tests and strict typing pass. Full runtime scenarios remain open.
+
+## ADR-0036 — Explicit selection among three owner-approved Groq models
+
+**Status:** ACCEPTED; direct owner direction2026-10-18.
+**Authority:** Owner: if Qwen does not make it, switch to openai/gpt-oss-120b or openai/gpt-oss-20b; use either of these three.
+**Question:** Which models may P04 use when actual Qwen walkthroughs fail?
+**Why:** Cap768 native/JSON probes pass, but actual document walkthrough still hits429 after successful search; different model quotas/capabilities must be measured, not assumed interchangeable.
+**Options:** Explicit per-run selection among approved three, or silently substitute providers/models (rejected).
+**Recommendation:** Keep Qwen default; allow explicit --model in serve/validate_agent and validated Settings/transport allowlist. Try GPT-OSS120B for remaining engineering walkthroughs. GPT-OSS uses low reasoning and parallel_tool_calls false; Qwen keeps none/parallel true. All retain same four local tools, one-attempt transport, budgets, gate and evidence rules. Built-in web/code tools stay unexposed.
+**What affects what:** settings.py, agent/llm.py, scripts/serve.py, scripts/validate_agent.py and transport/model compatibility tests. No new package/provider. Every receipt names its model; no model switch inside a failed attempt or research comparison.
+**My answer (editable):** User explicitly authorizes Qwen3.8-27B, GPT-OSS120B or GPT-OSS20B as alternatives. Approval is not successful live-model proof.
+**Verification:** E-P04-001: explicit allowlist/capability guards pass; actual native/JSON and five-disposition/document proof across the three named models is recorded, including expected failures. Source/wheel/TCP consumers pass. Official capability references are retained; no comparative model-quality claim.
+
+## ADR-0037 — Distinguish expected negative smoke outcomes from unexpected failures
+
+**Status:** ACCEPTED coordinator correction within P04-T04.03;2026-10-18.
+**Authority:** Existing HybridSearch exact-ID behavior, four-tool handler and five-disposition smoke requirements.
+**Question:** Can a healthy exact miss or deliberately unavailable adapter ever pass the original smoke predicate?
+**Why:** Exact unknown identifiers intentionally returnDEGRADED/EXACT_IDENTIFIER_NOT_FOUND with auditfailureNONE. Deliberately unavailable live adapters intentionally appendLIVE_UNAVAILABLE. The original assertions requiredsearchOK and zero failures respectively, making both intended negative controls impossible.
+**Options:** Preserve impossible assertions, weaken all failures (rejected), or check only the precise expected negative condition and reject every unexpected failure.
+**Recommendation:** Accept exact miss only with successful persisted tool result, sole exact-miss warning, matching retrieval trace and auditNONE. Unavailable scenario requires exactlyLIVE_UNAVAILABLE, no claims, unavailable/timeout adapter status and VERIFICATION_UNAVAILABLE. Provider400/429, malformed drafts, cancellation and unrelated failures still fail. Keep old failed receipts.
+**What affects what:** agent/tools.py persists safe retrieval warning/trace metadata; scripts/validate_agent.py reads it. Runtime release checks and model behavior are not relaxed. Expected domain-fault success is evidence of safe abstention, not dependency reliability.
+**My answer (editable):** Coordinator fixes unambiguous smoke-contract bugs under Rules5/7; no owner phase signoff inferred.
+**Verification:** Actual20B exact miss nowstrictPASS (3main/1tool,no unexpectedfailures). Unavailable corrected predicate still rejects earlier120B provider400 result. Actual20B unavailable strictPASS with exactlyLIVE_UNAVAILABLE/no claims and no unexpected failures; mandatory end review remains open.
+
+## ADR-0038 — Close alternate prompt reads and report executed search scope
+
+**Status:** ACCEPTED in-scope correctness/privacy fixes under ADR-0031 and P04 integrity requirements;2026-10-19.
+**Authority:** Sole end reviewer findings and existing case/user scope, redacted diagnostics and honest absence rules.
+**Question:** Can case-event evidence bypass redacted timeline/trace, or a no-tool reply imply a search?
+**Why:** REQUEST payload projection retained raw queries; timeline event IDs made another member's question retrievable through evidence/recall. Gate used a constant searched-scope label even without search. Root README still described implemented agent features as future.
+**Options:** Preserve those defects, remove continuity, or separate safe event metadata from owner-scoped unverified reported-input hydration and derive scope from actual tool execution.
+**Recommendation:** Public event/recall projections whitelist metadata for every event kind. Packet hydration reads only the current authenticated operator's own bounded prior reports, tagged unverified, from the same canonical event store. No new store/contract. Search text distinguishes none, failed/incomplete and completed scoped retrieval; it never attests full inventory. Correct stale public docs.
+**What affects what:** memory/store.py and packet.py, gate.py, owner/cross-member API/recall/packet canaries, no-tool search-scope tests and root README. All changes remain P04; P05 full memory is deferred.
+**My answer (editable):** Coordinator fixes confirmed in-scope findings; no shipped schema or public contract extension, no governance exception inferred.
+**Verification:** E-P04-001 retains initial failing controls and wrong-column correction. Source229PASS, updated exact-wheel30PASS; real model scope readback observed with both strict scenario failures preserved. Same LunaMedium reviewer resolves R1/R2/R3 with20targetedPASS. No full memory or model reliability claim.
+
+Current P04 closeout (2026-10-19): ADR-0031/0032/0034/0036/0037/0038 implementation and phase-local consumers verified at E-P04-001; mandatory end review/resolution complete. Earlier IN_PROGRESS verification text above is historical, not a current hold. Provider failures remain recorded; P05+ requires GO.
+
 ## Future decision template
 
 ```text
@@ -850,4 +948,4 @@ Verification: planned proof, result, evidence and execution/deferred state
 Amendment history: old answer/date/reason and superseding decision
 ```
 
-Next free ADR number: 0031. Accepted directions do not grant implementation GO.
+Next free ADR number: 0039. Accepted directions do not grant implementation GO.

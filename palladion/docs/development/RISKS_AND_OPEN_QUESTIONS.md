@@ -1,11 +1,11 @@
 # Risks, accepted answers and verification obligations
 
-Current authority amendment: user explicitly authorized P03 end-to-end; ADR-0030 separately approves the additive PolicyDecision extension. Earlier implementation hold below is historical; package setup is authorized, no provider request needed.
+Current authority amendment: user explicitly authorized P04 end-to-end from published64d2066; ADR-0030 separately approves the additive PolicyDecision extension. Earlier implementation hold below is historical; P04 explicit enabled provider commands are authorized.
 
 Updated 2026-10-17. The user read and accepted all recommendation directions, except
 fake-first runtime: use Groq `qwen/qwen3.8-27b`. uv and package-selection authority are
 explicitly approved. **Additive v3 migration is owner-approved (ADR-0025).**
-P03 is explicitly authorized; later implementation remains phase-scoped. Acceptance does not invent compatibility,
+P04 is explicitly authorized; later implementation remains phase-scoped. Acceptance does not invent compatibility,
 thresholds, fixture values, reviewer availability, completeness or production signoff.
 
 Owner answers live once in [ADR_LOG](ADR_LOG.md); edit **My answer (editable)** there.
@@ -14,7 +14,7 @@ This register tracks remaining evidence and deferred scope, not a competing answ
 | ID | Question / accepted direction | Decision and state | Remaining evidence / owning phase |
 |---|---|---|---|
 | Q01 | Synthetic approval authority | [ADR-0012](ADR_LOG.md#adr-0012--q01--synthetic-approval-authority) ACCEPTED: authenticated administrator events; separate upload/approval grants | P01/P02 implement registry and reject self-approval/unauthorized grants; G-SOURCE/G-SECURITY |
-| Q02 | Python packages, environment and model | [ADR-0013](ADR_LOG.md#adr-0013--q02--uv-and-real-groq-runtime-generation) ACCEPTED: uv, app-local uv venv, delegated package choices, actual Groq qwen/qwen3.8-27b; fake-first overridden | Working uv installed separately; user-created ignored app .venv exists (E-DOC-004). P01 verified reuse, package pins/locked sync and installed-wheel smoke (E-P01-001); actual model/tool/schema/quota remains P04 proof. Embeddings remain a measured compatible selection. No provider call now. |
+| Q02 | Python packages, environment and model | [ADR-0013](ADR_LOG.md#adr-0013--q02--uv-and-real-groq-runtime-generation) ACCEPTED: uv, app-local uv venv, delegated package choices, actual Groq qwen/qwen3.8-27b; fake-first overridden | Working uv installed separately; user-created ignored app .venv exists (E-DOC-004). P01 verified reuse, package pins/locked sync and installed-wheel smoke (E-P01-001); actual model/tool/schema/quota remains P04 proof. Embeddings remain a measured compatible selection. Actual P04 probes are at E-P04-001. |
 | Q03 | Qdrant native RRF/BM25 compatibility | [ADR-0014](ADR_LOG.md#adr-0014--q03--qdrant-hybrid-compatibility) ACCEPTED_DIRECTION; VERIFY_AT_IMPLEMENTATION | P02 real1.19.2/1.19.1 probe and same-point/nativeRRFk60/matched weighting passed (E-P02-001). Broader corpus/language measurements remain P08. |
 | Q04 | English/Indonesian processing | [ADR-0015](ADR_LOG.md#adr-0015--q04--english-and-indonesian-retrieval) ACCEPTED_DIRECTION; VERIFY_AT_IMPLEMENTATION | P02 two-profile pilot recorded language mix/per-language metrics (E-P02-001); tied tiny English-source corpus does not select a general winner. P08 broader adjudicated language evidence remains. |
 | Q05 | Historical audits and time-basis migrations | [ADR-0016](ADR_LOG.md#adr-0016--q05--historical-audit-and-time-basis-migration) ACCEPTED_DIRECTION: minimal valid/record-time plus knowledge_cutoff, mixed-basis conflict unless explicit precedence | P03 historical/current fixtures, current ACL/admin audit distinction and replay readers implemented and phase-reviewed; no inferred migration or real-business retention rule. |
@@ -60,3 +60,17 @@ an empty owner answer; do not silently infer approval. Maintain deferred rows un
 that scope is explicitly invoked. Source evidence and current owner answers outrank
 historical task wording. P01 is verified complete at E-P01-001; P02 and later
 implementation require their own scope authorization.
+
+## Active P04 proof and decisions
+
+Owner-approved ADR-0031/0032/0034 implementations now pass scoped trace/readiness,
+cancellable-worker/deadline and canonical provenance/replay/supersession controls.
+Actual five dispositions/document/TCP/wheel paths pass; single end review and allthree finding resolutions pass.
+Provider400/malformed generation and429 input/output quota failures remain recorded;
+none is automatically retried/switched or treated as successful verification. Keep all
+engineering reruns separate from future research denominators. The three permitted
+models are explicit owner choices (ADR-0036), with model-specific capabilities/proof.
+Measured combined8000TPM, Qwen7000input/1000output; header requests counter is1000RPD.
+No human escalation assignee or independent semantic gold exists; normative operational
+permission remains qualified/unavailable until P06 required review. Full scientific
+quality/latency/cost/held-out claims remain P08. Concurrent benchmark is outside this task.

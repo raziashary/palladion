@@ -265,3 +265,60 @@ Windows/WSL TCP abort in an existing P02 setup. Retained failed runs, confirmed 
 health, verified the exact affected case, then passed disjoint163 domain/contract and8
 real-Qdrant groups. No assertion/default weakened or infrastructure fix claimed. Await an
 actual listener before dependent checks; keep transport limitations separate from code proof.
+
+## L021 — Probe transport combinations and preserve existing tests
+
+P04 confirmed native Groq tools and plain JSON separately, then falsified assumed combined
+JSON-object/native-tool support (HTTP400). Keep capabilities separate until actual proof.
+Quota failures remain failed attempts, not schema repairs. Assert actual expected smoke
+outcomes and do not infer success when cleanup obscures a result.
+An Add File operation replaced an existing security test file. Diff review caught it;
+original functions restored and extended before regression. Verify file existence first.
+Memory readback must not replay old released text around later source revocation.
+
+## L022 — Revalidate a conflict from canonical provenance
+
+A historical policy replay can reconstruct rule rows yet still lack the time-source IDs
+needed to establish a current conflict. The P04 reader exposed that gap. Avoid a second
+log as an authority workaround: fix the original producer under explicit contract approval.
+The canonical change is owner-approved and implemented in ADR-0034; the original failing regression is retained in evidence, not hidden
+with a skip or weakened assertion. Backward read compatibility does not imply older strict
+binaries can parse new fields. Clause-bound risk also comes from backend source-span
+bindings, not a model's INFORMATIONAL label; its isolated bypass guard passes.
+
+
+## L023 — Quota direction and header units matter
+
+A1000 limit in error prose was initially mistaken for combined TPM. Actual headers
+reported8000TPM/1000RPD; subsequent failures distinguish7000input/1000output minute
+limits. Preserve direction, remaining/reset counters and numeric retry hints. A smaller
+cap is not proof an entire multi-call request fits; never silently retry/switch a failed
+model. Actual provider errors remain engineering failures, not research observations to drop.
+
+## L024 — Own native dispatch and process lifetime
+
+Transport carries native calls; loop validates shape/types/unique IDs and reserves
+budgets; Tools.execute owns scoped dispatch and returns matching name/id results.
+Reject malformed argument types before .encode/hash operations. Cancellation must persist
+the attempted tool and terminate/join its local search process. Windows pipes also need
+closing/draining after termination; an exited child alone did not prevent a resource warning.
+
+## L025 — Negative controls need precise expected outcomes
+
+Healthy exact-ID absence is intentionallyDEGRADED; dependency failure is not the same
+condition. Verify the actual warning plus correlated auditNONE. An intentionally failing
+adapter must recordLIVE_UNAVAILABLE while safe abstention passes its negative control;
+provider400/429 or malformed-model failures remain disallowed. Preserve original failed
+assertions/runs, document their mechanism, and prove the corrected consumer reads the record.
+
+
+## L026 — Follow alternate readers and verify the schema before querying
+
+A redacted timeline/trace did not protect raw request payloads retrievable through its
+event IDs. Trace every evidence/recall reader; test canary absence for both the owner
+and another case member. Preserve only owner-scoped unverified prior reports internally.
+The first correction guessed principal_id where the existing schema uses actor_id;
+that caused16 focused failures. Reading the actual schema fixed it, and34 focused
+checks then passed. Search scope must likewise come from an executed tool result,
+not a constant label attached to every response. E-P04-001 retains both red controls
+and the failed first implementation.
