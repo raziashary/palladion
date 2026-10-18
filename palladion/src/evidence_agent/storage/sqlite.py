@@ -23,7 +23,7 @@ class Database:
     """
 
     APPLICATION_ID = 0x50414C4C  # ASCII "PALL"
-    SCHEMA_VERSION = 2
+    SCHEMA_VERSION = 3
 
     def __init__(self, path: str | Path) -> None:
         self.path = str(path)
@@ -145,12 +145,21 @@ class Database:
                 (2, utc_now()),
             )
             connection.execute("PRAGMA user_version = 2")
+            self._migration_2_to_3(connection)
+            connection.execute(
+                "INSERT INTO schema_versions(version, applied_at) VALUES (?, ?)",
+                (3, utc_now()),
+            )
+            connection.execute("PRAGMA user_version = 3")
 
     def _apply_migration(self, current: int, target: int) -> None:
-        if (current, target) != (1, 2):
+        if (current, target) not in {(1, 2), (2, 3)}:
             raise DatabaseSchemaError(f"no forward migration from version {current} to {target}")
         with self.transaction() as connection:
-            self._migration_1_to_2(connection)
+            if (current, target) == (1, 2):
+                self._migration_1_to_2(connection)
+            else:
+                self._migration_2_to_3(connection)
             connection.execute(
                 "INSERT INTO schema_versions(version, applied_at) VALUES (?, ?)",
                 (target, utc_now()),
@@ -163,6 +172,117 @@ class Database:
             "CREATE INDEX case_events_scope_idx "
             "ON case_events(tenant_id, case_id, occurred_at)"
         )
+
+    @staticmethod
+    def _migration_2_to_3(connection: sqlite3.Connection) -> None:
+        """Add P02's generation catalog without altering the published P01 tables."""
+        statements = (
+            """CREATE TABLE p02_chunks (
+                chunk_id TEXT PRIMARY KEY,
+                tenant_id TEXT NOT NULL,
+                revision_id TEXT NOT NULL,
+                case_id TEXT NOT NULL,
+                section_id TEXT NOT NULL,
+                start_byte INTEGER NOT NULL CHECK (start_byte >= 0),
+                end_byte INTEGER NOT NULL CHECK (end_byte > start_byte),
+                line_start INTEGER NOT NULL CHECK (line_start > 0),
+                line_end INTEGER NOT NULL CHECK (line_end >= line_start),
+                text TEXT NOT NULL,
+                content_sha256 TEXT NOT NULL CHECK (
+                    length(content_sha256) = 64 AND content_sha256 NOT GLOB '*[^0-9a-f]*'
+                ),
+                source_sha256 TEXT NOT NULL CHECK (
+                    length(source_sha256) = 64 AND source_sha256 NOT GLOB '*[^0-9a-f]*'
+                ),
+                parent_id TEXT,
+                neighbor_ids_json TEXT NOT NULL,
+                parser_version TEXT NOT NULL,
+                UNIQUE (tenant_id, revision_id, start_byte, end_byte),
+                FOREIGN KEY (tenant_id, revision_id)
+                    REFERENCES document_revisions(tenant_id, revision_id)
+            )""",
+            """CREATE TABLE index_generations (
+                tenant_id TEXT NOT NULL,
+                revision_id TEXT NOT NULL,
+                generation TEXT NOT NULL,
+                fingerprint TEXT NOT NULL,
+                parser_version TEXT NOT NULL,
+                graph_enabled INTEGER NOT NULL CHECK (graph_enabled IN (0, 1)),
+                required_backends_json TEXT NOT NULL,
+                state TEXT NOT NULL CHECK (state IN ('INDEXING', 'READY', 'FAILED')),
+                expected_count INTEGER NOT NULL CHECK (expected_count >= 0),
+                expected_manifest_sha256 TEXT NOT NULL CHECK (
+                    length(expected_manifest_sha256) = 64 AND
+                    expected_manifest_sha256 NOT GLOB '*[^0-9a-f]*'
+                ),
+                created_at TEXT NOT NULL,
+                ready_at TEXT,
+                PRIMARY KEY (tenant_id, revision_id, generation),
+                FOREIGN KEY (tenant_id, revision_id)
+                    REFERENCES document_revisions(tenant_id, revision_id)
+            )""",
+            """CREATE TABLE index_generation_chunks (
+                tenant_id TEXT NOT NULL,
+                revision_id TEXT NOT NULL,
+                generation TEXT NOT NULL,
+                chunk_id TEXT NOT NULL REFERENCES p02_chunks(chunk_id),
+                content_sha256 TEXT NOT NULL CHECK (
+                    length(content_sha256) = 64 AND content_sha256 NOT GLOB '*[^0-9a-f]*'
+                ),
+                PRIMARY KEY (tenant_id, revision_id, generation, chunk_id),
+                FOREIGN KEY (tenant_id, revision_id, generation)
+                    REFERENCES index_generations(tenant_id, revision_id, generation)
+            )""",
+            """CREATE TABLE index_backend_manifests (
+                tenant_id TEXT NOT NULL,
+                revision_id TEXT NOT NULL,
+                generation TEXT NOT NULL,
+                backend TEXT NOT NULL,
+                expected_count INTEGER NOT NULL CHECK (expected_count >= 0),
+                expected_manifest_sha256 TEXT NOT NULL CHECK (
+                    length(expected_manifest_sha256) = 64 AND
+                    expected_manifest_sha256 NOT GLOB '*[^0-9a-f]*'
+                ),
+                confirmed_count INTEGER NOT NULL CHECK (confirmed_count >= 0),
+                confirmed_manifest_sha256 TEXT NOT NULL CHECK (
+                    length(confirmed_manifest_sha256) = 64 AND
+                    confirmed_manifest_sha256 NOT GLOB '*[^0-9a-f]*'
+                ),
+                acknowledged_at TEXT NOT NULL,
+                PRIMARY KEY (tenant_id, revision_id, generation, backend),
+                FOREIGN KEY (tenant_id, revision_id, generation)
+                    REFERENCES index_generations(tenant_id, revision_id, generation)
+            )""",
+            """CREATE TABLE exact_aliases (
+                tenant_id TEXT NOT NULL,
+                case_id TEXT NOT NULL,
+                normalized_alias TEXT NOT NULL,
+                alias TEXT NOT NULL,
+                revision_id TEXT NOT NULL,
+                chunk_id TEXT NOT NULL REFERENCES p02_chunks(chunk_id),
+                PRIMARY KEY (tenant_id, case_id, normalized_alias, revision_id, chunk_id),
+                FOREIGN KEY (tenant_id, case_id) REFERENCES cases(tenant_id, case_id),
+                FOREIGN KEY (tenant_id, revision_id)
+                    REFERENCES document_revisions(tenant_id, revision_id)
+            )""",
+            """CREATE TABLE context_links (
+                tenant_id TEXT NOT NULL,
+                case_id TEXT NOT NULL,
+                from_chunk_id TEXT NOT NULL REFERENCES p02_chunks(chunk_id),
+                to_chunk_id TEXT NOT NULL REFERENCES p02_chunks(chunk_id),
+                relation TEXT NOT NULL CHECK (relation = 'EXCEPTION_TO'),
+                actor_id TEXT NOT NULL REFERENCES principals(principal_id),
+                created_at TEXT NOT NULL,
+                PRIMARY KEY (tenant_id, from_chunk_id, to_chunk_id, relation),
+                FOREIGN KEY (tenant_id, case_id) REFERENCES cases(tenant_id, case_id),
+                CHECK (from_chunk_id <> to_chunk_id)
+            )""",
+            "CREATE INDEX p02_chunks_revision_idx ON p02_chunks(tenant_id, revision_id, start_byte)",
+            "CREATE INDEX exact_alias_lookup_idx ON exact_aliases(tenant_id, case_id, normalized_alias)",
+            "CREATE INDEX context_links_from_idx ON context_links(tenant_id, case_id, from_chunk_id)",
+        )
+        for statement in statements:
+            connection.execute(statement)
 
     def _validate_schema_shape(self, version: int) -> None:
         expected = {
@@ -208,6 +328,18 @@ class Database:
             }
             if "case_events_scope_idx" not in indexes:
                 raise DatabaseSchemaError("Palladion schema version 2 is missing its migration index")
+        if version >= 3:
+            p02_tables = {
+                "p02_chunks",
+                "index_generations",
+                "index_generation_chunks",
+                "index_backend_manifests",
+                "exact_aliases",
+                "context_links",
+            }
+            if not p02_tables.issubset(actual):
+                missing = ", ".join(sorted(p02_tables - actual))
+                raise DatabaseSchemaError(f"Palladion schema version 3 is missing tables: {missing}")
 
 
 def utc_now() -> str:

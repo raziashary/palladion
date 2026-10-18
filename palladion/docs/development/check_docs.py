@@ -288,8 +288,8 @@ def self_test(documents: dict[str, str]) -> int:
         "unapproved root file owner": (plan_key, plan.replace(
             "`AGENTS.md`, `README.md`, `.gitignore`", "`AGENTS.md`, `unrelated.txt`, `.gitignore`", 1)),
         "runtime task owning root navigation": (plan_key, plan.replace(
-            "`palladion/.gitignore`, `palladion/pyproject.toml`",
-            "`README.md`, `palladion/pyproject.toml`", 1)),
+            "`palladion/.gitignore`, `palladion/.gitattributes`, `palladion/pyproject.toml`",
+            "`README.md`, `palladion/.gitattributes`, `palladion/pyproject.toml`", 1)),
     }
     for label, (path, replacement) in mutations.items():
         altered = dict(documents)

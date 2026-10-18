@@ -196,6 +196,28 @@ Two stale GO statements also demonstrated why current status needs a full docume
 Final staging exposed a Windows autocrlf risk for hashed source originals. App attributes
 now preserve those bytes; a fresh index checkout must pass actual fixture/CLI reads.
 
+## L017 — Real retrieval proof exposes environment and consumer gaps
+
+P02 pre-adversary found missing search/revocation producers and persistent representation
+metadata. Owner approved additive v3 before schema changes. Source-preserving parsing,
+exact manifests and current canonical readers are distinct from an index acknowledging a
+write. A→B→A configuration reindex must read the active generation, not newest-created.
+Empty source ACL means authorized case members, requiring a scoped OR in discovery;
+boolean payloads need a BOOL index. Repeated collection checks validate existing schema
+and create only missing indexes.
+
+Docker became unusable; preserve its install directory. Official glibc build exceeded
+Ubuntu's libc; verified musl build works. Native Windows actual writes failed on filesystem
+access, so supported standalone execution uses WSL Linux storage. Version output alone
+was not proof. Fresh HTTP upload→approval→search→citation and revoke→deny pass against
+that real server. Test cleanup needed explicit Qdrant close (no context-manager API).
+
+Metric tests falsified an incorrect expected nDCG calculation. Empty denominators remain
+null. A failed measurement stage must make a pilot incomplete; raw run history is kept.
+P02 pilots cannot establish full B0/B1/B2 answer-system or general multilingual quality.
+User changed future subagents to Luna Medium; preserve earlier High receipts, update
+standing instructions and use Medium for all new dispatches. E-P02-001 retains proof.
+
 ## New learning entry template
 
 ```text
@@ -212,3 +234,7 @@ Revisit condition:
 For a retraction: keep and strike the original false claim, add a new entry with why it
 was wrong and which evidence falsified it, and link any ADR/status corrections. Never
 erase failed runs or rename a post-hoc threshold as the original goal.
+
+## L018 — Exercise bounds through the real consumer
+
+P02's single work audit found a producer/consumer budget mismatch: discovery allowed40 candidates and reranking allowed30. A real HTTP regression first reproduced400, then passed with a declared ranker budget consumed before ranking. Apply chunk bounds to individual Unicode blocks and exception groups, including separators; preserving exact spans does not require unbounded groups. Normalize expected asset/inference backend failures at the adapter boundary so optional reranking can degrade explicitly. Keep fixture-setup failures separate from the intended negative control. E-P02-001 records resolution and final measurements.

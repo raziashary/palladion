@@ -17,9 +17,9 @@ repository from the blueprint's illustrative tree.
 
 ## Scope and integrity
 
-- Current mandate: explicit user GO for P01 end-to-end. Build and verify contracts,
-  uv/settings, persisted authorization/approval, immutable originals and synthetic fixtures.
-  The earlier P00 WAIT_FOR_GO is historical. No provider call, P02 implementation or UI.
+- Current mandate: explicit user GO for P02 end-to-end: provenance-first ingestion, real
+  Qdrant retrieval, authenticated source/search/citation API and pilot retrieval measurements.
+  P01 is complete and published at aa4b439. No generative provider call, P03+ or UI.
   `baseline/` is reserved for
   later comparator implementations; do not populate it as part of this setup.
 - Preserve the [vision](palladion/docs/vision/palladion-blueprint-v2.md). Do not silently
@@ -45,7 +45,7 @@ repository from the blueprint's illustrative tree.
   tests may inject data/errors to exercise guards but cannot substitute for that proof.
   Mock operational adapters and synthetic business data remain required. Free-plan intent
   does not waive quota, attempt/time budgets, explicit enablement or failure accounting.
-- Every subagent must use **GPT 6 Luna, High effort** (`gpt-6-luna`, `high`), per the user.
+- Every subagent must use **GPT 6 Luna, Medium effort** (`gpt-6-luna`, `medium`), per the user.
   If unavailable, report that limitation; do not substitute another model silently.
   Scope each dispatch, remove live-resource credentials, prohibit git/external mutations,
   and keep reviewers independent. The coordinator owns integration and status updates.
@@ -67,12 +67,12 @@ and architecture are not imported.
    editing. Update the checkbox and PROGRESS together; a parent closes only after every
    child and its own acceptance are proven. A list of files is not implementation evidence.
 3. **Require a pre-phase adversary before every phase starts.** Dispatch one independent
-   GPT 6 Luna High subagent to refute the phase tasks, sources, dependencies, trust boundaries,
+   GPT 6 Luna Medium subagent to refute the phase tasks, sources, dependencies, trust boundaries,
    consumer paths and proof against the vision and current source. Record confirmed, refuted,
    partial and uncertain claims; verify load-bearing findings in the main session and
    correct the plan/gates before dependent work. Record the receipt in EVIDENCE_LOG;
    existing historical audits do not satisfy a newly changed phase. After the phase's
-   validation, smoke and testing gates, dispatch one GPT 6 Luna High work auditor to
+   validation, smoke and testing gates, dispatch one GPT 6 Luna Medium work auditor to
    inspect implementation, consumers, test evidence and doc consistency. The post-phase
    work audit is a separate single-agent step; neither review replaces the other.
    Both reviewers must read the complete [blueprint](palladion/docs/vision/palladion-blueprint-v2.md)
@@ -118,17 +118,17 @@ and architecture are not imported.
 ## Phase closeout order
 
 Build the bounded task → stack validation → actual entry-point smoke → owning integrity
-gates → one mandatory GPT 6 Luna High work auditor and resolution of findings → learning and
+gates → one mandatory GPT 6 Luna Medium work auditor and resolution of findings → learning and
 status/evidence updates → no-stale sweep including README/navigation → process/port
 cleanup → scoped staged-diff/secret review → verified commit → continue authorized work.
 Skipped checks are not PASS. PARTIAL evidence does not close a later consumer obligation.
 For documentation-only work, the document checker CLI is the runnable entry point.
-For P01, use the offline foundation CLI and foundation tests; multi-phase source/security
-gates remain PARTIAL until their later runtime/API/index obligations pass. A checkpoint never expands the user's current mandate.
+For P02, use real isolated Qdrant, API/CLI source readback and retrieval measurements;
+multi-phase source/security gates remain PARTIAL until later runtime/graph obligations pass. A checkpoint never expands the user's current mandate.
 The mandatory pre-phase adversary precedes this sequence. The P00 full-suite review is
 historical. Every future pre-adversary and post-auditor still reads the complete blueprint
-and applies the canonical review contract. Complete P01 only under the current mandate;
-P02 requires its own scope authorization. Do not infer new main-push approval from P01 GO.
+and applies the canonical review contract. Complete P02 under the current mandate; P03 requires its own scope authorization.
+Do not infer new main-push approval from P02 GO.
 
 ## Close every task
 

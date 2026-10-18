@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import sqlite3
 import uuid
@@ -204,6 +205,67 @@ class Registry:
                     {"principal_id": principal_id, "case_id": case_id},
                 )
 
+    def source_metadata(self, principal: Principal, revision_id: str) -> dict[str, object]:
+        """Read source scope and status under current source authorization."""
+        row = self.database.connection.execute(
+            "SELECT revision.revision_id, revision.tenant_id, revision.case_id, revision.family_id, "
+            "revision.content_sha256, revision.source_path, revision.owner_id, "
+            "revision.approval_status, revision.index_state, revision.index_generation, "
+            "revision.valid_from, revision.valid_to, revision.acl_json, approval.status "
+            "AS approval_record_status FROM document_revisions AS revision "
+            "LEFT JOIN approval_records AS approval ON approval.approval_record_id = revision.approval_record_id "
+            "AND approval.tenant_id = revision.tenant_id AND approval.revision_id = revision.revision_id "
+            "WHERE revision.tenant_id = ? AND revision.revision_id = ?",
+            (principal.tenant_id, revision_id),
+        ).fetchone()
+        if row is None:
+            raise PermissionDenied
+        self.access.authorize(
+            principal,
+            tenant_id=row["tenant_id"],
+            case_id=row["case_id"],
+            grant="source:read",
+        )
+        acl = json.loads(row["acl_json"])
+        allowed = acl.get("allowed_principal_ids", [])
+        if allowed and principal.principal_id not in allowed:
+            raise PermissionDenied
+        metadata: dict[str, object] = dict(row)
+        metadata["allowed_principal_ids"] = tuple(allowed)
+        return metadata
+
+    def revoke_source(self, actor: Principal, revision_id: str) -> None:
+        """Immediately revoke source authority and append an audit event atomically."""
+        with self.database.transaction() as connection:
+            self.access.authorize(
+                actor,
+                tenant_id=actor.tenant_id,
+                grant="document:approve",
+                role="admin",
+            )
+            row = connection.execute(
+                "SELECT tenant_id, case_id, approval_status FROM document_revisions "
+                "WHERE tenant_id = ? AND revision_id = ?",
+                (actor.tenant_id, revision_id),
+            ).fetchone()
+            if row is None:
+                raise PermissionDenied
+            self.access.authorize(
+                actor,
+                tenant_id=row["tenant_id"],
+                case_id=row["case_id"],
+                grant="document:approve",
+                role="admin",
+            )
+            if row["approval_status"] != "APPROVED":
+                raise ResourceConflict
+            connection.execute(
+                "UPDATE document_revisions SET approval_status = 'REVOKED' "
+                "WHERE tenant_id = ? AND revision_id = ? AND approval_status = 'APPROVED'",
+                (actor.tenant_id, revision_id),
+            )
+            self._audit(connection, actor, "SOURCE_REVOKED", {"revision_id": revision_id})
+
     def register_source(
         self,
         principal: Principal,
@@ -346,8 +408,17 @@ class Registry:
                 )
         return revision
 
-    def approve_source(self, principal: Principal, revision_id: str) -> str:
+    def approve_source(
+        self,
+        principal: Principal,
+        revision_id: str,
+        *,
+        supersedes_revision_id: str | None = None,
+        applicability_scope: dict[str, str] | None = None,
+    ) -> str:
         """Record external approval; uploader self-approval is forbidden."""
+        if (supersedes_revision_id is None) != (applicability_scope is None):
+            raise ValidationFailure
         with self.database.transaction() as connection:
             self.access.authorize(
                 principal,
@@ -373,6 +444,27 @@ class Registry:
             if row["index_state"] != "STORED":
                 raise ResourceConflict
 
+            predecessor = None
+            scope_json = None
+            if supersedes_revision_id is not None and applicability_scope is not None:
+                expected_scope = {"tenant_id": row["tenant_id"], "case_id": row["case_id"]}
+                if applicability_scope != expected_scope:
+                    raise ValidationFailure
+                predecessor = connection.execute(
+                    "SELECT tenant_id, case_id, family_id, approval_status FROM document_revisions "
+                    "WHERE tenant_id = ? AND revision_id = ?",
+                    (row["tenant_id"], supersedes_revision_id),
+                ).fetchone()
+                if (
+                    predecessor is None
+                    or predecessor["approval_status"] != "APPROVED"
+                    or predecessor["case_id"] != row["case_id"]
+                    or predecessor["family_id"] != row["family_id"]
+                    or supersedes_revision_id == revision_id
+                ):
+                    raise ValidationFailure
+                scope_json = json.dumps(applicability_scope, separators=(",", ":"), sort_keys=True)
+
             approval_id = f"approval_{uuid.uuid4().hex}"
             recorded_at = utc_now()
             scope = json.dumps(
@@ -390,6 +482,35 @@ class Registry:
                 "WHERE tenant_id = ? AND revision_id = ?",
                 (approval_id, principal.tenant_id, revision_id),
             )
+            if predecessor is not None and supersedes_revision_id is not None and scope_json is not None:
+                edge_identity = "\0".join(
+                    (principal.tenant_id, supersedes_revision_id, revision_id, scope_json)
+                ).encode("utf-8")
+                connection.execute(
+                    "INSERT OR IGNORE INTO supersession_edges "
+                    "(edge_id, tenant_id, predecessor_revision_id, successor_revision_id, "
+                    "applicability_scope_json, valid_from, recorded_at, approved_by) "
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                    (
+                        "edge_" + hashlib.sha256(edge_identity).hexdigest(),
+                        principal.tenant_id,
+                        supersedes_revision_id,
+                        revision_id,
+                        scope_json,
+                        row["valid_from"] or recorded_at,
+                        recorded_at,
+                        principal.principal_id,
+                    ),
+                )
+                self._audit(
+                    connection,
+                    principal,
+                    "SOURCE_SUPERSESSION_RECORDED",
+                    {
+                        "revision_id": revision_id,
+                        "predecessor_revision_id": supersedes_revision_id,
+                    },
+                )
             self._audit(
                 connection,
                 principal,

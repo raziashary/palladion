@@ -1,0 +1,521 @@
+"""Run the explicitly enabled, retrieval-only P02 synthetic pilot."""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import importlib.metadata
+import json
+import platform
+import statistics
+import tempfile
+import time
+import uuid
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Literal
+
+from qdrant_client import QdrantClient
+
+from evidence_agent.core.bootstrap import seed
+from evidence_agent.core.errors import PermissionDenied, ResourceConflict
+from evidence_agent.core.evaluation import macro_average, score_ranked_references
+from evidence_agent.core.fixtures import load_fixtures
+from evidence_agent.core.models import Principal
+from evidence_agent.retrieval.hybrid import HybridSearch
+from evidence_agent.retrieval.rerank import FastEmbedReranker
+from evidence_agent.storage.catalog import Catalog
+from evidence_agent.storage.originals import OriginalStore
+from evidence_agent.storage.qdrant import QdrantIndex
+from evidence_agent.storage.registry import Registry
+from evidence_agent.storage.sqlite import Database
+
+APP_ROOT = Path(__file__).resolve().parents[1]
+DATA_ROOT = APP_ROOT / "data" / "demo"
+REPORT_PATH = APP_ROOT / "runtime" / "evaluation" / "p02-pilot.json"
+PILOT_PATH = DATA_ROOT / "retrieval_pilot.json"
+Bm25Profile = Literal["english", "no_stemming"]
+IndexMode = Literal["lexical", "dense", "hybrid"]
+SearchMode = Literal["hybrid", "reranked"]
+BM25_PROFILES: tuple[Bm25Profile, ...] = ("english", "no_stemming")
+TOP_K = 20
+
+
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _canonicalize(
+    search: HybridSearch,
+    principal: Principal,
+    case_id: str,
+    hits: tuple[Any, ...],
+    as_of: datetime | None,
+) -> tuple[list[str], int]:
+    ids: list[str] = []
+    excluded = 0
+    for hit in hits:
+        try:
+            search.resolver.resolve(principal, case_id, hit.chunk_id,
+                                    generation=hit.generation, as_of=as_of)
+        except (PermissionDenied, ResourceConflict):
+            excluded += 1
+            continue
+        if hit.chunk_id not in ids:
+            ids.append(hit.chunk_id)
+    return ids, excluded
+
+
+def _reference_ids(
+    references: list[dict[str, str]], catalog: Catalog, admin: Principal, case_id: str
+) -> list[str]:
+    ids: list[str] = []
+    for reference in references:
+        ids.extend(catalog.lookup_alias(admin, case_id, reference["clause_id"]))
+    return list(dict.fromkeys(ids))
+
+
+class _ObservedRanker:
+    def __init__(self, ranker: FastEmbedReranker) -> None:
+        self.ranker = ranker
+        self.last: dict[str, Any] | None = None
+
+    @property
+    def max_candidates(self) -> int:
+        return self.ranker.max_candidates
+
+    def rank(self, query: str, chunks: Any) -> tuple[Any, ...]:
+        started = time.perf_counter()
+        ordered = self.ranker.rank(query, chunks)
+        elapsed_ms = (time.perf_counter() - started) * 1000
+        self.last = {
+            "input_ids": [chunk.chunk_id for chunk in chunks],
+            "ranked_ids": [chunk.chunk_id for chunk in ordered],
+            "candidate_count": len(chunks),
+            "elapsed_ms": elapsed_ms,
+        }
+        return ordered
+
+
+def _failed_stage(error: Exception) -> dict[str, Any]:
+    return {"status": "ERROR", "error_type": type(error).__name__, "error": str(error),
+            "raw_ids": [], "ranked_ids": [], "candidate_count": None,
+            "canonical_excluded_count": None, "elapsed_ms": None}
+
+
+def _score_or_missing(expected: list[str], ranked: list[str], failed: bool) -> dict[str, float | None]:
+    if failed:
+        return {key: None for key in score_ranked_references(expected, ())}
+    return score_ranked_references(expected, ranked)
+
+
+def _pilot_case(
+    case: dict[str, Any],
+    *,
+    profile: Bm25Profile,
+    index: QdrantIndex,
+    catalog: Catalog,
+    principals: dict[str, Principal],
+    expected_lookup: dict[str, list[str]],
+    ranker: _ObservedRanker,
+    expected_clause_texts: dict[str, str],
+) -> dict[str, Any]:
+    principal = principals[case["principal_id"]]
+    case_id = case["case_id"]
+    as_of = datetime.fromisoformat(case["as_of"]) if case.get("as_of") else None
+    gold_ids = expected_lookup[case["query_id"]]
+    result: dict[str, Any] = {
+        "query_id": case["query_id"], "case_id": case_id,
+        "principal_id": principal.principal_id, "language": case["language"],
+        "query": case["query"], "as_of": case.get("as_of"), "slice": case["slice"],
+        "expected_clause_refs": case["expected"], "expected_chunk_ids": gold_ids,
+        "stages": {}, "metrics": {},
+    }
+    service = HybridSearch(catalog, index)
+    reranked_service = HybridSearch(catalog, index, ranker)
+    stage_specs: tuple[tuple[str, IndexMode, bool], ...] = (
+        ("lexical", "lexical", False),
+        ("dense_ann", "dense", False),
+        ("dense_exact", "dense", True),
+        ("hybrid", "hybrid", False),
+    )
+    for name, index_mode, exact in stage_specs:
+        started = time.perf_counter()
+        try:
+            hits = index.query(case["query"], principal, case_id, mode=index_mode,
+                               limit=TOP_K, exact=exact)
+            elapsed_ms = (time.perf_counter() - started) * 1000
+            canonical_ids, excluded = _canonicalize(service, principal, case_id, hits, as_of)
+            result["stages"][name] = {
+                "status": "OK", "raw_ids": [hit.chunk_id for hit in hits],
+                "ranked_ids": canonical_ids, "candidate_count": len(hits),
+                "canonical_excluded_count": excluded, "elapsed_ms": elapsed_ms,
+            }
+        except Exception as error:  # retain the failure as a measurement outcome
+            result["stages"][name] = _failed_stage(error)
+        result["metrics"][name] = _score_or_missing(
+            gold_ids, result["stages"][name]["ranked_ids"],
+            result["stages"][name]["status"] != "OK")
+
+    service_specs: tuple[tuple[str, SearchMode, HybridSearch], ...] = (
+        ("hybrid_exact_union", "hybrid", service),
+        ("expanded", "reranked", reranked_service),
+    )
+    for name, search_mode, target_service in service_specs:
+        if search_mode == "reranked":
+            ranker.last = None
+        started = time.perf_counter()
+        try:
+            search_result = target_service.search(
+                principal, case_id, case["query"], mode=search_mode, limit=12, as_of=as_of)
+            result["stages"][name] = {
+                "status": search_result.status,
+                "warnings": list(search_result.warnings),
+                "ranked_ids": [passage.citation_id for passage in search_result.passages],
+                "passages": [passage.model_dump(mode="json") for passage in search_result.passages],
+                "stage_counts": search_result.stage_counts,
+                "candidate_count": search_result.stage_counts.get("discovered"),
+                "canonical_excluded_count": None,
+                "elapsed_ms": (time.perf_counter() - started) * 1000,
+            }
+            if search_mode == "reranked":
+                reranker_result = ranker.last
+                result["stages"]["reranked"] = {
+                    "status": search_result.status,
+                    "ranked_ids": (reranker_result["ranked_ids"]
+                                   if reranker_result is not None else []),
+                    "input_ids": (reranker_result["input_ids"]
+                                  if reranker_result is not None else []),
+                    "candidate_count": (reranker_result["candidate_count"]
+                                        if reranker_result is not None else None),
+                    "elapsed_ms": (reranker_result["elapsed_ms"]
+                                   if reranker_result is not None else None),
+                    "failure": "RERANK_RESULT_UNAVAILABLE" if reranker_result is None else None,
+                }
+                result["stages"][name]["service"] = {
+                    "stage_counts": search_result.stage_counts,
+                    "warnings": list(search_result.warnings),
+                }
+            result["metrics"][name] = _score_or_missing(
+                gold_ids, result["stages"][name]["ranked_ids"],
+                result["stages"][name]["status"] == "ERROR")
+            if search_mode == "reranked":
+                result["metrics"]["reranked"] = _score_or_missing(
+                    gold_ids, result["stages"]["reranked"]["ranked_ids"],
+                    result["stages"]["reranked"]["status"] == "ERROR")
+        except Exception as error:
+            result["stages"][name] = _failed_stage(error)
+            result["stages"][name]["reranker"] = ranker.last
+            if search_mode == "reranked":
+                reranker_result = ranker.last
+                result["stages"]["reranked"] = (
+                    {"status": "ERROR", "error_type": "RERANK_FAILURE",
+                     "ranked_ids": [], "candidate_count": None, "elapsed_ms": None}
+                    if reranker_result is None else
+                    {"status": "OK", **reranker_result})
+                result["metrics"]["reranked"] = _score_or_missing(gold_ids, [],
+                                                                      reranker_result is None)
+            result["metrics"][name] = _score_or_missing(gold_ids, [], True)
+
+    for name, metrics in result["metrics"].items():
+        if ("exception" in case["slice"] and gold_ids
+                and result["stages"][name]["status"] != "ERROR"):
+            metrics["exception_recall"] = metrics["recall_at_20"]
+        else:
+            metrics["exception_recall"] = None
+
+    ann = result["stages"]["dense_ann"]
+    exact = result["stages"]["dense_exact"]
+    if ann["status"] == "OK" and exact["status"] == "OK":
+        exact_ids = set(exact["ranked_ids"])
+        overlap = (len(set(ann["ranked_ids"]) & exact_ids) / len(exact_ids)
+                   if exact_ids else None)
+    else:
+        overlap = None
+    result["dense_ann_vs_exact_overlap_at_20"] = {
+        "value": overlap, "ann_count": len(ann["ranked_ids"]),
+        "exact_count": len(exact["ranked_ids"]),
+        "denominator": len(exact["ranked_ids"]),
+    }
+
+    if case.get("exact_identifier"):
+        hybrid = result["stages"]["hybrid_exact_union"]
+        expected_behavior = case["exact_expected"]
+        if expected_behavior == "hit":
+            success = bool(set(gold_ids) & set(hybrid["ranked_ids"]))
+        elif expected_behavior == "unknown":
+            success = ("EXACT_IDENTIFIER_NOT_FOUND" in hybrid.get("warnings", [])
+                       and not hybrid["ranked_ids"])
+        else:
+            restricted = case["restricted_reference"]
+            restricted_id = expected_lookup[f"restricted:{restricted['clause_id']}"]
+            success = not set(restricted_id) & set(hybrid["ranked_ids"])
+            restricted_text = expected_clause_texts[restricted["clause_id"]]
+            result["restricted_text_leak"] = any(
+                restricted_text.casefold() in passage["text"].casefold()
+                for passage in hybrid.get("passages", [])
+            )
+            success = success and not result["restricted_text_leak"]
+        result["exact_identifier_result"] = {
+            "identifier": case["exact_identifier"], "expected": expected_behavior,
+            "success": success,
+        }
+    else:
+        result["exact_identifier_result"] = None
+    return result
+
+
+def _run_profile(url: str, profile: Bm25Profile, pilot: dict[str, Any], bundle: Any,
+                 expected_clause_texts: dict[str, str]) -> dict[str, Any]:
+    collection = f"p02_eval_{profile}_{uuid.uuid4().hex}"
+    index_client = QdrantClient(url=url, timeout=10)
+    cleanup_client = QdrantClient(url=url, timeout=10)
+    created = False
+    index = QdrantIndex(url=url, collection_name=collection, bm25_profile=profile,
+                        client=index_client)
+    try:
+        if cleanup_client.collection_exists(collection):
+            raise RuntimeError(f"generated collection name already exists: {collection}")
+        index.ensure_collection()
+        created = True
+        with tempfile.TemporaryDirectory(prefix="p02-eval-") as temporary:
+            runtime_root = Path(temporary)
+            seed(runtime_root, APP_ROOT, index)
+            if not cleanup_client.collection_exists(collection):
+                raise RuntimeError("seed removed the evaluator-owned Qdrant collection")
+            with (runtime_root / "registry.sqlite").open("rb") as stream:
+                sqlite_sha256 = hashlib.sha256(stream.read()).hexdigest()
+            with Database(runtime_root / "registry.sqlite") as database:
+                registry = Registry(database, OriginalStore(runtime_root / "originals"))
+                catalog = Catalog(registry)
+                principals = {
+                    principal.principal_id: registry.access.authenticate(principal.principal_id)
+                    for principal in bundle.principals
+                }
+                admin = principals["admin-a"]
+                expected_lookup: dict[str, list[str]] = {}
+                for case in pilot["queries"]:
+                    expected_lookup[case["query_id"]] = _reference_ids(
+                        case["expected"], catalog, admin, case["case_id"])
+                    if case.get("restricted_reference"):
+                        reference = case["restricted_reference"]
+                        expected_lookup[f"restricted:{reference['clause_id']}"] = _reference_ids(
+                            [reference], catalog, admin, case["case_id"])
+                ranker = _ObservedRanker(FastEmbedReranker(enabled=True))
+                before = index.health()
+                cases = [
+                    _pilot_case(
+                        case, profile=profile, index=index, catalog=catalog,
+                        principals=principals, expected_lookup=expected_lookup,
+                        ranker=ranker, expected_clause_texts=expected_clause_texts)
+                    for case in pilot["queries"]
+                ]
+                after = index.health()
+                exact_id_rows = [case for case in cases if case["exact_identifier_result"] is not None]
+                per_stage = {}
+                stage_names = tuple(cases[0]["metrics"])
+                for stage in stage_names:
+                    per_stage[stage] = {
+                        "overall": macro_average(case["metrics"][stage] for case in cases),
+                        "language": {
+                            language: macro_average(case["metrics"][stage] for case in cases
+                                                    if case["language"] == language)
+                            for language in sorted({case["language"] for case in cases})
+                        },
+                        "slices": {
+                            label: macro_average(case["metrics"][stage] for case in cases
+                                                 if label in case["slice"])
+                            for label in sorted({label for case in cases for label in case["slice"]})
+                        },
+                        "scored_case_count": sum(
+                            case["metrics"][stage]["mrr"] is not None for case in cases),
+                        "pilot_case_count": len(cases),
+                    }
+                timings = [case["stages"][stage]["elapsed_ms"] for case in cases
+                           for stage in case["stages"]
+                           if case["stages"][stage]["elapsed_ms"] is not None]
+                return {
+                    "collection": collection,
+                    "bm25_profile": profile,
+                    "representation": index.representation_manifest,
+                    "fingerprint": index.fingerprint,
+                    "sqlite_sha256": sqlite_sha256,
+                    "index_health_before": before,
+                    "index_health_after": after,
+                    "indexed_vectors_count_disclosure": {
+                        "value": after.get("indexed_vectors_count"),
+                        "points_count": after.get("points_count"),
+                        "small_collection_note": (
+                            "Qdrant may scan a small collection without a built HNSW segment; "
+                            "the reported health value is retained and no ANN speed/recall "
+                            "claim is made from this tiny pilot."),
+                    },
+                    "reranker": ranker.ranker.manifest,
+                    "metric_definitions": {
+                        "relevance": "Every expected canonical chunk has binary gain 1; all others 0.",
+                        "recall_at_k": "Unique expected chunk IDs found in the first K unique canonical results / expected chunk IDs.",
+                        "mrr": "Reciprocal rank of first expected canonical chunk; zero when an applicable query has no hit.",
+                        "ndcg_at_k": "DCG with binary relevance / ideal DCG; duplicate ranked IDs are removed before scoring.",
+                        "empty_expected_set": "Metrics are null and excluded from macro averages, not treated as zero.",
+                        "exact_id_success": "Known ID resolves to expected canonical chunk; unknown ID is explicitly rejected; restricted ID returns no restricted passage or full clause text.",
+                        "ann_overlap_at_20": "Canonical, time-eligible ANN dense top 20 intersection with exact dense top 20 / exact eligible top-20 count; null for an empty exact set.",
+                        "aggregation": "Unweighted macro mean over cases with a non-empty gold denominator; pilot only.",
+                        "exception_recall": "Recall@20 on the source-clause-anchored exception query only; null on other cases.",
+                    },
+                    "exact_identifier_cases": {
+                        "success_count": sum(row["exact_identifier_result"]["success"] for row in exact_id_rows),
+                        "denominator": len(exact_id_rows),
+                        "results": [row["exact_identifier_result"] for row in exact_id_rows],
+                    },
+                    "timing_summary_ms": {
+                        "observation_count": len(timings),
+                        "mean": statistics.fmean(timings) if timings else None,
+                        "p50": statistics.median(timings) if timings else None,
+                        "max": max(timings) if timings else None,
+                        "scope": "Per-query component calls; includes canonicalized direct stages and service calls; local synthetic CPU/Qdrant only.",
+                    },
+                    "metrics_by_stage": per_stage,
+                    "observed_misses": [
+                        {"query_id": case["query_id"], "stage": stage,
+                         "missing_expected_chunk_ids": sorted(
+                             set(case["expected_chunk_ids"]) - set(case["stages"][stage]["ranked_ids"]))}
+                        for case in cases for stage in case["stages"]
+                        if case["expected_chunk_ids"]
+                        and case["stages"][stage]["status"] != "ERROR"
+                        and set(case["expected_chunk_ids"]) - set(case["stages"][stage]["ranked_ids"])
+                    ],
+                    "cases": cases,
+                }
+    finally:
+        try:
+            if created and cleanup_client.collection_exists(collection):
+                cleanup_client.delete_collection(collection_name=collection)
+        finally:
+            index.close()
+            cleanup_client.close()
+
+
+def _safe_run_profile(url: str, profile: Bm25Profile, pilot: dict[str, Any], bundle: Any,
+                      expected_clause_texts: dict[str, str]) -> dict[str, Any]:
+    try:
+        return _run_profile(url, profile, pilot, bundle, expected_clause_texts)
+    except Exception as error:
+        return {"bm25_profile": profile, "status": "ERROR",
+                "error_type": type(error).__name__, "error": str(error),
+                "measurements": None}
+
+
+def run(url: str) -> dict[str, Any]:
+    pilot = json.loads(PILOT_PATH.read_text(encoding="utf-8"))
+    if pilot.get("schema_version") != 1 or pilot.get("annotation_status") != "PILOT":
+        raise ValueError("retrieval pilot must declare schema version 1 and PILOT annotation status")
+    bundle = load_fixtures(APP_ROOT)
+    source_by_id = bundle.source_map()
+    for case in pilot["queries"]:
+        if case["principal_id"] not in bundle.principal_map():
+            raise ValueError(f"unknown pilot principal in {case['query_id']}")
+        if case["case_id"] not in bundle.case_map():
+            raise ValueError(f"unknown pilot case in {case['query_id']}")
+        for reference in case.get("expected", []) + ([case["restricted_reference"]]
+                                                        if case.get("restricted_reference") else []):
+            source = source_by_id[reference["source_id"]]
+            if reference["clause_id"] not in source.clauses:
+                raise ValueError(f"unknown source clause in {case['query_id']}: {reference}")
+            if source.approval_state != "APPROVED":
+                raise ValueError(f"pilot gold must name an approved source: {case['query_id']}")
+    expected_clause_texts = {
+        reference["clause_id"]: source_by_id[reference["source_id"]].clauses[
+            reference["clause_id"]].text
+        for case in pilot["queries"] if case.get("restricted_reference")
+        for reference in [case["restricted_reference"]]
+    }
+    sources = [source for source in bundle.sources if source.approval_state == "APPROVED"]
+    corpus_paths = [APP_ROOT / "data" / "demo" / source.path.removeprefix("data/demo/")
+                    for source in sources]
+    corpus_digest = hashlib.sha256("".join(
+        f"{path.name}:{_sha256(path)}\n" for path in sorted(corpus_paths)
+    ).encode("utf-8")).hexdigest()
+    run_id = f"p02-pilot-{uuid.uuid4().hex}"
+    profiles = [_safe_run_profile(url, profile, pilot, bundle, expected_clause_texts)
+                for profile in BM25_PROFILES]
+    return {
+        "schema_version": 1,
+        "run_id": run_id,
+        "run_label": "retrieval-substrate-pilot",
+        "created_at_utc": datetime.now(timezone.utc).isoformat(),
+        "status": "PILOT_ONLY" if all(
+            item.get("status") != "ERROR"
+            and all(stage["status"] != "ERROR" for case in item.get("cases", [])
+                    for stage in case["stages"].values())
+            and all(case["exact_identifier_result"] is None or case["exact_identifier_result"]["success"]
+                    for case in item.get("cases", []))
+            for item in profiles)
+        else "INCOMPLETE_FAILURE_RECORDED",
+        "scope": "Retrieval-only lexical/hybrid/reranked-context substrate. No generative model, answer arms, graph, production data, or held-out claim.",
+        "limitations": [
+            "Synthetic fixture labels are PILOT and lack independent human adjudication.",
+            "Indonesian queries target English source documents; this does not measure Indonesian-document retrieval.",
+            "The eight bounded queries do not establish generalized language, temporal, security, or retrieval quality.",
+            "Small collection state may not exercise HNSW; actual index-health counts are reported per profile.",
+            "BM25 profile comparison is descriptive development evidence only; no generalized winner is claimed.",
+        ],
+        "environment": {
+            "python": platform.python_version(),
+            "qdrant_client": importlib.metadata.version("qdrant-client"),
+            "qdrant_server_url": url,
+            "app_version": "0.1.0",
+        },
+        "corpus": {
+            "approved_source_ids": [source.source_id for source in sources],
+            "approved_source_count": len(sources),
+            "source_hashes": {source.source_id: source.sha256 for source in sources},
+            "approved_source_files_sha256": corpus_digest,
+            "pilot_definition_sha256": _sha256(PILOT_PATH),
+            "fixture_catalog_sha256": _sha256(DATA_ROOT / "sample_cases.json"),
+            "settings_sha256": _sha256(APP_ROOT / "config" / "settings.yaml"),
+            "evaluator_sha256": _sha256(Path(__file__).resolve()),
+            "metric_module_sha256": _sha256(APP_ROOT / "src" / "evidence_agent" / "core"
+                                               / "evaluation.py"),
+            "annotation_status": bundle.annotation_status,
+            "pilot_query_count": len(pilot["queries"]),
+            "query_languages": dict((language, sum(case["language"] == language
+                                                     for case in pilot["queries"]))
+                                    for language in sorted({case["language"]
+                                                            for case in pilot["queries"]})),
+            "query_scope": sorted({case["case_id"] for case in pilot["queries"]}),
+        },
+        "profiles": profiles,
+    }
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--url", default="http://127.0.0.1:16333")
+    parser.add_argument("--run", action="store_true",
+                        help="explicitly seed/query/delete only unique p02_eval_* collections")
+    args = parser.parse_args(argv)
+    if not args.run:
+        parser.error("--run is required before the pilot creates temporary SQLite data and Qdrant collections")
+    report = run(args.url)
+    REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    if REPORT_PATH.exists():
+        prior = json.loads(REPORT_PATH.read_text(encoding="utf-8"))
+        history = REPORT_PATH.with_name(prior["run_id"] + ".json")
+        if not history.exists():
+            history.write_bytes(REPORT_PATH.read_bytes())
+    encoded = json.dumps(report, sort_keys=True, indent=2) + "\n"
+    REPORT_PATH.with_name(report["run_id"] + ".json").write_text(encoded, encoding="utf-8")
+    REPORT_PATH.write_text(encoded, encoding="utf-8")
+    print(json.dumps({"report": str(REPORT_PATH), "run_id": report["run_id"],
+                      "status": report["status"],
+                      "profiles": [{"bm25_profile": item["bm25_profile"],
+                                    "collection": item["collection"],
+                                    "index_health": item["index_health_after"],
+                                    "exact_identifier_cases": item["exact_identifier_cases"]}
+                                   if item.get("status") != "ERROR" else item
+                                   for item in report["profiles"]]}, indent=2))
+    return 0 if report["status"] == "PILOT_ONLY" else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

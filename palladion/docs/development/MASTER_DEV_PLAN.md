@@ -1,11 +1,11 @@
 # Palladion master development plan
 
-Version 5, 2026-10-17. Scope anchor: [blueprint v0.2](../vision/palladion-blueprint-v2.md),
+Version 6, 2026-10-18. Scope anchor: [blueprint v0.2](../vision/palladion-blueprint-v2.md),
 especially “Locked decisions,” “Build plan,” “System invariants,” and the full walkthrough.
-Current mandate: explicit user GO for **P01 end-to-end**, including compatible package
-setup and deterministic foundation proof. P00's earlier hold/publishing approval is
-historical; no new main push is inferred. P02–P08 and X01 remain future scope.
-P01 needs no provider call. E-P01-001 records pre-phase findings and implementation proof;
+Current mandate: explicit user GO for **P02 end-to-end**; P01 is published at aa4b439.
+P02 includes compatible retrieval packages, local Qdrant and authenticated source/search
+API proof, plus retrieval-only pilot measurements. P03–P08/X01 remain future scope.
+No new main push or generative provider call is inferred. E-P02-001 records verified P02 closure; P03 awaits explicit GO;
 no UI phase is authorized. ADR-0011 governs; ADR-0013 selects uv and real Groq generation.
 
 ## Document authority and ownership
@@ -53,7 +53,7 @@ must update it in the same unit, or be explicitly queued for the user's decision
 ### Before each phase
 
 Before each phase (including a newly scoped documentation phase), dispatch a GPT 6 Luna
-High adversary to challenge the task/dependency/file/proof assumptions. The coordinator
+Medium adversary to challenge the task/dependency/file/proof assumptions. The coordinator
 verifies findings, corrects the plan/gates and records the preflight receipt before work.
 Recheck materially changed phase premises; an old receipt does not authorize a new scope.
 
@@ -64,7 +64,7 @@ Every pre-phase adversary and the single post-phase work auditor must read the c
 The dispatch names that exact file, current user amendments/accepted ADRs, phase tasks and
 exits, gates, traceability and live source/test/evidence paths. A coordinator summary or
 task-card-only review cannot replace this read. Reviewers remain read-only, GPT 6 Luna
-High, without credential/live-resource access or git mutations.
+Medium, without credential/live-resource access or git mutations.
 
 The adversary checks whether tasks, dependencies, files and proof can fulfill the vision.
 The auditor checks the actual diff, intended consumers, executed checks and remaining
@@ -99,7 +99,7 @@ their actual readers. Use synthetic isolated resources; inspect destructive test
 before running it. Credentials are command-local; do not copy them into worktrees.
 
 Additional research delegation remains proportionate. Required pre/post phase reviews
-are mandatory, not discretionary. All subagents use `gpt-6-luna`, `high`;
+are mandatory, not discretionary. All subagents use `gpt-6-luna`, `medium`;
 dispatch exact inputs, allowed read/write paths, commands and prohibitions. Do not grant
 live resources or git changes. Only the coordinator closes tasks/gates. No overlapping writers.
 
@@ -107,7 +107,7 @@ live resources or git changes. Only the coordinator closes tasks/gates. No overl
 
 Run stack validation, the owning gates, and a representative entry-point smoke; record
 exact commands, environment, observed results and limitations in [EVIDENCE_LOG](EVIDENCE_LOG.md).
-After stack validation, smoke and owning gates, dispatch one GPT 6 Luna High work auditor
+After stack validation, smoke and owning gates, dispatch one GPT 6 Luna Medium work auditor
 to inspect the completed phase and actual evidence using the blueprint review contract
 above. Resolve material findings or keep
 the task open. Update progress, affected goal
@@ -573,129 +573,144 @@ order. Shared-file tasks are sequential. Each proof names the observation that c
 
 <a id="p02-t01-01"></a>
 
-- [ ] **P02-T01.01 — Parse MD/TXT into source-preserving structures**
+- [x] **P02-T01.01 — Parse MD/TXT into source-preserving structures**
   - **Files:** `palladion/src/evidence_agent/ingest/parsing.py`, `palladion/tests/test_ingest.py`.
   - **Depends:** P01-T04.03.
   - **Change:** Parse UTF-8 headings/tables/clauses with original offsets and lines; chunker consumes exact text and parser version.
   - **Proof:** UNIT; [G-SOURCE](TESTING_GATES.md#g-source-task-coverage); spans reconstruct Unicode originals; malformed/unsupported input returns explicit failure, not fabricated text.
+  - **Evidence:** E-P02-001 task-to-consumer index and exact commands/results; single work audit and all four finding resolutions verified; P02 closed. Later runtime/graph/research obligations are not passed.
 
 <a id="p02-t01-02"></a>
 
-- [ ] **P02-T01.02 — Chunk without detaching rule exceptions**
+- [x] **P02-T01.02 — Chunk without detaching rule exceptions**
   - **Files:** `palladion/src/evidence_agent/ingest/chunking.py`, `palladion/tests/test_ingest.py`.
   - **Depends:** P02-T01.01, P01-T02.03.
   - **Change:** Produce deterministic chunks and parent/neighbor links; separate original citation text from generated embedding prefixes.
   - **Proof:** UNIT; [G-SOURCE](TESTING_GATES.md#g-source-task-coverage); rule/exception boundary is recoverable, IDs/order/hash stable, contextual prefix never enters original quote.
+  - **Evidence:** E-P02-001 task-to-consumer index and exact commands/results; single work audit and all four finding resolutions verified; P02 closed. Later runtime/graph/research obligations are not passed.
 
 <a id="p02-t01-03"></a>
 
-- [ ] **P02-T01.03 — Validate trusted approval and upload metadata**
-  - **Files:** `palladion/src/evidence_agent/ingest/metadata.py`, `palladion/tests/test_ingest.py`, `palladion/tests/test_security.py`.
+- [x] **P02-T01.03 — Validate trusted approval and upload metadata**
+  - **Files:** `palladion/src/evidence_agent/ingest/metadata.py`, `palladion/src/evidence_agent/storage/registry.py`, `palladion/tests/test_ingest.py`, `palladion/tests/test_security.py`.
   - **Depends:** P01-T03.03, P01-T02.04.
   - **Change:** Check uploader/approver grants, MIME/size/hash, temporal scope and supersession before pipeline writes authenticated registry metadata.
   - **Proof:** UNIT; [G-SOURCE](TESTING_GATES.md#g-source-task-coverage), [G-SECURITY](TESTING_GATES.md#g-security-task-coverage); valid upload accepted; prose approval, unauthorized approver and invalid supersession scope rejected.
+  - **Evidence:** E-P02-001 task-to-consumer index and exact commands/results; single work audit and all four finding resolutions verified; P02 closed. Later runtime/graph/research obligations are not passed.
 
 <a id="p02-t01-04"></a>
 
-- [ ] **P02-T01.04 — Publish only reconciled ingest generations**
-  - **Files:** `palladion/src/evidence_agent/ingest/pipeline.py`, `palladion/tests/test_ingest.py`.
+- [x] **P02-T01.04 — Publish only reconciled ingest generations**
+  - **Files:** `palladion/src/evidence_agent/ingest/pipeline.py`, `palladion/src/evidence_agent/storage/catalog.py`, `palladion/src/evidence_agent/storage/sqlite.py`, `palladion/src/evidence_agent/storage/schema.sql`, `palladion/src/evidence_agent/core/retrieval.py`, `palladion/tests/test_ingest.py`.
   - **Depends:** P02-T01.02, P02-T01.03, P02-T02.02.
-  - **Change:** Stage sources/chunks/backend acknowledgments; publish SQLite generation only after exact manifest reconciliation; retry accepted input idempotently.
+  - **Change:** Stage sources/chunks/backend acknowledgments; publish SQLite generation only after exact manifest reconciliation; retry accepted input idempotently. Owner-approved additive v3 migration persists exact IDs/hashes and representation fingerprints; prove fresh/populated/failed upgrades.
   - **Proof:** INTEGRATION; [G-SOURCE](TESTING_GATES.md#g-source-task-coverage); interrupted/partial upsert stays unpublishable, recovery idempotent, graph-off required-index set explicit.
+  - **Evidence:** E-P02-001 task-to-consumer index and exact commands/results; single work audit and all four finding resolutions verified; P02 closed. Later runtime/graph/research obligations are not passed.
 
 #### P02-T02 execution tasks
 
 <a id="p02-t02-01"></a>
 
-- [ ] **P02-T02.01 — Pin and probe dense/BM25 retrieval dependencies**
-  - **Files:** `palladion/compose.yaml`, `palladion/pyproject.toml`, `palladion/config/settings.yaml`, `palladion/docs/development/ADR_LOG.md`.
+- [x] **P02-T02.01 — Pin and probe dense/BM25 retrieval dependencies**
+  - **Files:** `palladion/compose.yaml`, `palladion/scripts/qdrant_server.py`, `palladion/scripts/probe_retrieval.py`, `palladion/pyproject.toml`, `palladion/config/settings.yaml`, `palladion/docs/development/ADR_LOG.md`.
   - **Depends:** P01-T01.03.
-  - **Change:** Resolve Q03/Q04 using official pinned APIs and actual probe; configure synthetic local Qdrant, model/tokenizer and BM25 mode for adapter.
+  - **Change:** Resolve Q03/Q04 using official pinned APIs and actual probe; configure synthetic local Qdrant, model/tokenizer and BM25 mode for adapter. User authorizes a Docker alternative; checksum-pinned standalone Qdrant in WSL with Linux-owned storage is the supported path on this machine.
   - **Proof:** INTEGRATION; [G-RETRIEVAL](TESTING_GATES.md#g-retrieval-task-coverage); real server/client supports named vectors and native RRF k=60; incompatible mode fails visibly instead of switching weighting.
+  - **Evidence:** E-P02-001 task-to-consumer index and exact commands/results; single work audit and all four finding resolutions verified; P02 closed. Later runtime/graph/research obligations are not passed.
 
 <a id="p02-t02-02"></a>
 
-- [ ] **P02-T02.02 — Implement Qdrant collection, points and scoped queries**
+- [x] **P02-T02.02 — Implement Qdrant collection, points and scoped queries**
   - **Files:** `palladion/src/evidence_agent/storage/qdrant.py`, `palladion/tests/test_retrieval.py`.
   - **Depends:** P02-T02.01, P01-T02.03.
   - **Change:** Create payload indexes before ingestion and shared dense/bm25 point IDs; expose scoped upsert/query/health for pipeline and hybrid readers.
   - **Proof:** INTEGRATION; [G-RETRIEVAL](TESTING_GATES.md#g-retrieval-task-coverage); actual collection readback includes both representations/filters; missing vector or generation is not trusted as READY.
+  - **Evidence:** E-P02-001 task-to-consumer index and exact commands/results; single work audit and all four finding resolutions verified; P02 closed. Later runtime/graph/research obligations are not passed.
 
 #### P02-T03 execution tasks
 
 <a id="p02-t03-01"></a>
 
-- [ ] **P02-T03.01 — Resolve exact identifiers without fuzzy substitution**
+- [x] **P02-T03.01 — Resolve exact identifiers without fuzzy substitution**
   - **Files:** `palladion/src/evidence_agent/storage/exact.py`, `palladion/tests/test_retrieval.py`.
   - **Depends:** P01-T03.02, P01-T02.03.
   - **Change:** Map validated exact codes/aliases to canonical targets; hybrid reader unions results separately from ranking fusion.
   - **Proof:** INTEGRATION; [G-RETRIEVAL](TESTING_GATES.md#g-retrieval-task-coverage); known exact ID resolves, unknown stays unknown, POL-17 never silently returns POL-71; namespace filter enforced.
+  - **Evidence:** E-P02-001 task-to-consumer index and exact commands/results; single work audit and all four finding resolutions verified; P02 closed. Later runtime/graph/research obligations are not passed.
 
 <a id="p02-t03-02"></a>
 
-- [ ] **P02-T03.02 — Resolve eligible immutable evidence before exposure**
+- [x] **P02-T03.02 — Resolve eligible immutable evidence before exposure**
   - **Files:** `palladion/src/evidence_agent/retrieval/evidence.py`, `palladion/tests/test_ingest.py`, `palladion/tests/test_security.py`.
   - **Depends:** P02-T01.03, P01-T03.03, P01-T02.04.
   - **Change:** Recheck ACL, publication generation, approval/time/scope and exact span/hash; citation and final gate share canonical resolver.
   - **Proof:** INTEGRATION; [G-SOURCE](TESTING_GATES.md#g-source-task-coverage), [G-SECURITY](TESTING_GATES.md#g-security-task-coverage); valid span readback passes; draft/revoked/stale-index/restricted/corrupt hit blocked before prompt or output.
+  - **Evidence:** E-P02-001 task-to-consumer index and exact commands/results; single work audit and all four finding resolutions verified; P02 closed. Later runtime/graph/research obligations are not passed.
 
 <a id="p02-t03-03"></a>
 
-- [ ] **P02-T03.03 — Fuse dense/sparse once and union exact candidates**
+- [x] **P02-T03.03 — Fuse dense/sparse once and union exact candidates**
   - **Files:** `palladion/src/evidence_agent/retrieval/hybrid.py`, `palladion/tests/test_retrieval.py`.
   - **Depends:** P02-T02.02, P02-T03.01, P02-T03.02.
   - **Change:** Run scoped dense/BM25 queries, native RRF exactly once, exact injection and canonical eligibility before rerank reader.
   - **Proof:** INTEGRATION; [G-RETRIEVAL](TESTING_GATES.md#g-retrieval-task-coverage); relevant/wrong-ID/old-source cases and sparse outage classified; score never becomes truth probability or exhaustive absence.
+  - **Evidence:** E-P02-001 task-to-consumer index and exact commands/results; single work audit and all four finding resolutions verified; P02 closed. Later runtime/graph/research obligations are not passed.
 
 <a id="p02-t03-04"></a>
 
-- [ ] **P02-T03.04 — Rerank and expand parent/exception context**
+- [x] **P02-T03.04 — Rerank and expand parent/exception context**
   - **Files:** `palladion/src/evidence_agent/retrieval/rerank.py`, `palladion/config/settings.yaml`, `palladion/tests/test_retrieval.py`.
   - **Depends:** P02-T03.03.
   - **Change:** Add explicit rerank/no-op treatment and bounded original parent/neighbor expansion; assembly rechecks expanded spans and deduplicates sources.
   - **Proof:** INTEGRATION; [G-RETRIEVAL](TESTING_GATES.md#g-retrieval-task-coverage); exception recovered within passage budget; restricted adjacent text excluded, duplicates cannot consume all slots.
+  - **Evidence:** E-P02-001 task-to-consumer index and exact commands/results; single work audit and all four finding resolutions verified; P02 closed. Later runtime/graph/research obligations are not passed.
 
 <a id="p02-t03-05"></a>
 
-- [ ] **P02-T03.05 — Report searched scope, required slots and index health**
+- [x] **P02-T03.05 — Report searched scope, required slots and index health**
   - **Files:** `palladion/src/evidence_agent/retrieval/coverage.py`, `palladion/tests/test_retrieval.py`.
   - **Depends:** P02-T03.04.
   - **Change:** Build search-result provenance, partial failures and supplied-source coverage distinct from inventory attestation for agent/evaluator readers.
   - **Proof:** UNIT; [G-RETRIEVAL](TESTING_GATES.md#g-retrieval-task-coverage); accepted-but-unindexed revision warns; zero hits cannot certify missing external inventory or required-slot sufficiency.
+  - **Evidence:** E-P02-001 task-to-consumer index and exact commands/results; single work audit and all four finding resolutions verified; P02 closed. Later runtime/graph/research obligations are not passed.
 
 #### P02-T04 execution tasks
 
 <a id="p02-t04-01"></a>
 
-- [ ] **P02-T04.01 — Wire source and citation API entry points**
-  - **Files:** `palladion/src/evidence_agent/main.py`, `palladion/src/evidence_agent/api/routes.py`, `palladion/src/evidence_agent/api/schemas.py`, `palladion/tests/test_end_to_end.py`.
+- [x] **P02-T04.01 — Wire source and citation API entry points**
+  - **Files:** `palladion/src/evidence_agent/main.py`, `palladion/src/evidence_agent/api/routes.py`, `palladion/src/evidence_agent/api/schemas.py`, `palladion/scripts/serve.py`, `palladion/tests/test_end_to_end.py`.
   - **Depends:** P02-T01.04, P02-T03.05.
-  - **Change:** Add app factory/lifespan and authenticated upload/separate approval/index-health/evidence-read transport with real domain adapters.
+  - **Change:** Add app factory/lifespan and authenticated upload/separate approval/search/revocation/index-health/evidence-read transport with real domain adapters.
   - **Proof:** SMOKE; [G-SOURCE](TESTING_GATES.md#g-source-task-coverage), [G-SECURITY](TESTING_GATES.md#g-security-task-coverage); API upload/approve/search/citation reads exact original; unauthorized self-approval and citation read denied.
+  - **Evidence:** E-P02-001 task-to-consumer index and exact commands/results; single work audit and all four finding resolutions verified; P02 closed. Later runtime/graph/research obligations are not passed.
 
 <a id="p02-t04-02"></a>
 
-- [ ] **P02-T04.02 — Record minimal correlated retrieval audit events**
+- [x] **P02-T04.02 — Record minimal correlated retrieval audit events**
   - **Files:** `palladion/src/evidence_agent/telemetry/audit.py`, `palladion/tests/test_security.py`.
   - **Depends:** P02-T04.01.
   - **Change:** Persist generation, safe scope, stage counts/timing, exclusion reasons and failure IDs through audit.py's internal append/read interface. P04-T04.02 later exposes the role-gated API reader; its authorization is not claimed here.
   - **Proof:** INTEGRATION; [G-SECURITY](TESTING_GATES.md#g-security-task-coverage); production audit append→close/reopen→internal readback preserves matched trace/result; restricted-text/credential canaries absent on success/error. API authorization proof remains P04-T04.02.
+  - **Evidence:** E-P02-001 task-to-consumer index and exact commands/results; single work audit and all four finding resolutions verified; P02 closed. Later runtime/graph/research obligations are not passed.
 
 <a id="p02-t04-03"></a>
 
-- [ ] **P02-T04.03 — Expose idempotent seed and reconciliation commands**
-  - **Files:** `palladion/scripts/reconcile.py`, `palladion/scripts/seed.py`, `palladion/tests/test_ingest.py`.
+- [x] **P02-T04.03 — Expose idempotent seed and reconciliation commands**
+  - **Files:** `palladion/scripts/reconcile.py`, `palladion/scripts/seed.py`, `palladion/src/evidence_agent/core/bootstrap.py`, `palladion/tests/test_ingest.py`.
   - **Depends:** P02-T04.02.
   - **Change:** Seed synthetic accepted sources and compare manifest IDs/counts/hashes through real adapters; existing volumes are never reset by default.
   - **Proof:** SMOKE; [G-SOURCE](TESTING_GATES.md#g-source-task-coverage); second seed preserves IDs, missing point is detected, citation still resolves; no destructive default.
+  - **Evidence:** E-P02-001 task-to-consumer index and exact commands/results; single work audit and all four finding resolutions verified; P02 closed. Later runtime/graph/research obligations are not passed.
 
 <a id="p02-t04-04"></a>
 
-- [ ] **P02-T04.04 — Measure B0/B1/B2 retrieval before agent and graph**
-  - **Files:** `palladion/scripts/evaluate.py`, `palladion/tests/test_retrieval.py`, `palladion/tests/test_goldens.py`, `palladion/docs/development/EVIDENCE_LOG.md`.
+- [x] **P02-T04.04 — Measure B0/B1/B2 retrieval before agent and graph**
+  - **Files:** `palladion/scripts/evaluate.py`, `palladion/src/evidence_agent/core/evaluation.py`, `palladion/data/demo/retrieval_pilot.json`, `palladion/tests/test_evaluation.py`, `palladion/tests/test_retrieval.py`, `palladion/tests/test_goldens.py`, `palladion/docs/development/EVIDENCE_LOG.md`.
   - **Depends:** P02-T04.03.
-  - **Change:** Run pinned lexical/hybrid/rerank per-stage queries including ANN-vs-exact and language/time/ACL slices; scorer consumes actual ranked references.
+  - **Change:** Run pinned lexical/hybrid/rerank retrieval-only substrate pilot per-stage queries including ANN-vs-exact and language/time/ACL slices; scorer consumes actual ranked references.
   - **Proof:** MEASUREMENT; [G-RETRIEVAL](TESTING_GATES.md#g-retrieval-task-coverage), [G-RESEARCH](TESTING_GATES.md#g-research-task-coverage); wrong expected clause fails scoring; preserve pilot counts/failures with no invented target or held-out tuning.
+  - **Evidence:** E-P02-001 task-to-consumer index and exact commands/results; single work audit and all four finding resolutions verified; P02 closed. Later runtime/graph/research obligations are not passed.
 
 ### Atomic tasks — P03
 
@@ -966,7 +981,7 @@ order. Shared-file tasks are sequential. Each proof names the observation that c
 <a id="p05-t03-02"></a>
 
 - [ ] **P05-T03.02 — Measure long-session recall and packet omissions**
-  - **Files:** `palladion/scripts/evaluate.py`, `palladion/tests/test_goldens.py`, `palladion/docs/development/EVIDENCE_LOG.md`.
+  - **Files:** `palladion/scripts/evaluate.py`, `palladion/src/evidence_agent/core/evaluation.py`, `palladion/data/demo/retrieval_pilot.json`, `palladion/tests/test_evaluation.py`, `palladion/tests/test_goldens.py`, `palladion/docs/development/EVIDENCE_LOG.md`.
   - **Depends:** P05-T03.01.
   - **Change:** Compare fixed B4/B5 continuations with varying compression; score completion, omitted facts, stale claims and token/call cost from actual outputs.
   - **Proof:** MEASUREMENT; [G-RESEARCH](TESTING_GATES.md#g-research-task-coverage); scorer catches deliberately missing critical fact; vector memory remains a separately declared treatment, not hidden B5 work.
@@ -1014,7 +1029,7 @@ order. Shared-file tasks are sequential. Each proof names the observation that c
 <a id="p06-t03-01"></a>
 
 - [ ] **P06-T03.01 — Pair critic on/off using saved draft and ledger**
-  - **Files:** `palladion/scripts/evaluate.py`, `palladion/tests/test_goldens.py`, `palladion/tests/test_critic.py`.
+  - **Files:** `palladion/scripts/evaluate.py`, `palladion/src/evidence_agent/core/evaluation.py`, `palladion/data/demo/retrieval_pilot.json`, `palladion/tests/test_evaluation.py`, `palladion/tests/test_goldens.py`, `palladion/tests/test_critic.py`.
   - **Depends:** P06-T02.02.
   - **Change:** Add frozen-input controls for same-context review, independent counter-search and optional blind-requirements variant; scorer isolates critique from changed retrieval.
   - **Proof:** MEASUREMENT; [G-RESEARCH](TESTING_GATES.md#g-research-task-coverage); initial inputs hashed equal, true corrections/false vetoes/changed evidence/misses reported, withheld-appendix blind spot retained.
@@ -1022,7 +1037,7 @@ order. Shared-file tasks are sequential. Each proof names the observation that c
 <a id="p06-t03-02"></a>
 
 - [ ] **P06-T03.02 — Report critic cost, failures and retention conclusion**
-  - **Files:** `palladion/scripts/evaluate.py`, `palladion/docs/development/EVIDENCE_LOG.md`, `palladion/docs/development/PROJECT_LEARNING.md`.
+  - **Files:** `palladion/scripts/evaluate.py`, `palladion/src/evidence_agent/core/evaluation.py`, `palladion/data/demo/retrieval_pilot.json`, `palladion/tests/test_evaluation.py`, `palladion/docs/development/EVIDENCE_LOG.md`, `palladion/docs/development/PROJECT_LEARNING.md`.
   - **Depends:** P06-T03.01.
   - **Change:** Report extra calls/searches/tokens/latency and correction tradeoffs beside full-runtime results; do not silently change mandatory normative-review default.
   - **Proof:** MEASUREMENT; [G-RESEARCH](TESTING_GATES.md#g-research-task-coverage); failed reviews retained and no best-of-N selection; neutral result cannot be relabeled accuracy gain.
@@ -1078,7 +1093,7 @@ order. Shared-file tasks are sequential. Each proof names the observation that c
 <a id="p07-t03-01"></a>
 
 - [ ] **P07-T03.01 — Measure graph's incremental evidence against B2**
-  - **Files:** `palladion/scripts/evaluate.py`, `palladion/tests/test_goldens.py`, `palladion/docs/development/EVIDENCE_LOG.md`, `palladion/docs/development/ADR_LOG.md`.
+  - **Files:** `palladion/scripts/evaluate.py`, `palladion/src/evidence_agent/core/evaluation.py`, `palladion/data/demo/retrieval_pilot.json`, `palladion/tests/test_evaluation.py`, `palladion/tests/test_goldens.py`, `palladion/docs/development/EVIDENCE_LOG.md`, `palladion/docs/development/ADR_LOG.md`.
   - **Depends:** P07-T02.02.
   - **Change:** Run paired frozen B2/B3 queries; record exception recall, identity/review effort, latency/cost and retained/disabled decision for later treatment reader.
   - **Proof:** MEASUREMENT; [G-RESEARCH](TESTING_GATES.md#g-research-task-coverage); selected missed appendix recovered and aggregate negatives retained; no benefit permits disable decision, never fabricated win.
@@ -1098,7 +1113,7 @@ order. Shared-file tasks are sequential. Each proof names the observation that c
 <a id="p08-t01-02"></a>
 
 - [ ] **P08-T01.02 — Persist reproducible manifests and scorer inputs**
-  - **Files:** `palladion/scripts/evaluate.py`, `palladion/tests/test_goldens.py`.
+  - **Files:** `palladion/scripts/evaluate.py`, `palladion/src/evidence_agent/core/evaluation.py`, `palladion/data/demo/retrieval_pilot.json`, `palladion/tests/test_evaluation.py`, `palladion/tests/test_goldens.py`.
   - **Depends:** P08-T01.01.
   - **Change:** Capture revision/dirty hash, corpus/gold/split hashes, models/prompts/pins/config/generations, scope/randomness/cache/hardware beside actual outputs.
   - **Proof:** UNIT; [G-RESEARCH](TESTING_GATES.md#g-research-task-coverage); replay scorer consumes recorded output, rejects missing hashes/denominators, unavailable measurement never becomes zero.
@@ -1108,7 +1123,7 @@ order. Shared-file tasks are sequential. Each proof names the observation that c
 <a id="p08-t02-01"></a>
 
 - [ ] **P08-T02.01 — Execute declared B0–B9 and memory-vector controls**
-  - **Files:** `palladion/scripts/evaluate.py`, `palladion/tests/test_goldens.py`.
+  - **Files:** `palladion/scripts/evaluate.py`, `palladion/src/evidence_agent/core/evaluation.py`, `palladion/data/demo/retrieval_pilot.json`, `palladion/tests/test_evaluation.py`, `palladion/tests/test_goldens.py`.
   - **Depends:** P08-T01.02, P08-T02.03, P08-T02.04, P08-T02.05, P08-T02.06.
   - **Change:** Implement declared treatment/parent switches and repeated model/frozen retrieval controls; isolate raw ablations from operational release and account every call.
   - **Proof:** MEASUREMENT; [G-RESEARCH](TESTING_GATES.md#g-research-task-coverage); manifests disclose parent/capability differences and one fusion stage; no hidden critic searches, planner cost or default adaptive bypass.
@@ -1116,7 +1131,7 @@ order. Shared-file tasks are sequential. Each proof names the observation that c
 <a id="p08-t02-02"></a>
 
 - [ ] **P08-T02.02 — Compute support, utility and sliced cost metrics**
-  - **Files:** `palladion/scripts/evaluate.py`, `palladion/tests/test_goldens.py`.
+  - **Files:** `palladion/scripts/evaluate.py`, `palladion/src/evidence_agent/core/evaluation.py`, `palladion/data/demo/retrieval_pilot.json`, `palladion/tests/test_evaluation.py`, `palladion/tests/test_goldens.py`.
   - **Depends:** P08-T02.01.
   - **Change:** Calculate raw numerator/denominator, case-clustered uncertainty and retrieval/support/disposition/abstention/false-veto/latency/cost slices for report reader.
   - **Proof:** UNIT; [G-RESEARCH](TESTING_GATES.md#g-research-task-coverage); known scorer cases cover wrong citation, safe refusal and zero denominator; refusal-only cannot appear perfect through omitted utility.
@@ -1184,7 +1199,7 @@ order. Shared-file tasks are sequential. Each proof names the observation that c
 <a id="p08-t04-01"></a>
 
 - [ ] **P08-T04.01 — Export the reproducible result set and honest conclusion**
-  - **Files:** `palladion/scripts/evaluate.py`, `palladion/docs/development/EVIDENCE_LOG.md`, `palladion/docs/development/PROJECT_LEARNING.md`, `palladion/docs/development/GOAL.md`, `palladion/docs/development/PROGRESS.md`.
+  - **Files:** `palladion/scripts/evaluate.py`, `palladion/src/evidence_agent/core/evaluation.py`, `palladion/data/demo/retrieval_pilot.json`, `palladion/tests/test_evaluation.py`, `palladion/docs/development/EVIDENCE_LOG.md`, `palladion/docs/development/PROJECT_LEARNING.md`, `palladion/docs/development/GOAL.md`, `palladion/docs/development/PROGRESS.md`.
   - **Depends:** P08-T03.03.
   - **Change:** Export pinned manifests, scored outputs/failures and redacted summary with artifact hashes; report null/adverse findings and prototype limits.
   - **Proof:** SMOKE; [G-RESEARCH](TESTING_GATES.md#g-research-task-coverage); independent reader reconstructs metrics/cost from retained artifacts; missing/failed runs visible, no unsupported production/superiority claim.

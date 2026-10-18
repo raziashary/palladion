@@ -1,9 +1,18 @@
 # Current progress
 
-Updated 2026-10-17 (Asia/Bangkok). Atomic task state lives in MASTER_DEV_PLAN;
+Updated 2026-10-18 (Asia/Bangkok). Atomic task state lives in MASTER_DEV_PLAN;
 command observations and review receipts live in EVIDENCE_LOG.
 
 ## Current checkpoint
+
+P02 DONE under explicit user GO from published aa4b439. All15 atomic children,
+real Qdrant/HTTP consumers, approved additive v3, retrieval-only pilot and the single
+post-phase audit/resolution are verified at E-P02-001. Final suite:115 passed; lint,
+strict typing, build and isolated exact-wheel HTTP smoke passed. Docker-free Qdrant
+runs through the checksum-pinned WSL launcher. New subagents use GPT6LunaMedium.
+Owned test listeners are stopped. P03 awaits explicit GO; no new main push is authorized.
+
+Previous phase checkpoint (verified):
 
 P01 is DONE under explicit user GO, baseline 12dfc3f. All fourteen atomic
 foundation tasks, package isolation proof and the single post-phase work audit with
@@ -23,7 +32,7 @@ Human gold-label adjudication, retrieval, citation API and model behavior are no
 |---|---|---|
 | P00 | DONE | E-DOC-001–E-DOC-004, published checkpoint 12dfc3f |
 | P01 | DONE | E-P01-001; all 14 children, gates, wheel smoke and single audit/resolution |
-| P02 | PLANNED | Ingest/retrieval/index/citation API; outside current mandate |
+| P02 | DONE | E-P02-001; all15 children, real-server/HTTP/pilot/wheel proof and single audit resolution |
 | P03 | PLANNED | Temporal policy execution and mock live gateway |
 | P04 | PLANNED | Groq boundary, four tools, bounded loop/gate/message API |
 | P05 | PLANNED | Runtime memory/continuity beyond P01 contracts |
@@ -36,11 +45,11 @@ Human gold-label adjudication, retrieval, citation API and model behavior are no
 
 | Gate | State | Evidence and limits |
 |---|---|---|
-| G-DOC | PASS | 17 Markdown files, 93 cards, 20 negative controls; semantic audit/resolution verified |
-| G-CONTRACT | PASS | 75 tests, strict typing/lint, exact fixture inventory, offline and installed-wheel readers; independent review resolved |
-| G-SOURCE | PARTIAL | Fresh/populated/rollback/foreign DB checks, immutable bytes, persisted source reader pass; P02/P07 index/API/revocation obligations remain |
+| G-DOC | PASS | Structure/self-test17 files/93 cards/20 controls and full-blueprint phase review/resolution pass |
+| G-CONTRACT | PASS | Foundation retained; final115 tests, strict typing/lint and exact-wheel HTTP consumer; independent review resolved |
+| G-SOURCE | PARTIAL | Fresh/populated/rollback/foreign DB checks, immutable bytes, persisted source reader pass; P02 index/API/revocation verified; P07 graph obligations remain |
 | G-SECURITY | PARTIAL | Stored identity/grants/membership/source ACL and revocation/self-approval controls pass; later prompt/API/tool/graph boundaries remain |
-| G-RETRIEVAL | NOT_RUN | No retrieval subsystem |
+| G-RETRIEVAL | PARTIAL | P02 subset PASS: real Qdrant/model/ACL/canonical/exact/exception/pilot/audit; P08-T02.05 controlled fusion ablation remains |
 | G-TEMPORAL | NOT_RUN | Contracts/fixtures only; no resolver |
 | G-POLICY | NOT_RUN | Policy fixtures only; no execution engine |
 | G-LIVE | NOT_RUN | Observation fixtures only; no adapter gateway |
@@ -50,7 +59,7 @@ Human gold-label adjudication, retrieval, citation API and model behavior are no
 | G-CRITIC | NOT_RUN | Contracts only; no critic runtime |
 | G-GRAPH | NOT_RUN | Identity helpers only; no graph store/traversal |
 | G-E2E | NOT_RUN | Offline foundation smoke is not message/provider end-to-end proof |
-| G-RESEARCH | NOT_RUN | PILOT corpus only; no experiments or scientific scoring |
+| G-RESEARCH | PARTIAL | Eight-case/two-profile retrieval-only pilot; human adjudication/full arms/held-out remain P08 |
 
 ## Checkpoint history
 
@@ -71,9 +80,7 @@ Human gold-label adjudication, retrieval, citation API and model behavior are no
 
 ## Next-session handoff
 
-P01 is complete at E-P01-001; 23 of 93 atomic cards are verified (9 P00, 14 P01),
-70 future cards remain planned. This is task accounting, not system readiness.
-Wait for explicit P02 scope authorization; do not enter retrieval or call Groq.
-Preserve root .env/.gitignore and unrelated .vscode. The verified local P01 checkpoint
-requires explicit new approval before publishing to main. No new main-push approval
-is inferred from the P01 GO.
+P01 is published at aa4b439. P02 is locally verified complete at E-P02-001.
+P03 requires explicit user GO and a fresh Medium pre-phase adversary before implementation.
+No task percentage establishes system readiness. Preserve root .env/.gitignore and
+unrelated .vscode. No provider call or new main push is authorized by P02 completion.

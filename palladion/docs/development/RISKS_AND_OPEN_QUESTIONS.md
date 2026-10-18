@@ -1,11 +1,11 @@
 # Risks, accepted answers and verification obligations
 
-Current authority amendment: user explicitly authorized P01 end-to-end. Earlier implementation hold below is historical; package setup is authorized, no provider request needed.
+Current authority amendment: user explicitly authorized P02 end-to-end and a Docker alternative. Earlier implementation hold below is historical; package setup is authorized, no provider request needed.
 
 Updated 2026-10-17. The user read and accepted all recommendation directions, except
 fake-first runtime: use Groq `qwen/qwen3.8-27b`. uv and package-selection authority are
-explicitly approved. **No unanswered owner decision blocks P01 foundations.**
-P01 is explicitly authorized; later implementation remains phase-scoped. Acceptance does not invent compatibility,
+explicitly approved. **Additive v3 migration is owner-approved (ADR-0025).**
+P02 is explicitly authorized; later implementation remains phase-scoped. Acceptance does not invent compatibility,
 thresholds, fixture values, reviewer availability, completeness or production signoff.
 
 Owner answers live once in [ADR_LOG](ADR_LOG.md); edit **My answer (editable)** there.
@@ -15,8 +15,8 @@ This register tracks remaining evidence and deferred scope, not a competing answ
 |---|---|---|---|
 | Q01 | Synthetic approval authority | [ADR-0012](ADR_LOG.md#adr-0012--q01--synthetic-approval-authority) ACCEPTED: authenticated administrator events; separate upload/approval grants | P01/P02 implement registry and reject self-approval/unauthorized grants; G-SOURCE/G-SECURITY |
 | Q02 | Python packages, environment and model | [ADR-0013](ADR_LOG.md#adr-0013--q02--uv-and-real-groq-runtime-generation) ACCEPTED: uv, app-local uv venv, delegated package choices, actual Groq qwen/qwen3.8-27b; fake-first overridden | Working uv installed separately; user-created ignored app .venv exists (E-DOC-004). P01 verified reuse, package pins/locked sync and installed-wheel smoke (E-P01-001); actual model/tool/schema/quota remains P04 proof. Embeddings remain a measured compatible selection. No provider call now. |
-| Q03 | Qdrant native RRF/BM25 compatibility | [ADR-0014](ADR_LOG.md#adr-0014--q03--qdrant-hybrid-compatibility) ACCEPTED_DIRECTION; VERIFY_AT_IMPLEMENTATION | P02 compatible server/client probe, same-point dense/bm25, one RRF k=60, matched ingest/query weighting. Pin actual supported mode/version. |
-| Q04 | English/Indonesian processing | [ADR-0015](ADR_LOG.md#adr-0015--q04--english-and-indonesian-retrieval) ACCEPTED_DIRECTION; VERIFY_AT_IMPLEMENTATION | P02/P08 record language mix, compare tokenizer/stemming variants on development labels, pin winner and report per-language metrics. No claimed improvement yet. |
+| Q03 | Qdrant native RRF/BM25 compatibility | [ADR-0014](ADR_LOG.md#adr-0014--q03--qdrant-hybrid-compatibility) ACCEPTED_DIRECTION; VERIFY_AT_IMPLEMENTATION | P02 real1.19.2/1.19.1 probe and same-point/nativeRRFk60/matched weighting passed (E-P02-001). Broader corpus/language measurements remain P08. |
+| Q04 | English/Indonesian processing | [ADR-0015](ADR_LOG.md#adr-0015--q04--english-and-indonesian-retrieval) ACCEPTED_DIRECTION; VERIFY_AT_IMPLEMENTATION | P02 two-profile pilot recorded language mix/per-language metrics (E-P02-001); tied tiny English-source corpus does not select a general winner. P08 broader adjudicated language evidence remains. |
 | Q05 | Historical audits and time-basis migrations | [ADR-0016](ADR_LOG.md#adr-0016--q05--historical-audit-and-time-basis-migration) ACCEPTED_DIRECTION: minimal valid/record-time plus knowledge_cutoff, mixed-basis conflict unless explicit precedence | P03 define/review synthetic historical query fixtures and replay traces; no inferred migration or real-business retention rule. |
 | Q06 | External inventory attestation/change feed | [ADR-0017](ADR_LOG.md#adr-0017--q06--external-inventory-boundary) ACCEPTED_DIRECTION; external integration DEFERRED | Distinguish INDEX_COVERAGE from INVENTORY_ATTESTED now; later owner-provided attester/scope/change contract. T12 preserves uncertainty. |
 | Q07 | Reported validity and live freshness | [ADR-0018](ADR_LOG.md#adr-0018--q07--fact-validity-and-observation-freshness) ACCEPTED_DIRECTION: use-specific owner/config values, separate timestamps, no model expiry | P03/P05 record explicit synthetic fixture values/owner/rule, test stale BI and UNSPECIFIED lifetime; no numerical company policy invented. |

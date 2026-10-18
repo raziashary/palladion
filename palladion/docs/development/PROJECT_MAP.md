@@ -43,6 +43,17 @@ C:/palladion/                         Git root, main; initial revision 9b167a2
         check_docs.py               Links/IDs, atomic metadata/dependencies, planned-file coverage
 ```
 
+## Ingestion/retrieval now implemented (P02, verified with audit resolution)
+
+`ingest/` parses original spans, chunks structural context and stages exact generations.
+`storage/catalog.py` owns additive v3 chunks/manifests/aliases/context links. The real
+Qdrant adapter stores named neural dense/native BM25 points; `retrieval/` canonicalizes
+ACL/approval/time/generation and supports bounded learned rerank/context expansion.
+`api/` and main factory expose authenticated source/search/citations; telemetry has an
+internal correlated reader. Seed/reconcile/serve/evaluate scripts use those actual owners.
+WSL standalone launcher verifies Qdrant release hashes and preserves Linux-owned storage.
+Compose is optional. No message/LLM/policy/critic/graph runtime is implemented.
+
 ## Foundation now implemented (P01)
 
 The app package/uv.lock/settings, core models/errors/IDs/fixtures, security access,
@@ -54,7 +65,7 @@ CLI state is temporary and cleaned; no API/search/provider process is started.
 
 ## Runtime ownership and later planned components
 
-Paths are relative to `palladion/`; only the P01 foundation subset above is implemented. ADR-0001 maps the
+Paths are relative to `palladion/`; P01 and the described P02 subset above are implemented; later components remain planned. ADR-0001 maps the
 blueprint's illustrative `evidence-agent/` root here; do not create a duplicate project.
 
 | Planned area | Owns | Producers / consumers | Build phase |

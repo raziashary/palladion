@@ -1,6 +1,6 @@
 # Research and later comparison protocol
 
-Status: **planned, no experiments executed**. Governing source: blueprint “Research
+Status: **P02 retrieval-only pilot in progress; no full answer-system experiments executed**. Governing source: blueprint “Research
 evaluation,” “Questions deliberately left to experiments,” “Prototype environment.”
 Research records follow [ADR-0007](ADR_LOG.md#adr-0007--research-discipline-and-gate-meanings).
 No metric below is a measured Palladion result.
@@ -31,7 +31,7 @@ these hypotheses have direction and instruments but no invented success threshol
 ADR-0013 selects uv (`uv venv` in `C:/palladion/palladion`, app-local `.venv`, pinned
 `uv.lock`) and real Groq `qwen/qwen3.8-27b` for initial generative runs. Main and critic
 use separate contexts; a shared provider/model is not independent truth. Runtime choice
-does not constrain development subagents, which remain GPT 6 Luna High, or prescribe
+does not constrain development subagents, which remain GPT 6 Luna Medium, or prescribe
 an embedding model. Actual embedding/tokenizer selection follows the compatibility task.
 
 P01 package setup is authorized and deterministic foundation fixtures are validated;
@@ -63,7 +63,9 @@ estimated list-price resource cost if useful; never assume all inference is cost
 | B8 | B5/B6 + optional small-model nonexclusive planner | Declare parent; planner call counted (up to 9 calls per blueprint variant) |
 | B9 | Fixed B2 data, native RRF vs controlled alternative fusion | Exactly one dense/sparse fusion stage per treatment |
 
-B0/B1 establish substrate performance at P02. Full treatments mature later. B3's label
+P02 records retrieval-only lexical/hybrid/reranked-context substrate pilots, not full
+B0/B1/B2 arms (those include generation). No answer-quality conclusion is possible at
+P02. Preserve language/time/ACL slices and index-state disclosures. Full treatments mature later. B3's label
 does not require implementing graph before policy/memory/critic; follow the build slices.
 Vector memory compares structured/FTS-only against vector augmentation as a separately
 named treatment, not an undisclosed change to B5.
@@ -73,6 +75,15 @@ isolated synthetic evaluator. Their raw answers are scored as experimental artif
 not released as supported operational guidance. If a common safety wrapper is imposed,
 retain and score both raw and wrapped results; disclose its effect rather than giving
 baselines hidden Palladion capabilities. Never disable real authorization for a benchmark.
+
+## Recorded P02 substrate pilot
+
+E-P02-001 records the actual eight-case/two-profile run, raw artifact hash and metric
+denominators. Both BM25 profiles tied here; lexical MRR0.9, hybrid/reranked/context MRR1.0,
+Recall@5=1.0 on the scored tiny cases. Reranking showed no added quality on this pilot.
+These are descriptive pilot measurements, not full B0/B1/B2 answers or a general winner.
+The corpus is English; one of eight queries is Indonesian. Human adjudication, meaningful
+sample size, held-out results and overall hypothesis conclusions remain unexecuted.
 
 ## Corpus, splits and labeling
 

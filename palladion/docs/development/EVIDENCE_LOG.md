@@ -472,6 +472,158 @@ Final structural checker passes 17 documents/93 cards; 20 negative controls pass
 closeout run. Forty-eight scoped staged paths passed whitespace/credential-pattern review;
 no unstaged tracked changes, preserved original vision/root ignore and empty baseline.
 
+## E-P02-001 — P02 provenance-first retrieval (verified complete)
+
+User explicitly authorizes P02 end-to-end. Baseline main aa4b439, published origin/main;
+only unrelated untracked .vscode exists and is preserved. No root .env read. Active goal
+recovered; full mandatory pre-phase adversary p02_pre_adversary uses GPT 6 Luna High.
+Early findings: HTTP search/revocation producers need explicit task ownership; retrieval
+substrate pilots must not claim full B0/B1/B2 generated-answer arms; persisted manifest
+needs exact IDs/model/tokenizer identity and a schema migration not owned by P02 cards.
+Coordinator verified registry/schema/cards. Owner asked via async tool to approve additive
+v3 schema change (Rule 4). Owner explicitly approved the recommended additive v3 migration via ask-user tool.
+Dependent implementation is now authorized, with preservation/fresh/upgrade/rollback proof.
+
+Environment: existing Docker CLI 29.8.0, engine initially stopped; docker desktop start
+returned success. No existing containers listed. User app Python 3.14.7/uv reused.
+Dependency research uses official Qdrant APIs and PyPI metadata; no generative provider
+call. Future steps remain unverified; no gate PASS is inferred from planning.
+
+### Pre-phase receipt and plan corrections
+
+p02_pre_adversary (GPT 6 Luna High) directly read all §1–§18 blueprint sections,
+all fifteen P02 cards/exit, governing ADRs, development records and live P01 source.
+Confirmed Slice1 chain and source/discovery authority boundaries; identified missing
+source-revocation producer, search transport, manifest representation/exact-ID persistence
+and misleading full B0/B1/B2 wording. Coordinator inspected source/schema/cards and
+amended ownership/acceptance; owner approved additive v3. The later four read tools,
+zero-call nonexclusive preflight, five main calls including finalization, three critic
+calls and draft→critic→finalization→gate/continuity remain P04/P06 obligations.
+Uncertain compatibility/language choices require actual probes; no inference from docs.
+
+uv add pinned qdrant-client1.19.1, fastembed0.9.0, FastAPI0.143.3, uvicorn0.54.0,
+httpx0.28.1; resolved60 packages, installed39, imports passed on Python3.14.7.
+Initial Docker start returned success, but subsequent live checks found executable gone,
+no Docker processes/services and install directory containing only tmp-delete. Earlier
+engine assumption retracted: installation is currently unusable; no container started.
+Preserved that directory. WSL Ubuntu x86_64/glibc2.35 successfully starts; coordinator
+is probing the same pinned Qdrant1.19.2 standalone server in an owned temporary directory
+for integration proof. Compose remains the documented pinned development setup; neither
+an in-memory index nor a synthetic embedding substitutes for actual server/model proof.
+
+### Runtime/dependency and Docker-alternative observations
+
+User explicitly instructed an alternative because Docker cannot work on this machine.
+Official Qdrant1.19.2 glibc archive matched its release digest but could not start on
+Ubuntu glibc2.35 (needs2.38/2.39). Musl archive matched official SHA256
+50b253243309ed0ae50a19f678f0d0adcc4f0b567b3bd2c5c0c7e02fa8404bb6 and started real
+server1.19.2/build016542aa in owned /tmp/palladion-p02-_ri3h9l2, LinuxPID450,
+HTTP16333/gRPC16334. Native Windows release digest7d86596f16c6e85d45a50312f5e16ccb51e059b62e3d7308110cb65b4c799a4d
+also verified/version-started, but actual indexing returned filesystem access-denied500.
+Stopped owned native PID19236 and verified17333/17334 freed. No Docker directory changed.
+Standalone launcher now supports --wsl with persistent Linux-owned storage and pinned
+public release checksums; no system installation/reset or hosted resource required.
+
+Pre-audit source checks: ingestion worker 24 targeted tests (including A→B→A active
+config regression), adapter11 targeted tests, Ruff/strict mypy3.14 passed scoped source.
+Full intermediate suite97 passed/2 real-server tests skipped before enabling server.
+Mypy3.11 encountered current NumPy stub syntax; strict target changed to actual3.14,
+without broad imports/type ignores. Lower declared Python versions remain untested.
+
+Real Qdrant API tests then passed both behaviors against WSL: upload→approval→search→
+exact bytes, source revocation, wrong tenant/restricted source and tampered principal.
+Initial run exposed test cleanup using nonexistent client property, then unsupported
+Qdrant context-manager protocol; corrected to explicit closing and finally cleanup.
+These were failed runs, not gate PASS. Final repeated checks remain required.
+
+Adapter actual probes: multilingual384-dimensional MiniLM neural embeddings and pinned
+crossencoder loaded successfully. Model/tokenizer file digests and immutable HF revisions
+are exposed in representation manifests. Native BM25 English/no_stemming plus single
+nativeRRFk60 both returned intended EN/ID control passages against realserver, withboth
+vectors and exacthashreadback; two-document control is not a language-wide conclusion.
+All worker-created p02_probe UUID collections were cleaned. Full pilot runs still pending.
+
+### P02 validation and retrieval pilot checkpoint — 2026-10-18
+
+Full real-server suite: credential vars removed, PALLADION_TEST_QDRANT_URL explicitly
+http://127.0.0.1:16333; .venv/Scripts/python.exe -m pytest --tb=short -q -> 110 passed.
+Ruff check . -> PASS; mypy src scripts -> PASS (36 files, actual Python3.14 target).
+One Starlette deprecation notice recommends httpx2; current pinned httpx0.28.1 is tested
+and works. No warning was filtered. No provider calls or root .env access occurred.
+
+Document CLI/self-test -> 17 Markdown files/93 cards/20 deliberate mutants PASS.
+Intermediate failure: runtime-root-owner mutation no longer matched the P01 card after
+.gitattributes ownership was added. Restored a changing mutation; its self-test rejects
+no-ops, so it failed visibly rather than producing false PASS. Historical earlier P01
+20-control result preceded that card amendment; current corrected check is now passing.
+
+Actual CLI seed and reconcile passed with explicit runtime/p02-http-smoke and uniquely
+owned p02_http_smoke_20261017 collection: 3 approved revisions, exact expected/actual
+chunk counts5/6/2. Real serve.py on localhost18080 returned live/ready200, authorized
+search and 8 exact citation readbacks. Tokens were loaded only from explicitly synthetic
+ignored demo_auth.json and never printed. Standalone shipped launcher --wsl --port18333
+started PID3046 in Linux persistent storage; --stop terminated that recorded executable
+and preserved storage. Final process/port cleanup remains required.
+
+sdist/wheel build passed. Wheel source-by-source comparison found no stale modules and
+included schema.sql. Current wheel SHA25624ee4653b1b1633858a8e77dcb341431d8530687060cb4e7c5715480b7d66a58.
+Fresh temporary UV_PROJECT_ENVIRONMENT, uv sync --locked --no-editable, exact wheel
+reinstall and Python-I confirmed site-packages/schema; actual HTTP/registry/Qdrant/source
+and revocation test passed(1). Temporary environment removal verified. No editable-source
+fallback. uv.lock records60 packages (59 installed excluding project count detail).
+
+Pilot source/metric controls: 5 evaluator tests pass, including wrong expected clause,
+duplicate predictions, empty-denominator null and failed-stage=>incomplete run. The new
+run archives prior raw reports instead of erasing them. Eight synthetic queries(7English,
+1Indonesian over English sources), two BM25 profiles, seven actual ranked stages. Both
+profiles have 13points/13indexed_vectors reported; no large-scale HNSW inference.
+Raw latest runtime/evaluation/p02-pilot.json: run p02-pilot-2d9fb89c09664dc29b0352ee34d33766,
+SHA2568407f7cba2939526a9fdf156de26415608f576fb2ddc3062531ec4d1bad07d20.
+Evaluator file hash matches the report; all stages completed without ERROR. Both
+profile-owned collections were absent in live readback after cleanup.
+
+| Profile / substrate | Recall@5 | MRR | nDCG@5 | Exact controls |
+|---|---|---|---|---|
+| English lexical | 1.0 | 0.9 | 0.9261859507 | 4/4 per profile |
+| No-stemming lexical | 1.0 | 0.9 | 0.9261859507 | 4/4 per profile |
+| Hybrid+exact (both) | 1.0 | 1.0 | 1.0 | known/unknown/restricted distinguished |
+| Reranked/context (both) | 1.0 | 1.0 | 1.0 | no additional gain shown on this tiny pilot |
+
+Null target denominators are excluded, not scored zero. Actual raw outputs/times,
+language/scope slices, ANN-vs-exact controls, model/tokenizer/HF/file/version fingerprints
+and misses are retained in report and immutable run-id copy. These are retrieval-only
+PILOT measurements with no independent human labels, not full B0/B1/B2 answer arms or
+hypothesis success. Profiles tied on this tiny corpus; retain explicit English initial
+configuration without a generalized winner claim. Reranker added no measured quality gain
+here; it stays an explicit optional treatment. Single work audit remains pending.
+
+### P02 task → consumer → proof index
+
+| Atomic task | Actual consumer | Phase-local proof |
+|---|---|---|
+| P02-T01.01 | parser → chunker | Unicode original-span/unsupported-input tests |
+| P02-T01.02 | structural chunks → pipeline/catalog | exact IDs/hash/line/neighbor controls |
+| P02-T01.03 | metadata/registry → upload/approval/revoke API | MIME/scope/grants/self-approval/supersession tests |
+| P02-T01.04 | staged exact manifests → READY reader | interrupted/retry/A-B-A/fresh/populated/rollback checks |
+| P02-T02.01 | pinned packages/models/server → actual adapter | real1.19.2/1.19.1/model/tokenizer/nativeRRF60 probe |
+| P02-T02.02 | named dense/BM25 points → scope queries/readback | real13point manifests, BOOL ACL/filter/schema tests |
+| P02-T03.01 | exact aliases → canonical union | known/unknown/restricted and POL-17/POL-71 control |
+| P02-T03.02 | canonical resolver → search and citation | current ACL/approval/time/READY/fingerprint/hash and revoke tests |
+| P02-T03.03 | native hybrid → canonical references | single nativeRRFk60, actual pilot ranked outputs |
+| P02-T03.04 | learned crossencoder/context links → rechecked passages | actual pinned-model pilot, bound/ACL/dedup tests |
+| P02-T03.05 | actual readback → coverage result | missing-point health, inventory false and outage controls |
+| P02-T04.01 | app factory/routes → actual HTTP caller | seed/serve live200→search→8citations; isolated upload/revoke smoke |
+| P02-T04.02 | safe correlated audit → reopened internal reader | matching trace/result counts, source/query canaries absent |
+| P02-T04.03 | seed/reconcile CLI → actual adapters | idempotent seed, exact13chunk readback, revocation preserved |
+| P02-T04.04 | pilot dataset/scorer → saved actual ranked report | two profiles,7stages, metric negative controls, honest limits |
+
+Latest integration refinement: HTTP upload now consumes validate_upload_metadata and
+its typed validated values; optional SHA256 mismatch is rejected before registration.
+Approval consumes same-family supersession validation and Registry rechecks atomically.
+Source aliases are exercised with known POL-71 versus unknown POL-17. Repeated seed after
+source revocation preserves denial and skips revoked structural links. Targeted HTTP
+checks pass. All15 cards have phase-local evidence; single work audit is still pending.
+
 ## Future evidence record template
 
 ```text
@@ -492,3 +644,39 @@ Limitations / next action:
 Do not prefill PASS for planned commands. Record an unavailable check as NOT_RUN/BLOCKED
 and explain why; pure deterministic guard tests, actual Groq integrations and model-quality
 experiments are different evidence classes.
+
+### P02 post-phase audit findings (2026-10-18, resolved; original findings retained)
+
+The single fresh-context GPT 6 Luna Medium work auditor read blueprint sections 1–18 and all P02 task/consumer records. It confirmed: discovery can send 40 candidates to a ranker capped at 30; oversized blocks/exception attachment bypass the chunk target; expected model-loading failures lack typed degradation; two current traceability rows retain superseded High effort. The main-session real HTTP regression reproduced the first defect: 40 visible candidates returned HTTP 400 (one failing test, intended assertion). Owners: coordinator for candidate budgeting, adapter failure translation and traceability; focused Medium implementer for exact-span bounded chunking. Findings remain open until regression and audit resolution evidence below.
+
+### P02 audit resolution and refreshed measurement
+
+The same single Medium auditor rereviewed all four fixes and reported no new defect in them. Candidate budgeting is declared by Ranker.max_candidates and consumed before reranking; the actual >30-candidate HTTP control passed after reproducing its original HTTP400. Chunking now splits oversized Unicode blocks with exact original byte/line spans and includes separator bytes in the grouping bound; focused ingestion controls: 22 passed. Expected model-loading and ONNX inference failures become DependencyUnavailable and are consumed as degraded retrieval. Current traceability now records Medium, while historical High receipts remain historical. The first new failure-control attempt used the wrong synthetic case and failed authorization403; corrected fixture case-42, with final suite result recorded below. No failed attempt is represented as a passing degradation control.
+
+Refreshed evaluator after the candidate-budget and chunking changes: explicit scripts/evaluate.py --run exited0, report status PILOT_ONLY, immutable run p02-pilot-df976c991cc249868dac51cfbac89fb9; raw report SHA256 dc14a65905e3c8106f0b6fc928d95233192586c2029541a28d68a7728b307124 at ignored runtime/evaluation/. Prior run files are retained. Both profiles again passed all4 exact-ID controls and retained the same tiny-corpus metrics in the table above. This remains eight-query retrieval-only pilot evidence, without adjudicated gold/full answer arms/production or superiority claims.
+
+Final build using python -m build --installer uv passed. Exact source/schema zip comparison passed for wheel SHA256 85c797940298812381b656435c3372500c3ce0c9bc64e81f2928f63f14cebd53. Final Ruff passed, strict mypy src scripts passed36 files, uv lock --check resolved60 packages, docs checker/self-test passed17 files/93 cards/20 controls. Fresh exact-wheel HTTP smoke and final real-server suite results follow after completion.
+
+### P02 final closeout (2026-10-18)
+
+Final full suite with explicit PALLADION_TEST_QDRANT_URL=http://127.0.0.1:16333:
+python -m pytest -q --tb=short ->115 passed, one retained Starlette/httpx deprecation
+warning,118.05s. Both actual HTTP load/inference failure controls pass with200,
+DEGRADED/RERANK_UNAVAILABLE and retained authorized passages. Exact final wheel installed
+into a fresh noneditable uv environment; isolated -I import verifies site-packages/schema,
+and real upload→approval→search→citation→revocation test passed1 (37.63s); temporary
+environment cleaned. Final wheel digest above is authoritative over earlier build receipts.
+No source changes followed this proof. All four confirmed post-audit findings are RESOLVED,
+including same-auditor rereview; the audit independently repeated17 focused tests/lint/
+typing/docs controls before its source-only resolution checks. Full live tests and wheel
+smoke were main-session evidence, not independently repeated by the auditor.
+
+Stopped owned HTTP processes5380/19372 and verified Qdrant PID450 executable before
+SIGTERM. The WSL server exited0; no listeners remained on16333/16334,17333/17334,
+18080,18333/18334. Persistent synthetic stores retained; no Docker/global service reset.
+All15 P02 children and the P02 G-RETRIEVAL subset are complete; whole G-RETRIEVAL stays PARTIAL for P08-T02.05 controlled fusion ablation. G-SOURCE/G-SECURITY remain
+PARTIAL for later graph/tool/prompt consumers; G-RESEARCH remains PARTIAL for adjudication,
+full answer arms and held-out experiments. No P03/UI/provider call/baseline implementation
+or new main push is implied. Local scoped commit follows final staged review.
+
+Final same-auditor documentation sweep found two stale E-P02-001/audit subsection headings; both now identify completed/resolved status. Other reviewed current phase/gate records agree. Blueprint/root ignore hashes preserved, baseline empty, and all55 scoped staged paths exclude secrets/runtime/unrelated .vscode. Credential-signature scan and staged whitespace check pass.

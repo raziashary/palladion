@@ -1,0 +1,49 @@
+"""Explicit application factory; imports load no credentials, models or services."""
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Mapping
+
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+from starlette.middleware.base import RequestResponseEndpoint
+from starlette.responses import Response
+
+from evidence_agent.api.routes import router
+from evidence_agent.core.errors import EvidenceAgentError
+from evidence_agent.core.retrieval import SearchIndex
+from evidence_agent.retrieval.hybrid import Ranker
+
+
+def create_app(runtime_root: Path, index: SearchIndex, tokens: Mapping[str, str],
+               ranker: Ranker | None = None) -> FastAPI:
+    app = FastAPI(title="Palladion retrieval prototype", docs_url=None, redoc_url=None)
+    app.state.runtime_root = runtime_root.resolve()
+    app.state.index = index
+    app.state.tokens = dict(tokens)
+    app.state.ranker = ranker
+
+    @app.middleware("http")
+    async def bounded_body(request: Request, call_next: RequestResponseEndpoint) -> Response:
+        # Require truthful framing and cap bytes before JSON parsing; streaming is bounded too.
+        if request.method in {"POST", "PUT", "PATCH"}:
+            content = bytearray()
+            async for piece in request.stream():
+                content.extend(piece)
+                if len(content) > 128 * 1024:
+                    return JSONResponse({"detail": "Request too large"}, status_code=413)
+            request._body = bytes(content)
+        return await call_next(request)
+
+    @app.exception_handler(EvidenceAgentError)
+    async def domain_error(request: Request, exc: EvidenceAgentError) -> JSONResponse:
+        status = {"PERMISSION_DENIED": 403, "VALIDATION_ERROR": 400,
+                  "CONFLICT": 409, "UNAVAILABLE": 503}.get(exc.code.value, 500)
+        return JSONResponse({"detail": exc.user_summary}, status_code=status)
+
+    @app.exception_handler(ValueError)
+    async def invalid_input(request: Request, exc: ValueError) -> JSONResponse:
+        return JSONResponse({"detail": "Invalid request"}, status_code=400)
+
+    app.include_router(router)
+    return app

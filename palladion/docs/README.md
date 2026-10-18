@@ -26,7 +26,7 @@ Begin with the master plan's reading protocol and the current progress record.
 Authority, update rules, and conflict handling are defined once in the master plan.
 Do not create competing plans, memories, or unlinked status files elsewhere.
 
-Current scope is P01 end-to-end under explicit GO. Foundation code/locked packaging,
+P02 end-to-end is verified complete under explicit GO; P03 awaits its own GO. P01 is published and complete. Foundation code/locked packaging,
 contracts/access/storage and synthetic fixtures are verified complete, with 75 tests,
-installed-wheel smoke and single independent audit/resolution at E-P01-001. P02 and provider calls are outside this phase.
+installed-wheel smoke and single independent audit/resolution at E-P01-001. P02 retrieval/API/measurement checks are at E-P02-001; generative provider calls and P03+ remain outside this phase.
 Both phase reviewers read the full blueprint under the master review contract.

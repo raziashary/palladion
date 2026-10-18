@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "annotation_status": "PILOT",
+  "annotation_note": "Small retrieval-only synthetic set. Labels are source-span anchored but have not received independent human adjudication; Indonesian queries target English source material.",
+  "queries": [
+    {
+      "query_id": "RP01",
+      "case_id": "case-42",
+      "principal_id": "reader-a",
+      "language": "en",
+      "query": "What conditions must be verified before a reversal review can proceed?",
+      "expected": [{"source_id": "SOP-2026-B", "clause_id": "S26-REVERSAL"}],
+      "slice": ["current", "known_clause"]
+    },
+    {
+      "query_id": "RP02",
+      "case_id": "case-42",
+      "principal_id": "reader-a",
+      "language": "en",
+      "query": "S26-INVESTIGATE",
+      "expected": [{"source_id": "SOP-2026-B", "clause_id": "S26-INVESTIGATE"}],
+      "exact_identifier": "S26-INVESTIGATE",
+      "exact_expected": "hit",
+      "slice": ["current", "exact_identifier"]
+    },
+    {
+      "query_id": "RP03",
+      "case_id": "case-42",
+      "principal_id": "reader-a",
+      "language": "en",
+      "query": "If settlement is pending or times out, what should support do?",
+      "expected": [{"source_id": "EX-2026-04", "clause_id": "EX-SETTLEMENT-DELAY"}],
+      "slice": ["current", "exception"]
+    },
+    {
+      "query_id": "RP04",
+      "case_id": "case-42",
+      "principal_id": "reader-a",
+      "language": "id",
+      "query": "Jika layanan settlement mengalami timeout, apa yang harus dilakukan dan apakah status UNSETTLED boleh disimpulkan?",
+      "expected": [{"source_id": "EX-2026-04", "clause_id": "EX-SETTLEMENT-DELAY"}],
+      "slice": ["current", "exception", "indonesian_query_english_source"]
+    },
+    {
+      "query_id": "RP05",
+      "case_id": "case-43",
+      "principal_id": "uploader-a",
+      "language": "en",
+      "query": "Which reversal conditions applied to a transaction in June 2025?",
+      "as_of": "2025-06-20T11:30:00Z",
+      "expected": [{"source_id": "SOP-2025-A", "clause_id": "S25-REVERSAL"}],
+      "slice": ["historical_time", "case-43"]
+    },
+    {
+      "query_id": "RP06",
+      "case_id": "case-42",
+      "principal_id": "reader-a",
+      "language": "en",
+      "query": "S26-REVERSAL",
+      "expected": [{"source_id": "SOP-2026-B", "clause_id": "S26-REVERSAL"}],
+      "exact_identifier": "S26-REVERSAL",
+      "exact_expected": "hit",
+      "slice": ["current", "exact_identifier"]
+    },
+    {
+      "query_id": "RP07",
+      "case_id": "case-42",
+      "principal_id": "reader-a-limited",
+      "language": "en",
+      "query": "EX-SETTLEMENT-DELAY",
+      "expected": [],
+      "exact_identifier": "EX-SETTLEMENT-DELAY",
+      "exact_expected": "denied",
+      "restricted_reference": {"source_id": "EX-2026-04", "clause_id": "EX-SETTLEMENT-DELAY"},
+      "slice": ["acl_denial", "restricted_exception"]
+    },
+    {
+      "query_id": "RP08",
+      "case_id": "case-42",
+      "principal_id": "reader-a",
+      "language": "en",
+      "query": "POL-DEMO-999",
+      "expected": [],
+      "exact_identifier": "POL-DEMO-999",
+      "exact_expected": "unknown",
+      "slice": ["unknown_identifier"]
+    }
+  ]
+}

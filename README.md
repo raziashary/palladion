@@ -5,15 +5,17 @@ recognizes insufficient evidence, preserves case context, and challenges its con
 The initial research domain is internal support investigation using synthetic payment
 documents and read-only mock operational systems.
 
-**Current state:** P01 foundation is implemented, tested and independently audited: strict
+**Current state:** P01 is verified; P02 provenance retrieval is verified complete: strict
 contracts, persisted synthetic access/approval, SQLite/originals and 24 pilot fixtures.
-The uv package/lock and offline validation entry point exist. Retrieval, message API,
-agent loop, UI and benchmark results remain absent.
+The uv package/lock and offline validation entry point exist. Message API,
+agent loop, UI and full answer-system benchmark results remain absent.
+P02 includes real dense/BM25 Qdrant retrieval, source/search/citation API and retrieval-only
+pilots. Use the Docker-free WSL launcher documented in palladion/README.md.
 User selected uv and actual Groq `qwen/qwen3.8-27b` for future implementation. All
 recommendation directions are answered in the editable ADR log. The user created the
 ignored app `.venv` after separate toolchain repair; product dependency setup and execution
 are authorized by the explicit P01 GO. Current evidence is in the development suite;
-no provider call is needed for this deterministic phase. P02 remains future scope.
+no provider call is needed for this deterministic phase. P03 remains future scope.
 
 - [Documentation entry point](palladion/docs/README.md)
 - [Master vision](palladion/docs/vision/palladion-blueprint-v2.md)

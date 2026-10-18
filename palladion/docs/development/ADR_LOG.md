@@ -305,7 +305,8 @@ records executed proof. Current documentation conformity is checked by G-DOC/E-D
 
 **Status:** ACCEPTED; original decision date 2026-10-17; restructured without a new owner vote.
 
-**Authority:** Direct user instruction: every development subagent GPT 6 Luna High.
+**Authority:** Original user instruction required GPT 6 Luna High; superseding user instruction
+2026-10-18 requires GPT 6 Luna Medium for every new dispatch (ADR-0026).
 
 **Question:** Which models may development subagents use?
 
@@ -315,7 +316,7 @@ its rationale and evidence are retained below rather than replaced by a new clai
 **Options:** Retain the accepted direction or explicitly amend it; the historical record
 preserves alternatives considered. Current amendments: ADR-0011 governs GO, ADR format and phase reviews; ADR-0013 governs uv/Groq. Apply them over conflicting historical wording.
 
-**Recommendation:** Use GPT 6 Luna High for every development subagent; this is separate from Groq runtime generation.
+**Recommendation:** Use GPT 6 Luna Medium for every newly dispatched development subagent; this is separate from Groq runtime generation. The user superseded the original High-effort direction on 2026-10-18.
 
 **What affects what:** All development dispatches; pre-phase adversary and post-phase auditor receipts.
 
@@ -447,7 +448,7 @@ records executed proof. Current documentation conformity is checked by G-DOC/E-D
 
 **Options:** Keep optional reviews and old format, or adopt the explicitly requested structured answer workflow and mandatory reviews.
 
-**Recommendation:** Use this editable structure; before each phase one GPT 6 Luna High adversary refutes tasks against source/vision; after validation/smoke/gates one GPT 6 Luna High work auditor audits evidence and consumers. Coordinator resolves findings. For this task both coordinator and that auditor inspect every development doc against the entire blueprint.
+**Recommendation:** Use this editable structure; before each phase one GPT 6 Luna Medium adversary refutes tasks against source/vision; after validation/smoke/gates one GPT 6 Luna Medium work auditor audits evidence and consumers. Coordinator resolves findings. For this task both coordinator and that auditor inspect every development doc against the entire blueprint.
 
 **What affects what:** AGENTS and MASTER_DEV_PLAN schedule both independent reviews; TESTING_GATES/EVIDENCE_LOG retain receipts and findings; PROGRESS is WAIT_FOR_GO after docs closure. No implementation/install/venv/model call/push now.
 
@@ -530,7 +531,10 @@ integration remains P04 proof; deterministic fixtures cannot substitute for it.
 
 **My answer (editable):** Accept the recommendation direction; do not invent a compatibility result.
 
-**Verification:** VERIFY_AT_IMPLEMENTATION; G-RETRIEVAL integration probe must pass before dependent indexing.
+**Verification:** P02 actual probe passed with Qdrant1.19.2/client1.19.1, same-point
+named dense/BM25 and one nativeRRFk60. Explicit English/no-stemming representations
+share ingest/query options and IDF handling. E-P02-001 retains actual model/tokenizer
+file fingerprints and pilot limits; final work audit remains phase-owned.
 
 ## ADR-0015 — Q04 — English and Indonesian retrieval
 
@@ -550,7 +554,10 @@ integration remains P04 proof; deterministic fixtures cannot substitute for it.
 
 **My answer (editable):** Accept the recommendation; select details from measured development evidence rather than a claimed language improvement.
 
-**Verification:** VERIFY_AT_IMPLEMENTATION; no selected tokenizer variant or recall measurement yet.
+**Verification:** E-P02-001 measures English/no-stemming on eight PILOT queries
+(7English,1Indonesian targeting English sources). Results tied; retain explicit English
+initial profile without claiming a language-wide winner. General Indonesian-document
+quality and human adjudication remain future evidence.
 
 ## ADR-0016 — Q05 — Historical audit and time-basis migration
 
@@ -755,6 +762,30 @@ Sources: [Pydantic strict mode](https://docs.pydantic.dev/latest/concepts/strict
 [uv locked sync](https://docs.astral.sh/uv/concepts/projects/sync/) and Python SQLite docs.
 All provider-specific compatibility remains deferred to enabled P04 proof.
 
+## ADR-0025 — P02 additive retrieval catalog and verified substrate
+
+**Status:** ACCEPTED; schema extension explicitly approved by owner 2026-10-17.
+**Authority:** P02 GO, compatible package delegation, and owner async answer approving additive v3 migration.
+**Question:** How can P02 persist exact publication IDs and model/tokenizer identity without losing P01 data?
+**Why:** Pre-adversary found v2 manifest lacks reproducibility fields and P02 ownership omitted migrations.
+**Options:** Additive transactional v3 catalog, or keep v2 and introduce a competing sidecar authority.
+**Recommendation:** Add v3 tables for chunk spans/generation records/exact aliases/manifests bound to immutable source IDs and representation fingerprints. Preserve v2 tables/behavior; verify fresh/populated/failed upgrades. Explicit search and audited source revocation supply missing consumers/producers. Shared typed ingestion/index contracts retain canonical resolution ownership.
+**What affects what:** storage schema/sqlite/catalog/registry, ingestion, index adapters, canonical resolver, authenticated API and tests. Qdrant discovery never supplies canonical quote authority. P02 pilots measure retrieval only, not full B0/B1/B2 answer arms.
+**My answer (editable):** User: Approve additive v3 migration (Recommended).
+**Verification:** VERIFIED at E-P02-001: additive fresh/populated/rollback preservation, real exact-manifest publication and HTTP consumers pass within final115-test suite; single audit findings resolved.
+
+## ADR-0026 — Standing subagent effort and Docker-free execution amendment
+
+**Status:** ACCEPTED; direct owner instructions 2026-10-18.
+**Authority:** User: from now on only use GPT 6 Luna Medium; Docker cannot work, implement an alternative.
+**Question:** Which development-agent effort and local Qdrant path govern remaining work?
+**Why:** Owner changes the standing model preference and requires a working Docker alternative.
+**Options:** Luna Medium for future dispatches and checksum-pinned Qdrant in WSL, or retain superseded High/Docker requirements (rejected).
+**Recommendation:** Every new subagent uses gpt-6-luna/medium. Preserve completed High receipts as historical evidence. Run official pinned Qdrant1.19.2 in WSL with Linux-owned storage; keep optional Compose for other machines, no production-readiness claim.
+**What affects what:** Global AGENTS section12, project AGENTS, master review protocol, gates, memory and future reviewer dispatch. Runtime Groq model/critic budgets are unchanged. The in-flight High evaluator was interrupted; any new dispatch uses Medium.
+**My answer (editable):** User: from now on only use gpt 6 luna medium; Docker alternative requested.
+**Verification:** Standing rules updated in global/project instructions. WSL launcher starts real Qdrant; recorded PID3046 stop succeeds with storage preserved. Final115-test suite, isolated wheel HTTP smoke and same-auditor resolution verified at E-P02-001.
+
 ## Future decision template
 
 ```text
@@ -771,4 +802,4 @@ Verification: planned proof, result, evidence and execution/deferred state
 Amendment history: old answer/date/reason and superseding decision
 ```
 
-Next free ADR number: 0025. Accepted directions do not grant implementation GO.
+Next free ADR number: 0027. Accepted directions do not grant implementation GO.

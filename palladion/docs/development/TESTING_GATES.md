@@ -1,7 +1,7 @@
 # Testing gates
 
-P01 contracts, fixture, storage and access tests plus the offline foundation CLI are
-runnable. Later index/API/agent/research obligations remain planned. Gate catalog rows
+P01 foundations and P02 ingest/retrieval/API/evaluator checks are runnable. Real-server
+checks require explicit local-server enablement. Later agent/graph/full research obligations remain planned. Gate catalog rows
 describe full obligations; current phase-local results never imply full runtime proof. Gate states
 and evidence are recorded in [PROGRESS](PROGRESS.md) and [EVIDENCE_LOG](EVIDENCE_LOG.md).
 Read source and test fixtures before running anything with stateful-resource access.
@@ -28,8 +28,8 @@ Read source and test fixtures before running anything with stateful-resource acc
   result, pass/fail counts, evidence path, reviewer, limitations, cleanup and next action.
 - Retry only classified transient I/O under a single retry owner. Preserve original failures;
   a rerun does not erase flakiness. Never lower a gate after seeing a failure to obtain green.
-- Every phase has a recorded GPT 6 Luna High adversarial task/contract review before work.
-  After validation, smoke and required gates, one GPT 6 Luna High work auditor checks the
+- Every phase has a recorded GPT 6 Luna Medium adversarial task/contract review before work.
+  After validation, smoke and required gates, one GPT 6 Luna Medium work auditor checks the
   result/evidence/consumers. Findings must be resolved or keep the affected phase open.
   Both reviewers read the entire blueprint and apply the master plan's
   [blueprint review contract](MASTER_DEV_PLAN.md#blueprint-review-contract-for-both-reviewers),
@@ -39,6 +39,14 @@ Read source and test fixtures before running anything with stateful-resource acc
   For current P00-T05 the coordinator and that single post-auditor additionally inspect
   every development document against the complete blueprint; structural checks alone
   cannot pass that semantic audit. E-DOC-003 records both independent review receipts.
+
+## P02 phase-local evidence boundary
+
+P02 adds actual Qdrant named dense/BM25 native RRF k=60, authorized search/citation API,
+scoped source revocation, exact ID/hash publication manifests and retrieval-only pilots.
+Owner approved additive v3 with fresh/populated/rollback preservation tests. Runtime tools,
+policy decisions, prompt exposure, graph and generated answers remain future obligations.
+No P02 metric is a full B0/B1/B2 answer-system result.
 
 ## P01 phase-local evidence boundary
 
@@ -196,7 +204,7 @@ Now, from repository root:
 
 These documentation-only commands use the existing Python interpreter, without creating
 the application environment. Separate machine repair installed uv and the user created
-the ignored app .venv (E-DOC-004); further app package/model setup remains held until GO.
+the ignored app .venv (E-DOC-004); P02 dependency/real-index setup is authorized; generative model integration remains P04.
 
 ```powershell
 python palladion/docs/development/check_docs.py
