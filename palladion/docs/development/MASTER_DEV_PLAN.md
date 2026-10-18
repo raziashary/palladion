@@ -50,6 +50,11 @@ must update it in the same unit, or be explicitly queued for the user's decision
    Seek direction where universal decision rules require it; no new architectural choice is
    implicitly approved by a task ID. Continue independent authorized work while waiting.
 
+Standing delegation limit (owner 2026-10-18): subagents only for the start adversary
+and end reviewer, both GPT 6 Luna Medium. All investigation, implementation and tests
+belong to the coordinator. Reuse the end reviewer for resolution checks; do not dispatch
+intermediate research, implementation or testing agents. Historical dispatches remain receipts.
+
 ### Before each phase
 
 Before each phase (including a newly scoped documentation phase), dispatch a GPT 6 Luna

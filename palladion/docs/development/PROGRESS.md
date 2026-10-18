@@ -7,10 +7,12 @@ command observations and review receipts live in EVIDENCE_LOG.
 
 P02 DONE under explicit user GO from published aa4b439. All15 atomic children,
 real Qdrant/HTTP consumers, approved additive v3, retrieval-only pilot and the single
-post-phase audit/resolution are verified at E-P02-001. Final suite:115 passed; lint,
+post-phase audit/resolution are verified at E-P02-001. Latest suite:117 passed; lint,
 strict typing, build and isolated exact-wheel HTTP smoke passed. Docker-free Qdrant
 runs through the checksum-pinned WSL launcher. New subagents use GPT6LunaMedium.
-Owned test listeners are stopped. P03 awaits explicit GO; no new main push is authorized.
+Owner follow-up E-P02-002 complete: direct dependency guard, generation publication/CLI
+corrections and both public READMEs verified. User explicitly authorizes this checkpoint
+commit/push. P03 awaits explicit GO.
 
 Previous phase checkpoint (verified):
 
@@ -46,7 +48,7 @@ Human gold-label adjudication, retrieval, citation API and model behavior are no
 | Gate | State | Evidence and limits |
 |---|---|---|
 | G-DOC | PASS | Structure/self-test17 files/93 cards/20 controls and full-blueprint phase review/resolution pass |
-| G-CONTRACT | PASS | Foundation retained; final115 tests, strict typing/lint and exact-wheel HTTP consumer; independent review resolved |
+| G-CONTRACT | PASS | Foundation retained; latest117 tests, strict typing/lint and exact-wheel HTTP consumer; independent review resolved |
 | G-SOURCE | PARTIAL | Fresh/populated/rollback/foreign DB checks, immutable bytes, persisted source reader pass; P02 index/API/revocation verified; P07 graph obligations remain |
 | G-SECURITY | PARTIAL | Stored identity/grants/membership/source ACL and revocation/self-approval controls pass; later prompt/API/tool/graph boundaries remain |
 | G-RETRIEVAL | PARTIAL | P02 subset PASS: real Qdrant/model/ACL/canonical/exact/exception/pilot/audit; P08-T02.05 controlled fusion ablation remains |
@@ -83,4 +85,5 @@ Human gold-label adjudication, retrieval, citation API and model behavior are no
 P01 is published at aa4b439. P02 is locally verified complete at E-P02-001.
 P03 requires explicit user GO and a fresh Medium pre-phase adversary before implementation.
 No task percentage establishes system readiness. Preserve root .env/.gitignore and
-unrelated .vscode. No provider call or new main push is authorized by P02 completion.
+unrelated .vscode. No provider call or P03 is authorized. The owner explicitly requests pushing this
+verified follow-up checkpoint; later shared-branch publication still requires approval.

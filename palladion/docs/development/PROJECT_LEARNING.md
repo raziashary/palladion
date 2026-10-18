@@ -238,3 +238,14 @@ erase failed runs or rename a post-hoc threshold as the original goal.
 ## L018 — Exercise bounds through the real consumer
 
 P02's single work audit found a producer/consumer budget mismatch: discovery allowed40 candidates and reranking allowed30. A real HTTP regression first reproduced400, then passed with a declared ranker budget consumed before ranking. Apply chunk bounds to individual Unicode blocks and exception groups, including separators; preserving exact spans does not require unbounded groups. Normalize expected asset/inference backend failures at the adapter boundary so optional reranking can degrade explicitly. Keep fixture-setup failures separate from the intended negative control. E-P02-001 records resolution and final measurements.
+
+## L019 — Import success is not manifest completeness
+
+The P02 closeout missed three direct dependencies because the installed transitive graph
+satisfied imports. Promote directly imported packages with uv add, preserve locked versions,
+and check import ownership explicitly, including literal dynamic imports. Protocol ellipses
+are interface declarations: trace concrete implementers before calling them unfinished.
+A canonical active-generation invariant must also be consumed by maintenance CLIs and
+checked transactionally at publication; the follow-up found both gaps. E-P02-002 retains
+negative controls, setup mistakes, final test evidence and review scope. New user rule
+limits delegation to start adversary/end reviewer, GPT6LunaMedium; coordinator owns the rest.

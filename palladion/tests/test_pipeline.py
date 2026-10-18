@@ -7,6 +7,7 @@ import pytest
 from evidence_agent.core.errors import PermissionDenied, ResourceConflict
 from evidence_agent.core.models import Principal
 from evidence_agent.core.retrieval import Chunk
+from evidence_agent.ingest.parsing import PARSER_VERSION
 from evidence_agent.ingest.pipeline import IngestPipeline
 from evidence_agent.storage.catalog import Catalog
 from evidence_agent.storage.originals import OriginalStore
@@ -204,4 +205,24 @@ def test_catalog_exact_alias_and_exception_link_are_scoped_and_audited(tmp_path:
     with pytest.raises(PermissionDenied):
         catalog.context_links(other, rule.chunk_id)
     assert generation
+    database.close()
+
+
+def test_delayed_generation_cannot_publish_over_newer_staged_generation(tmp_path: Path) -> None:
+    database, _, catalog, uploader, revision, content = _setup(tmp_path)
+    index = MemoryIndex()
+    IngestPipeline(catalog, index).index(uploader, revision)
+    chunks = catalog.chunks_for_revision(uploader, revision)
+    older = catalog.stage_generation(uploader, revision, chunks, source_bytes=content,
+                                     fingerprint="older-config", parser_version=PARSER_VERSION)
+    newer = catalog.stage_generation(uploader, revision, chunks, source_bytes=content,
+                                     fingerprint="newer-config", parser_version=PARSER_VERSION)
+    readback = {chunk.chunk_id: chunk.content_sha256 for chunk in chunks}
+    with pytest.raises(ResourceConflict):
+        catalog.reconcile(uploader, revision, older, readback)
+    source = catalog.registry.source_metadata(uploader, revision)
+    assert source["index_generation"] == newer
+    assert source["index_state"] == "INDEXING"
+    assert catalog.reconcile(uploader, revision, newer, readback)
+    assert catalog.eligible_generation_metadata(uploader, revision)["generation"] == newer
     database.close()

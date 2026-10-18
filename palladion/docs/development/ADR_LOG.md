@@ -786,6 +786,30 @@ All provider-specific compatibility remains deferred to enabled P04 proof.
 **My answer (editable):** User: from now on only use gpt 6 luna medium; Docker alternative requested.
 **Verification:** Standing rules updated in global/project instructions. WSL launcher starts real Qdrant; recorded PID3046 stop succeeds with storage preserved. Final115-test suite, isolated wheel HTTP smoke and same-auditor resolution verified at E-P02-001.
 
+## ADR-0027 — Direct dependency and interface completion audit
+
+**Status:** ACCEPTED; user follow-up 2026-10-18.
+**Authority:** User requests inspection/fix of apparent incomplete functions, missing direct dependencies and similar gaps, then commit/push; P03 remains on hold.
+**Question:** How should direct imports and Protocol method declarations be validated before publication?
+**Why:** P02 imports huggingface_hub and dynamically imports onnxruntime but declared them only transitively. Existing tests/install smokes did not detect this manifest ownership gap.
+**Options:** Keep transitive reliance, or declare each directly used distribution and validate import ownership.
+**Recommendation:** Use uv add to promote already-locked huggingface-hub1.33.0, onnxruntime1.31.0 and starlette1.8.0 to direct dependencies without upgrading the resolved environment. Add a standard-library import/manifest checker with negative controls. Clarify Protocol docstrings and verify concrete implementations with existing typing and real retrieval tests.
+**What affects what:** pyproject.toml/uv.lock, src interface documentation, scripts/check_dependencies.py and regression controls, packaging and consumer verification. Also correct the owning catalog active-generation publication check and CLI reader; no schema, API shape or P03 changes.
+**My answer (editable):** User: check the other as well; once all clear commit and push, wait for Phase3 GO.
+**Verification:** VERIFIED at E-P02-002: direct-import checker47 files/four negative controls,117 actual-server tests, typing/lint/build/installed-wheel smoke and source review passed. Prior closeout missed direct dependency completeness; correction retained there.
+
+## ADR-0028 — Limit delegation to start/end review
+
+**Status:** ACCEPTED; direct user instruction 2026-10-18.
+**Authority:** User limits subagents to the adversary at the start and review at the end, model gpt6luna medium, citing usage cost.
+**Question:** When may a subagent be dispatched?
+**Why:** Intermediate research/implementation/test agents consume more usage than the owner wants.
+**Options:** Earlier proactive delegation, or start adversary/end reviewer only.
+**Recommendation:** Only those two roles, gpt-6-luna/medium. Coordinator performs all intermediate work; reuse end reviewer for resolution checks. Preserve historical evidence.
+**What affects what:** Global AGENTS Rule12/14/16, project AGENTS, master task protocol, gates, working memory and future dispatches. Does not alter system runtime models or authorize P03.
+**My answer (editable):** User: only use subagents for the adversary at the start and the review at the end; Model is gpt 6 luna medium.
+**Verification:** Standing instructions updated; no new intermediate dispatches after this instruction.
+
 ## Future decision template
 
 ```text
@@ -802,4 +826,4 @@ Verification: planned proof, result, evidence and execution/deferred state
 Amendment history: old answer/date/reason and superseding decision
 ```
 
-Next free ADR number: 0027. Accepted directions do not grant implementation GO.
+Next free ADR number: 0029. Accepted directions do not grant implementation GO.

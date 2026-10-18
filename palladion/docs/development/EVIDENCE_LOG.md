@@ -680,3 +680,70 @@ full answer arms and held-out experiments. No P03/UI/provider call/baseline impl
 or new main push is implied. Local scoped commit follows final staged review.
 
 Final same-auditor documentation sweep found two stale E-P02-001/audit subsection headings; both now identify completed/resolved status. Other reviewed current phase/gate records agree. Blueprint/root ignore hashes preserved, baseline empty, and all55 scoped staged paths exclude secrets/runtime/unrelated .vscode. Credential-signature scan and staged whitespace check pass.
+
+## E-P02-002 — Owner follow-up: implementation completeness and direct dependencies
+
+2026-10-18. Owner challenges apparent unfinished Protocol methods and undeclared direct
+imports, requests a broader source/function/library check and public README refresh,
+then commit/push to the established main upstream; P03 remains on hold.
+
+Correction to P02 closeout: passing locked installs/imports did not prove manifest
+completeness. Direct huggingface_hub, dynamic onnxruntime and starlette imports relied
+on transitive dependencies in31f4b8c. All three promoted by actual uv add to direct pins
+at their already-locked versions1.33.0/1.31.0/1.8.0; resolved environment stays60 packages.
+Coordinator's AST inventory covers all src/scripts/tests, including literal dynamic
+imports. New scripts/check_dependencies.py checks declared runtime versus dev ownership,
+with four missing-declaration negative controls and stdlib/relative/positive controls.
+
+SearchIndex/DenseEncoder/Ranker/ChunkReranker ellipses are intentional Protocol declarations,
+not runnable implementations. Traced QdrantIndex and FastEmbedDenseEncoder concrete
+methods and existing real consumers. Added explicit interface documentation. Both pass
+statements in production handle verified file races/cleanup; no production TODO/FIXME/
+NotImplementedError implementation stubs found in the searched src/scripts scope.
+A fresh read-only GPT6LunaMedium auditor independently inventoried these paths. Its
+statement that dependencies were present inspected the coordinator's in-flight fixes,
+not31f4b8c; baseline defect and fix are distinguished here. No global completeness claim.
+
+Coordinator also read pipeline, catalog publication/retry/readers, original-store cleanup,
+canonical resolver, API routes, coverage, Qdrant calls and seed/serve/reconcile consumers.
+Found reconciliation CLI used newest-created generation rather than active generation.
+Found delayed reconciliation could publish older staged work over newer generation.
+New deterministic control first failed due parser fixture mismatch; corrected setup then
+failed for intended missing ResourceConflict. Added active-generation check within the
+publication transaction and switched CLI to canonical eligible generation. Real CLI
+A→B→A profile rollback and delayed-job controls are included in final verification.
+No schema/API change or later-phase implementation. ADR-0027 records scope/ownership.
+
+Both public READMEs now explain purpose, implemented versus planned flow, setup,
+interfaces/dependencies, local authentication, API routes, measurement and limits.
+Verification and publication receipt follow below after completion.
+
+Follow-up validation history: first full run had117 passing test bodies but exited1 for
+one teardown error: Qdrant collection deletion exceeded the default client timeout.
+This was not a green suite. Updated only test cleanup to an explicit30s client/server
+budget and guaranteed index.close in a nested finally; no production timeout changed.
+Final full rerun follows. Ruff passed; mypy37 files passed; dependency checker47 files
+and four negative controls passed; uv lock/check resolved60 and installed compatibility
+check59 distributions passed. Build passed; exact wheel SHA256
+5ac39432545be561b5e135be87eede6b7f3e277e5282d230fe74bbf17f48e930 matched
+all current packaged Python/schema bytes. Fresh noneditable environment then installed
+that exact wheel; isolated import/schema and real HTTP/Qdrant consumer passed1 in42.03s,
+with temporary environment cleaned. One retained Starlette/httpx deprecation warning.
+
+End-review source checks accepted the dependency/interface inventory, active-generation
+guard and actual CLI reader correction, import checker and README descriptions. Reviewer
+reported no remaining material defect in its declared scope and requested final result
+counts in current records. Coordinator retains integration/test responsibility.
+ADR-0028 implements the owner's new delegation scope limit in global/project AGENTS,
+master protocol, gates and memory. No intermediate dispatch after that instruction.
+
+Final follow-up rerun: explicit local-server-enabled python -m pytest -q --tb=short ->
+117 passed, one retained Starlette/httpx deprecation warning,174.63s, exit0. This includes
+real CLI profile rollback and delayed-generation rejection. The earlier teardown failure
+remains recorded above; the new cleanup budget and unconditional client closure pass.
+Current source/manifest/interface checks and both public READMEs are reviewed and updated.
+No unfinished production stubs or undeclared direct imports were found in this checked scope;
+future phases remain explicitly unimplemented. Requesting the owned standalone launcher
+stop preserves storage. Final port/staged review precedes commit/push under owner approval.
+
+Cleanup verified: no listeners on16333/16334/18080 after owned PID485 stop; persistent storage preserved. Scoped staged review/credential signature scan and diff whitespace check passed before publication.

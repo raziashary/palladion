@@ -188,6 +188,8 @@ class Catalog:
         with self.database.transaction() as connection:
             source = self.registry.source_metadata(principal, revision_id)
             self._require_approved(source)
+            if source["index_generation"] != generation:
+                raise ResourceConflict
             row = connection.execute(
                 "SELECT expected_count, expected_manifest_sha256, required_backends_json, state "
                 "FROM index_generations WHERE tenant_id = ? AND revision_id = ? AND generation = ?",

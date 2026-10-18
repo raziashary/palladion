@@ -34,7 +34,7 @@ def main() -> None:
                 "SELECT revision_id FROM document_revisions WHERE tenant_id=? AND approval_status='APPROVED'",
                 (principal.tenant_id,))]
             for revision in revisions:
-                metadata = catalog.generation_for_revision(principal, revision)
+                metadata = catalog.eligible_generation_metadata(principal, revision)
                 if metadata is None:
                     reports.append({"revision": revision, "match": False, "reason": "UNINDEXED"})
                     continue

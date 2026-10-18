@@ -33,6 +33,11 @@ class Candidate(VersionedModel):
 
 
 class SearchIndex(Protocol):
+    """Structural interface implemented by storage.qdrant.QdrantIndex.
+
+    Ellipsis bodies declare required signatures; this is not a runnable index.
+    """
+
     @property
     def fingerprint(self) -> str: ...
     def ensure_collection(self) -> None: ...

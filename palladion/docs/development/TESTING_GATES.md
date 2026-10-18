@@ -8,6 +8,14 @@ Read source and test fixtures before running anything with stateful-resource acc
 
 ## Execution and evidence rules
 
+Subagents are limited to the start adversary and end reviewer (GPT 6 Luna Medium);
+the coordinator performs all intermediate research, implementation and verification.
+
+- Run `python scripts/check_dependencies.py --self-test` from the application directory
+  for dependency/source changes. Direct runtime imports must be declared in pyproject,
+  test-only imports in the dev group; transitive install success is insufficient.
+  Literal dynamic imports are included. This checker is limited to current Python import
+  forms and installed distribution metadata; it does not prove arbitrary plugin loading.
 - Derive tests from the blueprint and task contract. Each guard needs a violating case
   that fails and a valid case that passes. Do not merely assert an internal method was called.
 - A gate passes only after its named acceptance is observed through its producer and real

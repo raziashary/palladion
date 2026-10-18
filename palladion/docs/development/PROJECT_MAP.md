@@ -137,3 +137,5 @@ immediately; asynchronous index/cache cleanup cannot be the access-control bound
 Future `baseline/` systems → shared evaluation contract ← Palladion arms → frozen corpus,
 gold labels and scorer → report with raw safety/usefulness/latency/cost dimensions. All
 comparison adapters and results are currently absent; see RESEARCH_PROTOCOL and X01.
+
+Dependency manifest ownership is checked by scripts/check_dependencies.py over src/scripts/tests (including literal dynamic imports); pyproject runtime/dev declarations and uv.lock own dependency setup. E-P02-002 records the follow-up completion checks.

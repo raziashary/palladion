@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import os
+import subprocess
+import sys
 import uuid
 from contextlib import closing
 from pathlib import Path
@@ -44,9 +46,11 @@ def runtime(tmp_path: Path):
         revisions = seed(root, APP, index)
         yield root, index, revisions
     finally:
-        with closing(QdrantClient(url=URL)) as client:
-            client.delete_collection(index.collection_name)
-        index.close()
+        try:
+            with closing(QdrantClient(url=URL, timeout=30)) as client:
+                client.delete_collection(index.collection_name, timeout=30)
+        finally:
+            index.close()
 
 
 def test_actual_upload_approval_search_citation_and_revocation(runtime) -> None:
@@ -227,3 +231,19 @@ def test_reranker_asset_failure_degrades_actual_http_consumer(runtime, monkeypat
         assert result["status"] == "DEGRADED"
         assert "RERANK_UNAVAILABLE" in result["warnings"]
         assert result["passages"]
+
+
+def test_reconcile_cli_reads_active_generation_after_profile_rollback(runtime) -> None:
+    root, index, _ = runtime
+    alternate = QdrantIndex(url=URL, collection_name=index.collection_name,
+                            model_cache_dir=APP / "runtime/model_cache", bm25_profile="no_stemming")
+    try:
+        seed(root, APP, alternate)
+    finally:
+        alternate.close()
+    seed(root, APP, index)
+    completed = subprocess.run(
+        [sys.executable, "scripts/reconcile.py", "--root", str(root), "--url", str(URL),
+         "--collection", index.collection_name], cwd=APP, capture_output=True, text=True)
+    assert completed.returncode == 0, completed.stdout + completed.stderr
+    assert '"all_match": true' in completed.stdout

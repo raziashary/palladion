@@ -45,6 +45,10 @@ repository from the blueprint's illustrative tree.
   tests may inject data/errors to exercise guards but cannot substitute for that proof.
   Mock operational adapters and synthetic business data remain required. Free-plan intent
   does not waive quota, attempt/time budgets, explicit enablement or failure accounting.
+- Standing delegation limit: subagents only for the adversary at the start and the
+  reviewer at the end. The coordinator does research, exploration, implementation,
+  test authoring/execution and intermediate checks. Reuse the end reviewer for finding
+  resolution; no extra implementation, research or test agents. Both roles use Luna Medium.
 - Every subagent must use **GPT 6 Luna, Medium effort** (`gpt-6-luna`, `medium`), per the user.
   If unavailable, report that limitation; do not substitute another model silently.
   Scope each dispatch, remove live-resource credentials, prohibit git/external mutations,

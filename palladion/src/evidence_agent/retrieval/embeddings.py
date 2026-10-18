@@ -24,7 +24,10 @@ CPU_THREADS = 2
 
 
 class DenseEncoder(Protocol):
-    """Minimal interface needed by the index and its isolated tests."""
+    """Structural encoder interface implemented by FastEmbedDenseEncoder below.
+
+    Ellipsis bodies declare signatures, rather than unfinished embedding work.
+    """
 
     @property
     def fingerprint(self) -> str: ...

@@ -19,7 +19,8 @@ Updated 2026-10-18. Navigation aid only; user/vision/source/ADRs retain authorit
 - Evidence authority belongs to authenticated immutable sources, valid executed policy
   traces and scoped observations. Model/critic/search/graph/memory are not new authority.
 - User validity for reported facts differs from owner-defined observation freshness.
-- Every development subagent: **GPT 6 Luna Medium**. Every phase requires one pre-phase
+- Subagents only for the start adversary and end reviewer, both **GPT 6 Luna Medium**.
+  Coordinator owns research, implementation and testing; reuse reviewer for resolution. Every phase requires one pre-phase
   adversary and, after tests/gates, one post-phase work auditor. Current whole-suite
   restructure also needs coordinator and auditor checks against the entire blueprint.
   Both future reviewer roles directly read the complete blueprint and follow MASTER_DEV_PLAN
@@ -39,14 +40,15 @@ Read root AGENTS → [master plan task protocol](MASTER_DEV_PLAN.md#task-reading
 P02 DONE from published aa4b439; E-P02-001, ADR-0025/0026. All15 children verified:
 canonical ingestion/catalog, approved additive schema v3, actual dense/BM25 Qdrant,
 exact-ID/canonical/ACL retrieval, authenticated upload/approval/revocation/search/citation,
-readback/coverage/audit and honest retrieval-only pilot. Final115 tests, Ruff, strict
+readback/coverage/audit and honest retrieval-only pilot. Latest117 tests, Ruff, strict
 mypy36 files, build, exact-wheel isolated HTTP/Qdrant smoke and docs20 controls pass.
 Single Medium post-auditor's four findings fixed and rereviewed; historical High reviews
 retain their original effort records. New dispatches exclusively GPT6LunaMedium.
 Docker unusable; checksum-pinned Qdrant1.19.2 musl build in WSL/Linux-owned storage is
 the supported alternative. Owned test servers stopped; persistent test data retained.
 Next: wait for P03 GO, then fresh Medium adversary/full-blueprint review before its tasks.
-No generative provider call or new main push is authorized.
+No generative provider call or P03 is authorized. Owner explicitly authorizes this verified
+follow-up commit/push; E-P02-002 covers direct dependency and generation/CLI corrections.
 
 Previous verified foundation:
 
