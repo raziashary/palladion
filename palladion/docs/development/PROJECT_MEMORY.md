@@ -37,18 +37,28 @@ Read root AGENTS → [master plan task protocol](MASTER_DEV_PLAN.md#task-reading
 
 ## Current state and next action
 
+P03 DONE from f48ad05: all10 atomic cards verified at E-P03-001. Start adversary
+and single end reviewer used GPT6LunaMedium; main implemented/tested. No schema or
+dependency change. Additive PolicyDecision extension approved/implemented (ADR-0030).
+171 tests pass across disjoint163+8 commands; two failed combined WSL transport runs
+remain recorded. Ruff, mypy45 files, docs/dependency controls and exact-wheel domain
+smoke pass. Reviewer status-drift finding corrected; no confirmed runtime defect.
+G-TEMPORAL/G-LIVE pass phase scope; G-POLICY remains PARTIAL for P04 gate consumer.
+P04 awaits owner GO. Generation/UI and a new main push remain excluded.
+
+Previous P02 state:
+
 P02 DONE from published aa4b439; E-P02-001, ADR-0025/0026. All15 children verified:
 canonical ingestion/catalog, approved additive schema v3, actual dense/BM25 Qdrant,
 exact-ID/canonical/ACL retrieval, authenticated upload/approval/revocation/search/citation,
 readback/coverage/audit and honest retrieval-only pilot. Latest117 tests, Ruff, strict
-mypy36 files, build, exact-wheel isolated HTTP/Qdrant smoke and docs20 controls pass.
+mypy37 files, build, exact-wheel isolated HTTP/Qdrant smoke and docs20 controls pass.
 Single Medium post-auditor's four findings fixed and rereviewed; historical High reviews
 retain their original effort records. New dispatches exclusively GPT6LunaMedium.
 Docker unusable; checksum-pinned Qdrant1.19.2 musl build in WSL/Linux-owned storage is
 the supported alternative. Owned test servers stopped; persistent test data retained.
-Next: wait for P03 GO, then fresh Medium adversary/full-blueprint review before its tasks.
-No generative provider call or P03 is authorized. Owner explicitly authorizes this verified
-follow-up commit/push; E-P02-002 covers direct dependency and generation/CLI corrections.
+P02 publication and its dependency/generation follow-up completed at f48ad05.
+That prior approval is historical; current P03 GO does not authorize a new main push.
 
 Previous verified foundation:
 
@@ -69,7 +79,7 @@ P00 completion/old hold is historical at E-DOC-001–E-DOC-004. P01 GO supersede
 that hold for this phase. Source/security gates remain PARTIAL until later consumers;
 no P01 check establishes full message/runtime behavior. Root .env was never read or
 copied; app .venv is reused/ignored. Unrelated .vscode remains untouched. New main
-publishing requires explicit user approval; P03+ is outside current scope.
+publishing requires explicit user approval; P04+ is outside current scope.
 
 ## Open risks to retain
 

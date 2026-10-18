@@ -10,14 +10,14 @@ fictional payment documents and read-only mock operational systems.
 The project is being built system-first, without a UI. Its research claims remain
 hypotheses until tested against controlled baselines and held-out cases.
 
-**Current state:** P01 is verified; P02 provenance retrieval is verified complete: strict
+**Current state:** P01/P02 are verified; P03 temporal policy and scoped mock observations are verified for the phase-local domain: strict
 contracts, persisted synthetic access/approval, SQLite/originals and 24 pilot fixtures.
 The uv package/lock and offline validation entry point exist. Message API,
 agent loop, UI and full answer-system benchmark results remain absent.
 P02 includes real dense/BM25 Qdrant retrieval, source/search/citation API and retrieval-only
 pilots. Use the Docker-free WSL launcher documented in palladion/README.md.
 The future generative boundary uses Groq `qwen/qwen3.8-27b`; current retrieval needs no
-Groq API call. P03 remains future scope.
+Groq API call. P04 agent/gate integration remains future scope.
 
 ## What works today
 
@@ -28,6 +28,8 @@ Groq API call. P03 remains future scope.
 - Canonical evidence checks, bounded optional reranking and context expansion.
 - Authenticated local upload, approval, search, citation and index-coverage endpoints.
 - Retrieval-only pilot reports with representation identities, raw ranks and failure accounting.
+- Approved time-aware policy definitions, bounded predicate execution and persisted decision replay.
+- Four named mock operational reads with target authorization, explicit errors, deadlines and freshness.
 
 Search results are discovery candidates. Before returning text, Palladion rechecks stored
 identity, scope, approval, applicability, generation and original bytes. Search scores and
@@ -44,7 +46,7 @@ flowchart LR
     C --> E[Passages + original-byte citations + warnings]
 ```
 
-Later phases add temporal policy execution, bounded read tools and an agent loop,
+Later phases add agent-facing bounded read tools and an agent loop,
 independent-context criticism, continuity memory and a final release gate. Enterprise
 identity integration, generated answers, graph traversal and full answer-system benchmarks
 are not implemented by the current retrieval prototype.
@@ -59,6 +61,7 @@ cd palladion
 uv sync --locked
 uv run --locked --no-env-file python scripts/validate_foundation.py
 uv run --locked --no-env-file python scripts/check_dependencies.py --self-test
+uv run --locked --no-env-file python scripts/validate_policy.py
 ```
 
 These checks need no provider credentials. Retrieval additionally requires local Qdrant
@@ -105,4 +108,4 @@ The current pilot has eight synthetic queries over a tiny corpus and lacks indep
 adjudicated labels. English/Indonesian query coverage does not establish general multilingual
 quality. Retrieval metrics do not establish answer correctness, production readiness or
 superiority. External comparator implementations and full answer-system experiments remain
-future work. Phase 3 awaits explicit GO.
+future work. P03 domain verification is recorded in the evidence log; Phase 4 awaits explicit GO.

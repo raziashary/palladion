@@ -189,3 +189,12 @@ EVIDENCE_LOG. Large raw outputs stay outside commits in a declared artifact loca
 do not commit secrets, private data or giant generated reports. A report without accessible
 underlying artifacts is an evidence gap. Label the failure-owning stage: ingestion,
 candidates, ranking, source resolver, tool selection, policy inputs, critic, gate or scoring.
+
+## P03 domain verification boundary
+
+E-P03-001 verifies deterministic temporal rules and scoped mock observations, not a full
+B4 answer arm. No generative model/provider call, answer-quality score, human adjudication
+or baseline superiority is inferred. Mock operation freshness/deadline limits are synthetic
+owner assumptions (ADR-0029), not measured business thresholds. Knowledge-cutoff audit is
+minimal registry reconstruction; input observation read times and actual evaluated-at remain
+explicit. Preserve current versus audit-mode outcomes and source/target-denial failures.

@@ -1,0 +1,46 @@
+# Fictional prototype owner limits, not real company policy or measured capacity.
+schema_version: "1.0"
+calls_per_minute: 20
+max_concurrent: 4
+max_pending: 16
+operations:
+  get_transaction_status:
+    schema_version: "1.0"
+    owner: palladion-fixture-owner
+    source_system: mock_transaction_api
+    freshness_field: observed_at
+    max_age_seconds: 300
+    timeout_ms: 1000
+    max_attempts: 2
+    backoff_ms: 10
+    max_response_bytes: 16384
+  get_settlement_status:
+    schema_version: "1.0"
+    owner: palladion-fixture-owner
+    source_system: mock_settlement_service
+    freshness_field: observed_at
+    max_age_seconds: 300
+    timeout_ms: 1000
+    max_attempts: 2
+    backoff_ms: 10
+    max_response_bytes: 16384
+  get_incident_status:
+    schema_version: "1.0"
+    owner: palladion-fixture-owner
+    source_system: mock_incident_api
+    freshness_field: observed_at
+    max_age_seconds: 300
+    timeout_ms: 1000
+    max_attempts: 2
+    backoff_ms: 10
+    max_response_bytes: 16384
+  get_merchant_summary:
+    schema_version: "1.0"
+    owner: palladion-fixture-owner
+    source_system: mock_curated_bi
+    freshness_field: data_as_of
+    max_age_seconds: 900
+    timeout_ms: 1000
+    max_attempts: 2
+    backoff_ms: 10
+    max_response_bytes: 16384

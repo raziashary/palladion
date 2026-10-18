@@ -747,3 +747,143 @@ future phases remain explicitly unimplemented. Requesting the owned standalone l
 stop preserves storage. Final port/staged review precedes commit/push under owner approval.
 
 Cleanup verified: no listeners on16333/16334/18080 after owned PID485 stop; persistent storage preserved. Scoped staged review/credential signature scan and diff whitespace check passed before publication.
+
+## E-P03-001 — Temporal policy and read-only mock observations (complete)
+
+2026-10-18 owner GO. Baseline f48ad05 main/origin main, one checkout, only unrelated
+untracked.vscode preserved. Full P03 parent and10 cards read with relevant vision,
+ADRs0016/0018, gates, goal, progress, map, memory, research/traceability/learning/risks.
+Sole GPT6LunaMedium pre-adversary read full blueprint1–18 and reported missing trusted
+producers for CASE_OPENED/DOMAIN_EVENT, policy writer/reader gap, mutable-status audit
+hazard, caller-constructed verified facts and premature gate-consumer proof. Coordinator
+confirms findings in existing source. Agent narrative miscounted8 children; register has10.
+Plan: use existing policy_versions/source clauses plus append-only case/audit events;
+no schema/grant migration needed. Current ACL always applies; historical audit is explicit
+admin-only and cannot authorize current instructions. P03 domain replay reader is real;
+P04 gate consumer remains deferred and G-POLICY staysPARTIAL for it. Core PolicyDecision
+lacks outcome/normalized inputs and disallows zero-fact determined policies; owner async
+question requests additive contract correction before dependent engine work.
+
+P03 owner answer received: Approve additive PolicyDecision extension (Recommended).
+ADR-0030 records fields/default compatibility and no-fact determined decisions; existing
+valid payloads still parse without supplying new fields. Implemented live contracts/config,
+mock async adapter, authorized scope producer/readers, bounded single-flight gateway,
+policy registry/approval/supersession/revocation, four-producer temporal resolver and safe
+AST/decision/replay. Runtime facts are read by gateway event IDs; caller values/verified
+labels are not accepted. Reopened trace reader re-executes predicates against recorded
+normalized inputs and checks source authorization. Admin audit-mode source reader verifies
+past approval/revocation plus current ACL; it never returns current operational authority.
+No schema/dependency changes. Current/audit source intervals remain half-open.
+
+Focused validation history: live17 controls passed; policy/time/live/contracts68 passed,
+then concurrency/reopen tests exposed reversed arguments in the new membership-revocation
+test (guard failed before intended target). Corrected fixture call;72 passed. A new audit
+clause test incorrectly expected the section label in body text; changed to exact stored
+SHA verification, not relaxed semantic behavior. mypy45 files and Ruff pass. Actual
+scripts/validate_policy.py smoke passes missing settlement→INCOMPLETE_INPUT, historical
+transaction→2025 policy/current handling→2026 handling, completed decision, same-reader
+and reopened SQLite trace. Initial smoke helper lacked typing annotations; corrected.
+Final focused/full/build/audit evidence follows.
+
+Expanded focused run:54 new policy/temporal/live tests passed8.44s; Ruff and strict
+mypy45 source/script files pass. Dependency checker59 Python files and four missing-import
+controls pass; uv lock60/installed59 compatibility check and build pass. New negative
+controls additionally cover absent/draft clauses and case-specific supersession scope.
+First full regression run:170 passed plus1 setup ERROR, exit1. Cause: coordinator launched
+pytest before the freshly started WSL listener was ready (connection refused), and its
+fixture cleanup also could not connect. This is not a green suite or a policy failure;
+no timeout/default was changed. Verified actual /healthz after the same server became
+ready; full regression rerun now uses that confirmed live server. Owned launcherPID476,
+stdout/stderr retained in ignored runtime/p03-qdrant.log. No existing store was reset.
+
+Second full attempt:170 passed plus1 setup ERROR (Windows WinError10053 connection abort
+while creating a P02 Qdrant payload index); retained as a failed run. Same Qdrant process
+remained healthy and the exact failed reranker case passed1 in11.43s without code/default
+changes. To isolate this environment fault, regression was partitioned, not skipped:
+pytest --ignore=tests/test_end_to_end.py ->163 passed17.06s, exit0;
+explicit local-server pytest tests/test_end_to_end.py ->8 passed77.04s, exit0.
+These disjoint commands cover all171 current tests. They are not presented as a single
+passing all-tests invocation. WSL/Windows transport remains an observed environment
+limitation, not a claimed production fix. No test assertions or runtime limits relaxed.
+Latest smoke passes after explicit admin-only historical evaluation-time simulation
+support; ordinary evaluation_time overrides are rejected. Evaluated-at and as-of remain
+distinct. Knowledge cutoff reconstructs registry state; observation timestamps and the
+actual evaluation time stay recorded, without claiming a full temporal database.
+
+Build, Ruff, strict mypy45 files, dependency checker59 files/four negative controls,
+locked60/installed59 compatibility and docs17 files/93 tasks/20 controls pass. Initial
+installed-wheel proof SHA2d3cf8532b0482ab8c728837612509677568e4339e43df3e751ce6c4381d760a
+passed isolated source/schema/import, actual P03 smoke and dependency checker, with a
+fresh noneditable environment/exact wheel reinstall and cleanup. The final rebuild after
+historical simulation will receive its own final hash/installed-reader proof below.
+
+### P03 task-to-consumer proof
+
+| Atomic task | Real producer → consumer | Proof / limit |
+|---|---|---|
+| P03-T01.01 | Admin policy registration + approved immutable clauses → registry/engine | Draft/missing/revoked/self-approval and scope guards; canonical byte hashes; existing policy tables |
+| P03-T01.02 | Gateway transaction/canonical case/server clock/named owner event → temporal resolver | All4 bases, exact half-open edges, missing/untrusted/naive/future controls; no convenient override |
+| P03-T01.03 | Persistent policy/edge/revocation events → atomic temporal selection | Overlap/concurrent writers/cycles/scoped case edges/cutoff tests; mixed basis conflict |
+| P03-T01.04 | ADR-0016 fixtures + append-only events → current/admin-audit readers | Revoked source blocked currently; authorized prior bytes hash verified; no retroactive ACL grant |
+| P03-T02.01 | Validated bounded JSON AST + typed requirements → evaluator | eq/in/ordered/all/any/not, depth/work/unknown/missing/type controls; no dynamic execution |
+| P03-T02.02 | Persisted observation IDs → normalized executed decision → reopened replay | Missing settlement incomplete; failed/stale/unverified inputs fail closed; zero-input outcome; row conflict; P04 gate reader deferred |
+| P03-T03.01 | adapters.yaml fictional owner limits + strict request/snapshot schemas → gateway | Versions/types/unknown URL/SQL/principal/identifier rejected; source/read/BI timestamps distinct |
+| P03-T03.02 | Changing bounded mock sequences → persisted observation reader | All9 statuses, delayed BI, changed state, transient/permanent failure controls; no actual enterprise service |
+| P03-T03.03 | Backend case scope + current stored identity → named target read → minimized event | Cross-case/tenant/unknown target denied uniformly before call; mid-read revocation; no raw canary/secret fields |
+| P03-T03.04 | One gateway retry/deadline/concurrency/rate owner → result + correlated safe audit | Single-flight/dedup,2-attempt cap/recovery, queue/response/rate caps, cancellation cleanup, timestamps/hashes |
+
+All10 atomic implementations have phase-local proof. Single end-audit and resolution
+are recorded below; G-POLICY remainsPARTIAL for P04's gate consumer even after P03 closure.
+
+Final pre-audit exact wheel proof after historical-simulation support: SHA256
+c02e436ab196f9c3a0fd73ed00715ca8d466b231b40385a776e69a37e863ffa0.
+Zip comparison matched all packaged Python/schema files. Fresh uv --locked --no-editable
+installation followed by exact-wheel --reinstall --no-deps; Python -I imported only
+site-packages/schema and ran actual scripts/validate_policy.py and import/manifest checker
+successfully. Temporary environment removed. No P03 source changes after this proof.
+The sole end reviewer is GPT6LunaMedium, fresh full-blueprint/all-development/source review;
+allowed only isolated policy/temporal/live/contracts tests and static/docs checks, no runtime
+credentials/Qdrant/provider/network/git mutations. Findings/resolution follow.
+
+### Single P03 end-review and resolution
+
+Reviewer `p03_work_reviewer`, GPT6LunaMedium, fresh read-only context, directly read
+blueprint sections1–18, all12 development documents and all10 P03 task/consumer paths.
+It independently ran75 focused policy/temporal/live/core-contract tests (PASS), Ruff,
+mypy45 files, documentation checker17 files/93 cards/20 controls, and dependency
+checker59 files/four controls (all PASS). It found no confirmed runtime defect in
+its reviewed scope. Full regression, real Qdrant and exact-wheel smoke remain
+coordinator evidence, not independently repeated reviewer measurements.
+
+Confirmed finding: PROGRESS retained NOT_RUN temporal/policy/live rows and an owner
+answer-pending phase row. Consequence: contradictory recovery instructions despite
+approved ADR-0030 and executed domain evidence. Owner: coordinator. Correction:
+P03 DONE, G-TEMPORAL and synthetic-contract G-LIVE PASS; overall G-POLICY PARTIAL
+because the real final-gate consumer belongs to P04. Current README, plan, goal,
+working memory, risk and handoff records synchronized. Same reviewer resolution
+check follows. No full-runtime, provider, enterprise, hypothesis or production claim.
+
+Same-reviewer first resolution check confirmed the PROGRESS correction and flagged two
+remaining current labels: PROJECT_MAP audit pending and ADR-0030 verification pending.
+Coordinator corrected both, plus ADR-0029 planned verification; approval/history retained.
+A closeout edit first used a repo-relative path from the app directory and failed with
+FileNotFoundError before writing; rerun from repository root succeeded.
+Owned WSL Qdrant PID476 stopped via scripts/qdrant_server.py --wsl --stop (exit0);
+launcher session58648 exited0. Windows listener check found no16333/16334/18080 listeners.
+Persistent Linux storage preserved; no task-owned listener remains.
+Blueprint SHA256911003f72b909e4e473cde917c872c022bf1332440fade1c97dce8ecf7af2b9c
+and root ignore SHA256785172bea621031b337e539d895c4769951121024f310f9f57892ac929a4683f
+are unchanged. No new source changes since final exact-wheel proof.
+
+Final same-reviewer narrow resolution receipt: RESOLVED. PROJECT_MAP, ADR-0029 and
+ADR-0030 agree with P03 DONE, phase-local temporal/live PASS and overall policy PARTIAL.
+No material unresolved finding remains in the reviewed P03 scope. Documentation CLI
+self-test again passed17 Markdown files/93 atomic cards/20 negative controls (exit0).
+Local verified checkpoint prepared; P04 and remote main publication require owner GO.
+
+Final staged review covered30 scoped paths; credential-signature and forbidden-path
+scans passed. Staged whitespace check initially found one trailing blank YAML line;
+removed only that blank line, then check passed. Actual validate_policy.py rerun passed
+with missing settlement INCOMPLETE_INPUT, expected event/current policies, executed
+FOLLOW_INVESTIGATION_SOP and reopened trace; zero provider calls/operational writes.
+Final documentation self-test passed again after all status corrections (exit0).

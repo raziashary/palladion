@@ -3,7 +3,8 @@
 P01 foundations and P02 ingestion/retrieval have real consumers: strict contracts,
 transactional SQLite, immutable originals, dense/BM25 Qdrant search and authenticated
 source/search/citation endpoints. P02 phase verification and audit resolution passed; no message API,
-agent loop, policy execution or generated-answer result is claimed.
+agent loop or generated-answer result is claimed. P03 now adds approved temporal policy
+execution and read-only mock operational observations; phase-local validation and single work review are complete (E-P03-001).
 
 Phase ownership and evidence are in the [development plan](docs/development/MASTER_DEV_PLAN.md)
 and [current progress](docs/development/PROGRESS.md).
@@ -159,9 +160,41 @@ retrieval substrate comparisons; full answer arms and held-out evaluation remain
 
 ## Development boundary
 
-P03 adds temporal policy execution and mock observations after explicit GO. Later phases
+P03 implements temporal policy execution and mock observations under explicit GO. Later phases
 cover bounded tools/agent/release gate, continuity, critic and optional graph experiments.
 No provider key is needed for the implemented retrieval slice. Keep live credentials out
 of verification commands and stop any test servers you start. See
 [testing gates](docs/development/TESTING_GATES.md) and
 [evidence](docs/development/EVIDENCE_LOG.md) for the verified boundary and remaining work.
+
+## Temporal policies and mock observations
+
+Run the isolated P03 domain demonstration without Qdrant, provider keys or network calls:
+
+```powershell
+uv run --locked --no-env-file python scripts/validate_policy.py
+```
+
+It creates fictional source/approval records, registers source-linked decision tables,
+reads target-authorized mock observations, executes a bounded safe predicate AST and
+reopens SQLite to replay the resulting trace. The same transaction can select the 2025
+transaction-time rule while current handling selects a separate 2026 handling family.
+Missing settlement stays `INCOMPLETE_INPUT`; an `OK` read never authorizes a payment action.
+
+Policies declare one of four trusted time bases: transaction event, canonical case opening,
+backend evaluation clock or a named authenticated domain event. Selection uses half-open
+valid intervals, registry knowledge cutoffs and explicit scoped supersession. Overlapping
+incomparable policies or undefined mixed bases remain conflicts. Historical audit mode is
+explicitly administrator-only and distinct from current operational guidance.
+
+`live/` provides transaction, settlement, incident and optional merchant-summary mock reads.
+`config/adapters.yaml` records fictional owner-defined timeouts, freshness, response and
+concurrency limits. Fresh read time cannot refresh an old BI `data_as_of` cutoff. The gateway
+accepts no URL, SQL, write verb, credentials or caller-chosen principal. Policy inputs are
+resolved from persisted observation IDs; a caller-supplied verified label is not evidence.
+
+Decision traces retain normalized inputs, source spans, selected version/time, row results
+and outcome. The replay reader rechecks access and source eligibility and recomputes matched
+rows. A stored decision is an audit artifact, not fresh permission to act. This is a direct
+domain interface: agent tool facades, policy HTTP/message integration and the final gate
+consumer belong to P04. No real enterprise connector or generated-answer benchmark is included.

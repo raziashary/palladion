@@ -5,6 +5,16 @@ command observations and review receipts live in EVIDENCE_LOG.
 
 ## Current checkpoint
 
+P03 DONE under explicit owner GO from published f48ad05. Start adversary completed
+full blueprint review;10 atomic children verified by coordinator (agent summary miscounted8).
+Existing policy tables/events suffice without schema migration. Owner approved additive PolicyDecision
+extension (ADR-0030); all10 policy/live domain tasks have phase-local proof.163 domain/contract and8 real-Qdrant
+API tests pass in disjoint commands; single Medium work audit found no confirmed runtime defect.
+Its stale status finding is corrected; E-P03-001 records review and closeout evidence.
+P04/provider/UI and a new main push remain unauthorized. E-P03-001 records evidence.
+
+Previous P02 checkpoint:
+
 P02 DONE under explicit user GO from published aa4b439. All15 atomic children,
 real Qdrant/HTTP consumers, approved additive v3, retrieval-only pilot and the single
 post-phase audit/resolution are verified at E-P02-001. Latest suite:117 passed; lint,
@@ -12,7 +22,7 @@ strict typing, build and isolated exact-wheel HTTP smoke passed. Docker-free Qdr
 runs through the checksum-pinned WSL launcher. New subagents use GPT6LunaMedium.
 Owner follow-up E-P02-002 complete: direct dependency guard, generation publication/CLI
 corrections and both public READMEs verified. User explicitly authorizes this checkpoint
-commit/push. P03 awaits explicit GO.
+commit/push at that checkpoint. P03 GO subsequently received.
 
 Previous phase checkpoint (verified):
 
@@ -35,7 +45,7 @@ Human gold-label adjudication, retrieval, citation API and model behavior are no
 | P00 | DONE | E-DOC-001–E-DOC-004, published checkpoint 12dfc3f |
 | P01 | DONE | E-P01-001; all 14 children, gates, wheel smoke and single audit/resolution |
 | P02 | DONE | E-P02-001; all15 children, real-server/HTTP/pilot/wheel proof and single audit resolution |
-| P03 | PLANNED | Temporal policy execution and mock live gateway |
+| P03 | DONE | E-P03-001; all10 children, approved ADR-0030, phase-local gates and single audit/resolution |
 | P04 | PLANNED | Groq boundary, four tools, bounded loop/gate/message API |
 | P05 | PLANNED | Runtime memory/continuity beyond P01 contracts |
 | P06 | PLANNED | Runtime adversarial critic and experiments |
@@ -48,13 +58,13 @@ Human gold-label adjudication, retrieval, citation API and model behavior are no
 | Gate | State | Evidence and limits |
 |---|---|---|
 | G-DOC | PASS | Structure/self-test17 files/93 cards/20 controls and full-blueprint phase review/resolution pass |
-| G-CONTRACT | PASS | Foundation retained; latest117 tests, strict typing/lint and exact-wheel HTTP consumer; independent review resolved |
+| G-CONTRACT | PASS | Foundation retained;171 tests across disjoint163+8 commands, strict typing/lint, exact-wheel domain smoke; independent review resolved |
 | G-SOURCE | PARTIAL | Fresh/populated/rollback/foreign DB checks, immutable bytes, persisted source reader pass; P02 index/API/revocation verified; P07 graph obligations remain |
 | G-SECURITY | PARTIAL | Stored identity/grants/membership/source ACL and revocation/self-approval controls pass; later prompt/API/tool/graph boundaries remain |
 | G-RETRIEVAL | PARTIAL | P02 subset PASS: real Qdrant/model/ACL/canonical/exact/exception/pilot/audit; P08-T02.05 controlled fusion ablation remains |
-| G-TEMPORAL | NOT_RUN | Contracts/fixtures only; no resolver |
-| G-POLICY | NOT_RUN | Policy fixtures only; no execution engine |
-| G-LIVE | NOT_RUN | Observation fixtures only; no adapter gateway |
+| G-TEMPORAL | PASS | P03 four trusted bases, half-open intervals, scoped supersession/conflicts and admin cutoff controls; E-P03-001 |
+| G-POLICY | PARTIAL | P03 bounded AST, persisted input IDs and reopened executed trace pass; P04 final-gate consumer remains |
+| G-LIVE | PASS | P03 named mock operations, target ACL, freshness, bounded retry/concurrency/deadline and audit controls; synthetic phase contract only |
 | G-BUDGET | NOT_RUN | Settings/contracts only; no runtime attempt accounting |
 | G-GATE | NOT_RUN | Typed dispositions only; no release gate |
 | G-MEMORY | NOT_RUN | Contracts/schema only; no continuity runtime |
@@ -82,8 +92,10 @@ Human gold-label adjudication, retrieval, citation API and model behavior are no
 
 ## Next-session handoff
 
-P01 is published at aa4b439. P02 is locally verified complete at E-P02-001.
-P03 requires explicit user GO and a fresh Medium pre-phase adversary before implementation.
-No task percentage establishes system readiness. Preserve root .env/.gitignore and
-unrelated .vscode. No provider call or P03 is authorized. The owner explicitly requests pushing this
-verified follow-up checkpoint; later shared-branch publication still requires approval.
+P03 is complete locally with all10 atomic cards and single Medium end-review resolution
+at E-P03-001. Latest regression is partitioned:163 domain/contract tests plus8 actual
+Qdrant API tests pass, no skips in those groups. Two failed combined runs remain
+recorded as Windows/WSL transport limitations, not erased or claimed fixed.
+P04 awaits explicit owner GO; provider/UI and a new main push remain unauthorized.
+Preserve root .env/.gitignore and unrelated .vscode. Future phases use only one start
+adversary and one end reviewer, GPT6LunaMedium, with full-blueprint review.

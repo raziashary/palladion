@@ -249,3 +249,19 @@ A canonical active-generation invariant must also be consumed by maintenance CLI
 checked transactionally at publication; the follow-up found both gaps. E-P02-002 retains
 negative controls, setup mistakes, final test evidence and review scope. New user rule
 limits delegation to start adversary/end reviewer, GPT6LunaMedium; coordinator owns the rest.
+
+## L020 — Authority needs producers, readers and an atomic snapshot
+
+P03's pre-adversary found that enum values and tables did not supply trusted times,
+authenticated policy approval or fact provenance. Implemented real case/server/event/live
+producers; policy inputs resolve persisted gateway IDs, not caller verification labels.
+An explicit admin historical mode reconstructs registry knowledge without restoring past
+ACLs or granting current permission. Core shape needed an owner-approved extension for
+executed outcomes and honest zero-input decisions. Reopened trace readers recompute rows.
+
+54 focused P03 tests and the installed-wheel smoke exercise the domain. Full regressions
+initially exposed coordinator startup sequencing (connection refused), then an independent
+Windows/WSL TCP abort in an existing P02 setup. Retained failed runs, confirmed same-server
+health, verified the exact affected case, then passed disjoint163 domain/contract and8
+real-Qdrant groups. No assertion/default weakened or infrastructure fix claimed. Await an
+actual listener before dependent checks; keep transport limitations separate from code proof.

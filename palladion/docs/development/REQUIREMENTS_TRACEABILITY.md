@@ -1,7 +1,7 @@
 # Requirements traceability
 
 Scope: blueprint v0.2 and user's 2026-10-17 suite request. All system coverage below
-mixes verified P01/P02 and planned later consumers; PROGRESS and E-P01-001/E-P02-001
+mixes verified P01/P02, P03 domain verification and planned later consumers; PROGRESS and E-P01-001/E-P02-001
 identify phase-local evidence and still-unrun obligations. References use stable heading/section names rather
 than fragile line numbers. A row is a coverage obligation, not proof of behavior.
 

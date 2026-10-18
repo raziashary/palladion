@@ -17,9 +17,9 @@ repository from the blueprint's illustrative tree.
 
 ## Scope and integrity
 
-- Current mandate: explicit user GO for P02 end-to-end: provenance-first ingestion, real
-  Qdrant retrieval, authenticated source/search/citation API and pilot retrieval measurements.
-  P01 is complete and published at aa4b439. No generative provider call, P03+ or UI.
+- Current mandate: explicit user GO for P03 end-to-end: temporal policy, safe rule
+  execution and scoped read-only mock observations. P02 is published at f48ad05.
+  No generative provider call, P04+ or UI.
   `baseline/` is reserved for
   later comparator implementations; do not populate it as part of this setup.
 - Preserve the [vision](palladion/docs/vision/palladion-blueprint-v2.md). Do not silently
@@ -127,12 +127,12 @@ status/evidence updates → no-stale sweep including README/navigation → proce
 cleanup → scoped staged-diff/secret review → verified commit → continue authorized work.
 Skipped checks are not PASS. PARTIAL evidence does not close a later consumer obligation.
 For documentation-only work, the document checker CLI is the runnable entry point.
-For P02, use real isolated Qdrant, API/CLI source readback and retrieval measurements;
+For P03, exercise persisted policy selection/decision replay and mock gateway consumers;
 multi-phase source/security gates remain PARTIAL until later runtime/graph obligations pass. A checkpoint never expands the user's current mandate.
 The mandatory pre-phase adversary precedes this sequence. The P00 full-suite review is
 historical. Every future pre-adversary and post-auditor still reads the complete blueprint
-and applies the canonical review contract. Complete P02 under the current mandate; P03 requires its own scope authorization.
-Do not infer new main-push approval from P02 GO.
+and applies the canonical review contract. Complete P03 under the current mandate; P04 requires its own scope authorization.
+Do not infer new main-push approval from P03 GO.
 
 ## Close every task
 

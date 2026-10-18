@@ -29,7 +29,7 @@ A null or adverse result is a valid research outcome.
 | Outcome | Scope and baseline | Proof and dependency |
 |---|---|---|
 | O01: Attributable source discovery | Immutable originals, ingestion, real Qdrant search and citation API exist; P02 audit/resolution verified; synthetic MD/TXT only | P01–P02; G-CONTRACT, G-SOURCE, G-RETRIEVAL; original bytes read through citation API |
-| O02: Correct policy and live evidence | No policy/live code exists | P03; G-TEMPORAL, G-POLICY, G-LIVE; trusted time/facts plus replayable rule trace |
+| O02: Correct policy and live evidence | P03 domain implementation, validation and audit complete; P04 final-gate integration remains | P03; G-TEMPORAL, G-POLICY, G-LIVE; trusted time/facts plus replayable rule trace |
 | O03: Bounded, honestly qualified answers | No agent/gate exists | P04; G-BUDGET, G-GATE, G-SECURITY; actual Groq qwen/qwen3.8-27b message API and canonical citation readback |
 | O04: Safe continuity | No runtime memory exists; developer memory is a separate document | P05; G-MEMORY; second authorized request consumes persisted state |
 | O05: Measured self-challenge | No critic exists | P06; G-CRITIC; frozen-draft paired evaluation, correction and false-veto rates |
@@ -55,14 +55,14 @@ and retain the original failure results if a target is missed.
 System-first modular Python prototype, FastAPI API, SQLite canonical registry and memory,
 Qdrant discovery, optional Neo4j, typed JSON policies, mock live adapters, pluggable models.
 uv and Groq `qwen/qwen3.8-27b` are selected. Delegated P01 package selection is complete;
-P02 package selection and implementation are now explicitly authorized. P01 pins and Python 3.14.7 locked/wheel compatibility
-are verified at E-P01-001; embedding/retrieval and provider behavior remain future proof.
+P02 package/embedding/retrieval verification is recorded at E-P02-001/002. Python3.14.7 locked/wheel
+compatibility is verified; P03 policy/live domain proof is at E-P03-001. Provider behavior remains P04 proof.
 The existing app .venv is reused and ignored. Runtime model access needs explicit command enablement,
 not merely credentials. User's root `.env` and `.gitignore` are preserved.
 
-Current user instruction explicitly authorizes P02 end-to-end, following completed P00/P01. Both future review roles must read the full blueprint and report traceable coverage.
+Current user instruction explicitly authorizes P03 end-to-end, following completed P00–P02. Both future review roles must read the full blueprint and report traceable coverage.
 
-Excluded now: P03+ implementation, UI, actual payments or mutations, private data,
+Excluded now: P04+ implementation, UI, actual payments or mutations, private data,
 real enterprise connectors, production signoff, and comparator implementations. Later
 system work follows the plan; later external comparisons require their own concrete scope.
 
@@ -71,7 +71,7 @@ system work follows the plan; later external comparisons require their own concr
 - [x] P00 — suite, atomic refinement, owner answers, full-vision checks and final reviewer-contract audit/resolution verified (E-DOC-001–E-DOC-004)
 - [x] P01 — corpus, contracts, adversarial fixtures (Slice 0); E-P01-001 tests, installed-wheel smoke and single audit/resolution
 - [x] P02 — provenance-first retrieval (Slice 1); E-P02-001 all15 tasks, real Qdrant/HTTP/pilot/wheel and audit resolution
-- [ ] P03 — temporal policy and mock observations (Slice 2)
+- [x] P03 — temporal policy and mock observations (Slice 2)
 - [ ] P04 — bounded runtime and gate (Slice 3)
 - [ ] P05 — memory and continuity (Slice 4)
 - [ ] P06 — critic experiment (Slice 5)

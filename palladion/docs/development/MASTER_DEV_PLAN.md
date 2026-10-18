@@ -2,10 +2,10 @@
 
 Version 6, 2026-10-18. Scope anchor: [blueprint v0.2](../vision/palladion-blueprint-v2.md),
 especially “Locked decisions,” “Build plan,” “System invariants,” and the full walkthrough.
-Current mandate: explicit user GO for **P02 end-to-end**; P01 is published at aa4b439.
-P02 includes compatible retrieval packages, local Qdrant and authenticated source/search
-API proof, plus retrieval-only pilot measurements. P03–P08/X01 remain future scope.
-No new main push or generative provider call is inferred. E-P02-001 records verified P02 closure; P03 awaits explicit GO;
+Current mandate: explicit user GO for **P03 end-to-end**; P02 is published at f48ad05.
+P03 includes approved temporal policies, bounded predicate execution and target-authorized
+mock observations; P02 retrieval remains a verified prerequisite. P04–P08/X01 remain future scope.
+No new main push or generative provider call is inferred. E-P03-001 records completed P03 work;
 no UI phase is authorized. ADR-0011 governs; ADR-0013 selects uv and real Groq generation.
 
 ## Document authority and ownership
@@ -103,8 +103,8 @@ Derive negative tests from the contract, check valid cases still pass, and test 
 their actual readers. Use synthetic isolated resources; inspect destructive test behavior
 before running it. Credentials are command-local; do not copy them into worktrees.
 
-Additional research delegation remains proportionate. Required pre/post phase reviews
-are mandatory, not discretionary. All subagents use `gpt-6-luna`, `medium`;
+Only the start adversary and end reviewer may be delegated; the coordinator does all
+intermediate work. Required pre/post phase reviews are mandatory, not discretionary. All subagents use `gpt-6-luna`, `medium`;
 dispatch exact inputs, allowed read/write paths, commands and prohibitions. Do not grant
 live resources or git changes. Only the coordinator closes tasks/gates. No overlapping writers.
 
@@ -723,87 +723,97 @@ order. Shared-file tasks are sequential. Each proof names the observation that c
 
 <a id="p03-t01-01"></a>
 
-- [ ] **P03-T01.01 — Register approved policies and source-clause eligibility**
-  - **Files:** `palladion/src/evidence_agent/policy/registry.py`, `palladion/tests/test_policy_engine.py`.
+- [x] **P03-T01.01 — Register approved policies and source-clause eligibility**
+  - **Files:** `palladion/src/evidence_agent/policy/registry.py`, `palladion/src/evidence_agent/policy/bootstrap.py`, `palladion/tests/conftest.py`, `palladion/tests/test_policy_engine.py`.
   - **Depends:** P02-T04.04.
   - **Change:** Read approved family/version/source links under principal scope; validate rule metadata and preserve current/historical selection inputs for temporal resolver.
   - **Proof:** INTEGRATION; [G-POLICY](TESTING_GATES.md#g-policy-task-coverage); valid table loads; unapproved/missing/revoked current clause cannot create policy authority.
+  - **Evidence:** E-P03-001 task-to-consumer proof and current validations; single work audit and status-finding resolution complete.
 
 <a id="p03-t01-02"></a>
 
-- [ ] **P03-T01.02 — Resolve four trusted time bases and half-open intervals**
+- [x] **P03-T01.02 — Resolve four trusted time bases and half-open intervals**
   - **Files:** `palladion/src/evidence_agent/policy/temporal.py`, `palladion/tests/test_policy_temporal.py`.
   - **Depends:** P03-T01.01.
   - **Change:** Obtain policy-declared time from permitted live/case/clock/domain sources; selection uses valid intervals without revision-name ranking.
   - **Proof:** UNIT; [G-TEMPORAL](TESTING_GATES.md#g-temporal-task-coverage); all bases/exact boundaries select correctly; missing/untrusted/naive time cannot select convenient version.
+  - **Evidence:** E-P03-001 task-to-consumer proof and current validations; single work audit and status-finding resolution complete.
 
 <a id="p03-t01-03"></a>
 
-- [ ] **P03-T01.03 — Apply supersession, conflicts and historical cutoffs**
+- [x] **P03-T01.03 — Apply supersession, conflicts and historical cutoffs**
   - **Files:** `palladion/src/evidence_agent/policy/temporal.py`, `palladion/src/evidence_agent/policy/registry.py`, `palladion/tests/test_policy_temporal.py`.
   - **Depends:** P03-T01.02, P03-T01.04.
   - **Change:** Apply authorized scope-matching edges and knowledge_cutoff; preserve audit semantics and reject incomparable overlaps or mixed-basis definitions.
   - **Proof:** INTEGRATION; [G-TEMPORAL](TESTING_GATES.md#g-temporal-task-coverage); T02/T03/T21 and concurrent overlap writes cannot silently choose winner; undefined migration remains conflict.
+  - **Evidence:** E-P03-001 task-to-consumer proof and current validations; single work audit and status-finding resolution complete.
 
 <a id="p03-t01-04"></a>
 
-- [ ] **P03-T01.04 — Apply accepted historical-audit and migration semantics**
+- [x] **P03-T01.04 — Apply accepted historical-audit and migration semantics**
   - **Files:** `palladion/docs/development/ADR_LOG.md`, `palladion/docs/development/RISKS_AND_OPEN_QUESTIONS.md`, `palladion/tests/test_policy_temporal.py`.
   - **Depends:** P03-T01.02.
   - **Change:** Apply accepted ADR-0016/Q05: record concrete synthetic knowledge-cutoff audit fixtures and trace-retention scope; incompatible time-basis migration remains conflict unless explicit approved precedence exists. No repeated policy vote or invented real-business rule.
   - **Proof:** DOC; [G-TEMPORAL](TESTING_GATES.md#g-temporal-task-coverage); accepted decision and boundary fixtures distinguish historical knowledge/current revocation; no inferred retroactive authorization.
+  - **Evidence:** E-P03-001 task-to-consumer proof and current validations; single work audit and status-finding resolution complete.
 
 #### P03-T02 execution tasks
 
 <a id="p03-t02-01"></a>
 
-- [ ] **P03-T02.01 — Validate and execute the bounded predicate AST**
-  - **Files:** `palladion/src/evidence_agent/policy/engine.py`, `palladion/tests/test_policy_engine.py`.
+- [x] **P03-T02.01 — Validate and execute the bounded predicate AST**
+  - **Files:** `palladion/src/evidence_agent/policy/engine.py`, `palladion/src/evidence_agent/core/models.py`, `palladion/tests/test_policy_engine.py`.
   - **Depends:** P03-T01.03.
   - **Change:** Implement typed allowlisted comparison/all/any/not operators with depth/work bounds; required-field validation precedes predicate execution.
   - **Proof:** UNIT; [G-POLICY](TESTING_GATES.md#g-policy-task-coverage); valid rows match; unknown type/operator, missing fact and excessive recursion fail; no eval/exec/SQL path.
+  - **Evidence:** E-P03-001 task-to-consumer proof and current validations; single work audit and status-finding resolution complete.
 
 <a id="p03-t02-02"></a>
 
-- [ ] **P03-T02.02 — Produce evidence-linked policy decision traces**
-  - **Files:** `palladion/src/evidence_agent/policy/engine.py`, `palladion/src/evidence_agent/policy/registry.py`, `palladion/tests/test_policy_engine.py`.
+- [x] **P03-T02.02 — Produce evidence-linked policy decision traces**
+  - **Files:** `palladion/src/evidence_agent/policy/engine.py`, `palladion/src/evidence_agent/policy/registry.py`, `palladion/src/evidence_agent/policy/bootstrap.py`, `palladion/tests/conftest.py`, `palladion/tests/test_policy_engine.py`.
   - **Depends:** P03-T02.01, P03-T03.02.
-  - **Change:** Validate fact provenance and intended-use freshness; return selected version/basis/as-of/inputs/rows/source clauses/audit result for gate reader.
+  - **Change:** Validate fact provenance and intended-use freshness; return selected version/basis/as-of/inputs/rows/source clauses/audit result for a direct domain replay reader; P04 gate consumption remains deferred.
   - **Proof:** INTEGRATION; [G-POLICY](TESTING_GATES.md#g-policy-task-coverage); replay trace; missing settlement is INCOMPLETE_INPUT, unverified fact is not false, conflicting rows cannot grant eligibility.
+  - **Evidence:** E-P03-001 task-to-consumer proof and current validations; single work audit and status-finding resolution complete.
 
 #### P03-T03 execution tasks
 
 <a id="p03-t03-01"></a>
 
-- [ ] **P03-T03.01 — Define named operation and timestamp contracts**
+- [x] **P03-T03.01 — Define named operation and timestamp contracts**
   - **Files:** `palladion/src/evidence_agent/live/contracts.py`, `palladion/config/adapters.yaml`, `palladion/tests/test_live.py`, `palladion/docs/development/ADR_LOG.md`.
   - **Depends:** P03-T01.03.
   - **Change:** Apply ADR-0018/Q07; record explicit synthetic owner/rule freshness limits, validate operation versions/bounds/errors and all three timestamp meanings; values are fixture assumptions, not inferred company policy.
   - **Proof:** UNIT; [G-LIVE](TESTING_GATES.md#g-live-task-coverage); valid envelope preserves three times; unknown operation/extra URL/invalid identifier/schema rejected before adapter call.
+  - **Evidence:** E-P03-001 task-to-consumer proof and current validations; single work audit and status-finding resolution complete.
 
 <a id="p03-t03-02"></a>
 
-- [ ] **P03-T03.02 — Provide deterministic observations and failure fixtures**
+- [x] **P03-T03.02 — Provide deterministic observations and failure fixtures**
   - **Files:** `palladion/src/evidence_agent/live/mock.py`, `palladion/tests/test_live.py`.
   - **Depends:** P03-T03.01.
   - **Change:** Implement fictional transaction/settlement/incident and optional BI reads with changing snapshots and timeout/throttle/schema/denied/not-found cases.
   - **Proof:** UNIT; [G-LIVE](TESTING_GATES.md#g-live-task-coverage); repeatable fixtures preserve owning system/times; old data_as_of remains stale despite fresh read and NOT_FOUND stays scoped.
+  - **Evidence:** E-P03-001 task-to-consumer proof and current validations; single work audit and status-finding resolution complete.
 
 <a id="p03-t03-03"></a>
 
-- [ ] **P03-T03.03 — Authorize target-bound read-only gateway calls**
+- [x] **P03-T03.03 — Authorize target-bound read-only gateway calls**
   - **Files:** `palladion/src/evidence_agent/live/gateway.py`, `palladion/src/evidence_agent/security/access.py`, `palladion/tests/test_live.py`, `palladion/tests/test_security.py`.
   - **Depends:** P03-T03.02.
   - **Change:** Map backend principal/case to permitted operations/targets; minimize/redact output before ledger; model never supplies credentials/host/write verbs.
   - **Proof:** INTEGRATION; [G-LIVE](TESTING_GATES.md#g-live-task-coverage), [G-SECURITY](TESTING_GATES.md#g-security-task-coverage); authorized target passes; cross-case merchant and dynamic SQL/URL/write denied without existence leak.
+  - **Evidence:** E-P03-001 task-to-consumer proof and current validations; single work audit and status-finding resolution complete.
 
 <a id="p03-t03-04"></a>
 
-- [ ] **P03-T03.04 — Bound live retries, deduplication and failure audit**
+- [x] **P03-T03.04 — Bound live retries, deduplication and failure audit**
   - **Files:** `palladion/src/evidence_agent/live/gateway.py`, `palladion/src/evidence_agent/telemetry/audit.py`, `palladion/tests/test_live.py`.
   - **Depends:** P03-T03.03, P03-T02.02.
   - **Change:** Apply deadlines/response/rate limits and single retry owner; deduplicate identical in-flight reads and classify failures for gate consumer.
   - **Proof:** INTEGRATION; [G-LIVE](TESTING_GATES.md#g-live-task-coverage); transient retry stays capped, permission/schema failure never broadens scope, cancellation stops read and audit preserves timestamps/errors.
+  - **Evidence:** E-P03-001 task-to-consumer proof and current validations; single work audit and status-finding resolution complete.
 
 ### Atomic tasks — P04
 

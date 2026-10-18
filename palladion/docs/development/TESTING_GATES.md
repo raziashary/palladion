@@ -1,6 +1,6 @@
 # Testing gates
 
-P01 foundations and P02 ingest/retrieval/API/evaluator checks are runnable. Real-server
+P01/P02 foundations and retrieval plus P03 policy/temporal/live domain checks are runnable. Real-server
 checks require explicit local-server enablement. Later agent/graph/full research obligations remain planned. Gate catalog rows
 describe full obligations; current phase-local results never imply full runtime proof. Gate states
 and evidence are recorded in [PROGRESS](PROGRESS.md) and [EVIDENCE_LOG](EVIDENCE_LOG.md).
@@ -243,3 +243,7 @@ Load the repository-root `.env` only for explicit enabled commands, never print/
 Record process IDs/ports and fixture directories before starting. Stop only task-owned
 processes and verify their recorded ports have no listeners. Do not use destructive
 Compose volume teardown or kill unrelated services as a cleanup shortcut.
+
+## P03 phase-local evidence boundary
+
+Temporal selection, safe execution, gateway observations and persisted replay are domain consumers. P04 owns the actual agent/gate/API consumer of policy traces, so full G-POLICY remains PARTIAL after P03. Four bases are exercised via canonical cases, registered named domain events, gateway records and server clock; accepting an enum alone is not proof. Historical audit never waives current principal/case/source ACL. Synthetic freshness/retention assumptions are explicit in ADR-0029. No provider call or full answer-system conclusion is implied.

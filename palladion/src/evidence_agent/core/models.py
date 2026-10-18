@@ -284,8 +284,15 @@ class PolicyDecision(VersionedModel):
     source_clauses: tuple[SourceRef, ...] = ()
     missing_fields: tuple[str, ...] = ()
     audit_id: str = Field(min_length=1)
+    outcome: str | None = None
+    normalized_inputs: dict[str, Any] = Field(default_factory=dict)
+    required_fields: tuple[str, ...] = ()
+    selection_trace: tuple[str, ...] = ()
+    evaluation_mode: Literal["current", "historical_audit"] = "current"
+    knowledge_cutoff: datetime | None = None
+    evaluated_at: datetime | None = None
 
-    @field_validator("as_of")
+    @field_validator("as_of", "knowledge_cutoff", "evaluated_at")
     @classmethod
     def require_aware_as_of(cls, value: datetime | None) -> datetime | None:
         if value is not None and (value.tzinfo is None or value.utcoffset() is None):
@@ -301,7 +308,8 @@ class PolicyDecision(VersionedModel):
                 self.time_basis,
                 self.rule_trace,
                 self.source_clauses,
-                self.input_evidence_refs,
+                self.input_evidence_refs or (self.outcome is not None and
+                    not self.normalized_inputs and not self.required_fields),
             )
         ):
             raise ValueError(

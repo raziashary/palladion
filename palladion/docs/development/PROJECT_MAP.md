@@ -52,7 +52,7 @@ ACL/approval/time/generation and supports bounded learned rerank/context expansi
 `api/` and main factory expose authenticated source/search/citations; telemetry has an
 internal correlated reader. Seed/reconcile/serve/evaluate scripts use those actual owners.
 WSL standalone launcher verifies Qdrant release hashes and preserves Linux-owned storage.
-Compose is optional. No message/LLM/policy/critic/graph runtime is implemented.
+Compose is optional. P03 now implements the policy/live domain path below; message/LLM/critic/graph runtime remains future.
 
 ## Foundation now implemented (P01)
 
@@ -65,7 +65,7 @@ CLI state is temporary and cleaned; no API/search/provider process is started.
 
 ## Runtime ownership and later planned components
 
-Paths are relative to `palladion/`; P01 and the described P02 subset above are implemented; later components remain planned. ADR-0001 maps the
+Paths are relative to `palladion/`; P01/P02 and the P03 domain path are implemented; later agent/gate/memory/critic/graph components remain planned. ADR-0001 maps the
 blueprint's illustrative `evidence-agent/` root here; do not create a duplicate project.
 
 | Planned area | Owns | Producers / consumers | Build phase |
@@ -139,3 +139,7 @@ gold labels and scorer → report with raw safety/usefulness/latency/cost dimens
 comparison adapters and results are currently absent; see RESEARCH_PROTOCOL and X01.
 
 Dependency manifest ownership is checked by scripts/check_dependencies.py over src/scripts/tests (including literal dynamic imports); pyproject runtime/dev declarations and uv.lock own dependency setup. E-P02-002 records the follow-up completion checks.
+
+## P03 domain path (implemented and phase-reviewed)
+
+Authenticated source-linked policy approval → policy_versions/source clauses plus append-only approval/revocation/supersession events → temporal resolver. Admin-registered case scope → named target-authorized mock gateway → minimized persisted LiveObservation events → PolicyEngine evidence-ID reader → normalized safe AST execution → persisted PolicyDecision → reopened replay/source reader. Policy/live modules share existing SQLite, original bytes and access checks; schema remains v3. scripts/validate_policy.py exercises the real path without Qdrant/network/provider. P04 owns gate/tool/API integration.

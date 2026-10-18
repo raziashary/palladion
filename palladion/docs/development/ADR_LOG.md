@@ -810,6 +810,30 @@ All provider-specific compatibility remains deferred to enabled P04 proof.
 **My answer (editable):** User: only use subagents for the adversary at the start and the review at the end; Model is gpt 6 luna medium.
 **Verification:** Standing instructions updated; no new intermediate dispatches after this instruction.
 
+## ADR-0029 — P03 authority, history and synthetic operation bounds
+
+**Status:** ACCEPTED within existing P03/ADR-0016/0018 scope; core change separately owner-approved in ADR-0030.
+**Authority:** Owner P03 GO; accepted historical-audit and synthetic owner-defined freshness directions.
+**Question:** How will P03 preserve trusted facts/history without new infrastructure or schema?
+**Why:** Pre-adversary found missing policy producers, target binding, historical state and replay consumers.
+**Options:** Use existing policy/source tables plus append-only typed case/audit events, or add competing stores/migrations.
+**Recommendation:** Existing stores, current ACL recheck, independent admin policy registration/approval tied to immutable clauses. Explicit admin audit mode replays cutoff approval/revocation; it never grants current operational authority. Trusted case scope is admin-registered; case opening is canonical cases.created_at, domain event is a named registered event, transaction time comes from persisted gateway evidence, evaluation time from backend clock. Undefined mixed bases stay conflict. Main implementation adds no dependency.
+**What affects what:** policy/live modules, existing access/audit facilities,10 P03 cards/tests, smoke/replay reader. Policy gate consumption remains P04. Synthetic owner palladion-fixture-owner config: transaction/settlement/incident observation age300s; merchant snapshot age900s; timeout1000ms,2 attempts,10ms backoff,16KiB response,20 calls/minute and4 concurrent/16 pending reads. These are test assumptions, not company policy or performance measurements. Retain append-only local traces without automatic purge; production retention deferred.
+**My answer (editable):** Inherits owner's accepted synthetic fixture/minimal audit directions and P03 GO. Core PolicyDecision extension is separately approved in ADR-0030; this record did not grant that approval.
+**Verification:** PASS for P03 scope at E-P03-001: four bases, current/audit distinction, source/target denial, concurrency/deadline, provenance and reopened replay controls executed; single work review complete. P04 gate consumer remains deferred.
+
+## ADR-0030 — Additive executed PolicyDecision fields
+
+**Status:** ACCEPTED; explicit owner async approval 2026-10-18.
+**Authority:** Owner answer: Approve additive PolicyDecision extension (Recommended).
+**Question:** May P03 add outcome, normalized inputs/selection trace and support determined zero-input policies without fake evidence?
+**Why:** Shipped P01 shape lacked executed outcome and required input refs even for no-input policies.
+**Options:** Add optional compatible fields and precise zero-input validation, or keep the incomplete shape.
+**Recommendation:** Optional outcome/normalized_inputs/required_fields/selection_trace/evaluated_at plus explicit audit mode/cutoff. Existing valid payloads retain defaults; zero-input outcome is explicit, no invented evidence refs.
+**What affects what:** core/models.PolicyDecision, policy engine/replay reader, compatibility and zero-input controls. No schema change or new generative tools.
+**My answer (editable):** User: Approve additive PolicyDecision extension (Recommended).
+**Verification:** PASS at E-P03-001: legacy compatible payload roundtrip and executed zero-input policy tests passed, including focused independent end-review checks. Approval remains the owner answer above.
+
 ## Future decision template
 
 ```text
@@ -826,4 +850,4 @@ Verification: planned proof, result, evidence and execution/deferred state
 Amendment history: old answer/date/reason and superseding decision
 ```
 
-Next free ADR number: 0029. Accepted directions do not grant implementation GO.
+Next free ADR number: 0031. Accepted directions do not grant implementation GO.
