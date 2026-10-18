@@ -1,24 +1,37 @@
 [project]
 name = "palladion-benchmark"
 version = "0.1.0"
-description = "Retrieval and evidence-reliability benchmark for Palladion (development suite stage; no runtime code yet)."
+description = "Retrieval and evidence-reliability benchmark for Palladion (harness foundation; no dataset or retriever yet)."
 requires-python = ">=3.11,<3.15"
-dependencies = []
+dependencies = [
+    "httpx==0.28.1",
+    "pyyaml>=6.0.2,<7",
+]
 
 [dependency-groups]
 dev = [
     "mypy>=1.10",
     "pytest>=8.0",
     "ruff>=0.5",
+    "types-pyyaml>=6,<7",
 ]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra"
 
 [tool.ruff]
-line-length = 100
+line-length = 120
 target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
 
 [tool.mypy]
 python_version = "3.11"
 strict = true
+files = ["benchmark", "tests"]
+
+[tool.ruff.lint.per-file-ignores]
+"docs/development/check_docs.py" = ["E501"]  # long message and regex literals in the checker

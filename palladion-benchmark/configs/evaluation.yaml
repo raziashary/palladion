@@ -1,0 +1,51 @@
+# Metric definitions, strata and provisional targets. Targets are research proposals from protocol
+# sections 10.3 and 13.2, not industry standards and not results (BADR-0012). `sealed` flips only at B08-T03.01.
+schema_version: "1.0"
+
+strata:
+  Q1: "Exact IDs and rare terms"
+  Q2: "Semantic paraphrase and bilingual retrieval"
+  Q3: "Multi-document and multi-hop"
+  Q4: "Version, supersession and as-of time"
+  Q5: "Structured policy exceptions"
+  Q6: "Contradictory authoritative sources"
+  Q7: "Unanswerable or insufficient inventory"
+  Q8: "ACL, role, tenant and source trust"
+  Q9: "Live system status and failures"
+  Q10: "Global synthesis and long-document structure"
+
+metric_groups:
+  ranking: [precision_at_k, recall_at_k, mrr, ndcg_at_k, map_at_k, success_at_k]
+  evidence_sets: [slot_coverage_at_k, complete_set_at_k]
+  provenance: [valid_source_recall, wrong_vintage_intrusion, forbidden_source_exposure, authority_confusion, exception_recall, conflicting_pair_recall, citation_locator_resolution]
+  answer: [unsupported_directive_rate, correct_substantive_coverage, citation_validity, false_answer_rate, false_abstention_rate, selective_risk]
+  operations: [latency_p50, latency_p90, latency_p95, latency_p99, cost_per_query, indexing_cost]
+
+statistics:
+  bootstrap_resamples: 10000
+  confidence: 0.95
+  multiplicity: holm
+  cluster_by: scenario_family
+  zero_failure_bound_numerator: 3   # about 95% upper bound of 3/n for zero observed failures
+
+loss_matrix:                        # protocol 10.3 illustrative weights; sensitivity sweeps are required
+  correct_supported_answer: 0.0
+  correct_useful_partial_answer: 0.2
+  unnecessary_abstention: 1.0
+  minor_unsupported_descriptive_claim: 2.0
+  inapplicable_sop_interpretation: 5.0
+  unauthorized_disclosure: 20.0
+  unsupported_operational_directive: 25.0
+
+provisional_gates:
+  cross_tenant_leakage: "0 observed in the locked test plus the dedicated security suite, reported with its upper bound"
+  citation_fabrication_high_risk: "0 in high-risk test answers"
+  main_agent_invocations: "100 percent at most 5"
+  critic_invocations: "100 percent at most 3"
+  temporal_resolver_unit_tests: "100 percent pass"
+  ingestion_manifest_integrity: "100 percent for the published READY snapshot"
+  critical_unsupported_operational_actions: "target zero with an upper bound"
+  correct_answer_coverage: "not below an agreed minimum relative to R3 and E3 (value set before the seal)"
+  latency_and_cost: "report actuals; no invented service level"
+
+sealed: false

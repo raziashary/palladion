@@ -1,0 +1,31 @@
+# Synthetic world scale and distributions (protocol sections 4.3, 4.5 and 5.3). Provisional (BADR-0012):
+# a composition hypothesis, not an estimate of any real company. All data is fictional.
+schema_version: "1.0"
+
+world_name: "Meridian Switchworks"
+
+m_tier_composition:                 # documents per source category; must sum to the M-tier document count
+  sop_versions: 2600
+  policy_clauses: 1400
+  runbooks_and_apis: 1800
+  manuals_and_faqs: 1700
+  incident_reports: 1500
+  tickets_and_cases: 1800
+  emails_memos_drafts: 1200
+
+language_profile_percent:
+  english: 55
+  indonesian: 30
+  mixed: 15
+
+noise_percent_ranges:               # [low, high]; categories overlap, so ranges are not additive
+  near_duplicates: [8, 12]
+  conflicting_or_stale: [5, 8]
+  unapproved_proposals: [2, 4]
+  prompt_injection_documents: [1, 2]
+
+episode_turns:
+  min: 3
+  max: 6
+
+update_events: 1000

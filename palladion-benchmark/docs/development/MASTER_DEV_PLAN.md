@@ -329,102 +329,102 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
 
 <a id="b01-t01-01"></a>
 
-- [ ] **B01-T01.01 — Finish project tooling and secret-safe configuration**
-  - **Files:** `palladion-benchmark/pyproject.toml`, `palladion-benchmark/uv.lock`, `palladion-benchmark/.gitignore`, `palladion-benchmark/.env.example`, `palladion-benchmark/Makefile`, `palladion-benchmark/docker-compose.yml`, `palladion-benchmark/benchmark/__init__.py`.
-  - **Depends:** B00-T04.02.
-  - **Change:** Package skeleton, dev commands via uv with a Make wrapper, .env.example holding variable names only, optional compose file with services disabled by default, ADR record for each added dependency.
-  - **Proof:** SMOKE; BG-HARNESS; clean-clone uv sync --locked, pytest, ruff and mypy pass; a planted fake key in a staged file is caught by the secret scan.
-  - **Evidence:** Not yet executed.
+- [x] **B01-T01.01 — Finish project tooling and secret-safe configuration**
+  - **Files:** `palladion-benchmark/pyproject.toml`, `palladion-benchmark/uv.lock`, `palladion-benchmark/.gitignore`, `palladion-benchmark/.env.example`, `palladion-benchmark/Makefile`, `palladion-benchmark/docker-compose.yml`, `palladion-benchmark/benchmark/__init__.py`, `palladion-benchmark/benchmark/secret_scan.py`, `palladion-benchmark/tests/test_secret_scan.py`.
+  - **Depends:** B00-T04.02, BADR-0014.
+  - **Change:** Package skeleton, dev commands via uv with a Make wrapper, .env.example holding variable names only, runtime pins httpx==0.28.1 (same as Palladion) and PyYAML, an optional Qdrant-only compose file (for machines with Docker; this machine has none, so Qdrant runs Docker-free per BADR-0017) pinned to the image tag Palladion uses on its own port 127.0.0.1:17333 with every service behind a profile, and a stdlib secret scanner (specified patterns plus an opt-in exact-value scan of the local .env with a minimum match length, never printing matches; test fixtures build fake keys at runtime). make is not installed and Docker cannot run on this machine, so the Makefile and compose file get static checks only and their execution is recorded NOT_RUN.
+  - **Proof:** SMOKE; BG-HARNESS, BG-SECURITY; clean-clone uv sync --locked, pytest, ruff and mypy pass; a planted fake key in a staged file is caught and a clean tree passes; the compose file has no service outside a profile and the Makefile recipes parse; execution of make and compose is NOT_RUN with the reason recorded.
+  - **Evidence:** E-B01-002; 23+ secret-scan tests, clean-copy sync/lint/types/tests pass; make not run (not installed) and Docker cannot run here (BADR-0017).
 
 <a id="b01-t02-01"></a>
 
-- [ ] **B01-T02.01 — Typed retrieval contracts**
+- [x] **B01-T02.01 — Typed retrieval contracts**
   - **Files:** `palladion-benchmark/benchmark/contracts.py`, `palladion-benchmark/tests/test_adapter_contracts.py`.
   - **Depends:** B01-T01.01.
-  - **Change:** RetrievalRequest, EvidenceCandidate and the RetrieverAdapter protocol with frozen, validated fields and explicit native_citation_supported.
-  - **Proof:** UNIT; BG-HARNESS; naive timestamps, non-positive ranks and unknown fields rejected; valid round trip passes.
-  - **Evidence:** Not yet executed.
+  - **Change:** RetrievalRequest, EvidenceCandidate and the RetrieverAdapter protocol as frozen dataclasses whose mappings and sequences are deep-copied into read-only forms; native_citation_supported is required with no default and must be backed by a non-null source_version_id when true (BADR-0016); request filters use an allowlist of arm-visible keys and string values are screened for gold-like markers (BI01, BI03); timestamps must be timezone-aware and are normalized to UTC; free-text query content is not screened here (fixture validation in B02 owns that).
+  - **Proof:** UNIT; BG-HARNESS; naive timestamps, non-positive ranks, bool or float where an int is required, NaN and infinity, unknown fields, a gold-like key and a gold-like value in a benign field are rejected; mutating the source dict after construction leaves the object unchanged; a benign request and a valid round trip pass.
+  - **Evidence:** E-B01-003, E-B01-005, E-B01-006; contract tests with planted-defect mutations all killed.
 
 <a id="b01-t02-02"></a>
 
-- [ ] **B01-T02.02 — Case contracts, evidence statuses and run-status taxonomy**
+- [x] **B01-T02.02 — Case contracts, evidence statuses and run-status taxonomy**
   - **Files:** `palladion-benchmark/benchmark/contracts.py`, `palladion-benchmark/tests/test_adapter_contracts.py`.
   - **Depends:** B01-T02.01.
-  - **Change:** CaseRequest, CaseResponse, SystemAdapter, five evidence statuses, abstention reasons and run states OK, NOT_RUN, UNSUPPORTED, FEATURE_NOT_SUPPORTED, INVALID_RUN, TIMEOUT.
-  - **Proof:** UNIT; BG-HARNESS; null latency or cost is never coerced to zero; an unknown status is rejected.
-  - **Evidence:** Not yet executed.
+  - **Change:** CaseRequest, CaseResponse, SystemAdapter, five evidence statuses, abstention reasons, run states OK, NOT_RUN, UNSUPPORTED, FEATURE_NOT_SUPPORTED, INVALID_RUN, TIMEOUT, an error origin (harness, provider or arm) and the adapter exceptions that map to run states.
+  - **Proof:** UNIT; BG-HARNESS; null latency or cost is never coerced to zero; an unknown status is rejected; each adapter exception maps to exactly one run state and origin.
+  - **Evidence:** E-B01-003, E-B01-005, E-B01-006; failure-to-run-state mapping and null handling tested.
 
 <a id="b01-t02-03"></a>
 
-- [ ] **B01-T02.03 — Configuration files and typed loaders**
-  - **Files:** `palladion-benchmark/configs/benchmark.yaml`, `palladion-benchmark/configs/comparators.yaml`, `palladion-benchmark/configs/evaluation.yaml`, `palladion-benchmark/configs/fixtures.yaml`, `palladion-benchmark/benchmark/contracts.py`.
+- [x] **B01-T02.03 — Configuration files and typed loaders**
+  - **Files:** `palladion-benchmark/configs/benchmark.yaml`, `palladion-benchmark/configs/comparators.yaml`, `palladion-benchmark/configs/evaluation.yaml`, `palladion-benchmark/configs/fixtures.yaml`, `palladion-benchmark/benchmark/config.py`, `palladion-benchmark/tests/test_config_loader.py`.
   - **Depends:** B01-T02.02.
-  - **Change:** Tiers S/M/L, seeds, K values 5/10/20, 4k/8k token budgets, split sizes, arm pins and metric definitions; loaders reject unknown keys.
-  - **Proof:** UNIT; BG-HARNESS; a floating latest pin is rejected in confirmatory mode; the same file loads identically twice.
-  - **Evidence:** Not yet executed.
+  - **Change:** Tiers S/M/L, seeds, K values 5/10/20, 4k/8k token budgets, split sizes, generator pool settings, arm pins and metric definitions. A safe YAML loader rejects duplicate keys and unknown keys; pins are an allowlist (40-hex commit, exact version, or the explicit placeholder UNPINNED, which confirmatory mode also rejects; main, HEAD, latest and ranges are rejected; version-like pins must be quoted strings).
+  - **Proof:** UNIT; BG-HARNESS; a duplicate key, an unquoted 3.10, a floating latest or branch pin in confirmatory mode and an unknown key are rejected; the same file loads identically twice.
+  - **Evidence:** E-B01-003, E-B01-005, E-B01-006; 49 config tests, real files load, confirmatory mode refuses UNPINNED.
 
 <a id="b01-t03-01"></a>
 
-- [ ] **B01-T03.01 — Arm registry with capability declarations**
+- [x] **B01-T03.01 — Arm registry with capability declarations**
   - **Files:** `palladion-benchmark/benchmark/registry.py`, `palladion-benchmark/benchmark/adapters/__init__.py`, `palladion-benchmark/tests/test_adapter_contracts.py`.
   - **Depends:** B01-T02.03.
-  - **Change:** Register arms R0-R7b and E0-E4 with declared capabilities (native citation, ACL filter, temporal filter, graph, offline cost); render the capability matrix.
-  - **Proof:** UNIT; BG-ADAPTER; an arm with a missing declaration is rejected; unsupported capability prints as unsupported, never blank.
-  - **Evidence:** Not yet executed.
+  - **Change:** Register arms R0-R7b and E0-E4 with declared capabilities (native citation, ACL filter, temporal filter, graph, offline cost) as SUPPORTED, UNSUPPORTED or UNVERIFIED with a source note; UNVERIFIED blocks any run that depends on that capability; E3 and E4 are pinned to FEATURE_NOT_SUPPORTED per OQ11; render the capability matrix.
+  - **Proof:** UNIT; BG-ADAPTER; an arm with a missing declaration is rejected; unsupported and unverified capabilities print as words, never blank; a run depending on an UNVERIFIED capability is refused; E3 cannot be declared available.
+  - **Evidence:** E-B01-003, E-B01-005, E-B01-006; 15 arms registered, matrix prints words, UNVERIFIED blocks runs.
 
 <a id="b01-t03-02"></a>
 
-- [ ] **B01-T03.02 — Immutable run manifest and reproducibility checklist**
-  - **Files:** `palladion-benchmark/benchmark/run_manifest.py`, `palladion-benchmark/docs/reproducibility.md`.
+- [x] **B01-T03.02 — Immutable run manifest and reproducibility checklist**
+  - **Files:** `palladion-benchmark/benchmark/run_manifest.py`, `palladion-benchmark/tests/test_run_manifest.py`, `palladion-benchmark/docs/reproducibility.md`.
   - **Depends:** B01-T02.03.
-  - **Change:** Manifest with source, question and evaluator-only gold digests, benchmark code commit, system-under-test commit plus source-tree digest and dirty-file list (confirmatory runs refuse a dirty tree), model revisions, hardware, pricing snapshot, seed and cache condition; start the reproducibility checklist.
-  - **Proof:** UNIT; BG-REPRO; one changed byte changes the digest; a manifest edited after write is rejected; gold digest never appears in arm-visible output.
-  - **Evidence:** Not yet executed.
+  - **Change:** Manifest implementing the full protocol 7.2 schema (run id, track, arm, split, source, question and evaluator-only gold digests, benchmark commit, system-under-test commit with source-tree digest and dirty-file list from read-only git calls, method version, image digest, model versions, retrieval config, prompt digest, hardware, pricing snapshot, seed, cache condition, start time) with a stated reason wherever a value is null; self-digest in canonical JSON, exclusive-create write before the first arm runs, digest recorded externally in every ledger record; confirmatory mode refuses a dirty tree and the benchmark and the system under test are checked separately; start the reproducibility checklist.
+  - **Proof:** UNIT; BG-REPRO; one changed byte changes the digest; an edit with a recomputed in-file digest is caught by the externally recorded digest; a second write to the same path is refused; gold digest never appears in the arm-visible view; a dirty or unpinned tree is refused in confirmatory mode.
+  - **Evidence:** E-B01-003, E-B01-005, E-B01-006; 45 manifest tests incl. external-digest tamper check and read-only git capture.
 
 <a id="b01-t03-03"></a>
 
-- [ ] **B01-T03.03 — Stage-span tracing and call-budget instrumentation**
+- [x] **B01-T03.03 — Stage-span tracing and call-budget instrumentation**
   - **Files:** `palladion-benchmark/benchmark/tracing.py`, `palladion-benchmark/tests/test_budget_enforcement.py`.
   - **Depends:** B01-T02.02.
-  - **Change:** Spans for the protocol stage list with wall time, tokens, retries, errors and cache hits; counters for main <=5 and critic <=3 that record violations as failures.
-  - **Proof:** UNIT; BG-HARNESS; a sixth main call is flagged as a failure rather than truncated; absent usage stays null.
-  - **Evidence:** Not yet executed.
+  - **Change:** Spans for the protocol stage list with wall time, tokens, retries, errors and cache hits; counters for main <=5 and critic <=3 with two semantics: calls the harness controls are refused before dispatch, and counts self-reported by a system under test are recorded as unverified and flagged as failures when over budget.
+  - **Proof:** UNIT; BG-HARNESS; a sixth main call is flagged as a failure rather than truncated; an over-budget self-report is recorded UNVERIFIED and flagged; absent usage stays null.
+  - **Evidence:** E-B01-003, E-B01-005, E-B01-006; 21 tracing and budget tests; concurrency test, race-freedom not proven.
 
 <a id="b01-t04-01"></a>
 
-- [ ] **B01-T04.01 — Paired, bounded, randomized runner**
-  - **Files:** `palladion-benchmark/benchmark/runner.py`.
+- [x] **B01-T04.01 — Paired, bounded, randomized runner**
+  - **Files:** `palladion-benchmark/benchmark/runner.py`, `palladion-benchmark/tests/test_runner.py`.
   - **Depends:** B01-T03.01, B01-T03.02, B01-T03.03.
-  - **Change:** Same-case pairing across arms, randomized order, per-case reset, deadlines, intention-to-treat records and a predeclared transient-retry rule that preserves both outcomes.
-  - **Proof:** INTEGRATION; BG-HARNESS; a crashing arm is recorded INVALID_RUN and never dropped; a selective rerun of a bad outcome is impossible.
-  - **Evidence:** Not yet executed.
+  - **Change:** Same-case pairing across arms, per-case arm order randomized by a sha256-derived seeded RNG whose seed is in the manifest, per-case reset, per-case deadlines, run-level limits applied between cases only (a whole case is NOT_RUN for every arm), intention-to-treat records, a predeclared transient-retry rule fixed in the manifest, an append-only ledger keyed by run, arm, question and attempt with one final outcome per pair, a plan-digest registry that refuses a second run of the same plan unless declared a resume, and an arm that timed out is marked unusable with late results discarded and counted.
+  - **Proof:** INTEGRATION; BG-HARNESS; a crashing arm is recorded INVALID_RUN and never dropped; a transient error once yields two readable attempt records and one final outcome; a selective rerun, within a run or by a new run id on the same plan, is refused; a stub that sleeps past its deadline then writes leaves a single TIMEOUT outcome and no later write.
+  - **Evidence:** E-B01-003, E-B01-005, E-B01-006; 26 runner tests; every planted runner defect killed.
 
 <a id="b01-t04-02"></a>
 
-- [ ] **B01-T04.02 — Top-level command line**
-  - **Files:** `palladion-benchmark/benchmark/cli.py`.
+- [x] **B01-T04.02 — Top-level command line**
+  - **Files:** `palladion-benchmark/benchmark/cli.py`, `palladion-benchmark/tests/test_cli.py`.
   - **Depends:** B01-T04.01.
   - **Change:** Commands for config validation, arm listing, capability matrix and version over the existing modules.
   - **Proof:** SMOKE; BG-HARNESS; capability-matrix exits 0 with all arms; an unknown arm exits nonzero.
-  - **Evidence:** Not yet executed.
+  - **Evidence:** E-B01-003, E-B01-005, E-B01-006; real entry point exits 0 and 2 as specified.
 
 <a id="b01-t05-01"></a>
 
-- [ ] **B01-T05.01 — Shared generator pool with explicit, recorded model selection**
+- [x] **B01-T05.01 — Shared generator pool with explicit, recorded model selection**
   - **Files:** `palladion-benchmark/benchmark/generator.py`, `palladion-benchmark/tests/test_generator_pool.py`.
-  - **Depends:** B01-T03.03, BADR-0007, BADR-0008.
-  - **Change:** One client for the approved Groq models; failover only on a classified rate limit under the recorded policy; model id, attempt and tokens logged per call; explicit enable flag.
-  - **Proof:** UNIT; BG-HARNESS; injected transport proves a hidden fallback cannot occur and every call records its model; this does not establish provider behavior.
-  - **Evidence:** Not yet executed.
+  - **Depends:** B01-T02.03, B01-T03.02, B01-T03.03, BADR-0007, BADR-0008, BADR-0015.
+  - **Change:** One client for the approved Groq models; each question's model is assigned before any arm runs from configured per-model token budgets (null budgets mean primary only); at call time a rate limit waits up to a capped time then fails as recorded, with no automatic switch; assign_models returns the questions that no budget covers as unassigned, and the Track B runner (B05-T05.01) records those NOT_RUN for every arm; every call records requested and served model, attempt, all request parameters (temperature, completion cap, reasoning effort, response format, timestamp), tokens, bounded rate-limit headers, request id and the statement that no provider-exposed revision exists; transport sets trust_env false and no redirects; error paths map to fixed codes; explicit enable flag and call budget enforced before dispatch.
+  - **Proof:** UNIT; BG-HARNESS, BG-SECURITY; injected transport proves a hidden fallback cannot occur, every call records its model, and a planted fake key forced through each error path appears in no output, record or manifest; this does not establish provider behavior.
+  - **Evidence:** E-B01-003, E-B01-005, E-B01-006; 69 generator tests; planted key through every error path appears nowhere.
 
 <a id="b01-t05-02"></a>
 
-- [ ] **B01-T05.02 — Real-provider proof for the generator entry point**
+- [x] **B01-T05.02 — Real-provider proof for the generator entry point**
   - **Files:** `palladion-benchmark/benchmark/generator.py`, `palladion-benchmark/docs/development/EVIDENCE_LOG.md`.
-  - **Depends:** B01-T05.01, OQ01.
-  - **Change:** One bounded real call per approved model through the actual entry point; record model ids, quotas observed and failures.
-  - **Proof:** SMOKE; BG-HARNESS; PASS only if each approved model returns at least one real response with its recorded model id; a model that fails is recorded as FAIL or NOT_RUN and the gate stays PARTIAL; key never printed.
-  - **Evidence:** Not yet executed.
+  - **Depends:** B01-T05.01, B01-T01.01, OQ01, BADR-0015.
+  - **Change:** A module entry point performs one bounded real call per approved model with an explicit enable flag, a call budget of three plus classified retries and a small completion cap; record model ids, quotas observed and failures.
+  - **Proof:** SMOKE; BG-HARNESS; PASS only if each approved model returns at least one real response whose served model equals the requested model; a model that fails is recorded as FAIL or NOT_RUN and the gate stays PARTIAL; key never printed.
+  - **Evidence:** E-B01-004, E-B01-005; 3 of 3 approved models returned a real response with matching served model and text.
 
 ### Atomic tasks — B02
 
@@ -660,9 +660,9 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
 <a id="b04-t04-01"></a>
 
 - [ ] **B04-T04.01 — Index build entry point**
-  - **Files:** `palladion-benchmark/scripts/build_indices.py`.
-  - **Depends:** B04-T02.02, B04-T03.01.
-  - **Change:** Build per-arm indexes for a snapshot in two modes, common-chunk (shared parser and boundaries) and native-ingestion (each system parses the originals with its defaults); record time, size, tokens, extraction failures and lost tables.
+  - **Files:** `palladion-benchmark/scripts/build_indices.py`, `palladion-benchmark/scripts/qdrant_server.py`, `palladion-benchmark/tests/test_qdrant_launcher.py`.
+  - **Depends:** B04-T02.02, B04-T03.01, BADR-0017.
+  - **Change:** Docker-free Qdrant launcher: a checksum-pinned official standalone release run under WSL on 127.0.0.1:17333 with its own data directory, never touching Palladion's store (own implementation of the same method). Build per-arm indexes for a snapshot in two modes, common-chunk (shared parser and boundaries) and native-ingestion (each system parses the originals with its defaults); record time, size, tokens, extraction failures and lost tables.
   - **Proof:** SMOKE; BG-REPRO; rebuild from the same manifest yields matching counts; a failed build is recorded rather than skipped.
   - **Evidence:** Not yet executed.
 
@@ -754,7 +754,7 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
 - [ ] **B05-T05.01 — Track B runner**
   - **Files:** `palladion-benchmark/scripts/run_track_b.py`.
   - **Depends:** B04-T04.02, B05-T01.02, B05-T02.01, B05-T03.01, B01-T05.02.
-  - **Change:** Same generator family, prompt, answer format, evidence budget and runtime gate for every retriever; per-call model recorded; pairing follows the failover policy.
+  - **Change:** Same generator family, prompt, answer format, evidence budget and runtime gate for every retriever; per-call model recorded; pairing follows the failover policy; questions that assign_models leaves unassigned are recorded NOT_RUN for every arm.
   - **Proof:** SMOKE; BG-TRACKB, BG-FAIR; a pair whose arms ran on different generator models is flagged; no hidden gold at generation time.
   - **Evidence:** Not yet executed.
 
@@ -800,8 +800,8 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
 
 - [ ] **B06-T04.01 — R7b bounded graph-expansion mode and Neo4j service**
   - **Files:** `palladion-benchmark/benchmark/adapters/palladion.py`, `palladion-benchmark/docker-compose.yml`.
-  - **Depends:** B04-T03.02.
-  - **Change:** Select Palladion's graph-enabled mode when it exists; otherwise declare FEATURE_NOT_SUPPORTED.
+  - **Depends:** B04-T03.02, OQ12.
+  - **Change:** Select Palladion's graph-enabled mode when it exists; otherwise declare FEATURE_NOT_SUPPORTED. Neo4j must also run without Docker (OQ12); the compose service is optional.
   - **Proof:** INTEGRATION; BG-ADAPTER; with the feature absent the arm is NOT_RUN with a reason, never a zero.
   - **Evidence:** Not yet executed.
 

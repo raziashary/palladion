@@ -19,7 +19,7 @@ its status is read from its own documents and source, never assumed.
 | Outcome | Scope and completion proof | State |
 |---|---|---|
 | O00: Development suite exists, validates and is independently reviewed | B00; BG-DOC; E-B00-001, E-B00-002, E-B00-003, E-B00-004 | DONE |
-| O01: Harness runs paired, bounded, randomized experiments with immutable manifests and a proven generator entry point | B01; BG-HARNESS, BG-REPRO | PLANNED |
+| O01: Harness runs paired, bounded, randomized experiments with immutable manifests and a proven generator entry point | B01; BG-HARNESS, BG-REPRO; E-B01-002 to E-B01-006 | DONE |
 | O02: Audited synthetic S-tier world, corpus, gold and validation report | B02; BG-FIXTURE, BG-GOLD, BG-SECURITY | PLANNED |
 | O03: Scorers distinguish perfect, empty and shuffled systems and implement the protocol's statistics | B03; BG-METRIC, BG-STATS, BG-REPORT | PLANNED |
 | O04: Track A pilot for R0, R1, R2, R3 and R7a | B04; BG-ADAPTER, BG-FAIR, BG-TRACKA | PLANNED |
@@ -56,7 +56,7 @@ owner's GO; the suite request covers B00 only.
 ## Phase checklist
 
 - [x] B00 — development suite (E-B00-001 to E-B00-004)
-- [ ] B01 — harness foundation
+- [x] B01 — harness foundation (E-B01-001 to E-B01-006)
 - [ ] B02 — synthetic world, S-tier corpus and gold
 - [ ] B03 — evaluation core
 - [ ] B04 — retrieval arms R0–R3, R7a and Track A pilot

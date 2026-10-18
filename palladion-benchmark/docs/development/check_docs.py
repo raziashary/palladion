@@ -32,6 +32,10 @@ REQUIRED = (
 EXTRA_FILES = {
     ROOT + "README.md", ROOT + "AGENTS.md", ROOT + "docs/README.md",
     ROOT + "benchmark/generator.py", ROOT + "tests/test_generator_pool.py", ROOT + "docs/dataset_card.md",
+    ROOT + "benchmark/secret_scan.py", ROOT + "tests/test_secret_scan.py", ROOT + "benchmark/config.py",
+    ROOT + "scripts/qdrant_server.py", ROOT + "tests/test_qdrant_launcher.py",
+    ROOT + "tests/test_config_loader.py", ROOT + "tests/test_run_manifest.py",
+    ROOT + "tests/test_runner.py", ROOT + "tests/test_cli.py",
 }
 PHASES = [f"B{n:02d}" for n in range(10)]
 ARMS = {"R0", "R1", "R2", "R3", "R4", "R5", "R6", "R7", "R7a", "R7b", "E0", "E1", "E2", "E3", "E4"}
@@ -324,9 +328,9 @@ def validate(documents: dict[str, str]) -> list[str]:
     # Coverage rows must name an owner task and a gate.
     for text in (gates_doc, trace):
         for line in text.splitlines():
-            if re.match(r"^\| (?:M\d{2}|MT\d{2}|BI\d{2}|H\d|A\d{2}|Q\d{1,2}|§\d+) \|", line):
-                if not re.search(r"\bB\d{2}-T\d{2}", line) or not re.search(r"\bBG-[A-Z0-9]+\b", line):
-                    errors.append(f"coverage row lacks task or gate: {line[:60]}")
+            is_row = re.match(r"^\| (?:M\d{2}|MT\d{2}|BI\d{2}|H\d|A\d{2}|Q\d{1,2}|§\d+) \|", line)
+            if is_row and (not re.search(r"\bB\d{2}-T\d{2}", line) or not re.search(r"\bBG-[A-Z0-9]+\b", line)):
+                errors.append(f"coverage row lacks task or gate: {line[:60]}")
     sections = {int(n) for n in re.findall(r"^\| §(\d+) \|", trace, re.MULTILINE)}
     for number in range(1, 23):
         if number not in sections:
@@ -369,8 +373,8 @@ def self_test(documents: dict[str, str]) -> int:
     gates, plan = DEV + "TESTING_GATES.md", DEV + "MASTER_DEV_PLAN.md"
     adr, trace = DEV + "ADR_LOG.md", DEV + "REQUIREMENTS_TRACEABILITY.md"
     risks, progress = DEV + "RISKS_AND_OPEN_QUESTIONS.md", DEV + "PROGRESS.md"
-    first_card = re.search(r"- \[[ x]\] \*\*B01-T02\.01 ", documents[plan])
-    assert first_card, "self-test anchor card B01-T02.01 missing"
+    open_card = next(ident for ident, done in checked_tasks(documents[plan]).items() if not done)
+    planned = next(p for p in PHASES if re.search(rf"^\| {p} \| PLANNED \|", documents[progress], re.M))
     vision_tree = documents[VISION].replace("│   ├── tracing.py", "│   ├── tracing_renamed.py", 1)
     mutations = {
         "broken local link": (gates, documents[gates] + "\n[bad](missing-proof.md)\n"),
@@ -402,9 +406,9 @@ def self_test(documents: dict[str, str]) -> int:
         "unowned protocol tree file": (plan, documents[plan].replace("`palladion-benchmark/benchmark/cli.py`", "")),
         "protocol tree changed": (VISION, vision_tree),
         "unordered writers of a shared file": (plan, documents[plan].replace(
-            "**Depends:** B04-T03.02.\n  - **Change:** Select", "**Depends:** B04-T01.01.\n  - **Change:** Select", 1)),
+            "**Depends:** B04-T03.02, OQ12.\n  - **Change:** Select", "**Depends:** B04-T01.01, OQ12.\n  - **Change:** Select", 1)),
         "checked card with missing file": (plan, documents[plan].replace(
-            "- [ ] **B01-T02.01 ", "- [x] **B01-T02.01 ", 1)),
+            f"- [ ] **{open_card} ", f"- [x] **{open_card} ", 1)),
         "missing ADR question": (adr, documents[adr].replace("**Question:**", "**Omitted question:**", 1)),
         "missing ADR authority": (adr, documents[adr].replace("**Authority:**", "**Omitted authority:**", 1)),
         "accepted ADR with OPEN answer": (adr, documents[adr].replace(
@@ -413,7 +417,7 @@ def self_test(documents: dict[str, str]) -> int:
             "**Status:** ACCEPTED; 2026-10-18.", "**Status:** PROPOSED; 2026-10-18.", 1)),
         "open question without decision": (risks, documents[risks].replace("| BADR-0006 | OPEN", "| none | OPEN", 1)),
         "PROGRESS done with unchecked cards": (progress, documents[progress].replace(
-            "| B01 | PLANNED |", "| B01 | DONE |", 1)),
+            f"| {planned} | PLANNED |", f"| {planned} | DONE |", 1)),
         "PROGRESS gate removed": (progress, documents[progress].replace("| BG-REPORT | NOT_RUN |", "| removed | NOT_RUN |", 1)),
         "second PROJECT_MEMORY": (ROOT + "docs/PROJECT_MEMORY.md", "# copy\n"),
         "arm registry row removed": (DEV + "RESEARCH_PROTOCOL.md", documents[DEV + "RESEARCH_PROTOCOL.md"].replace("| E2 |", "| removed |", 1)),

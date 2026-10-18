@@ -275,3 +275,83 @@ show the decision working, and is kept separate from acceptance.
 **My answer (editable):** Benchmark-local gitignored .env, created by the owner (2026-10-18). Loaded only by an explicitly enabled command; Palladion's root .env is never read or copied. The coordinator verified only that the file exists and is ignored by git, not its contents.
 
 **Verification:** The secret scan negative control in B01-T01.01; live-call tests refuse to run without the flag.
+
+## BADR-0014 — B01 runtime dependencies and additional files
+
+**Status:** ACCEPTED; 2026-10-18.
+
+**Authority:** Owner instruction 2026-10-18 that libraries may be added (BADR-0005), applied by the coordinator inside the B01 task scope; the owner may amend.
+
+**Question:** Which runtime dependencies and extra files does phase B01 add beyond the protocol tree?
+
+**Why:** B01 needs YAML configuration loading, an HTTP client for the Groq entry point, and a secret scan whose negative control the card requires; none of these has a home in the 70-file tree.
+
+**Options:** (a) httpx and PyYAML at runtime, types-PyYAML for typing, plus `benchmark/secret_scan.py`, `tests/test_secret_scan.py` and `benchmark/config.py` (typed configuration loaders kept apart from the contracts so each module has one responsibility); (b) standard-library urllib and a JSON-only config format; (c) skip the scan and rely on `.gitignore`.
+
+**Recommendation:** Option (a). httpx mirrors the client Palladion already uses for the same endpoint, which keeps the transport behavior comparable; PyYAML matches the protocol's `.yaml` config files; the scan is the only mechanism that makes the card's planted-key proof possible. Exact versions are pinned by `uv.lock` and recorded in EVIDENCE_LOG. Contracts use standard-library frozen dataclasses rather than pydantic because the protocol specifies dataclasses and no validation need requires another library.
+
+**What affects what:** B01-T01.01 (files and pins), B01-T02.03 (YAML), B01-T05.01 and B01-T05.02 (httpx); the checker's list of recorded additions; BG-SECURITY.
+
+**My answer (editable):** Accepted in scope under the owner's blanket permission to add libraries; owner may remove or replace any item.
+
+**Verification:** `uv sync --locked` from a clean state, the dependency list in `pyproject.toml` equals this ADR, and the secret scan rejects a planted key and passes a clean tree (B01-T01.01).
+
+## BADR-0015 — Generator model assignment rule and live-call authorization
+
+**Status:** ACCEPTED; 2026-10-18.
+
+**Authority:** Owner answers in chat, 2026-10-18: pre-assign models by quota; and the instruction to finish phase B01 end to end, which includes the real-provider proof in B01-T05.02, after creating `palladion-benchmark/.env`.
+
+**Question:** How does the three-model Groq pool operate, and what live spending is authorized in B01?
+
+**Why:** BADR-0007 says to switch models when rate limited and BADR-0008 says one model per question, chosen before any arm runs. The pre-phase adversary (A8, A2) found that these conflict unless an assignment rule is defined and that live spending needs a recorded authorization.
+
+**Options:** (a) Pre-assign each question's model from configured per-model token budgets; waits at call time are capped and never switch models; (b) automatic failover with the model as a stratum; (c) qwen only.
+
+**Recommendation:** Option (a). Budgets are configuration inputs and stay null until the owner states real limits, in which case every question gets the primary model. Questions are assigned in a seeded random order; the primary model takes questions until its budget is spent, then the next model in order. At call time a classified rate limit waits for the provider's retry-after up to 120 seconds (configurable, recorded), then the call fails and is recorded; it never switches model. When all budgets are exhausted, whole remaining questions are NOT_RUN for every arm. Automatic failover remains available only as an explicit, off-by-default setting whose use marks the question mixed-model.
+
+**What affects what:** B01-T02.03 (config), B01-T05.01, B01-T05.02, B05-T05.01, B07-T08.01; BADR-0007 and BADR-0008 (this elaborates them); risks BR04, BR07, BR13.
+
+**My answer (editable):** Pre-assign by quota (2026-10-18). Live authorization for B01 only: one call per approved model (three), a completion cap of at most 256 tokens, and at most six calls in total including classified retries; the commands use an explicit enable flag and the benchmark-local `.env`. Any further live use needs a new owner instruction.
+
+**Verification:** Unit tests with an injected transport show no switch occurs without the explicit setting and every call records its model; B01-T05.02 records the real calls, models, token counts and quota headers.
+
+## BADR-0016 — Contract strictness, isolation and system-under-test pinning
+
+**Status:** ACCEPTED; 2026-10-18.
+
+**Authority:** Owner answers in chat, 2026-10-18 (required citation field; subprocess isolation from B04); coordinator recommendation for the pinning rule.
+
+**Question:** Where does the harness depart from the protocol's sketches or tighten them, and how are arms isolated and pinned?
+
+**Why:** The protocol's `native_citation_supported: bool = True` makes an uncited arm look cited (BI06); a denylist of gold-like keys cannot keep gold out of arms in a shared process; a dirty shared working tree cannot be a pinned system under test (adversary findings adv-3, adv-5, adv-9 and adv-13).
+
+**Options:** For the citation field, keep the sketch's default or require it; for isolation, in-process threads or subprocesses; for the system under test, the live shared tree or a pinned checkout.
+
+**Recommendation:** Require the field with no default and demand a non-null `source_version_id` when true (a deviation from the sketch, stricter than it). Use an allowlist of arm-visible request fields. From B04 on, run arms and Palladion as separate subprocesses with a restricted input directory so timeouts can kill and gold is physically absent; B01 uses in-process fakes and marks an adapter unusable after a timeout. Confirmatory runs of Palladion use a pinned commit in a separate worktree or image, checked for cleanliness independently of the benchmark tree; read-only git status uses `--no-optional-locks`.
+
+**What affects what:** B01-T02.01, B01-T04.01, B04-T03.01, B06, B07-T04.01, B08-T03.01; BI01, BI03, BI06; risks BR01 and BR02.
+
+**My answer (editable):** Required citation field approved; subprocess isolation from B04 approved (2026-10-18). The pinned-worktree rule is the coordinator's recommendation, accepted in scope and to be confirmed when B04 starts.
+
+**Verification:** Contract tests reject a defaulted or unbacked citation claim and gold-like keys and values; B04 records subprocess isolation evidence; the manifest records both trees' state separately.
+
+## BADR-0017 — No Docker: Qdrant runs as a standalone binary under WSL
+
+**Status:** ACCEPTED; 2026-10-18.
+
+**Authority:** Owner message in chat, 2026-10-18: this machine cannot run Docker; do what Palladion does for Qdrant.
+
+**Question:** How do the benchmark's local services run on a machine without Docker?
+
+**Why:** Palladion runs Qdrant without Docker through a checksum-pinned official static release under WSL Ubuntu with Linux-owned storage, because the native Windows server produced filesystem errors. The benchmark needs its own index service (dense and hybrid arms) that cannot be disturbed by, or disturb, Palladion's store.
+
+**Options:** (a) The same method with the benchmark's own launcher: pinned official release, SHA-256 verified, WSL, separate ports (HTTP 17333, gRPC 17334), separate data directory under `~/.local/share/palladion-benchmark/qdrant/`; (b) share Palladion's running instance; (c) require Docker.
+
+**Recommendation:** Option (a). The launcher (`scripts/qdrant_server.py`, with tests) is built in B04-T04.01 as an addition (listed in BADR-0017, not copied from Palladion code, since the benchmark never imports or edits Palladion). `docker-compose.yml` stays as an optional file for machines with Docker and is not executed here. Neo4j (B06) needs the same treatment and is queued as OQ12.
+
+**What affects what:** B04-T01.02 and later cards that need Qdrant, B04-T04.01, B06-T04.01; risks BR06 and BR11; reproducibility (service version is pinned by release and checksum instead of an image digest).
+
+**My answer (editable):** Do not use Docker; run Qdrant without it, as Palladion does (2026-10-18).
+
+**Verification:** B04-T04.01 starts the pinned release under WSL on port 17333, reads back a collection through the benchmark's own client, confirms Palladion's port 16333 and store are untouched, and stops only the process it started.

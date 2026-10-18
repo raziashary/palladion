@@ -11,6 +11,12 @@ Wrong claims are struck through and corrected in place, not erased.
   scaffolding and is not kept in the repository.
 - **Make the stated limits visible at the point of use.** The gate catalog repeats that gates test the benchmark, not the systems under test.
 
+- **Plant a defect in a temporary copy and require the owning tests to fail.** Tests that passed on the first run proved nothing about their power. The sweep in E-B01-003 found real gaps:
+  untracked files were never part of the tree digest, a ledger duplicate-final check was shadowed by another check, the runner's completeness check was never exercised, redirect and proxy handling had no test,
+  model approval was checked only through a second path, and usage validation was invisible. Each got a test, and the survivor that remained (lock removal) is stated as a limit.
+- **Read the live interface before writing an adapter-facing card.** The pre-phase adversary (E-B01-001) and the earlier correction both traced to plans written from the protocol alone.
+- **Keep error text out of records by construction.** Raising a fixed-code error outside the `except` block leaves no chained exception, and a test that forces a planted key through every error path shows it.
+
 ## Risks surfaced while planning (not yet mistakes)
 
 - **A rate-limit failover pool confounds paired comparisons.** The owner's three-model Groq pool (BADR-0007) means a pair of arms could run on different models.
@@ -28,3 +34,6 @@ Wrong claims are struck through and corrected in place, not erased.
   claims an adapter capability.
 - ~~Excluding mixed-model pairs from the primary analysis keeps comparisons clean.~~ Proposed in BADR-0008; the review showed it is informative censoring
   because rate limits follow token volume. Replaced by a model-per-question rule fixed before arms run.
+- ~~Review finding labels made of the letter A and a number are safe identifiers.~~ In E-B01-001 the labels numbered 17 to 24 collided with the ablation ID namespace (A01 to A16) and the documentation checker flagged them as undefined IDs. Mechanism: the review labels reused a prefix
+  the checker treats as a stable ID. Correction: findings are labelled `adv-N`. Rule going forward: pick review labels outside every defined ID pattern.
+- ~~Configuration loaders belong in `contracts.py`.~~ The first plan put them there; the file grew past one responsibility, so the loaders moved to `benchmark/config.py` (BADR-0014) and the checker's recorded additions were updated in the same step.

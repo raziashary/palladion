@@ -20,7 +20,17 @@ Updated 2026-10-18. Navigation aid only; the user, the protocol, source and ADRs
 
 ## Locked decisions and open items
 
-Accepted: BADR-0001–0005, 0007–0012. All BADRs are accepted as of 2026-10-18 (BADR-0006 phase breakdown, BADR-0008 one model per question, BADR-0013 benchmark-local .env). Still open and tracked: OQ03 (read Palladion's interface at B04), OQ09 (license, before B08-T07.01), OQ10 (pairings, before B08-T03.01). Open questions OQ01–OQ11 in [risks and open questions](RISKS_AND_OPEN_QUESTIONS.md).
+Accepted: BADR-0001 to BADR-0017 (all). All BADRs are accepted as of 2026-10-18 (BADR-0006 phase breakdown, BADR-0008 one model per question, BADR-0013 benchmark-local .env). Still open and tracked: OQ03 (read Palladion's interface at B04), OQ09 (license, before B08-T07.01), OQ10 (pairings, before B08-T03.01). Open questions OQ01–OQ11 in [risks and open questions](RISKS_AND_OPEN_QUESTIONS.md).
+
+## What exists in code (B01)
+
+- `benchmark/contracts.py` (typed requests, candidates, case responses, run states, failure mapping), `config.py` (strict YAML loaders, pins), `registry.py` (15 arms, capability declarations),
+  `run_manifest.py` (immutable manifest, read-only git capture), `tracing.py` (stage spans, call budgets), `runner.py` (paired ITT runner, ledger, plan registry), `cli.py`, `generator.py` (Groq pool, live proof
+  entry point), `secret_scan.py`. Evidence: E-B01-002 to E-B01-006 (371 tests). Nothing yet touches Palladion, a corpus or a retriever.
+- Commands from `palladion-benchmark/`: `uv run pytest`, `uv run ruff check .`, `uv run ruff format --check benchmark tests`, `uv run mypy`, `uv run python -m benchmark.cli capability-matrix`,
+  `uv run python -m benchmark.secret_scan --staged`. `make` is not installed and Docker cannot run on the author's machine; Qdrant runs Docker-free under WSL (BADR-0017, launcher built in B04).
+- The live generator proof (3 calls, 3 of 3 approved models answered) is the only provider use so far; the key lives in the gitignored `palladion-benchmark/.env` and has never been printed.
+- Free-tier limits seen: 8,000 tokens per minute on each approved model. Pre-assignment budgets stay null until daily limits are stated (BADR-0015).
 
 ## Reading order for a fresh session
 

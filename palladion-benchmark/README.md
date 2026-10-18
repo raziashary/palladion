@@ -9,8 +9,10 @@ reaches it only through an adapter. The design is the
 [research protocol v1.0](docs/vision/palladion_retrieval_benchmark_research_protocol.md); its hypotheses H1–H8 are
 **unmeasured**.
 
-**Current state:** development suite only (phase B00). There is no benchmark code, dataset, adapter, provider call or
-result yet. The only gate run so far is the documentation checker. See [progress](docs/development/PROGRESS.md).
+**Current state:** the development suite (B00) and the harness foundation (B01) exist. The harness has typed contracts, strict
+configuration, an arm registry, run manifests, a paired runner, a CLI, a secret scanner and a generator pool over three Groq
+models. There is no dataset, no retriever adapter and no measurement yet; hypotheses H1–H8 remain untested. See
+[progress](docs/development/PROGRESS.md).
 
 ## What it will compare
 
@@ -46,11 +48,16 @@ Python tooling is managed with uv from this folder.
 ```powershell
 cd palladion-benchmark
 uv sync --locked
+uv run ruff check .
+uv run mypy
 uv run pytest
+uv run python -m benchmark.cli capability-matrix
 ```
 
-No runtime dependencies are declared yet; dependencies are added by the task that needs them. Provider calls are disabled
-until the owner provisions credentials and enables them explicitly (see [open questions](docs/development/RISKS_AND_OPEN_QUESTIONS.md)).
+Runtime dependencies are `httpx` and `PyYAML` (BADR-0014); others are added by the task that needs them. A `Makefile` wraps the
+same commands for machines that have `make`. Docker is not used on the author's machine: Qdrant will run as a checksum-pinned standalone binary under WSL, as in Palladion (BADR-0017); `docker-compose.yml` is optional. Provider calls never happen implicitly: the generator needs the benchmark-local
+`.env` (copy `.env.example`), an explicit `--enable-live` flag and a call budget, for example
+`uv run python -m benchmark.generator --prove --enable-live`. Run `uv run python -m benchmark.secret_scan --staged` before committing; it fails on binary or oversized files it cannot read unless `--allow-unscannable` is passed.
 
 ## Limits
 

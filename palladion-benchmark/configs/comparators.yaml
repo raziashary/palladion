@@ -1,0 +1,28 @@
+# Arm registry with pins. UNPINNED is allowed while exploring and refused in confirmatory mode.
+# A real pin replaces it in the phase that builds the arm (commit, version, model or image_tag).
+schema_version: "1.0"
+
+arms:
+  - {id: R0, name: "BM25 lexical", family: retrieval, tracks: [retrieval_only], pin: {kind: unpinned, value: "UNPINNED"}, eligibility: all}
+  - {id: R1, name: "Dense", family: retrieval, tracks: [retrieval_only], pin: {kind: unpinned, value: "UNPINNED"}, eligibility: all}
+  - {id: R2, name: "Hybrid RRF", family: retrieval, tracks: [retrieval_only, controlled_qa], pin: {kind: unpinned, value: "UNPINNED"}, eligibility: all}
+  - {id: R3, name: "Hybrid plus reranker", family: retrieval, tracks: [retrieval_only, controlled_qa], pin: {kind: unpinned, value: "UNPINNED"}, eligibility: all}
+  - {id: R4, name: "HippoRAG 2", family: graph_research, tracks: [retrieval_only], pin: {kind: unpinned, value: "UNPINNED"}, eligibility: "document questions, S tier until OQ06 is revisited"}
+  - {id: R5, name: "GraphRAG Local", family: graph_research, tracks: [retrieval_only], pin: {kind: unpinned, value: "UNPINNED"}, eligibility: "document questions; Global mode is a separate exploratory condition"}
+  - {id: R6, name: "LightRAG", family: graph_research, tracks: [retrieval_only], pin: {kind: unpinned, value: "UNPINNED"}, eligibility: "document questions, S tier until OQ06 is revisited"}
+  - {id: R7, name: "Palladion retriever", family: system_under_test, tracks: [retrieval_only, controlled_qa], pin: {kind: unpinned, value: "UNPINNED"}, eligibility: all}
+  - {id: R7a, name: "Palladion retriever without graph", family: system_under_test, tracks: [retrieval_only, controlled_qa], pin: {kind: unpinned, value: "UNPINNED"}, eligibility: all}
+  - {id: R7b, name: "Palladion retriever with bounded graph", family: system_under_test, tracks: [retrieval_only], pin: {kind: unpinned, value: "UNPINNED"}, eligibility: "NOT_RUN unless Palladion exposes graph expansion"}
+  - {id: E0, name: "Plain LangChain two-step", family: framework, tracks: [native_end_to_end], pin: {kind: unpinned, value: "UNPINNED"}, eligibility: all}
+  - {id: E1, name: "LangGraph agentic", family: framework, tracks: [native_end_to_end], pin: {kind: unpinned, value: "UNPINNED"}, eligibility: all}
+  - {id: E2, name: "Google ADK with RAG Engine", family: managed_service, tracks: [native_end_to_end], pin: {kind: unpinned, value: "UNPINNED"}, eligibility: "NOT_RUN unless access is confirmed (OQ07)"}
+  - {id: E3, name: "Palladion without critic", family: system_under_test, tracks: [native_end_to_end], pin: {kind: unpinned, value: "UNPINNED"}, eligibility: "FEATURE_NOT_SUPPORTED until Palladion documents a critic-off switch (OQ11)"}
+  - {id: E4, name: "Full Palladion with critic", family: system_under_test, tracks: [native_end_to_end], pin: {kind: unpinned, value: "UNPINNED"}, eligibility: "NOT_RUN until Palladion ships its independent critic (OQ11)"}
+
+# Embedding and reranker follow Palladion's pins (OQ04, OQ05); they are read from Palladion's live
+# settings when B04 starts, so they stay UNPINNED here.
+shared_models:
+  embeddings: {kind: unpinned, value: "UNPINNED"}
+  reranker: {kind: unpinned, value: "UNPINNED"}
+
+system_under_test: {kind: unpinned, value: "UNPINNED"}

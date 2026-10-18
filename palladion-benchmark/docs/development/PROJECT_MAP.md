@@ -9,7 +9,11 @@ Updated 2026-10-18. Shows what exists and what is planned. Planned paths are not
 | `docs/vision/palladion_retrieval_benchmark_research_protocol.md` | Vision and methodology (unedited) |
 | `docs/development/` | Plan, goal, progress, ADRs, gates, protocol, traceability, memory, map, learning, risks, evidence, `check_docs.py` |
 | `README.md`, `AGENTS.md`, `docs/README.md` | Entry points and project instructions |
-| `pyproject.toml`, `uv.lock`, `.gitignore` | uv bootstrap with dev tools only (B00-T03.02) |
+| `pyproject.toml`, `uv.lock`, `.gitignore`, `.env.example`, `Makefile`, `docker-compose.yml` | uv project, dev commands and an optional pinned Qdrant service (B00-T03.02, B01-T01.01) |
+| `benchmark/` | `contracts`, `config`, `registry`, `run_manifest`, `tracing`, `runner`, `cli`, `generator`, `secret_scan` and an empty `adapters/` package (B01) |
+| `configs/` | `benchmark.yaml`, `comparators.yaml`, `evaluation.yaml`, `fixtures.yaml` (B01-T02.03) |
+| `tests/` | 371 tests for the B01 modules |
+| `docs/reproducibility.md` | Reproducibility checklist, started in B01-T03.02 |
 
 ## Planned structure (owners in the atomic register)
 

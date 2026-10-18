@@ -1,6 +1,6 @@
 # Benchmark testing gates
 
-Only BG-DOC is runnable today. Every other gate is `NOT_RUN` and describes the full obligation
+BG-DOC and the B01 subsets of BG-HARNESS, BG-ADAPTER, BG-REPRO and BG-SECURITY are runnable today. Every other gate is `NOT_RUN`. Each row describes the full obligation
 of its owning phases; phase-local results never imply a full-gate pass. Gate states and evidence
 are in [PROGRESS](PROGRESS.md) and [EVIDENCE_LOG](EVIDENCE_LOG.md). Gates test the benchmark's
 own correctness. They do not test, and cannot establish, how well Palladion or any comparator performs.
@@ -37,7 +37,7 @@ own correctness. They do not test, and cannot establish, how well Palladion or a
 | Gate | Owner phases / protocol source | Falsifiable proof and required negative cases |
 |---|---|---|
 | BG-DOC | B00 and every doc-affecting task; whole suite | `python palladion-benchmark/docs/development/check_docs.py` and `--self-test`: required documents, local links and anchors, stable IDs, ADR fields, atomic fields, acyclic dependencies, ownership of all 70 protocol-tree files, coverage rows. Planted broken link, missing field, cycle and unowned file are rejected. The checker cannot prove semantic fidelity; the independent review does that. |
-| BG-HARNESS | B01; §3.1, §7, §18 | `tests/test_adapter_contracts.py`, `tests/test_budget_enforcement.py`, `tests/test_generator_pool.py`: contracts reject invalid input, null stays null, a sixth main call is a recorded failure, failover is explicit and per-call recorded, a crashing arm becomes `INVALID_RUN`. Real-provider proof of the generator entry point is separate and recorded (B01-T05.02). |
+| BG-HARNESS | B01; §3.1, §7, §18 | `tests/test_adapter_contracts.py`, `tests/test_budget_enforcement.py`, `tests/test_generator_pool.py`, `tests/test_runner.py`, `tests/test_cli.py`, `tests/test_config_loader.py`: contracts reject invalid input, null stays null, a sixth main call is a recorded failure, failover is explicit and per-call recorded, a crashing arm becomes `INVALID_RUN`. Real-provider proof of the generator entry point is separate and recorded (B01-T05.02). |
 | BG-FIXTURE | B02, B07-T07, B08-T01; §4, §16 | `tests/test_fixture_integrity.py`, `tests/test_temporal_gold.py`: determinism, referential integrity, contradiction really covers the same scope and time, distinct namespaces never merge, supersession acyclic, draft claiming approval stays unapproved, no leakage of gold into the published corpus. Every check has a planted-defect control. |
 | BG-GOLD | B02, B05, B07, B08; §5, §6, §14.5 | `tests/test_evidence_slots.py` plus the label audit: alternatives, empty-alternatives meaning, five negative mechanisms distinct from conflict, family-grouped splits, two-annotator agreement with denominators, defective cases fixed or withdrawn before sealing. |
 | BG-METRIC | B03, B05, B06, B07; §8–§11 | `tests/test_span_alignment.py`, `tests/test_evidence_slots.py` and metric unit tests: hand-computed values, oracle/empty/shuffled controls, wrong-vintage counted though ranked first, fabricated locator caught, always-abstain penalized, no metric reads a self-reported score as a probability. |

@@ -18,8 +18,5 @@ Start with the [project instructions](../AGENTS.md), then follow the reading ord
 | Structural validation | [check_docs.py](development/check_docs.py) |
 
 The Palladion system's documents live in [palladion/docs](../../palladion/docs/README.md); they are read for
-interface facts and never edited from here. The three protocol-tree documents `scoring_rubric.md`,
-`annotation_guide.md` and `reproducibility.md`, plus `dataset_card.md`, are created by their owning tasks and do not
-exist yet.
-
-Push test: this line may be removed.
+interface facts and never edited from here. [reproducibility.md](reproducibility.md) exists as a checklist started in B01;
+`scoring_rubric.md`, `annotation_guide.md` and `dataset_card.md` are created by their owning tasks and do not exist yet.

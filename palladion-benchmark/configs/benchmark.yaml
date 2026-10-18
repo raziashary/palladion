@@ -1,0 +1,54 @@
+# Provisional defaults (BADR-0012): sizes follow protocol sections 4.2, 5.2 and 13.2 as starting
+# proposals and are frozen only at the B08-T03.01 seal. Nothing here is a measured result.
+schema_version: "1.0"
+
+tiers:
+  S: {documents: 1200, single_turn_questions: 100, episodes: 10}     # smoke/pilot; episodes are a small subset
+  M: {documents: 12000, single_turn_questions: 1000, episodes: 100}  # primary
+  L: {documents: 60000, single_turn_questions: 240, episodes: 0}     # stress subset of primary families
+
+seeds:
+  default: 7
+
+evidence:
+  k_values: [5, 10, 20]
+  token_budgets: [4000, 8000]
+
+splits:
+  strata_count: 10
+  smoke_per_stratum: 10
+  dev_per_stratum: 30
+  test_per_stratum: 60
+
+runner:
+  case_deadline_seconds: 120.0
+  run_deadline_seconds: null        # null = no run-level limit; limits apply between cases only
+  retry:
+    max_attempts: 2                 # only classified transient infrastructure faults are retried
+    base_backoff_seconds: 1.0
+
+budgets:
+  main_max_calls: 5                 # protocol 11.3: main agent including finalization
+  critic_max_calls: 3
+
+# Generator pool (BADR-0007, BADR-0008, BADR-0015). Live calls also need an explicit enable flag
+# on the command line; this file never enables anything.
+generator:
+  models:
+    - "qwen/qwen3.8-27b"
+    - "openai/gpt-oss-120b"
+    - "openai/gpt-oss-20b"
+  temperature: 0.0
+  max_completion_tokens: 256
+  reasoning_effort:
+    "qwen/qwen3.8-27b": "none"
+    "openai/gpt-oss-120b": "low"
+    "openai/gpt-oss-20b": "low"
+  rate_limit_max_wait_seconds: 120.0
+  request_timeout_seconds: 60.0
+  call_budget_per_run: null         # null = unset; live commands pass an explicit budget
+  token_budgets:                    # per-model token budgets for assignment; null = unknown (primary only)
+    "qwen/qwen3.8-27b": null
+    "openai/gpt-oss-120b": null
+    "openai/gpt-oss-20b": null
+  allow_automatic_failover: false

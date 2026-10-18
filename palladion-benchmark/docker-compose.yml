@@ -1,0 +1,17 @@
+# OPTIONAL, for machines with a working Docker. The author's machine cannot run Docker, so the benchmark's own
+# Qdrant runs as a checksum-pinned standalone binary under WSL (BADR-0017, scripts/qdrant_server.py in B04) and
+# this file is never executed there. Every service sits behind a profile, so a bare `docker compose up`
+# starts nothing. Palladion's own Qdrant uses 127.0.0.1:16333; this one uses 17333 to avoid a clash.
+# The tag mirrors the one Palladion pins; an image digest is recorded when it can be resolved.
+services:
+  qdrant:
+    image: qdrant/qdrant:v1.19.2
+    profiles: ["qdrant"]
+    container_name: palladion-benchmark-qdrant
+    ports:
+      - "127.0.0.1:17333:6333"
+    volumes:
+      - benchmark-qdrant-data:/qdrant/storage
+
+volumes:
+  benchmark-qdrant-data:
