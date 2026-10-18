@@ -382,3 +382,64 @@ def test_p04_message_deadline_stops_and_persists_blocked_search_process(runtime,
         events = [json.loads(row[0]) for row in database.connection.execute(
             "SELECT payload_json FROM case_events WHERE event_kind='RUNTIME_TOOL_RESULT'")]
         assert any(e.get("status") == "CANCELLED" and e.get("tool") == "search_knowledge" for e in events)
+
+
+def test_p05_actual_passage_cache_checks_correction_close_and_revocation(runtime):
+    from evidence_agent.core.errors import PermissionDenied
+    from evidence_agent.memory.hotcache import HotCache
+    from evidence_agent.memory.store import CaseStore, MemorySpec
+    from evidence_agent.policy.bootstrap import seed_policy_fixture
+    from evidence_agent.retrieval.evidence import RequestLedger
+    from evidence_agent.retrieval.hybrid import HybridSearch
+    root, index, _ = runtime
+    with Database(root / "registry.sqlite") as database:
+        registry = Registry(database, OriginalStore(root / "originals"))
+        seed_policy_fixture(registry, APP)
+        principal = registry.access.authenticate("reader-a")
+        store = CaseStore(registry, principal, "case-42")
+        cache = HotCache()
+        search = HybridSearch(Catalog(registry), index)
+        passage = search.search(principal, "case-42", "SOP-2026-B", limit=1).passages[0]
+        ledger = RequestLedger(search, principal, "case-42", "p05-cache", hotcache=cache)
+        expected = ledger.add(passage.citation_id)
+        assert ledger.read(passage.citation_id) == expected and cache.hits == 1
+        first = store.memory().write(MemorySpec(scope_id="reader-a", content="initial report"))
+        ledger.read(passage.citation_id)
+        assert cache.hits == 1  # Canonical epoch change forces a miss.
+        store.memory().write(MemorySpec(scope_id="reader-a", content="corrected report"), supersedes_id=first)
+        ledger.read(passage.citation_id)
+        assert cache.hits == 1
+        CaseStore(registry, registry.access.authenticate("admin-a"), "case-42").memory().close_case()
+        ledger.read(passage.citation_id)
+        assert cache.hits == 1  # Close invalidates; an explicit fresh source read still revalidates.
+        registry.revoke_source(registry.access.authenticate("admin-a"), passage.revision_id)
+        with pytest.raises(PermissionDenied):
+            ledger.read(passage.citation_id)
+        assert not cache.entries
+
+
+def test_p05_source_backed_memory_reader_rechecks_revocation(runtime):
+    from evidence_agent.core.errors import PermissionDenied
+    from evidence_agent.core.models import SourceKind, SourceRef
+    from evidence_agent.memory.store import CaseStore, MemorySpec
+    from evidence_agent.retrieval.hybrid import HybridSearch
+    root, index, _ = runtime
+    with Database(root / "registry.sqlite") as database:
+        registry = Registry(database, OriginalStore(root / "originals"))
+        principal = registry.access.authenticate("reader-a")
+        passage = HybridSearch(Catalog(registry), index).search(principal, "case-42", "SOP-2026-B", limit=1).passages[0]
+        memory = CaseStore(registry, principal, "case-42").memory()
+        reference = SourceRef(source_kind=SourceKind.DOCUMENT_REVISION, tenant_id=principal.tenant_id,
+            source_id=passage.revision_id, revision_id=passage.revision_id, chunk_id=passage.citation_id,
+            span_start=passage.start_byte, span_end=passage.end_byte)
+        identifier = memory.write(MemorySpec(scope_kind="CASE", scope_id="case-42",
+            content="SOURCE_MEMORY_CANARY", source_ref=reference))
+        assert memory.read(identifier)["verification_status"] == "UNVERIFIED"
+        with TestClient(create_app(root, index, TOKENS)) as client:
+            response = client.get("/v1/evidence/"+identifier, params={"case_id":"case-42"}, headers=auth("test-reader-a"))
+            assert response.status_code == 200 and "SOURCE_MEMORY_CANARY" in response.text
+            registry.revoke_source(registry.access.authenticate("admin-a"), passage.revision_id)
+            with pytest.raises(PermissionDenied):
+                memory.read(identifier)
+            response = client.get("/v1/evidence/"+identifier, params={"case_id":"case-42"}, headers=auth("test-reader-a"))
+            assert response.status_code == 403 and "SOURCE_MEMORY_CANARY" not in response.text

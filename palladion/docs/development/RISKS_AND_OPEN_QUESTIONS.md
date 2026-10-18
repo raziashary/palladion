@@ -1,11 +1,11 @@
 # Risks, accepted answers and verification obligations
 
-Current authority amendment: user explicitly authorized P04 end-to-end from published64d2066; ADR-0030 separately approves the additive PolicyDecision extension. Earlier implementation hold below is historical; P04 explicit enabled provider commands are authorized.
+Current authority amendment: P04 published4245023; user explicitly authorized P05 end-to-end; ADR-0030 separately approves the additive PolicyDecision extension. Earlier implementation hold below is historical; P04 explicit enabled provider commands are authorized.
 
 Updated 2026-10-17. The user read and accepted all recommendation directions, except
 fake-first runtime: use Groq `qwen/qwen3.8-27b`. uv and package-selection authority are
 explicitly approved. **Additive v3 migration is owner-approved (ADR-0025).**
-P04 is explicitly authorized; later implementation remains phase-scoped. Acceptance does not invent compatibility,
+P05 is explicitly authorized; ADR0039/0040 approve v4/recall and owner/admin scope controls. Later implementation remains phase-scoped. Acceptance does not invent compatibility,
 thresholds, fixture values, reviewer availability, completeness or production signoff.
 
 Owner answers live once in [ADR_LOG](ADR_LOG.md); edit **My answer (editable)** there.
@@ -74,3 +74,11 @@ Measured combined8000TPM, Qwen7000input/1000output; header requests counter is10
 No human escalation assignee or independent semantic gold exists; normative operational
 permission remains qualified/unavailable until P06 required review. Full scientific
 quality/latency/cost/held-out claims remain P08. Concurrent benchmark is outside this task.
+
+P05 pilot/implementation evidence is E-P05-001. Model400/schema/quota failures and lifecycle reruns are retained; no semantic gold or organization policy authority is inferred. Scope controls are explicit owner decisions, not inferred from team names.
+
+P05 phase-local implementation/audit closes at E-P05-001. No unanswered owner ADR.
+The actual pilot has0/3 strict model completions; provider/tool reliability, semantic
+usefulness and H04 are unproven. P06/P08 retain every failed condition. Bounded recall
+is non-exhaustive even after current scope filters; exact-ID lookup/narrower queries
+are available. No tenant/private-row flooding can suppress allowed items before scope.

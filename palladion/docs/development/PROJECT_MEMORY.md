@@ -37,33 +37,27 @@ Read root AGENTS → [master plan task protocol](MASTER_DEV_PLAN.md#task-reading
 
 ## Current state and next action
 
-P03 DONE from f48ad05: all10 atomic cards verified at E-P03-001. Start adversary
-and single end reviewer used GPT6LunaMedium; main implemented/tested. No schema or
-dependency change. Additive PolicyDecision extension approved/implemented (ADR-0030).
-171 tests pass across disjoint163+8 commands; two failed combined WSL transport runs
-remain recorded. Ruff, mypy45 files, docs/dependency controls and exact-wheel domain
-smoke pass. Reviewer status-drift finding corrected; no confirmed runtime defect.
-G-TEMPORAL/G-LIVE pass phase scope; G-POLICY remains PARTIAL for P04 gate consumer.
-P03 published64d2066; shared main later advanced to benchmark commit ea0b8de.
-Preserve all concurrent palladion-benchmark and .vscode changes; P04 scope is palladion.
-P04 DONE at E-P04-001: all14 children and sole end-audit resolution complete.
-Current229 non-server +10 real-Qdrant tests pass (239 disjoint; six provider pytest
-cases deselected). Installed wheel regression30PASS; final EOF-whitespace-only rebuild20PASS, overlapping
-the above. Ruff/mypy56/dependency77+4/doc17MD+93cards+20 controls pass. Wheel SHA256
- 7be3caba6080d1fed754a1cfd535beed867a8e319b105c636c6d3922768bacc8
-matches47 files. Actual five dispositions/document/TCP proofs retained along with all
-failed runs; final20B/120B no-evidence refreshes failed strict scenario assertions due
-to malformed model output but safely abstained and exposed truthful executed scope.
-No model-quality/hypothesis success claim. R1 event privacy, R2 scope and R3 README
-resolved by same reviewer; actor_id owner hydration preserves UNVERIFIED reports.
-Canonical temporal refs, admin+membership traces/readiness and owned-process search
-are implemented under ADR-0031/0032/0034. ADR-0036 allows exactly three explicit models.
-No automatic fallback/retry. Measured8000combined TPM/Qwen7000input/1000output;
-requests counter1000RPD. No full memory/critic/graph/research or operational permission.
-All owned services stopped,0testcollections, ports16333/16334/18080 free. Automatic
-approval rejected deleting verified temporary wheel env; retained ignored without
-running processes. Preserve benchmark/.vscode. Wait for P05 GO; no new main push.
+P03 published64d2066; P04 published4245023. Preserve concurrent benchmark/.vscode work.
 
+P05 DONE at E-P05-001; all seven cards and third-turn correction verified with the same reviewer. Approvedv4
+adds immutable memory provenance/team/FTS with checked pre-migration backups; no user
+demo DB migrated. Four scopes require current principal/origin-case/source permissions.
+Owner/admin validity edits, explicit promotion and revisions remain context-only.
+Packet carries historical RECHECK observations, unverified reports, hypotheses, gaps
+and attempts. Empty failed replies cannot clear prior incomplete policy questions;
+current authorized decisive policy traces determine their continuity. Every HotCache hit revalidates source bytes/time/ACL/generation; no speed
+claim. Recall scopes/active state filter before500candidate bound and reports
+non-exhaustive coverage;501private-row starvation controls pass. Same reviewer resolves
+R1/R2 and third-turn correction;17targetedPASS. Latest246source+12actual-Qdrant=258disjointPASS, installed65
+(overlap)PASS, Ruff/mypy58/dependency79+4/doc controlsPASS. Final49file wheel SHA256
+6ab0757572b84aeb51ad24611d746ba45a616ce782b1d90cfa6403b9bcf8775f.
+Actual120B pilot p05-a3c0f62508844c53bb29288c590fb0a4 exits0/allconditions, setup true,
+packet gap recall0/1/1, strictcompletion0/3 due provider400errors. FreshPENDING, no
+staleFAILED claims; compressed answer omitted settlement. All failures retained, no
+H04/reliability/semantic claim. Scorer/guard evidence is separate from actual provider
+proof. OwnedQdrant99335/PID471 stopped,0collections, ports16333/16334/18080 free.
+Ignored wheel environment retained without processes. Benchmark/.vscode untouched.
+P04 pushed4245023; P05 checkpoint local only. Wait for P06 GO and explicit main push.
 
 Previous P02 state:
 
@@ -98,7 +92,7 @@ P00 completion/old hold is historical at E-DOC-001–E-DOC-004. P01 GO supersede
 that hold for this phase. Source/security gates remain PARTIAL until later consumers;
 no P01 check establishes full message/runtime behavior. At P01 root .env was never read or
 copied; P04 explicit enabled commands now read only the selected Groq credential internally, never print/export it; app .venv is reused/ignored. Unrelated .vscode remains untouched. New main
-publishing requires explicit user approval; P05+ is outside current scope.
+publishing requires explicit user approval; P06+ is outside current scope.
 
 ## Open risks to retain
 

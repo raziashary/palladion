@@ -56,3 +56,27 @@ def macro_average(rows: Iterable[Mapping[str, float | None]]) -> dict[str, float
         values = [value for row in materialized if (value := row.get(key)) is not None]
         result[key] = sum(values) / len(values) if values else None
     return result
+
+
+def score_continuation(output: Mapping[str, object], packet: Mapping[str, object], *,
+                       required_gaps: Sequence[str], current_value: str,
+                       stale_value: str) -> dict[str, object]:
+    """Exact synthetic controls, not semantic entailment or a research success threshold."""
+    required = set(required_gaps)
+    gaps = output.get("missing_requirements")
+    questions = packet.get("open_questions")
+    claims = output.get("verified_claims")
+    if not isinstance(gaps, list) or not isinstance(questions, list) or not isinstance(claims, list):
+        raise ValueError("Actual response/packet lists required")
+    texts = [str(c.get("text", "")) for c in claims if isinstance(c, dict)]
+    stale = sum(f": {stale_value} at " in text for text in texts)
+    current = any(f": {current_value} at " in text for text in texts)
+    packet_missing = sorted(required - set(questions))
+    answer_missing = sorted(required - set(gaps))
+    return {"required_gap_count": len(required), "packet_omitted_gaps": packet_missing,
+        "answer_omitted_gaps": answer_missing,
+        "packet_gap_recall": (len(required)-len(packet_missing))/len(required) if required else None,
+        "answer_gap_recall": (len(required)-len(answer_missing))/len(required) if required else None,
+        "stale_claim_count": stale, "current_observation_released": current,
+        "completion": current and not stale and not answer_missing and
+            output.get("disposition") == "PARTIALLY_SUPPORTED" and not output.get("verification_failures")}

@@ -5,6 +5,25 @@ command observations and review receipts live in EVIDENCE_LOG.
 
 ## Current checkpoint
 
+P04 is published4245023. **P05 DONE** at E-P05-001: all seven atomic cards,
+approved v4, scoped memory, FTS, packet/cache, follow-up and measurement consumers.
+Final third-turn correction preserves unresolved questions across empty failed replies;
+executed canonical policy resolution clears them. Same sole Luna Medium reviewer
+resolves R1/R2 and the third-turn code/documentation correction. Main closes phase-local
+obligations after source246PASS and12actual-Qdrant/HTTP checks (258disjoint).
+The exact installed wheel passes65 overlapping checks, and the trusted operator CLI
+smoke passes. Ruff, strict mypy58, dependency79+4 and docs17/93cards/20 controls pass.
+All49 packaged Python/SQL files match source; final hash is in EVIDENCE_LOG.
+Actual120B pilot recorded every condition; packet gap recall0/1/1, answer gap recall0/1/0,
+freshPENDING and no staleFAILED claims. Strict completion0/3 due provider/tool errors;
+no H04, model reliability or semantic success claimed. Pilot predates the final
+state-reader correction; deterministic source/installed regressions prove that change.
+Owned server stopped,0collections before stop, ports16333/16334/18080 free. Ignored
+wheel environment retained; no user demo migration. No unanswered P05 owner ADR.
+P06+, UI, enterprise writes, benchmark edits and another main push need authorization.
+
+## Previous P04 checkpoint
+
 P03 published at64d2066. **P04 DONE** at E-P04-001: all14 atomic children,
 phase-local gates, actual five-disposition/document/TCP consumers, installed artifact
 and sole LunaMedium end-audit/resolution verified. Current automated coverage:
@@ -18,7 +37,7 @@ the actual updated search-scope consumer is observed, not universal model reliab
 Reviewer R1 event privacy, R2 executed scope and R3 stale README are resolved.
 Owned processes stopped, test collections absent and ports16333/16334/18080 free.
 Ignored temporary wheel environment retained after automatic deletion rejection.
-P05/UI/enterprise writes, benchmark changes and a new main push remain unauthorized.
+At that checkpoint P05 needed GO; that hold is superseded above. UI/enterprise writes, benchmark changes and another main push remain unauthorized.
 
 Previous P02 checkpoint:
 
@@ -54,7 +73,7 @@ Human gold-label adjudication, retrieval, citation API and model behavior are no
 | P02 | DONE | E-P02-001; all15 children, real-server/HTTP/pilot/wheel proof and single audit resolution |
 | P03 | DONE | E-P03-001; all10 children, approved ADR-0030, phase-local gates and single audit/resolution |
 | P04 | DONE | E-P04-001: all14 children, phase-local proof, exact wheel and single audit/resolution |
-| P05 | PLANNED | Runtime memory/continuity beyond P01 contracts |
+| P05 | DONE | E-P05-001; all7 cards, third-turn correction, source/installed consumers and sole review/resolution |
 | P06 | PLANNED | Runtime adversarial critic and experiments |
 | P07 | PLANNED | Optional graph implementation and measurements |
 | P08 | PLANNED | Scientific runs, scorer, fault injection and reports |
@@ -64,8 +83,8 @@ Human gold-label adjudication, retrieval, citation API and model behavior are no
 
 | Gate | State | Evidence and limits |
 |---|---|---|
-| G-DOC | PASS | P00–P04 documentation PASS; final source/consumer/audit records checked |
-| G-CONTRACT | PASS | P01–P04 contracts and approved provenance extension pass; exact-wheel consumers and review resolved |
+| G-DOC | PASS | P00–P05 documentation PASS; final source/consumer/audit records checked |
+| G-CONTRACT | PASS | P01–P05 contracts and approved provenance/memory extensions pass; exact-wheel consumers and review resolved |
 | G-SOURCE | PARTIAL | Fresh/populated/rollback/foreign DB checks, immutable bytes, persisted source reader pass; P02 index/API/revocation verified; P07 graph obligations remain |
 | G-SECURITY | PARTIAL | Stored identity/grants/membership/source ACL and revocation/self-approval controls pass; P04 prompt/API/tool/trace controls pass; P07 graph boundaries remain |
 | G-RETRIEVAL | PARTIAL | P02 subset PASS: real Qdrant/model/ACL/canonical/exact/exception/pilot/audit; P08-T02.05 controlled fusion ablation remains |
@@ -74,7 +93,7 @@ Human gold-label adjudication, retrieval, citation API and model behavior are no
 | G-LIVE | PASS | P03 named mock operations, target ACL, freshness, bounded retry/concurrency/deadline and audit controls; synthetic phase contract only |
 | G-BUDGET | PARTIAL | Main/tool reserve, malformed/failure/parallel/cancellation controls pass; owned search-worker cancellation/deadline passes; P06 critic remains |
 | G-GATE | PARTIAL | Controlled claims, freshness, T09/T22 and safe rendering tested; all five live dispositions pass; P06 semantic/critic review remains |
-| G-MEMORY | PARTIAL | P04 event/packet/reopen/rechecked-pointer skeleton tested; P05 full categories/scopes/promotion remain |
+| G-MEMORY | PASS | P05 phase-local scopes/validity/recall/packet/cache/reopen and third-turn controls pass; sole audit resolved; semantic improvement unproven |
 | G-CRITIC | NOT_RUN | Contracts only; no critic runtime |
 | G-GRAPH | NOT_RUN | Identity helpers only; no graph store/traversal |
 | G-E2E | PARTIAL | P04 five-disposition/document/TCP/wheel and10 Qdrant tests pass; end review resolved; later memory/critic/graph obligations remain |
@@ -99,8 +118,12 @@ Human gold-label adjudication, retrieval, citation API and model behavior are no
 
 ## Next-session handoff
 
-P04 is complete; wait for owner GO for P05. Read E-P04-001 for all source, installed
-wheel, actual-model and audit receipts, including failed runs. P05 full memory, P06
-critic, P07 graph and P08 research remain planned. Main push needs explicit approval.
-Preserve concurrent benchmark/.vscode work. No owned server remains running. The ignored
-runtime/p04-wheel-env-20261018 environment is retained after automatic cleanup rejection.
+P05 complete; wait for owner GO for P06. Read E-P05-001 and ADR0039–0044 for current
+source/consumer/measurement/review receipts. Provider/tool failures and0/3 strict pilot
+completion remain a risk; P06/P08 must retain them in any denominators. No source or
+memory creates independent policy authority. Four read tools and final gate unchanged.
+No owned server remains running. Concurrent benchmark/.vscode stay outside this work.
+The app-local ignored wheel environment is retained for reproduction. Another main push
+needs explicit approval; P04 push approval was already fulfilled4245023.
+
+Final main audit reopened packet/resume closure before commit: third-turn empty reply erased an unresolved question. ADR0044, red/green regressions, refreshed source/installed checks and same-reviewer resolution now complete; premature closure was retracted in EVIDENCE_LOG.

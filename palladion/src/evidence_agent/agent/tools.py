@@ -41,6 +41,9 @@ class LiveArgs(VersionedModel):
 
 
 class MemoryArgs(VersionedModel):
+    query: str | None = Field(default=None, max_length=256)
+    memory_id: str | None = Field(default=None, min_length=1, max_length=100)
+    category: Literal["EPISODIC", "SEMANTIC", "PROCEDURAL"] | None = None
     limit: int = Field(default=8, ge=1, le=20)
 
 
@@ -67,6 +70,7 @@ def definitions() -> list[dict[str, Any]]:
 class Tools:
     def __init__(self, ledger: RequestLedger, gateway: LiveGateway, store: CaseStore) -> None:
         self.ledger, self.gateway, self.store = ledger, gateway, store
+        self.memory_enabled = True
 
     async def execute(self, name: str, arguments: str) -> dict[str, Any]:
         correlation = self.ledger.trace_id
@@ -77,6 +81,7 @@ class Tools:
             self.store.authorize()
             principal, case = self.ledger.principal, self.ledger.case_id
             data: Any
+            recall_incomplete = False
             if isinstance(args, KnowledgeArgs):
                 result = await search(self.ledger.search, principal.principal_id, case,
                                       args.query, args.search_mode, args.limit)
@@ -99,7 +104,12 @@ class Tools:
                 data = self.ledger.add(decision.audit_id)
                 self.ledger.tool_status[name] = decision.status.value
             elif isinstance(args, MemoryArgs):
-                data = self.store.recent(limit=args.limit)
+                memory = self.store.memory()
+                data = memory.recall(query=args.query, memory_id=args.memory_id,
+                    category=args.category, limit=args.limit) if self.memory_enabled else []
+                recall_incomplete = memory.last_recall_incomplete
+                if self.memory_enabled and not args.query and not args.memory_id and not args.category:
+                    data = (data + self.store.recent(limit=args.limit))[:args.limit]
                 for event in data:
                     self.ledger.add(event["event_id"])
                 self.ledger.tool_status[name] = "CONTEXT_ONLY"
@@ -109,6 +119,9 @@ class Tools:
                 "retryable": False, "correlation_id": correlation, "source_ref": None,
                 "data": ([model_view(item) for item in data] if isinstance(args, KnowledgeArgs)
                          else model_view(data) if isinstance(args, PolicyArgs) else data)}
+            if isinstance(args, MemoryArgs):
+                result_payload["recall_coverage"] = {"candidate_window_incomplete": recall_incomplete,
+                    "exhaustive": False, "source_acl_rechecked": True}
             self.store.append("TOOL_RESULT", correlation, {"tool": name, "status": "SUCCEEDED",
                 "evidence_ids": list(self.ledger.records),
                 "retrieval_trace_id": result.trace_id if isinstance(args, KnowledgeArgs) else None,

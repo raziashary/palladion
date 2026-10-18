@@ -1,9 +1,9 @@
 # Research and later comparison protocol
 
-Status: **P02 retrieval-only pilot in progress; no full answer-system experiments executed**. Governing source: blueprint “Research
+Status: **P02 retrieval-only pilot recorded; P05 continuity engineering pilot recorded with failures; no confirmatory answer-system experiment executed**. Governing source: blueprint “Research
 evaluation,” “Questions deliberately left to experiments,” “Prototype environment.”
 Research records follow [ADR-0007](ADR_LOG.md#adr-0007--research-discipline-and-gate-meanings).
-No metric below is a measured Palladion result.
+Protocol metrics are intended measurements; recorded pilot sections identify actual observations and limits.
 
 ## Question and falsifiable hypotheses
 
@@ -214,3 +214,24 @@ failed run/model/attempt, do not turn selected passing reruns into model compari
 Provider tokenizer revision is not disclosed here; actual provider token counts are
 recorded, without cross-model tokenizer equivalence claims. No benchmark dataset,
 license, arm implementation or confirmatory-run decision is supplied by this phase.
+
+
+## P05 fixed continuity pilot
+
+ADR-0041 fixes one synthetic case, B4 parent=B2+policy (reranker enabled, graph off),
+B5 memory on and B5 compressed1500 vs6000 characters, identical saved history and
+current mock snapshots, no critic/vector. data/demo/retrieval_pilot.json pins conditions.
+`evaluate.py --run --memory --enable-live-llm --model <approved-model>` saves every
+raw API response/packet/received usage/budget/error/rate header and citation readback
+under a fresh run ID. Forty unrelated turns stress continuity. First stateFAILED,
+second statePENDING; settlement_state remains missing. Exact scorer reports packet
+and answer gap omissions, stale controlled claims, fresh-state release and strict
+completion (provider failures make completionfalse), with explicit denominators.
+B4 withholds packet/recall through explicit evaluator settings; four tool names and
+canonical authority/gate remain unchanged. Initial setup must actually retain the
+critical gap; failed setup is disclosed, never fabricated. Each condition waits45s
+between requests and has at most5 main calls,8tools,60s; no failed condition retries
+inside a run. Lifecycle reruns retain originals. Character bounds are not token counts;
+actual received provider usage is separate, missing values are not zero. A CLI exit0
+means all conditions were observed and resources closed, not that models passed or
+H04 succeeded. No human-adjudicated semantic usefulness or held-out inference.

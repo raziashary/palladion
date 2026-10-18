@@ -5,16 +5,21 @@ import re
 from typing import Any
 
 from evidence_agent.core.errors import PermissionDenied
-from evidence_agent.live.gateway import read_scope
+from evidence_agent.core.models import ContinuityPacket
+from evidence_agent.live.gateway import read_scope, utc_clock
 from evidence_agent.memory.packet import build_packet
 from evidence_agent.memory.store import CaseStore
 from evidence_agent.policy.registry import PolicyRegistry, PolicySpec
 
 
-def preflight(query: str, store: CaseStore) -> dict[str, Any]:
+def preflight(query: str, store: CaseStore, *, include_memory: bool = True,
+              packet_max_chars: int = 6000) -> dict[str, Any]:
     if not query.strip() or len(query) > 2048:
         raise ValueError("Question bounds exceeded")
-    packet = build_packet(store, query)
+    store.authorize()
+    packet = (build_packet(store, query, max_chars=packet_max_chars) if include_memory else
+        ContinuityPacket(case_id=store.case_id, tenant_id=store.principal.tenant_id,
+            agent_role="investigator", current_goal=query, generated_at=utc_clock()))
     identifiers = re.findall(r"\b(?:TX|SET|INC|MERCHANT|SOP|ERR)-[A-Z0-9-]{2,80}\b", query)
     scope = read_scope(store.registry, store.principal, store.case_id)
     families: set[str] = set()

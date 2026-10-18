@@ -322,3 +322,48 @@ that caused16 focused failures. Reading the actual schema fixed it, and34 focuse
 checks then passed. Search scope must likewise come from an executed tool result,
 not a constant label attached to every response. E-P04-001 retains both red controls
 and the failed first implementation.
+
+
+## L027 — Memory scope and validity need a canonical owner
+
+Use explicit persisted team membership, owner/admin controls and immutable fact revisions;
+repetition is never promotion. Unknown lifetime staysUNSPECIFIED. Legacy unowned rows
+are preserved but never silently assigned to a reader. Back up recognized persistent
+schemas before forward migration and reopen the backup to prove restoration state.
+
+## L028 — A packet can remember correctly while an answer still omits a gap
+
+The actual P05 pilot retained settlement_state in both B5 packets, but the compressed
+answer omitted it after a provider tool-generation failure. Report packet and answer
+omissions separately; allthree conditions had strict completionfalse. A CLI that saves
+all observations is not evidence that the model completed every task. Old observations
+remain RECHECK_FOR_CURRENT_DECISION and require new material reads. Same-source cache
+hits still validate current ACL/time/bytes; no performance benefit is inferred.
+
+## L029 — SQLite context managers do not close connections
+
+The first P05 pilot produced allthree response rows, then Windows cleanup failed because
+native sqlite3 context managers only commit/rollback. Use contextlib.closing for owned
+backup/clone connections. Preserve the failed lifecycle receipt and verify the corrected
+CLI completes cleanup; never swallow permission errors or invent a successful smoke.
+
+
+## L030 — Scope filtering must precede bounded recall ranking
+
+Filtering only after LIMIT500 allowed501newer private memories to crowd out an older
+permitted item. The legacy query reproduces the omission; the corrected structured,
+FTS and packet readers recover the authorized item without private canaries. Scope,
+current membership, active validity and revision state now filter before the window;
+canonical source ACL/bytes/time still revalidate afterward. The model receives explicit
+non-exhaustive/incomplete-window metadata; a bounded search never proves full absence.
+Sole end reviewer resolves both this defect and stale authorization text.
+
+## L031 — Absence of a gap is not evidence that it was resolved
+
+Latest-answer-only state dropped an unresolved settlement question when a later failed
+reply had an empty missing-input list. A second-message pilot could not detect this
+third-turn defect. Preserve unresolved state from authorized decisive canonical policy
+traces and retain generic nonempty case questions; only an executed resolving result
+can clear a policy requirement. Prove both persistence after failure and resolution
+after real policy execution. Main retracted premature closure openly before commit,
+kept the red regressions, rebuilt the artifact and reused the same end reviewer.

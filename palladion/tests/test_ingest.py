@@ -37,9 +37,21 @@ def _registry(tmp_path: Path) -> tuple[Database, Registry]:
     return database, Registry(database, originals)
 
 
+def _remove_v4_fixture(connection: sqlite3.Connection) -> None:
+    # Only isolated test DBs; reconstruct old schemas to exercise real forward upgrades.
+    for trigger in ("memory_fts_insert", "memory_entries_no_update", "memory_entries_no_delete",
+                    "memory_provenance_no_update", "memory_provenance_no_delete"):
+        connection.execute(f"DROP TRIGGER IF EXISTS {trigger}")
+    for table in ("memory_provenance", "memory_team_memberships", "memory_teams", "memory_fts"):
+        connection.execute(f"DROP TABLE IF EXISTS {table}")
+    connection.execute("DROP INDEX IF EXISTS memory_scope_idx")
+    connection.execute("DELETE FROM schema_versions WHERE version=4")
+
+
 def _downgrade_to_v1(path: Path, *, populated: bool) -> None:
     connection = sqlite3.connect(path)
     try:
+        _remove_v4_fixture(connection)
         if populated:
             connection.execute("INSERT INTO tenants(tenant_id) VALUES ('tenant-preserved')")
         for table in (
@@ -59,9 +71,50 @@ def _downgrade_to_v1(path: Path, *, populated: bool) -> None:
         connection.close()
 
 
+@pytest.mark.parametrize("fail", [False, True])
+def test_v4_populated_upgrade_or_rollback_preserves_legacy_memory(tmp_path, fail):
+    path = tmp_path / "memory-v3.sqlite"
+    with Database(path) as database:
+        database.connection.execute("INSERT INTO tenants VALUES('preserved')")
+    connection = sqlite3.connect(path)
+    _remove_v4_fixture(connection)
+    connection.execute("PRAGMA user_version=3")
+    connection.execute("INSERT INTO memory_entries VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)", (
+        "legacy", "SEMANTIC", "preserved", "USER", "unknown", None, None,
+        "UNVERIFIED", "LEGACY_BYTES", "UNSPECIFIED", None, None, "2026-01-01T00:00:00Z"))
+    if fail:
+        connection.execute("CREATE TRIGGER fail_v4 BEFORE INSERT ON schema_versions WHEN NEW.version=4 "
+                           "BEGIN SELECT RAISE(ABORT,'injected v4 failure'); END")
+    connection.commit()
+    connection.close()
+    if fail:
+        owner = Database(path)
+        with pytest.raises(sqlite3.IntegrityError, match="injected v4 failure"):
+            owner.open()
+        assert owner.backup_path is not None
+        with sqlite3.connect(owner.backup_path) as backup:
+            assert backup.execute("PRAGMA user_version").fetchone()[0] == 3
+            assert backup.execute("SELECT content FROM memory_entries").fetchone()[0] == "LEGACY_BYTES"
+        with sqlite3.connect(path) as check:
+            assert check.execute("PRAGMA user_version").fetchone()[0] == 3
+            assert check.execute("SELECT 1 FROM sqlite_master WHERE name='memory_provenance'").fetchone() is None
+            assert check.execute("SELECT content FROM memory_entries").fetchone()[0] == "LEGACY_BYTES"
+    else:
+        with Database(path) as check:
+            assert check.backup_path is not None
+            with sqlite3.connect(check.backup_path) as backup:
+                assert backup.execute("PRAGMA user_version").fetchone()[0] == 3
+                assert backup.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
+            assert check.connection.execute("PRAGMA user_version").fetchone()[0] == 4
+            assert check.connection.execute("SELECT content FROM memory_entries").fetchone()[0] == "LEGACY_BYTES"
+            assert check.connection.execute("SELECT count(*) FROM memory_provenance").fetchone()[0] == 0
+            assert check.connection.execute("SELECT content FROM memory_fts WHERE memory_fts MATCH 'LEGACY_BYTES'").fetchone()[0] == "LEGACY_BYTES"
+
+
 def _downgrade_to_v2(path: Path) -> None:
     connection = sqlite3.connect(path)
     try:
+        _remove_v4_fixture(connection)
         for table in (
             "context_links",
             "exact_aliases",
@@ -85,7 +138,7 @@ def test_fresh_schema_enforces_foreign_keys_status_and_utc_records(tmp_path: Pat
         assert connection.execute("PRAGMA journal_mode").fetchone()[0].lower() == "wal"
         assert connection.execute("PRAGMA user_version").fetchone()[0] == Database.SCHEMA_VERSION
         rows = connection.execute("SELECT version, applied_at FROM schema_versions ORDER BY version").fetchall()
-        assert [row["version"] for row in rows] == [1, 2, 3]
+        assert [row["version"] for row in rows] == [1, 2, 3, 4]
         assert all(row["applied_at"].endswith("Z") for row in rows)
 
         with pytest.raises(sqlite3.IntegrityError):
@@ -114,7 +167,7 @@ def test_populated_forward_upgrade_preserves_rows_and_reopens(tmp_path: Path) ->
     _downgrade_to_v1(path, populated=True)
 
     with Database(path) as upgraded:
-        assert upgraded.connection.execute("PRAGMA user_version").fetchone()[0] == 3
+        assert upgraded.connection.execute("PRAGMA user_version").fetchone()[0] == Database.SCHEMA_VERSION
         assert [
             row[0]
             for row in upgraded.connection.execute("SELECT tenant_id FROM tenants ORDER BY tenant_id")
@@ -122,7 +175,7 @@ def test_populated_forward_upgrade_preserves_rows_and_reopens(tmp_path: Path) ->
         assert [
             row[0]
             for row in upgraded.connection.execute("SELECT version FROM schema_versions ORDER BY version")
-        ] == [1, 2, 3]
+        ] == [1, 2, 3, 4]
         assert upgraded.connection.execute(
             "SELECT 1 FROM sqlite_master WHERE type = 'index' AND name = 'case_events_scope_idx'"
         ).fetchone() is not None

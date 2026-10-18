@@ -262,3 +262,29 @@ P04 does not close P05 memory, P06 critic, P07 graph or P08 semantic research ob
 Live probes require explicit CLI enablement; pytest additionally requires local Qdrant
 and PALLADION_TEST_LIVE_LLM=1. Six opt-in provider pytest cases were deselected, not PASS.
 Failed attempts and disposition mismatches remain failures, not skipped success.
+
+
+## P05 phase-local verification boundary
+
+P05 seven cards require scoped category/owner/team/promotion provenance, unknown-lifetime
+retention, explicit validity/correction/revocation history, fresh/populated v4 upgrade,
+rollback and restorable pre-migration backups. Structured/exact/FTS recall rechecks
+current principal/case/team/source ACL before exposure. Packet categories derive from
+actual persisted writers: canonical live events remain RECHECK_FOR_CURRENT_DECISION;
+reported facts remain UNVERIFIED; hypotheses stay non-authorizing; prior trusted gate
+missing slots survive long chatter and compression. Test correction, close, validity,
+role/source/team revocation and another principal separately. Actual same-runtime
+follow-up refreshes live observations and citation sources after reopen. Cache hits
+never waive canonical verification; character/entry/TTL bounds are measured, no speed
+claim. Explicit Groq continuity pilot consumes real API outputs and scores omitted
+settlement/stale-state controls, all model failures retained. Source/unit injections
+prove guards separately; only actual provider consumers establish generative integration.
+P06 critic, P07 graph and P08 confirmatory semantic research remain deferred.
+
+Final P05 phase-local gate result: source246PASS +actual-Qdrant12PASS (258disjoint),
+installed65 overlapping checks, trusted CLI, schema backup/upgrade/rollback and single
+end-review resolution verified at E-P05-001. Recall starvation/coverage, source-backed
+memory API revocation and third-turn incomplete→empty failure→executed resolution
+controls pass. Actual pilot recorded0/3 strict completions; model reliability and H04
+remain unproven. G-RESEARCH/G-E2E retain later P06/P07/P08 obligations; phase completion
+is not a successful research conclusion.

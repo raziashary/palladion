@@ -13,6 +13,7 @@ from evidence_agent.core.retrieval import SearchIndex
 from evidence_agent.live.contracts import AdapterConfig, Snapshot
 from evidence_agent.live.gateway import LiveGateway
 from evidence_agent.live.mock import MockAdapter, ReadAdapter
+from evidence_agent.memory.hotcache import HotCache
 from evidence_agent.memory.store import CaseStore
 from evidence_agent.retrieval.evidence import RequestLedger
 from evidence_agent.retrieval.hybrid import HybridSearch, Ranker
@@ -29,6 +30,7 @@ class AgentServices:
                  ranker: Ranker | None = None) -> None:
         self.root, self.index, self.model = root, index, model
         self.adapter, self.config, self.settings, self.ranker = adapter, config, settings, ranker
+        self.hotcache = HotCache()
         self.database: Database | None = None
         self.registry: Registry | None = None
         self.gateway: LiveGateway | None = None
@@ -44,10 +46,11 @@ class AgentServices:
         store = CaseStore(self.registry, principal, case_id)
         store.authorize()
         ledger = RequestLedger(HybridSearch(Catalog(self.registry), self.index, self.ranker),
-            principal, case_id, new_trace(), {k: v.max_age_seconds for k, v in self.config.operations.items()})
+            principal, case_id, new_trace(), {k: v.max_age_seconds for k, v in self.config.operations.items()}, hotcache=self.hotcache)
         return AgentRuntime(self.model, Tools(ledger, self.gateway, store), store, self.settings)
 
     def close(self) -> None:
+        self.hotcache.clear()
         if self.database is not None:
             self.database.close()
             self.database = None

@@ -162,3 +162,31 @@ P04 phase closure is evidenced at E-P04-001, including updated installed consume
 single end-review resolution. Public event/recall reads redact raw questions/prompts;
 internal packet reports are owner-scoped and UNVERIFIED. Search scope reflects executed
 retrieval. Semantic/critic/research success is not inferred from source presence.
+
+
+## P05 implemented path (phase-local verification and audit complete)
+
+Trusted local operator/application → MemoryStore owner/admin and current scope checks →
+immutable memory_entries + memory_provenance and auditable case events. Team scopes
+use memory_team_memberships, not tenant/name inference. v4 migration adds FTS5 and
+provenance without rewriting legacy rows; recognized existing stores get checked,
+exclusive SQLite backups before upgrade. memory.py is a trusted local filesystem
+operator CLI, not multiuser authentication or an LLM write surface.
+
+Current principal/case/team/source → exact/structured/FTS recall → context-only memory
+records. build_packet derives reported/hypothesis/historical observation/open-question/
+attempt/handle fields from their actual producers; metadata is never current authority.
+CaseStore.unresolved_questions replays authorized decisive policy traces so empty failed
+replies cannot erase open inputs; an executed resolving policy clears those fields.
+preflight → loop forwards those fields; model requests fresh domain reads; ledger/gate
+revalidate material claims. AgentServices owns bounded HotCache; every hit revalidates
+canonical original bytes/ACL/time/generation and owner epoch. Correction/close/team/source
+changes prevent stale reuse. Only exact passages cached, no generated-answer cache.
+
+Settings.continuity_enabled defaults true; evaluator-only B4 disables packet/recall.
+packet_max_chars defaults6000, compressed pilot1500; current full query still reaches
+model separately from compact packet goal. Actual provider usage remains separate from
+character counts. evaluate.py --memory → real model/API outputs → score_continuation →
+PILOT report with all failed conditions. P06 critic/P07 graph/P08 confirmation remain.
+
+E-P05-001 verifies the above consumer paths. Recall scope/active metadata filters before its bounded candidate window; full source checks remain afterward. Non-exhaustive coverage reaches the model. Provider pilot strictcompletion0/3 is retained; no semantic or H04 improvement claim.

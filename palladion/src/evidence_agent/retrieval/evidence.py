@@ -9,6 +9,7 @@ from typing import Any
 from evidence_agent.core.errors import PermissionDenied, ResourceConflict
 from evidence_agent.core.models import Principal, VersionedModel
 from evidence_agent.core.retrieval import Chunk
+from evidence_agent.memory.hotcache import HotCache
 from evidence_agent.storage.catalog import Catalog
 
 
@@ -93,12 +94,13 @@ class RequestLedger:
     """Current-request handles; every release re-reads the original domain authority."""
 
     def __init__(self, search: object, principal: Principal, case_id: str, trace_id: str,
-                 freshness_seconds: dict[str, int] | None = None) -> None:
+                 freshness_seconds: dict[str, int] | None = None, hotcache: HotCache | None = None) -> None:
         # Local import avoids making retrieval's domain types depend on the orchestrator.
         from evidence_agent.retrieval.hybrid import HybridSearch
         if not isinstance(search, HybridSearch):
             raise TypeError("Canonical search owner required")
         self.search, self.principal, self.case_id, self.trace_id = search, principal, case_id, trace_id
+        self.hotcache = hotcache
         self.freshness_seconds = freshness_seconds or {}
         self.records: dict[str, dict[str, Any]] = {}
         from evidence_agent.core.models import EvidenceRecord
@@ -107,8 +109,14 @@ class RequestLedger:
         self.tool_status: dict[str, str] = {}
 
     def read(self, identifier: str) -> dict[str, Any]:
-        return read_runtime_evidence(self.search, self.principal, self.case_id, identifier,
-                                     freshness_seconds=self.freshness_seconds)
+        def load() -> dict[str, Any]:
+            return read_runtime_evidence(self.search, self.principal, self.case_id, identifier,
+                freshness_seconds=self.freshness_seconds)
+        if self.hotcache is not None and identifier.startswith("chunk_"):
+            from evidence_agent.memory.store import CaseStore
+            epoch = CaseStore(self.search.registry, self.principal, self.case_id).memory().epoch()
+            return self.hotcache.read(load, principal=self.principal, case_id=self.case_id, epoch=epoch)
+        return load()
 
     def add(self, identifier: str) -> dict[str, Any]:
         if identifier not in self.records and len(self.records) >= 32:
@@ -191,6 +199,11 @@ def read_runtime_evidence(search: object, principal: Principal, case_id: str,
     registry = search.registry
     registry.access.authorize(principal, tenant_id=principal.tenant_id,
                               case_id=case_id, grant="case:read")
+    if identifier.startswith("mem_"):
+        from evidence_agent.memory.store import CaseStore
+        memory_item = CaseStore(registry, principal, case_id).memory().read(identifier)
+        return {"evidence_id": identifier, "kind": "CASE_EVENT", "event": memory_item,
+                "valid": False, "authority": "NONE", "occurred_at": memory_item["set_at"]}
     if identifier.startswith("evt_"):
         from evidence_agent.memory.store import CaseStore
         event = CaseStore(registry, principal, case_id).read_event(identifier)

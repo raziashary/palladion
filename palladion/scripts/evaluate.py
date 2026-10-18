@@ -488,14 +488,153 @@ def run(url: str) -> dict[str, Any]:
     }
 
 
+def run_memory(url: str, model_name: str) -> dict[str, Any]:
+    """Fixed pilot: identical saved history, sources and live state; only memory varies."""
+    import shutil
+    import sqlite3
+    from contextlib import closing
+
+    from fastapi.testclient import TestClient
+
+    from evidence_agent.agent.llm import GroqModel
+    from evidence_agent.agent.preflight import preflight
+    from evidence_agent.agent.services import configure_agent
+    from evidence_agent.core.evaluation import score_continuation
+    from evidence_agent.live.contracts import Snapshot
+    from evidence_agent.live.gateway import load_config
+    from evidence_agent.live.mock import MockAdapter
+    from evidence_agent.main import create_app
+    from evidence_agent.memory.store import CaseStore, MemorySpec
+    from evidence_agent.policy.bootstrap import seed_policy_fixture
+    from evidence_agent.settings import Settings
+
+    if not url.startswith("http://127.0.0.1:"):
+        raise ValueError("Memory pilot requires an explicitly local Qdrant")
+    pilot = json.loads(PILOT_PATH.read_text(encoding="utf-8"))["continuity_pilot"]
+    run_id = "p05-" + uuid.uuid4().hex
+    destination = APP_ROOT / "runtime/evaluation" / (run_id + ".json")
+    report: dict[str, Any] = {"run_id": run_id, "status": "PILOT_ONLY",
+        "model": model_name, "provider": "groq", "parent": "B2+policy (reranker enabled; graph off)",
+        "corpus_sha256": _sha256(PILOT_PATH), "script_sha256": _sha256(Path(__file__)),
+        "annotation_status": "PILOT_NOT_HUMAN_ADJUDICATED", "critic": False, "vector_memory": False,
+        "conditions": [], "provider_tokenizer_revision": None,
+        "limitations": ["One fixed synthetic continuation, no quality/improvement inference",
+                        "No retry or selective rerun; failures remain in the denominator",
+                        "Packets measured before request using the same preflight producer",
+                        "Character bounds are not provider tokenizer counts"]}
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    collection = "p05_pilot_" + uuid.uuid4().hex
+    index = QdrantIndex(url=url, collection_name=collection, model_cache_dir=str(APP_ROOT / "runtime/model_cache"))
+    config = load_config(APP_ROOT / "config/adapters.yaml")
+    headers = {"Authorization": "Bearer synthetic-memory-reader"}
+    first_query = ("Read current transaction TX-DEMO-102, then evaluate DEMO.REVERSAL.CHECK "
+        "with that live ID only. Do not look up settlement. Return draft JSON containing only "
+        "its OBSERVED_FACT state and actual policy missing fields as RULE_REQUIREMENT. No action permission.")
+    follow_up = ("Follow up the previous investigation. Read current TX-DEMO-102 again, then evaluate "
+        "DEMO.REVERSAL.CHECK with that new live ID only. Do not look up settlement. Report the current "
+        "OBSERVED_FACT state and actual missing fields as RULE_REQUIREMENT, without operational permission.")
+
+    def app_for(root: Path, model: GroqModel, settings: Settings, value: str) -> Any:
+        app = create_app(root, index, {"synthetic-memory-reader": "reader-a"}, FastEmbedReranker(enabled=True))
+        adapter = MockAdapter({("get_transaction_status", "TX-DEMO-102"): (Snapshot(status="OK",
+            data={"transaction_id": "TX-DEMO-102", "state": value,
+                  "transaction_occurred_at": "2026-08-15T10:20:00Z"}),)})
+        configure_agent(app, model=model, adapter=adapter, config=config, settings=settings)
+        return app
+
+    try:
+        index.ensure_collection()
+        with tempfile.TemporaryDirectory(prefix="palladion-p05-") as temp:
+            base = Path(temp) / "base"
+            seed(base, APP_ROOT, index)
+            with Database(base / "registry.sqlite") as database:
+                registry = Registry(database, OriginalStore(base / "originals"))
+                seed_policy_fixture(registry, APP_ROOT)
+            model = GroqModel.from_env_file(APP_ROOT.parent / ".env", enabled=True, model=model_name)
+            settings = Settings.model_validate({"enable_live_llm": True, "model": model_name})
+            initial_started = time.perf_counter()
+            with TestClient(app_for(base, model, settings, pilot["stale_state"])) as client:
+                first = client.post("/v1/cases/case-42/messages", headers=headers, json={"query": first_query})
+                first.raise_for_status()
+                report["initial_response"] = first.json()
+            report["initial_elapsed_seconds"] = time.perf_counter()-initial_started
+            report["initial_provider_failure"] = model.last_failure
+            report["setup_critical_gap_present"] = "settlement_state" in first.json()["missing_requirements"]
+            with Database(base / "registry.sqlite") as database:
+                registry = Registry(database, OriginalStore(base / "originals"))
+                store = CaseStore(registry, registry.access.authenticate("reader-a"), "case-42")
+                report["initial_received_usage"] = [json.loads(r[0])["usage"] for r in database.connection.execute(
+                    "SELECT payload_json FROM case_events WHERE event_kind='RUNTIME_ATTEMPT'")
+                    if json.loads(r[0]).get("usage")]
+                store.memory().write(MemorySpec(scope_id="reader-a", content="Operator reports customer debit; unverified."))
+                for number in range(pilot["chatter_turns"]):
+                    store.append("REQUEST", "long-session-"+str(number), {"query": "Synthetic unrelated discussion "*20})
+                    store.append("ATTEMPT", "long-session-"+str(number), {"status": "FAILED", "attempt": number})
+            for condition in pilot["conditions"]:
+                arm, enabled, bound = condition["arm"], condition["memory"], condition["packet_max_chars"]
+                # Deliberate inter-condition pacing; not an in-request retry.
+                time.sleep(45)
+                root = Path(temp) / arm
+                root.mkdir()
+                with closing(sqlite3.connect(base / "registry.sqlite")) as source, closing(sqlite3.connect(root / "registry.sqlite")) as target:
+                    source.backup(target)
+                shutil.copytree(base / "originals", root / "originals")  # Synthetic immutable bytes only.
+                settings = settings.model_copy(update={"continuity_enabled": enabled, "packet_max_chars": bound})
+                model = GroqModel.from_env_file(APP_ROOT.parent / ".env", enabled=True, model=model_name)
+                row: dict[str, Any] = {"arm": arm, "memory_enabled": enabled, "packet_max_chars": bound}
+                with Database(root / "registry.sqlite") as database:
+                    registry = Registry(database, OriginalStore(root / "originals"))
+                    store = CaseStore(registry, registry.access.authenticate("reader-a"), "case-42")
+                    packet = preflight(follow_up, store, include_memory=enabled, packet_max_chars=bound)["packet"]
+                    row["packet"] = packet
+                    row["packet_characters"] = len(json.dumps(packet))
+                started = time.perf_counter()
+                with TestClient(app_for(root, model, settings, pilot["current_state"])) as client:
+                    response = client.post("/v1/cases/case-42/messages", headers=headers, json={"query": follow_up})
+                    row["http_status"] = response.status_code
+                    if response.status_code == 200:
+                        output = response.json()
+                        row["response"] = output
+                        row["score"] = score_continuation(output, packet, required_gaps=pilot["required_gaps"],
+                            current_value=pilot["current_state"], stale_value=pilot["stale_state"])
+                        row["citations_resolved"] = all(client.get("/v1/evidence/"+c["evidence_id"],
+                            params={"case_id": "case-42"}, headers=headers).status_code == 200 for c in output["citations"])
+                        with Database(root / "registry.sqlite") as database:
+                            received = [json.loads(r[0]) for r in database.connection.execute(
+                                "SELECT payload_json FROM case_events WHERE event_kind='RUNTIME_ATTEMPT' "
+                                "AND json_extract(payload_json,'$.trace_id')=?", (output["trace_id"],))]
+                            row["received_usage"] = [r["usage"] for r in received if r.get("usage")]
+                row["elapsed_seconds"] = time.perf_counter()-started
+                row["last_provider_failure"] = model.last_failure
+                row["last_rate_limits"] = model.last_rate_limits
+                report["conditions"].append(row)
+                destination.write_text(json.dumps(report, indent=2), encoding="utf-8")
+        report["all_conditions_observed"] = len(report["conditions"]) == 3
+    finally:
+        index.close()
+        with closing(QdrantClient(url=url, timeout=30)) as cleanup:
+            cleanup.delete_collection(collection, timeout=30)  # Only the command's fresh UUID.
+        destination.write_text(json.dumps(report, indent=2), encoding="utf-8")
+    return {"report": str(destination), **report}
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--url", default="http://127.0.0.1:16333")
+    parser.add_argument("--memory", action="store_true", help="Explicit P05 actual-Groq continuity pilot")
+    parser.add_argument("--enable-live-llm", action="store_true")
+    parser.add_argument("--model", choices=("qwen/qwen3.8-27b", "openai/gpt-oss-120b", "openai/gpt-oss-20b"), default="qwen/qwen3.8-27b")
     parser.add_argument("--run", action="store_true",
                         help="explicitly seed/query/delete only unique p02_eval_* collections")
     args = parser.parse_args(argv)
     if not args.run:
         parser.error("--run is required before the pilot creates temporary SQLite data and Qdrant collections")
+    if args.memory:
+        if not args.enable_live_llm:
+            parser.error("Memory pilot requires --enable-live-llm before credentials are read")
+        result = run_memory(args.url, args.model)
+        print(json.dumps(result, indent=2))
+        return 0 if result.get("all_conditions_observed") else 1
     report = run(args.url)
     REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
     if REPORT_PATH.exists():

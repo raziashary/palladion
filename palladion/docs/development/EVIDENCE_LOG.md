@@ -1279,3 +1279,212 @@ Benchmark/.vscode edits remain outside scoped staging. Main push is not authoriz
 Final staged whitespace check exposed one extra blank EOF line in newly added tools.py. Removed only that whitespace, rebuilt/reinstalled artifact; all47 packaged files match current source bytes. Final wheel SHA256 **7be3caba6080d1fed754a1cfd535beed867a8e319b105c636c6d3922768bacc8**. Earlier30-test/artifact result remains historical for the prior byte-identical implementation apart from that EOF whitespace; final20 targeted installed-consumer result follows. No semantic change or repeated provider attempt.
 
 Final exact-wheel targeted HTTP/privacy/packet/gate regression20PASS5.61s, one existing Starlette/httpx deprecation warning. Final document checker and staged whitespace/credential/scope checks are required before the checkpoint commit; no new runtime change follows this receipt.
+
+
+## E-P05-001 — Scoped memory and continuity
+
+Status IN_PROGRESS,2026-10-19 Asia/Bangkok. Owner explicitly authorizes P04 push and
+P05 end to end. Prior turn was progress: completed/committed P04 at4245023. Current
+main is4245023; full unpushed commit body reviewed then `git push origin main` exit0,
+remote `refs/heads/main` readback424502374ff32809e8bcf0fdf3df47599399d7e7. Only that
+approved commit was sent. Concurrent benchmark/.vscode changes preserved and excluded.
+P05 sole pre-phase adversary GPT6LunaMedium dispatched read-only with full-blueprint/
+all12development-document contract, source paths and explicit no credentials/services/
+tests/git writes. Ambient credential variable count0. Coordinator owns implementation,
+all tests and measurements. P06+, UI, enterprise writes and another main push excluded.
+
+Grounding: existing v3 memory_entries lacks owner/set_by/set_at/valid_from and FTS;
+there is no persisted team membership. Existing AccessController has current persisted
+principal/role/grant/case membership checks only. P05 needs explicit authorization and
+schema decisions; ADR-0039/0040 record proposed compatible extensions, not approval.
+
+Sole start adversary completed: full blueprint§1–18/I01–I15 and all12developmentdocs,
+scoped producers/readers. Six findings confirmed: staleGO anchors, absent team/promotion
+source, missing packet-field producers, incomplete correction/close cache controls,
+underspecified actual-output B4/B5 scorer, implicit provider follow-up proof. Main verified
+live source and updates plan/ADR0041 before dependent work. Owner explicitly approved
+ADR0039 additivev4/recall and ADR0040 scoped owner/admin controls; no repeated approval
+needed. Uncertain cache model/prompt dimensions resolved: only exact source passages,
+never generated answers; cache carries no model result. No latency benefit claimed.
+P05 acceptance remains open; P06critic/P07graph/P08scientific/X01 excluded.
+
+P05 implementation checkpoint: approvedv4 adds immutable provenance/history, team
+membership source and FTS5 without changing old memory rows. Initial fresh-schema
+smoke PASSv4. First focused suite46PASS/1FAIL exposed strict SourceRef enum hydration
+from a Python dict; fixed by versioned JSON reader. Next83PASS/1FAIL: new cross-case
+positive fixture referenced case-143 without actually granting it. Corrected fixture
+creates a distinct authorized case/membership (does not bypass authorization). Ruff
+found two test semicolon lines; corrected. No failure erased. Strict typing initially
+caught memory-item variable colliding with existing Passage variable; renamed locally.
+Packet now derives historical live reminders/currently authorized handles, owner
+reports, hypotheses and backend missing slots; old live tests now require explicit
+RECHECK_FOR_CURRENT_DECISION rather than silently omitting observations.
+
+P05 source regression239PASS22.55s before adding scorer/expiry controls; strict mypy58,
+RuffPASS. Dependency checker79files/four negative controlsPASS. Real local Qdrant/HTTP
+regression11PASS/6providercases deselected98.51s; new cache consumer verifies actual
+canonical source readbacks, repeat hit, correction/close epoch changes and source
+revocation denying cached text. No unraisable warnings; existing Starlette/httpx warning.
+Additional memory/schema/scorer controls42PASS5.08s. Backups use exclusive SQLite
+backup API before forward migration; successful and failed v4 upgrade tests reopen
+restorable v3 state and preserve legacy bytes. No user runtime DB opened/migrated.
+First actual120B memory pilot completed three response rows then exited1 on Windows
+cleanup: native sqlite3 connection context managers commit/rollback but do not close.
+Fixed source/destination ownership with contextlib.closing before deliberate CLI rerun.
+Original ignored report p05-e4c1a2af2dc54212934cf8124af3ce55.json and full error retained;
+not a successful CLI smoke. Actual model errors remain in each condition denominator.
+
+
+### Corrected actual continuity pilot (all observations retained)
+
+`python scripts/evaluate.py --run --memory --enable-live-llm --model openai/gpt-oss-120b --url http://127.0.0.1:16333`
+corrected lifecycle run exits0, allthree conditions observed and critical-gap setup true.
+Report runtime/evaluation/p05-a3c0f62508844c53bb29288c590fb0a4.json SHA256
+**e07e2eec0d6483e7f57214c78696e34239cdc5dec1b2c571115621d2fdef223c**.
+Initial actual message PARTIALLY_SUPPORTED, no verification failures. Same saved
+history/current snapshots across B4/B5/compressed. All follow-up citations resolve and
+allthree release currentPENDING, staleFAILED claim count0. B4 packet611chars omits
+settlement (recall0); B5 packet2604chars retains it (recall1); compressed1490chars
+retains it (recall1). Answer missing-slot recall: B4=0,B5=1,compressed=0.
+Strict completion **0/3**, all conditions containPROVIDER_HTTP_400/tool-generation
+failure; B4 alsoPERMISSION_DENIED for an inadmissible tool input. Budgets main/tools:
+B4=4/2,B5=4/2,compressed=3/1, each within5/8; failed model attempts counted.
+Received token pairs: B4=990/76,1242/65,882/165; B5=1401/151,1664/91,1477/298;
+compressed=1293/86,860/165. These omit failed requests' unknown usage, not zero cost.
+All raw responses, packet contents, timings, known usage and safe rate/failure metadata
+remain in the report. No retry/fallback within a request. Initial failed-cleanup run is
+retained separately. CLI exit0 establishes observation/lifecycle completion, not model
+reliability, H04 improvement, semantic accuracy or successful completion of these tasks.
+Provider reliability remains an explicit risk; P06/P08 owners must account for these
+failures, not silently compare only successful traces. No human labels or paid-cost
+measurement is inferred. Source guard proof separately exercises valid typed proposals
+through actual preflight/tool/gate consumer: corrected reports appear, old source IDs
+cannot authorize a current claim, freshPENDING read supplies released evidence.
+
+
+### P05 pre-end-review verification checkpoint
+
+Latest source regression242PASS18.68s; RuffPASS; strict mypy58filesPASS; dependency
+79files/fournegativecontrolsPASS. Build pinned Hatchling/uvPASS, exact installed wheel
+SHA256 **1dda4fe9989d8aae1f6c8fc922795cd4f190e340e0d51aba5d31920b8f895359** matches49
+packaged Python/SQL files, including new memory_schema.sql and hotcache.py.
+Installed isolated `python -I -m pytest tests/test_memory.py tests/test_ingest.py
+tests/test_runtime_api.py tests/test_evaluation.py tests/test_end_to_end.py -k
+'not p04_actual_groq_walkthrough' -q --tb=short -W error::pytest.PytestUnraisableExceptionWarning`
+=>60PASS/6deselected88.27s, existing Starlette/httpx warning only. Includes all11 actual
+Qdrant/HTTP readers; disjoint latest automated242+11=253 (overlap not double-counted).
+Installed-wheel trusted operator CLI write→FTS recall→correct→old-ref denial→revoke→
+reopen smokePASS; temp cleanup succeeds. Worker and v4 schema import from site-packages.
+Docs checker17MD/93cards/20negativecontrolsPASS. Actual Groq pilot and all0/3 strict
+completion failures retained above; source/runtime mechanisms and model reliability
+are separate claims. Sole end audit/resolution still required before task/phase closure.
+
+Sole P05 end reviewer GPT6LunaMedium read complete blueprint§1–18/I01–I15, all12docs,
+scoped source/consumers and both pilot reports. No side-effecting commands/tests run.
+R1 confirmed medium: 500tenant candidates were bounded before current scope checks,
+allowing private-row starvation. R2 confirmed low: appREADME retained P05-requires-GO.
+Main accepts both; ADR0043 records SQL pre-scope/window disclosure, regression and same
+reviewer resolution. Pilot failure accounting was reviewed with no identified defect;
+0/3 strict completion remains explicit, no model/hypothesis success inferred. Phase/cards
+remain open until finding resolution and refreshed affected artifact/consumer proof.
+
+R1 regression now constructs501newer denied USER matches plus an older authorized
+match. The legacy tenant-wide LIMIT500 control excludes it; corrected structured/FTS
+read and actual packet recover it without PRIVATE_FLOOD_CANARY. SQL applies current
+scope/team/origin-case, validity/supersession/revocation/close before candidate bounds;
+canonical source reads remain mandatory after SQL. A separate501eligible-row control
+proves recall_coverage reports incomplete candidate window and non-exhaustive scope.
+R2 stale P05-GO sentence corrected. Prior artifact/test receipts remain historical
+until affected final source/artifact controls finish and same reviewer rechecks.
+
+
+### P05 final verification and review resolution (2026-10-19)
+
+After R1/R2 correction: full source244PASS19.45s; RuffPASS; strict mypy58PASS;
+dependency79files/fournegativecontrolsPASS. Final pinned build/installPASS. Wheel
+SHA256 **8b5f2ccc8bcff820023499f5f4162fa3e16a49cd3ef344412caa028fdbffa5a5** matches49
+packaged Python/SQL files. Updated isolated installed suite62PASS/6providercases
+deselected87.87s. Additional exact-wheel actual Qdrant source-backed memory→v1 evidence
+reader→source revocation→403/no canary test1PASS11.74s. Thus latest disjoint automated
+coverage244source +12actual-Qdrant=256; installed62+1 overlaps those counts, not added.
+One existing Starlette/httpx deprecation warning remains; no unraisable warnings.
+The actual120B pilot receipts predate the R1 scope/window correction; its fixture has
+one authorized report and no private flood. Source/installed regressions exercise the
+changed scope path directly; no later model success is inferred from that correction.
+No silent provider rerun or hidden dropped failure. Actual provider first request
+PARTIALLY_SUPPORTED/noerrors and follow-up currentPENDING/citation consumers are
+observed; all0/3 strict-completion failures remain measured limitations, not green
+model reliability or memory-improvement results.
+
+Same sole LunaMedium reviewer resolves R1/R2, verifies private-row starvation regression,
+structured/FTS/packet no-canary controls and bounded-coverage metadata reaches the model;
+15focused memory testsPASS. Full initial18-section/I01–I15 coverage retained, no phase
+closure delegated. ~~Main closes seven P05 cards/phase-local obligations~~ after source,
+installed, API, measurement and single audit/resolution evidence. No new owner ADR
+remains unanswered. P06 critic/P07 graph/P08 semantic/held-out and X01 remain deferred.
+
+Final local collection readback0total/0p05/0p02test. Supported stop requested only
+recorded owned Qdrant PID528; launcherexec25676 exited0, persistent storage preserved.
+Ports16333/16334/18080 verifiedfree. No HTTP daemon started. Ignored prior wheel test
+environment remains for reproduction (P04 automatic deletion rejection); no process
+uses it. Initial pilot failed-temp cleanup receipt remains, all provider processes
+exited; corrected pilot/CLI temporary cleanup succeeds. User demo DB/.env/.gitignore
+and concurrent benchmark/.vscode work remain untouched. P04 push fulfilled4245023;
+P05 commit is local only, another main push/P06 require owner authorization.
+
+
+Main final audit correction/retraction: preceding closure statement was premature.
+A latest empty RELEASE after model failure erased prior unresolved settlement from
+subsequent packets. This was not caught by the two earlier reviewer findings or
+second-message-only pilot. Reopened P05 packet/resume closure before any commit.
+ADR0044 fixes the owning state reader, not the final-gate authority contract. Two
+new targeted regressions fail for the intended erased settlement_state (2FAIL,15
+notselected), including actual canonical policy trace and generic case-question path.
+Require decisive executed per-family policy state or explicit case closure for resolution.
+
+### P05 third-turn correction verification (supersedes premature closure)
+
+ADR0044 now reconstructs current authorized decisive policy state per family; a later
+empty/outage reply cannot clear unresolved fields. Generic latest nonempty trusted
+questions outside executed policy fields remain context. No historical policy becomes
+current action permission. Two controls first failed for erased settlement_state,
+then17memory tests passed3.75s, including incomplete→failed empty reply→third packet
+and fresh settlement→executed DETERMINED→resolved packet. Same reviewer independently
+confirms code correction; final documentation consistency resolution follows separately.
+
+Final commands from system root (no live-provider enablement/ambient credentials):
+- `.venv/Scripts/python -m pytest --ignore=tests/test_end_to_end.py -q --tb=short -W error::pytest.PytestUnraisableExceptionWarning`
+  → exit0,246PASS22.17s.
+- `.venv/Scripts/python -m ruff check src scripts tests` → exit0/PASS;
+  `.venv/Scripts/python -m mypy src scripts` → exit0/58filesPASS.
+- `.venv/Scripts/python scripts/check_dependencies.py --self-test` → exit0,
+  79files/fournegativecontrolsPASS; docs checker --self-test →17MD/93cards/20controlsPASS.
+- Pinned `python -m build --installer uv` and exact-wheel `uv pip install --reinstall --no-deps`
+  → exit0; all49 packaged Python/SQL files match current source bytes. Wheel SHA256
+  **6ab0757572b84aeb51ad24611d746ba45a616ce782b1d90cfa6403b9bcf8775f**.
+- Ignored isolated installed Python `-I -m pytest tests/test_memory.py tests/test_ingest.py tests/test_runtime_api.py tests/test_evaluation.py tests/test_end_to_end.py -k 'not p04_actual_groq_walkthrough' -q --tb=short -W error::pytest.PytestUnraisableExceptionWarning`
+  with explicit local Qdrant URL → exit0,65PASS/6providerdeselected85.19s. Includes all12
+  actual Qdrant/HTTP cases. Disjoint automated coverage246nonserver+12server=258;
+  installed65 overlaps those checks and is not added. Existing Starlette/httpx
+  deprecation warning only, no unraisable warning; no dependency change inferred.
+- Installed-wheel trusted local operator CLI smoke → write→FTS→correct→old-ID denied→
+  revoke→reopened read PASS; synthetic TemporaryDirectory cleanup succeeds.
+
+Third-turn regressions run against the rebuilt installed package too. Actual120B pilot
+reports predate this deterministic state-reader correction and SQL scope correction;
+no new model run or improved generative result is implied. All0/3 strict completions,
+400/tool failures and earlier lifecycle failure remain recorded. Latest source and
+installed consumers prove the changed path separately. Blueprint bytes unchanged:
+911003f72b909e4e473cde917c872c022bf1332440fade1c97dce8ecf7af2b9c.
+Owned Qdrant exec99335/PID471 stopped with supported launcher (exit0), storage preserved;
+collection readback0 before stop, ports16333/16334/18080 verifiedfree. No HTTP daemon
+started. Ignored wheel environment retained without processes; user demo not migrated.
+
+Sole end reviewer resolution receipt: third-turn code correction and both regressions
+confirmed (17focusedPASS); stale completion claims found and corrected while phase
+was reopened. Reviewer re-read the corrected current-status documents and explicitly
+resolved that finding without marking gates or cards. No additional agent dispatched.
+Main now closes all seven P05 cards and phase-local memory obligations against the
+final source/artifact/consumer evidence above. Current docs consistently reflect this
+verified closeout; historical premature closure stays struck and explained. No owner
+ADR awaits an answer. P04 push is fulfilled; P05 local commit only, P06/main push need GO.

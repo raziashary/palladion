@@ -208,11 +208,11 @@ No real enterprise connector or generated-answer research benchmark is included.
 P04 implementation and phase-local checks now cover real Groq transport, bounded loop,
 four scoped tools, request ledger, necessary-condition gate and message/timeline/citation
 readers. Scoped admin developer traces, dependency/config readiness and owned-process
-search cancellation are verified. Single end review and finding resolution are complete; full memory and
-critic remain later phases. Five dispositions and document citation paths have actual
+search cancellation are verified. Single end review and finding resolution are complete. P05 adds scoped continuity;
+critic remains a later phase. Five dispositions and document citation paths have actual
 provider proofs, with every model/quota/schema failure retained (E-P04-001).
 Two final no-evidence refreshes failed strict assertions while safely abstaining;
-these engineering path checks do not establish model reliability. P05 requires GO.
+these engineering path checks do not establish model reliability. P05 is authorized; P06 requires its own GO.
 Use `python scripts/seed.py --policies` to explicitly seed trusted synthetic case/policy
 fixtures. After setup, `python scripts/serve.py --enable-live-llm` explicitly enables
 root .env credential loading and real model calls; omitting the flag disables messages.
@@ -234,3 +234,37 @@ The native-tool flow is `agent/llm.py` (transport) → `agent/loop.py` (budgeted
 call handling) → `agent/tools.py:Tools.execute` (validated domain dispatch) → loop
 (matching tool-call results) → model → deterministic gate. Models never execute tools
 directly or supply their own identity/case authority.
+
+
+## Scoped continuity (P05)
+
+P05 phase-local implementation and single audit/resolution are verified complete. Scoped episodic/semantic/procedural
+memory uses current persisted permissions: USER owner, CASE members, explicit TEAM
+members, and administrator-promoted ORGANIZATION items. Case-derived sharing retains
+its origin-case/source restrictions. All remembered assertions remain context; they
+cannot become company policy or authorize actions. Only owner/authorized administrator
+operations change validity, corrections or revocation. Unspecified expiry stays
+UNSPECIFIED; old live observations always require a new read for current decisions.
+
+The four-tool recall handler accepts optional query, memory_id and category selectors;
+default limit/event behavior remains compatible. Packets preserve unresolved slots,
+reported facts, hypotheses and historical observations with recheck labels. Exact
+passage cache hits always validate current source state; no speed claim is made.
+Schema v4 upgrades preserve old rows and first create a checked .pre-v4-UUID.sqlite
+backup alongside any recognized persistent database. Foreign schemas fail closed.
+No task migrated the user's demo store. Retain backups; do not delete runtime data.
+
+Trusted local synthetic operator example (requires filesystem access, not an HTTP or
+multiuser authentication boundary): `python scripts/memory.py --root runtime/demo
+--principal reader-a --case case-42 recall --query debit`. Actions write/correct use a
+bounded MemorySpec JSON --spec file; revoke uses --id; administrator team-add/team-revoke
+use --team/--member; close invalidates case continuity. No such writes are LLM tools.
+
+Explicit real-provider pilot: `python scripts/evaluate.py --run --memory
+--enable-live-llm --model openai/gpt-oss-120b`. It uses temporary synthetic stores and
+its own UUID collection, and records all B4/B5/compressed outputs, usage and failures.
+The current pilot retained the critical gap in B5 packets, but strict completion was
+0/3 due model/tool errors. This establishes measurements, not a memory-improvement or
+reliability claim. See E-P05-001. Full critic and scientific evaluation remain later.
+
+Final P05 evidence: E-P05-001,246source+12actual-Qdrant checks, updated wheel and single audit resolution. Recall applies current scope before its bounded window and reports non-exhaustive coverage. P06 requires owner GO; pilot0/3 strict completions remain disclosed.

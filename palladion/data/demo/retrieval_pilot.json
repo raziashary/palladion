@@ -85,5 +85,33 @@
       "exact_expected": "unknown",
       "slice": ["unknown_identifier"]
     }
-  ]
+  ],
+  "continuity_pilot": {
+    "status": "PILOT_NOT_HUMAN_ADJUDICATED",
+    "case_id": "case-42",
+    "principal_id": "reader-a",
+    "chatter_turns": 40,
+    "required_gaps": [
+      "settlement_state"
+    ],
+    "stale_state": "FAILED",
+    "current_state": "PENDING",
+    "conditions": [
+      {
+        "arm": "B4",
+        "memory": false,
+        "packet_max_chars": 6000
+      },
+      {
+        "arm": "B5",
+        "memory": true,
+        "packet_max_chars": 6000
+      },
+      {
+        "arm": "B5-compressed",
+        "memory": true,
+        "packet_max_chars": 1500
+      }
+    ]
+  }
 }

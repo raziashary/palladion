@@ -932,6 +932,78 @@ All provider-specific compatibility remains deferred to enabled P04 proof.
 
 Current P04 closeout (2026-10-19): ADR-0031/0032/0034/0036/0037/0038 implementation and phase-local consumers verified at E-P04-001; mandatory end review/resolution complete. Earlier IN_PROGRESS verification text above is historical, not a current hold. Provider failures remain recorded; P05+ requires GO.
 
+## ADR-0039 — P05 additive memory schema and recall contract
+
+**Status:** ACCEPTED; explicit owner reply2026-10-19; implementation/proof required.
+**Authority:** P05 seven atomic tasks and blueprint §9; Rule4 shipped schema/tool contracts.
+**Question:** May P05 add a forward-only v4 migration for memory owner/validity/history metadata, explicit team memberships and FTS5, plus optional recall query/category selectors?
+**Why:** v3 memory_entries cannot represent all required provenance/validity fields; team membership and FTS are absent. Existing recall accepts only limit.
+**Options:** Add compatible v4/optional selectors preserving existing rows/default readers, or owner-selected alternative. Hiding permissions/history in free prose is rejected.
+**Recommendation:** Add columns/tables/indexes transactionally, preserve old rows without inventing owner or verification, test fresh install/populated v3 upgrade/rollback/foreign-schema preservation. Retain recall limit/default and add bounded optional query/exact memory ID/category; no identity/scope override and no fifth tool. Existing packet fields suffice; any measured bounds metadata can remain local, without changing the core packet contract.
+**What affects what:** storage/sqlite.py/schema validation, memory/store.py (or focused local memory contracts), security/access.py, agent/tools.py, readiness uses actual Database.SCHEMA_VERSION, storage/memory/security/transport tests, plan ownership and docs. No new dependency/vector store or actual persistent runtime migration during tests; isolated synthetic DBs only.
+**My answer (editable):** User: Approve additive v4 and recall extension (Recommended). Supersedes pending proposal2026-10-19.
+**Verification:** E-P05-001 verifies fresh/populated/rollback/backup and compatible default/exact/FTS readers, final installed wheel and single review/resolution.
+
+## ADR-0040 — P05 scope, promotion and owner controls
+
+**Status:** ACCEPTED; explicit owner reply2026-10-19; implementation/proof required.
+**Authority:** Blueprint §9.1/9.3/9.5; no shipped team/promotion precedent; Rule4 authorization decision.
+**Question:** Who may read/write/promote scoped memories and control validity?
+**Why:** Same tenant alone cannot imply team membership or permission to expose another private case; models have four read tools only.
+**Options:** Explicit persisted team membership plus existing tenant/case/role/grant checks, or owner-selected policy. Inferring teams from names or broadening scope on repetition is rejected.
+**Recommendation:** USER owner-only; CASE current case members; TEAM explicit current team members; ORGANIZATION same tenant with explicit administrator promotion. Every case-derived item additionally requires current membership in its originating case and current source ACL; promotion never removes those restrictions or creates company-policy authority. Writes/validity/corrections require original owner or existing admin with case:read and document:approve; team administration/promotion require that admin authority and current origin-case membership. General shared items are explicitly created by that authorized admin without a private-case source. Model/runtime guesses never auto-promote; model cannot invoke writes. Validity rule defaults UNSPECIFIED, never model expiry; immutable actor/time/event history. Trusted application Python operations (and an explicit local CLI for operator edits) own writes; do not add enterprise/UI or LLM write tools. Case-close/correction/source revocation invalidate cache/packet; historical evidence remains historical, freshness rechecked independently.
+**What affects what:** security/access.py plus memory owner/control methods, v4 membership metadata, memory/store.py/packet.py/hotcache.py, runtime consumers and owner/team/cross-case/tenant/revocation canaries. Source evidence remains canonical and mandatory critic remains unavailable until P06.
+**My answer (editable):** User: Approve scoped owner/admin controls (Recommended). Supersedes pending proposal2026-10-19.
+**Verification:** E-P05-001 source/member/team/promotion/validity controls, actual follow-up and source-backed API revocation pass; no new authority inferred.
+
+## ADR-0041 — P05 packet producers, cache proof and pilot measurements
+
+**Status:** ACCEPTED coordinator execution detail within P05;2026-10-19.
+**Authority:** P05 start adversary/full blueprint §9/§14, owner GO and ADR-0039/0040.
+**Question:** Which actual producers and measurements prove continuity?
+**Why:** Existing packets omit open questions/hypotheses/observations; retrieval metrics cannot measure memory.
+**Options:** Explicit typed producer/readers and pilot-only paired outputs, or infer coverage from the skeleton (rejected).
+**Recommendation:** Generate historical observation reminders from scoped canonical live events with RECHECK_FOR_CURRENT_DECISION, typed reported items from owner-controlled memory, hypotheses from non-authorizing releases, policy gaps from persisted gate releases; never elevate context into evidence. Preserve last critical unresolved gaps independently of recent chatter and report compression omissions. Cache exact passages only, with canonical revalidation on every use, principal/grant/case/source hash/generation/time and correction/close state keys; bounded ephemeral entries, no speed claim. Measure a fixed synthetic long-session B4 parent (same B2/policy/live configuration, memory withheld by explicit continuity_enabled=false evaluator setting, default true) against B5 normal/compressed packet_max_chars (6000/1500) using the same runtime. These validated Settings fields are isolated experimental controls; default runtime retains continuity, all four read tools and unchanged gate. Save actual model/API outputs, packets, raw usage/errors, tokens/calls/latency and exact required-slot/stale-claim controls for every condition; no retries selecting successes, no full semantic score/hypothesis success. Critic/vector/graph remain disabled. Test scorer by deliberately omitting settlement and inserting a stale observed value.
+**What affects what:** memory/store.py/packet.py/hotcache.py, security/access.py/storage registry/sqlite migration, agent services/preflight/loop/tools, evaluation functions/CLI and tests. Add exact owning files to P05 cards, source/storage compatibility tests and doc records; existing packet contract remains unchanged.
+**My answer (editable):** Coordinator specifies falsifiable implementation/measurement under existing mandate; owner approvals remain separately recorded in ADR-0039/0040.
+**Verification:** E-P05-001 source/installed/API/real Groq follow-up and sole audit/resolution verified. Pilot0/3 strict completions retained; no P08 research closure.
+
+## ADR-0042 — Preserve persistent state before forward migration
+
+**Status:** ACCEPTED coordinator safeguard required by Rule13;2026-10-19.
+**Authority:** Owner-approved additivev4 and universal backup-before-schema-change rule.
+**Question:** How can existing stores be opened without losing a restorable v3 state?
+**Why:** Startup and trusted local CLI use Database.open; tests use temporary stores but real prototype stores must not be treated as disposable.
+**Options:** Require a manual backup before every open, or create a checked SQLite backup before forward migration. Never reset/overwrite a store.
+**Recommendation:** After recognizing the old schema and before WAL/schema writes, create an exclusive same-directory .pre-v4-UUID.sqlite backup using SQLite backup API; integrity_check must pass. Expose its path on the Database owner for CLI/doc evidence; never in public HTTP diagnostics. Unknown schemas remain untouched. No migration is run against user demo storage in this task.
+**What affects what:** storage/sqlite.py and isolated upgrade/rollback tests; runtime backups remain ignored. No schema downgrade or deleting prior backups.
+**My answer (editable):** Coordinator fulfills required preservation under approved migration; no destructive authority inferred.
+**Verification:** E-P05-001 populated upgrade/rollback, checked backup reopen/old-version/legacy byte controls pass; no real demo migration.
+
+## ADR-0043 — Apply memory scope before bounded recall windows
+
+**Status:** ACCEPTED in-scope correctness fix;2026-10-19.
+**Authority:** Sole end reviewer finding R1; P05 authorized known-fact recall/security contract.
+**Question:** Can inaccessible tenant memories crowd out an older authorized match?
+**Why:** The first query bounded all tenant candidates before scope checks; 501 private matches could suppress an authorized one.
+**Options:** Unbounded scanning (rejected), or current scope/active validity/supersession/revocation filters before the candidate bound, followed by canonical per-item checks.
+**Recommendation:** Push current USER/CASE/TEAM/ORGANIZATION and original-case membership plus validity/revision eligibility into SQL before limit. Preserve full canonical source checks after selection; source eligibility is never inferred from SQL alone. Inspect501 candidates and process at most500; recall tool explicitly reports incomplete candidate window and non-exhaustive scope. Exact-ID lookup remains available. Prove >500 denied newer matches cannot suppress authorized results, without exposing denied contents.
+**What affects what:** memory/store.py, agent/tools.py and memory regression/coverage controls, scoped recall documentation. No permission expansion or public schema change.
+**My answer (editable):** Coordinator fixes confirmed owning-code defect under Rules5/7; owner-approved scope rules unchanged.
+**Verification:** E-P05-001 legacy-query starvation control, actual scope/FTS/packet recovery and coverage tests pass; same reviewer resolves R1/R2 with15memoryPASS; final246source and updated wheel65 overlapping checks pass after ADR0044 correction.
+
+## ADR-0044 — Preserve unresolved questions across failed replies
+
+**Status:** ACCEPTED in-scope owning-code correction;2026-10-19.
+**Authority:** Main final completion audit, P05 packet/resume requirements and blueprint §9/§11.
+**Question:** Does a later empty gap list resolve a previously missing settlement input?
+**Why:** The initial packet reader used only the latest RELEASE. After a model/tool failure with empty gaps, the next packet forgot a real unresolved question without new evidence.
+**Options:** Treat every empty reply as resolution (rejected), or reconstruct state from decisive canonical policy events and explicit case continuity.
+**Recommendation:** Re-read latest authorized current INCOMPLETE_INPUT/DETERMINED decision per family. Incomplete fields stay open; only a later executed determined/updated incomplete result can resolve them. Failed/unverified attempts and empty release lists do not resolve. For case questions without a decisive policy trace, preserve latest nonempty trusted gap record until explicit case closure. Preserve role/source rechecks and bounded packet questions; no old policy result becomes current permission. No final-gate/API contract change.
+**What affects what:** memory/store.py/packet.py and third-turn/incomplete→failure→fresh-settlement→determined regressions, source/installed consumers and same-reviewer resolution. Pilot output failures remain unchanged.
+**My answer (editable):** Coordinator fixes confirmed packet producer/reader bug under existing P05 authority; no new source of policy authority.
+**Verification:** E-P05-001: two controls first fail for erased settlement_state, then17memory/246nonserver/65installed overlapping tests pass; exact rebuilt artifact and same-reviewer code/documentation resolution verified. No new model success inferred.
+
 ## Future decision template
 
 ```text
@@ -948,4 +1020,4 @@ Verification: planned proof, result, evidence and execution/deferred state
 Amendment history: old answer/date/reason and superseding decision
 ```
 
-Next free ADR number: 0039. Accepted directions do not grant implementation GO.
+Next free ADR number: 0045. Accepted directions do not grant implementation GO.

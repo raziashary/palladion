@@ -8,6 +8,27 @@ import pytest
 from evidence_agent.core.evaluation import macro_average, score_ranked_references
 
 
+def test_continuation_scorer_detects_critical_omission_stale_claim_and_missing_measurements():
+    from evidence_agent.core.evaluation import score_continuation
+    packet = {"open_questions": ["settlement_state"]}
+    output = {"disposition": "PARTIALLY_SUPPORTED", "verification_failures": [],
+        "missing_requirements": ["settlement_state"],
+        "verified_claims": [{"text": "Last observed mock state: PENDING at now."}]}
+    def score(out=output, context=packet):
+        return score_continuation(out, context, required_gaps=["settlement_state"],
+                                  current_value="PENDING", stale_value="FAILED")
+    assert score()["completion"]
+    assert score(context={"open_questions": []})["packet_omitted_gaps"] == ["settlement_state"]
+    assert not score({**output, "missing_requirements": []})["completion"]
+    stale = {**output, "verified_claims": [{"text": "Last observed mock state: FAILED at yesterday."}]}
+    assert score(stale)["stale_claim_count"] == 1 and not score(stale)["completion"]
+    assert not score({**output, "verification_failures": ["PROVIDER_HTTP_429"]})["completion"]
+    with pytest.raises(ValueError):
+        score({})
+    assert score_continuation(output, packet, required_gaps=[], current_value="PENDING",
+                              stale_value="FAILED")["packet_gap_recall"] is None
+
+
 def test_duplicate_predictions_do_not_inflate_recall_or_shift_repeat_rank() -> None:
     scores = score_ranked_references(
         ("clause-a", "clause-b", "clause-a"),

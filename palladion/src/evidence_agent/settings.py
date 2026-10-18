@@ -14,6 +14,8 @@ class Settings(BaseModel):
     provider: Literal["groq"] = "groq"
     model: Literal["qwen/qwen3.8-27b", "openai/gpt-oss-120b", "openai/gpt-oss-20b"] = "qwen/qwen3.8-27b"
     enable_live_llm: StrictBool = False
+    continuity_enabled: StrictBool = True
+    packet_max_chars: int = Field(default=6000, ge=1500, le=12000)
     qdrant_url: str = Field(default="http://127.0.0.1:16333", pattern=r"^http://127\.0\.0\.1:[0-9]{4,5}$")
     qdrant_collection: str = Field(default="knowledge_chunks_v1", pattern=r"^[a-zA-Z0-9_]{1,100}$")
     bm25_profile: Literal["english", "no_stemming"] = "english"

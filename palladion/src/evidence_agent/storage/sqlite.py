@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import sqlite3
-from contextlib import contextmanager
+import uuid
+from contextlib import closing, contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterator
@@ -23,11 +24,12 @@ class Database:
     """
 
     APPLICATION_ID = 0x50414C4C  # ASCII "PALL"
-    SCHEMA_VERSION = 3
+    SCHEMA_VERSION = 4
 
     def __init__(self, path: str | Path) -> None:
         self.path = str(path)
         self._connection: sqlite3.Connection | None = None
+        self.backup_path: Path | None = None
 
     @property
     def connection(self) -> sqlite3.Connection:
@@ -48,7 +50,18 @@ class Database:
             connection.execute("PRAGMA foreign_keys = ON")
             if connection.execute("PRAGMA foreign_keys").fetchone()[0] != 1:
                 raise DatabaseSchemaError("SQLite foreign key enforcement is unavailable")
-            self._preflight_schema()
+            previous = self._preflight_schema()
+            if self.path != ":memory:" and 0 < previous < self.SCHEMA_VERSION:
+                # Preserve the exact old persistent state before any forward schema mutation.
+                backup_path = Path(self.path).with_name(Path(self.path).name + ".pre-v" +
+                    str(self.SCHEMA_VERSION) + "-" + uuid.uuid4().hex + ".sqlite")
+                with backup_path.open("xb"):
+                    pass
+                with closing(sqlite3.connect(backup_path)) as backup:
+                    connection.backup(backup)
+                    if backup.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
+                        raise DatabaseSchemaError("Pre-migration backup integrity check failed")
+                self.backup_path = backup_path
             journal = connection.execute("PRAGMA journal_mode = WAL").fetchone()[0]
             if self.path != ":memory:" and str(journal).lower() != "wal":
                 raise DatabaseSchemaError("SQLite WAL mode could not be enabled")
@@ -151,15 +164,20 @@ class Database:
                 (3, utc_now()),
             )
             connection.execute("PRAGMA user_version = 3")
+            self._migration_3_to_4(connection)
+            connection.execute("INSERT INTO schema_versions VALUES (?, ?)", (4, utc_now()))
+            connection.execute("PRAGMA user_version = 4")
 
     def _apply_migration(self, current: int, target: int) -> None:
-        if (current, target) not in {(1, 2), (2, 3)}:
+        if (current, target) not in {(1, 2), (2, 3), (3, 4)}:
             raise DatabaseSchemaError(f"no forward migration from version {current} to {target}")
         with self.transaction() as connection:
             if (current, target) == (1, 2):
                 self._migration_1_to_2(connection)
-            else:
+            elif target == 3:
                 self._migration_2_to_3(connection)
+            else:
+                self._migration_3_to_4(connection)
             connection.execute(
                 "INSERT INTO schema_versions(version, applied_at) VALUES (?, ?)",
                 (target, utc_now()),
@@ -284,6 +302,12 @@ class Database:
         for statement in statements:
             connection.execute(statement)
 
+    @staticmethod
+    def _migration_3_to_4(connection: sqlite3.Connection) -> None:
+        script = Path(__file__).with_name("memory_schema.sql").read_text(encoding="utf-8")
+        for statement in _read_sql_statements(script):
+            connection.execute(statement)
+
     def _validate_schema_shape(self, version: int) -> None:
         expected = {
             "schema_versions",
@@ -340,6 +364,10 @@ class Database:
             if not p02_tables.issubset(actual):
                 missing = ", ".join(sorted(p02_tables - actual))
                 raise DatabaseSchemaError(f"Palladion schema version 3 is missing tables: {missing}")
+        if version >= 4:
+            if not {"memory_provenance", "memory_teams", "memory_team_memberships", "memory_fts"}.issubset(actual):
+                raise DatabaseSchemaError("Palladion schema version 4 is missing memory tables")
+
 
 
 def utc_now() -> str:

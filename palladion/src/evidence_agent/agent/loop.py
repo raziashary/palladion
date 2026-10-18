@@ -63,6 +63,7 @@ class AgentRuntime:
                   settings: Settings) -> None:
         self.model, self.tools, self.store, self.settings = model, tools, store, settings
         self.ledger = tools.ledger
+        self.tools.memory_enabled = settings.continuity_enabled
         self.budget = Budget(settings.main_max_calls, settings.tool_max_calls)
 
     async def _call(self, messages: list[dict[str, Any]], *, final: bool) -> ModelTurn:
@@ -92,7 +93,9 @@ class AgentRuntime:
 
     async def _investigate(self, query: str, hints: dict[str, Any]) -> Draft:
         packet = hints["packet"]
-        context = {"authorized_targets": hints["authorized_targets"],
+        context = {"verified_observations": packet["verified_observations"],
+            "open_questions": packet["open_questions"], "hypotheses": packet["hypotheses"],
+            "authorized_targets": hints["authorized_targets"],
             "known_approved_policy_families": hints["known_approved_policy_families"],
             "reported_facts": packet["reported_facts"], "evidence_handles": packet["evidence_handles"],
             "previous_attempts": [{"status": e["payload"].get("status"), "at": e["at"]}
@@ -184,8 +187,16 @@ class AgentRuntime:
     async def answer(self, query: str) -> dict[str, Any]:
         self.store.authorize()
         # Keep the previous packet separate: current query remains explicitly user-reported.
-        hints = preflight(query, self.store)
-        self.store.append("REQUEST", self.ledger.trace_id, {"query": query})
+        hints = preflight(query, self.store, include_memory=self.settings.continuity_enabled,
+            packet_max_chars=self.settings.packet_max_chars)
+        packet = hints["packet"]
+        self.store.append("REQUEST", self.ledger.trace_id, {"query": query,
+            "continuity_metrics": {"enabled": self.settings.continuity_enabled,
+                "packet_characters": len(json.dumps(packet)),
+                "open_question_count": len(packet["open_questions"]),
+                "observation_count": len(packet["verified_observations"]),
+                "reported_count": len(packet["reported_facts"]),
+                "handle_count": len(packet["evidence_handles"])}})
         try:
             async with asyncio.timeout(self.settings.request_timeout_seconds):
                 draft = await self._investigate(query, hints)

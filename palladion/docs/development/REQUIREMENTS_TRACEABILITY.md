@@ -91,3 +91,16 @@ handler→canonical evidence/policy/live/memory→reserved final→necessary-con
 message/citation/trace readers. Cross-cutting obligations remain split: P05 full memory,
 P06 mandatory critic/semantic challenge, P07 graph and P08 scientific scoring. Actual
 provider/model and failure history are explicit; P04 end review and resolution are complete; later phase consumers remain deferred.
+
+
+P05 receipt E-P05-001 extends I09/I10/I13 via explicit owner validity/FTS/team/promotions,
+canonical revalidation and packet category producers. Tests exercise correction/expiry/
+close/revocation, actual Qdrant cache readers and fresh live follow-up; actual Groq pilot
+scores packet versus answer omissions separately and retains0/3 strict completions.
+This is phase-local mechanism evidence, not proof of the research hypothesis. P06 critic,
+P07 graph, P08 semantic/held-out evaluation and X01 remain explicitly deferred.
+
+P05 phase-local closure: E-P05-001 records allseven atomic tasks, installed49file
+artifact,258disjoint automated checks, actual model pilot (including0/3 strict
+completions), sole end review and R1/R2 plus third-turn correction resolution. Full research/semantic/critic/graph
+obligations remain with their later phases; no broad integrity guarantee inferred.

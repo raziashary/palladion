@@ -1,11 +1,11 @@
 # Palladion master development plan
 
-Version 7, 2026-10-19. Scope anchor: [blueprint v0.2](../vision/palladion-blueprint-v2.md),
+Version 8, 2026-10-19. Scope anchor: [blueprint v0.2](../vision/palladion-blueprint-v2.md),
 especially “Locked decisions,” “Build plan,” “System invariants,” and the full walkthrough.
-Current checkpoint: **P04 DONE**, authorized end-to-end from published64d2066; E-P04-001.
+Current checkpoint: **P05 DONE** from published4245023; E-P05-001 records source/consumer/measurement/audit proof and failures.
 P04 includes actual Groq, four tools, packet/ledger, bounded investigation/finalization,
 deterministic gate and authenticated message/citation/timeline/trace consumers.
-P03 push completed; no new main push inferred. P05–P08/X01/UI remain outside scope.
+P04 push completed; no new main push inferred. P06–P08/X01/UI remain outside scope.
 ADR-0011 governs; ADR-0013 selects uv and real Groq generation. E-P04-001 records work.
 
 ## Document authority and ownership
@@ -280,7 +280,7 @@ retries, and resumability,” and “Memory write protocol.” Depends on P04. O
 | P05-T02 | Application-generated bounded packet, structured/FTS recall, scope/hash/generation keyed hot cache | Evidence handles reread under current ACL/time; revocation invalidates cache; unspecified lifetime retained; G-MEMORY, G-SECURITY |
 | P05-T03 | Follow-up/resume path with corrections, role changes and updated live observations | New message consumes previous events but refreshes material evidence; long-session loss metrics; G-E2E, G-MEMORY |
 
-Exit: a second request preserves reported/observed/hypothesis distinctions without granting
+Exit verified at E-P05-001: allseven children, source/installed/API consumers, actual pilot and sole audit/resolution. Strict pilot model completion0/3 remains a failure measurement, not a runtime reliability claim. A second request preserves reported/observed/hypothesis distinctions without granting
 old evidence current authority. Optional sqlite-vec remains an ablation, not a dependency.
 
 ## P06 — Adversarial critic experiment (Slice 5)
@@ -943,16 +943,16 @@ order. Shared-file tasks are sequential. Each proof names the observation that c
 
 <a id="p05-t01-01"></a>
 
-- [ ] **P05-T01.01 — Persist scoped memory categories and failed attempts**
-  - **Files:** `palladion/src/evidence_agent/memory/store.py`, `palladion/tests/test_memory.py`.
+- [x] **P05-T01.01 — Persist scoped memory categories and failed attempts**
+  - **Files:** `palladion/src/evidence_agent/memory/store.py`, `palladion/src/evidence_agent/storage/sqlite.py`, `palladion/src/evidence_agent/storage/memory_schema.sql`, `palladion/src/evidence_agent/security/access.py`, `palladion/src/evidence_agent/storage/registry.py`, `palladion/tests/test_ingest.py`, `palladion/tests/test_memory.py`.
   - **Depends:** P04-T04.03.
   - **Change:** Expand event store into episodic/semantic/procedural entries with USER/CASE/TEAM/ORGANIZATION scope and attributable source/event refs for recall.
   - **Proof:** INTEGRATION; [G-MEMORY](TESTING_GATES.md#g-memory-task-coverage); close/reopen preserves labels/failures; cross-case read and unsupported guess promotion denied.
 
 <a id="p05-t01-02"></a>
 
-- [ ] **P05-T01.02 — Control fact validity and semantic promotion**
-  - **Files:** `palladion/src/evidence_agent/memory/store.py`, `palladion/tests/test_memory.py`, `palladion/tests/test_security.py`.
+- [x] **P05-T01.02 — Control fact validity and semantic promotion**
+  - **Files:** `palladion/src/evidence_agent/memory/store.py`, `palladion/scripts/memory.py`, `palladion/tests/test_memory.py`, `palladion/tests/test_security.py`.
   - **Depends:** P05-T01.01.
   - **Change:** Apply authorized user/owner validity/revocation and explicit organization promotion; retain actor/time/rule without model expiry decisions.
   - **Proof:** INTEGRATION; [G-MEMORY](TESTING_GATES.md#g-memory-task-coverage), [G-SECURITY](TESTING_GATES.md#g-security-task-coverage); no expiry stays UNSPECIFIED, correction auditable, repeated assertion cannot become global policy.
@@ -961,44 +961,44 @@ order. Shared-file tasks are sequential. Each proof names the observation that c
 
 <a id="p05-t02-01"></a>
 
-- [ ] **P05-T02.01 — Read structured/FTS memory under current principal**
-  - **Files:** `palladion/src/evidence_agent/memory/store.py`, `palladion/src/evidence_agent/agent/tools.py`, `palladion/tests/test_memory.py`.
+- [x] **P05-T02.01 — Read structured/FTS memory under current principal**
+  - **Files:** `palladion/src/evidence_agent/memory/store.py`, `palladion/src/evidence_agent/agent/tools.py`, `palladion/src/evidence_agent/retrieval/evidence.py`, `palladion/tests/test_memory.py`.
   - **Depends:** P05-T01.02.
   - **Change:** Implement typed/exact/FTS recall and feed attributable facts/events to recall_memory; vector augmentation remains disabled until measured.
   - **Proof:** INTEGRATION; [G-MEMORY](TESTING_GATES.md#g-memory-task-coverage); authorized known fact recalled with source, similar private case excluded, stale principal grants not inherited.
 
 <a id="p05-t02-02"></a>
 
-- [ ] **P05-T02.02 — Generate bounded packets from actual case events**
-  - **Files:** `palladion/src/evidence_agent/memory/packet.py`, `palladion/tests/test_memory.py`.
+- [x] **P05-T02.02 — Generate bounded packets from actual case events**
+  - **Files:** `palladion/src/evidence_agent/memory/packet.py`, `palladion/src/evidence_agent/settings.py`, `palladion/tests/test_memory.py`.
   - **Depends:** P05-T02.01.
   - **Change:** Regenerate compact packet separating verified/reported/hypothesis state, unresolved questions, attempts and bounded handles for next preflight.
   - **Proof:** UNIT; [G-MEMORY](TESTING_GATES.md#g-memory-task-coverage); critical missing settlement survives compression, tampered prose/principal cannot override authenticated typed state.
 
 <a id="p05-t02-03"></a>
 
-- [ ] **P05-T02.03 — Cache exact passages by source and authorization context**
-  - **Files:** `palladion/src/evidence_agent/memory/hotcache.py`, `palladion/tests/test_memory.py`, `palladion/tests/test_security.py`.
+- [x] **P05-T02.03 — Cache exact passages by source and authorization context**
+  - **Files:** `palladion/src/evidence_agent/memory/hotcache.py`, `palladion/src/evidence_agent/agent/services.py`, `palladion/src/evidence_agent/retrieval/evidence.py`, `palladion/tests/test_memory.py`, `palladion/tests/test_security.py`, `palladion/tests/test_end_to_end.py`.
   - **Depends:** P05-T02.02.
-  - **Change:** Add bounded ephemeral passage cache keyed by content/scope/generation/time; correction/close/revocation invalidates handles before readers reuse them.
+  - **Change:** Add bounded ephemeral passage cache keyed by content/scope/generation/time; correction/close/revocation invalidates handles before readers reuse them. ADR-0041 requires separate tests for every trigger, current ACL/time and omission-safe cache behavior.
   - **Proof:** INTEGRATION; [G-MEMORY](TESTING_GATES.md#g-memory-task-coverage), [G-SECURITY](TESTING_GATES.md#g-security-task-coverage); authorized repeat hits cache, role/source change invalidates, another user never receives cached passage.
 
 #### P05-T03 execution tasks
 
 <a id="p05-t03-01"></a>
 
-- [ ] **P05-T03.01 — Resume a second message with revalidated evidence**
+- [x] **P05-T03.01 — Resume a second message with revalidated evidence**
   - **Files:** `palladion/src/evidence_agent/agent/preflight.py`, `palladion/src/evidence_agent/agent/loop.py`, `palladion/tests/test_end_to_end.py`, `palladion/tests/test_memory.py`.
   - **Depends:** P05-T02.03.
   - **Change:** Wire full memory/packet/cache into continuation; current material claims reread source/live facts rather than reusing old authority.
-  - **Proof:** SMOKE; [G-E2E](TESTING_GATES.md#g-e2e-task-coverage), [G-MEMORY](TESTING_GATES.md#g-memory-task-coverage); restart/follow-up reads attempts, correction/revocation/changed settlement updates answer; no hidden-thought resumption assumed.
+  - **Proof:** SMOKE; [G-E2E](TESTING_GATES.md#g-e2e-task-coverage), [G-MEMORY](TESTING_GATES.md#g-memory-task-coverage); actual explicitly enabled Groq restart/follow-up plus deterministic controls read attempts; correction/revocation/changed settlement updates answer; no hidden-thought resumption assumed.
 
 <a id="p05-t03-02"></a>
 
-- [ ] **P05-T03.02 — Measure long-session recall and packet omissions**
+- [x] **P05-T03.02 — Measure long-session recall and packet omissions**
   - **Files:** `palladion/scripts/evaluate.py`, `palladion/src/evidence_agent/core/evaluation.py`, `palladion/data/demo/retrieval_pilot.json`, `palladion/tests/test_evaluation.py`, `palladion/tests/test_goldens.py`, `palladion/docs/development/EVIDENCE_LOG.md`.
   - **Depends:** P05-T03.01.
-  - **Change:** Compare fixed B4/B5 continuations with varying compression; score completion, omitted facts, stale claims and token/call cost from actual outputs.
+  - **Change:** Compare fixed B4/B5 continuations with varying compression per ADR-0041; score actual persisted model/API outputs for completion, critical packet omissions, stale claims and token/call cost. Record every failed condition; no research success claim.
   - **Proof:** MEASUREMENT; [G-RESEARCH](TESTING_GATES.md#g-research-task-coverage); scorer catches deliberately missing critical fact; vector memory remains a separately declared treatment, not hidden B5 work.
 
 ### Atomic tasks — P06

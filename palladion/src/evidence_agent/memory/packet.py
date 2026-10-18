@@ -1,23 +1,84 @@
-"""Regenerate a bounded packet from authorized persisted events, never model grants."""
+"""Application-generated continuity; historical observations always require a new read."""
 from __future__ import annotations
 
 import json
 
-from evidence_agent.core.models import ContinuityPacket, GateDisposition, SourceRef
-from evidence_agent.live.gateway import utc_clock
+from evidence_agent.core.errors import EvidenceAgentError
+from evidence_agent.core.models import (
+    ContinuityPacket,
+    GateDisposition,
+    Hypothesis,
+    LiveOperationStatus,
+    ReportedFact,
+    SourceRef,
+    VerifiedObservation,
+)
+from evidence_agent.live.gateway import read_observation, utc_clock
 from evidence_agent.memory.store import CaseStore
 
 
-def build_packet(store: CaseStore, query: str) -> ContinuityPacket:
-    events = store.recent()
-    disposition = None
-    handles: list[SourceRef] = []
-    for event in events:
-        payload = event["payload"]
-        if event["kind"] == "RUNTIME_RELEASE":
-            disposition = GateDisposition(payload["disposition"])
-            handles.extend(SourceRef.model_validate_json(json.dumps(h)) for h in payload["evidence_handles"])
-    return ContinuityPacket(case_id=store.case_id, tenant_id=store.principal.tenant_id,
-        agent_role="investigator", current_goal=query, reported_facts=store.own_reported_facts(),
-        previous_attempts=tuple(e for e in events if e["kind"] in {"RUNTIME_ATTEMPT", "RUNTIME_TOOL_RESULT"}),
-        evidence_handles=tuple(handles[-12:]), last_disposition=disposition, generated_at=utc_clock())
+def build_packet(store: CaseStore, query: str, *, max_chars: int = 6000) -> ContinuityPacket:
+    if not 1500 <= max_chars <= 12000:
+        raise ValueError("Packet compression bound exceeded")
+    store.authorize()
+    memory = store.memory()
+    if memory.closed():
+        return ContinuityPacket(case_id=store.case_id, tenant_id=store.principal.tenant_id,
+            agent_role="investigator", current_goal=query[:512], generated_at=utc_clock())
+    events = store.recent(limit=20)
+    release = store.registry.database.connection.execute(
+        "SELECT payload_json FROM case_events WHERE tenant_id=? AND case_id=? "
+        "AND event_kind='RUNTIME_RELEASE' ORDER BY occurred_at DESC,event_id DESC LIMIT 1",
+        (store.principal.tenant_id, store.case_id)).fetchone()
+    prior = store._safe_payload("RUNTIME_RELEASE", json.loads(release[0])) if release else {}
+    handles = [SourceRef.model_validate_json(json.dumps(h)) for h in prior.get("evidence_handles", [])][:3]
+    memories = memory.recall(limit=20)
+    reported = [ReportedFact(fact_id=m["memory_id"], statement=m["content"][:512],
+        source=m["owner_id"], validity_policy_id=m["validity_policy_id"],
+        provenance=(m["source_event_id"],)) for m in memories if m["claim_kind"] == "REPORTED"][:4]
+    # Explicitly controlled facts replace raw prior-query reminders, even after revocation.
+    controlled = store.registry.database.connection.execute(
+        "SELECT 1 FROM memory_provenance p JOIN memory_entries e USING(memory_id) "
+        "WHERE e.tenant_id=? AND p.origin_case_id=? AND p.owner_id=? LIMIT 1",
+        (store.principal.tenant_id, store.case_id, store.principal.principal_id)).fetchone()
+    if not reported and not controlled:
+        reported = [f.model_copy(update={"statement": f.statement[:512]}) for f in store.own_reported_facts()]
+    hypotheses = [Hypothesis(hypothesis_id=m["memory_id"], statement=m["content"][:256])
+                  for m in memories if m["claim_kind"] == "HYPOTHESIS"][:2]
+    for index, item in enumerate(prior.get("hypotheses", [])[:2]):
+        hypotheses.append(Hypothesis(hypothesis_id="prior-"+str(index), statement=item["text"]))
+    observations = []
+    rows = store.registry.database.connection.execute(
+        "SELECT event_id FROM case_events WHERE tenant_id=? AND case_id=? "
+        "AND event_kind='LIVE_OBSERVATION' ORDER BY occurred_at DESC,event_id DESC LIMIT 32",
+        (store.principal.tenant_id, store.case_id)).fetchall()
+    seen = set()
+    for row in rows:
+        try:
+            observed = read_observation(store.registry, store.principal, store.case_id, row[0])
+        except (EvidenceAgentError, ValueError):
+            continue
+        if observed.operation_id in seen:
+            continue
+        seen.add(observed.operation_id)
+        if observed.operation_status not in {LiveOperationStatus.OK, LiveOperationStatus.STALE_DATA}:
+            continue
+        for field in ("state", "settlement_state", "result"):
+            if field in observed.data and len(str(observed.data[field])) <= 128:
+                observations.append(VerifiedObservation(fact_id=observed.lookup_id+":"+field,
+                    predicate=field, value=observed.data[field], evidence_id=observed.lookup_id,
+                    observed_at=observed.observed_at, freshness_status="RECHECK_FOR_CURRENT_DECISION"))
+    packet = ContinuityPacket(case_id=store.case_id, tenant_id=store.principal.tenant_id,
+        agent_role="investigator", current_goal=query[:512],
+        verified_observations=tuple(observations[:3]), reported_facts=tuple(reported),
+        hypotheses=tuple(hypotheses[:2]), open_questions=store.unresolved_questions(),
+        evidence_handles=tuple(handles), last_disposition=GateDisposition(prior["disposition"]) if prior else None,
+        previous_attempts=tuple(e for e in events if e["kind"] in {"RUNTIME_ATTEMPT", "RUNTIME_TOOL_RESULT"})[-4:],
+        generated_at=utc_clock())
+    # Keep critical unresolved slots first; omit lower-priority context explicitly in metrics.
+    for field in ("previous_attempts", "evidence_handles", "reported_facts", "hypotheses", "verified_observations"):
+        while len(packet.model_dump_json()) > max_chars and getattr(packet, field):
+            packet = packet.model_copy(update={field: getattr(packet, field)[:-1]})
+    if len(packet.model_dump_json()) > max_chars:
+        packet = packet.model_copy(update={"current_goal": query[:128]})
+    return packet

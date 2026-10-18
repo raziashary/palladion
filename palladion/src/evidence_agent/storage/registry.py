@@ -30,7 +30,12 @@ class Registry:
     def __init__(self, database: Database, originals: OriginalStore) -> None:
         self.database = database
         self.originals = originals
-        self.access = AccessController(self.get_principal, self.is_member)
+        self.access = AccessController(self.get_principal, self.is_member, self.is_team_member)
+
+    def is_team_member(self, tenant_id: str, team_id: str, principal_id: str) -> bool:
+        return self.database.connection.execute(
+            "SELECT 1 FROM memory_team_memberships WHERE tenant_id=? AND team_id=? "
+            "AND principal_id=? AND revoked_at IS NULL", (tenant_id, team_id, principal_id)).fetchone() is not None
 
     def bootstrap_principal(self, principal: Principal) -> Principal:
         """Persist one trusted synthetic profile; repeated calls never restore grants."""
