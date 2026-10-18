@@ -74,6 +74,8 @@ and the checker; no edits, no git, no credentials, no network.
 
 ## E-B00-004 — Publication
 
-Task: B00-T04.02. Recorded in the commit that follows this log; the commit hash and push result are appended to PROGRESS once the push is verified.
-Intended steps: re-run the checker and self-test, scan the staged diff for secrets, stage only `palladion-benchmark/` paths, commit with a Conventional
-Commit subject and body, confirm `git log origin/main..HEAD` holds only this commit, then push `main`.
+Task: B00-T04.02. Before commit: checker and self-test passed, secret pattern scan over `palladion-benchmark/` found nothing, `git diff --cached --name-only`
+listed 20 files all under `palladion-benchmark/`, `git log origin/main..HEAD` held only the benchmark commit. Commit `5c392f9`
+("docs(benchmark): establish benchmark development suite and uv project") was made with a path-scoped `git commit -- palladion-benchmark`, then
+`git push origin main` fast-forwarded `64d2066..5c392f9`; afterwards `git status -sb` showed `main...origin/main` with no divergence. Palladion's
+uncommitted files were not staged or committed. This entry was added in a follow-up documentation commit.
