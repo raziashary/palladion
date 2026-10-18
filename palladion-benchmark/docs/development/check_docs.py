@@ -410,8 +410,8 @@ def self_test(documents: dict[str, str]) -> int:
         "accepted ADR with OPEN answer": (adr, documents[adr].replace(
             "**My answer (editable):** In this repo, own uv project", "**My answer (editable):** OPEN own uv project", 1)),
         "proposed ADR with an answer": (adr, documents[adr].replace(
-            "**My answer (editable):** OPEN — not yet answered. The owner's request", "**My answer (editable):** Yes. The owner's request", 1)),
-        "open question without decision": (risks, documents[risks].replace("| BADR-0013 | OPEN |", "| none | OPEN |", 1)),
+            "**Status:** ACCEPTED; 2026-10-18.", "**Status:** PROPOSED; 2026-10-18.", 1)),
+        "open question without decision": (risks, documents[risks].replace("| BADR-0006 | OPEN", "| none | OPEN", 1)),
         "PROGRESS done with unchecked cards": (progress, documents[progress].replace(
             "| B01 | PLANNED |", "| B01 | DONE |", 1)),
         "PROGRESS gate removed": (progress, documents[progress].replace("| BG-REPORT | NOT_RUN |", "| removed | NOT_RUN |", 1)),

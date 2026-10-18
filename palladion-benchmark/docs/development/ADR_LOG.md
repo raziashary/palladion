@@ -118,9 +118,9 @@ show the decision working, and is kept separate from acceptance.
 
 ## BADR-0006 — Phase decomposition B00–B09
 
-**Status:** PROPOSED; 2026-10-18.
+**Status:** ACCEPTED; 2026-10-18.
 
-**Authority:** Coordinator derivation from protocol §19.1 and §14.1; not yet confirmed by the owner.
+**Authority:** Owner answer in chat, 2026-10-18: approve the B00–B09 breakdown as written, including M-tier generation in B08.
 
 **Question:** Are the ten phases and their order the intended work breakdown?
 
@@ -132,7 +132,7 @@ show the decision working, and is kept separate from acceptance.
 
 **What affects what:** MASTER_DEV_PLAN, GOAL, PROGRESS phase tables.
 
-**My answer (editable):** OPEN — not yet answered. The owner's request to build the suite is treated as permission to draft the plan, not as approval of B01 onward.
+**My answer (editable):** Approved as written (2026-10-18).
 
 **Verification:** Owner reads the plan; every protocol section maps to at least one task (BG-DOC traceability check).
 
@@ -258,9 +258,9 @@ show the decision working, and is kept separate from acceptance.
 
 ## BADR-0013 — Provider credentials for the benchmark
 
-**Status:** PROPOSED; 2026-10-18.
+**Status:** ACCEPTED; 2026-10-18.
 
-**Authority:** Coordinator proposal following the owner's rule that secrets stay out of chat and commits.
+**Authority:** Owner answer in chat, 2026-10-18: the owner created the gitignored palladion-benchmark/.env.
 
 **Question:** Where does the benchmark read its Groq credential from, and when may it call the provider?
 
@@ -272,6 +272,6 @@ show the decision working, and is kept separate from acceptance.
 
 **What affects what:** B01-T01.01 (`.env.example` names only), B01-T05.01, B01-T05.02; question OQ01.
 
-**My answer (editable):** OPEN — not yet answered. No provider call is made until the owner provisions a key and says so.
+**My answer (editable):** Benchmark-local gitignored .env, created by the owner (2026-10-18). Loaded only by an explicitly enabled command; Palladion's root .env is never read or copied. The coordinator verified only that the file exists and is ignored by git, not its contents.
 
 **Verification:** The secret scan negative control in B01-T01.01; live-call tests refuse to run without the flag.
