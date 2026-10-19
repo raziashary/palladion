@@ -415,6 +415,8 @@ class StatisticsSettings:
     multiplicity: str
     cluster_by: str
     zero_failure_bound_numerator: int
+    bootstrap_seed: int
+    min_clusters: int
 
 
 @dataclass(frozen=True)
@@ -423,6 +425,8 @@ class EvaluationConfig:
     strata: Mapping[str, str]
     metric_groups: Mapping[str, tuple[str, ...]]
     statistics: StatisticsSettings
+    quantile_method: str
+    slot_kinds: Mapping[str, str]
     loss_matrix: Mapping[str, float]
     provisional_gates: Mapping[str, str]
     sealed: bool
@@ -447,8 +451,14 @@ class EvaluationConfig:
             multiplicity=s.text("multiplicity", allowed=("holm",)),
             cluster_by=s.text("cluster_by", allowed=("scenario_family",)),
             zero_failure_bound_numerator=s.integer("zero_failure_bound_numerator", minimum=1),
+            bootstrap_seed=s.integer("bootstrap_seed", minimum=0),
+            min_clusters=s.integer("min_clusters", minimum=2),
         )
         s.finish()
+        quantile_method = r.text("quantile_method", allowed=("linear",))
+        kinds_r = r.sub("slot_kinds")
+        slot_kinds = {name: kinds_r.text(name) for name in sorted(kinds_r.data)}
+        kinds_r.finish()
         loss_r = r.sub("loss_matrix")
         loss = {name: loss_r.number(name) for name in sorted(loss_r.data)}
         loss_r.finish()
@@ -457,7 +467,7 @@ class EvaluationConfig:
         gates_r.finish()
         sealed = r.boolean("sealed")
         r.finish()
-        return cls(version, strata, groups, statistics, loss, gates, sealed)
+        return cls(version, strata, groups, statistics, quantile_method, slot_kinds, loss, gates, sealed)
 
 
 # --------------------------------------------------------------------------- fixtures.yaml

@@ -36,8 +36,8 @@ card and the script disagree.
 | Skeleton diversity (floor 0.10) | 0.16 |
 | Newest-version rule right on version questions (ceiling 0.30) | 0.00 |
 | Oldest-version rule right on version questions (ceiling 0.60) | 0.50 |
-| Corpus manifest SHA-256 | 104d5baafd105fbfb2c79630e089173d10f3576f277e96677ba5e4d1a77a2267 |
-| Questions SHA-256 | b7a52980bac8658b563b3dde6d0eb4c42fba0e565685596f6220ae35dbb5d7a7 |
+| Corpus manifest SHA-256 | 4d14dfc45aa7c47e018220a0b6e9d6c89d9ed69b69c7feb60943024ecbd818ce |
+| Questions SHA-256 | 216045d31196f3323d9a728243c1141b457138bb5178b2f33cf53125fe030cd5 |
 | Snapshot id | snap-b491d64cb7a4665a |
 
 Questions by stratum: Q1 10, Q10 10, Q2 10, Q3 10, Q4 10, Q5 10, Q6 10, Q7 10, Q8 10, Q9 10.

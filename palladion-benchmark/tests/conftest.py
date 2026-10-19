@@ -7,10 +7,11 @@ from pathlib import Path
 import pytest
 
 from benchmark.config import FixturesConfig, load_fixtures_config
+from benchmark.eval.normalize import PublishedCorpus
 from benchmark.fixtures.artifacts import build_corpus, plan_from_config
 from benchmark.fixtures.documents import Document
 from benchmark.fixtures.knowledge import DocumentState
-from benchmark.fixtures.manifest import Split, build_records, snapshot_id
+from benchmark.fixtures.manifest import Split, build_records, snapshot_id, write_namespaces
 from benchmark.fixtures.question_gen import build_questions
 from benchmark.fixtures.questions import GoldRecord
 from benchmark.fixtures.world import World, build_world
@@ -43,3 +44,16 @@ def s_snapshot(s_world: World, s_corpus: tuple[Document, ...]) -> str:
 @pytest.fixture(scope="session")
 def s_questions(s_world: World, s_corpus: tuple[Document, ...], s_snapshot: str) -> tuple[GoldRecord, ...]:
     return build_questions(s_world, s_corpus, s_snapshot, SEED, "S", {Split.SMOKE: 10})
+
+
+@pytest.fixture(scope="session")
+def s_published(tmp_path_factory: pytest.TempPathFactory, s_world: World, s_corpus: tuple[Document, ...]) -> Path:
+    """The S-tier published namespace written once to disk, the way a scorer finds it."""
+    root = tmp_path_factory.mktemp("published") / "S"
+    write_namespaces(root, s_world, s_corpus, SEED)
+    return root / "published"
+
+
+@pytest.fixture(scope="session")
+def s_published_corpus(s_published: Path) -> PublishedCorpus:
+    return PublishedCorpus.load(s_published)

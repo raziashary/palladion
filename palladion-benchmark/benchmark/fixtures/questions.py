@@ -9,11 +9,13 @@ Whole scenario families go to one split, decided before any question is written 
 from __future__ import annotations
 
 import itertools
+import json
 import random
 import re
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from enum import StrEnum
+from pathlib import Path
 from typing import Any, Final
 
 from benchmark.contracts import (
@@ -24,7 +26,7 @@ from benchmark.contracts import (
     Track,
     screen_arm_visible,
 )
-from benchmark.fixtures import sha256_hex, to_plain
+from benchmark.fixtures import digest_of, sha256_hex, to_plain
 from benchmark.fixtures.knowledge import SNAPSHOT_TIME, AsOfBasis
 from benchmark.fixtures.manifest import Split
 from benchmark.fixtures.world import World
@@ -96,6 +98,9 @@ _SLOT_MECHANISM: Final[dict[SlotState, frozenset[AbstentionReason]]] = {
     SlotState.UNINDEXED: frozenset({R.UNINDEXED_SOURCE}),
 }
 ALL_TRACKS: Final = (Track.RETRIEVAL_ONLY.value, Track.CONTROLLED_QA.value, Track.NATIVE_END_TO_END.value)
+
+
+_OPTIONAL_GOLD_FIELDS = frozenset({"source_case_id", "tags", "history_allowed"})
 
 
 class GoldError(ValueError):
@@ -170,12 +175,65 @@ class GoldRecord:
     twin_of: str | None
     source_case_id: str | None = None
     tags: tuple[str, ...] = field(default=())
+    history_allowed: bool = False  # True only when the question itself asks for superseded versions
+
+    @classmethod
+    def from_dict(cls, data: Mapping[str, Any]) -> GoldRecord:
+        """Rebuild a record from its serialised form. Unknown or missing fields are refused."""
+        names = [f.name for f in fields(cls)]
+        unknown = sorted(set(data) - set(names))
+        missing = sorted(n for n in names if n not in data and n not in _OPTIONAL_GOLD_FIELDS)
+        if unknown or missing:
+            raise GoldError(f"gold record has unknown {unknown} or missing {missing} field(s)")
+
+        def citations(items: Sequence[Mapping[str, Any]]) -> tuple[Citation, ...]:
+            return tuple(Citation(**c) for c in items)
+
+        values: dict[str, Any] = dict(data)
+        values["split"] = Split(data["split"])
+        values["stratum"] = Stratum(data["stratum"])
+        values["answerability"] = Answerability(data["answerability"])
+        values["missing_reasons"] = tuple(AbstentionReason(x) for x in data["missing_reasons"])
+        values["slots"] = tuple(
+            EvidenceSlot(
+                s["slot"],
+                SlotState(s["state"]),
+                AbstentionReason(s["mechanism"]) if s["mechanism"] else None,
+                citations(s["alternatives"]),
+            )
+            for s in data["slots"]
+        )
+        values["minimal_sets"] = tuple(citations(group) for group in data["minimal_sets"])
+        values["gold_as_of_basis"] = AsOfBasis(data["gold_as_of_basis"]) if data["gold_as_of_basis"] else None
+        values["allowed_statuses"] = tuple(EvidenceStatus(x) for x in data["allowed_statuses"])
+        values["citation_gold_spans"] = citations(data["citation_gold_spans"])
+        values["harm_severity"] = Severity(data["harm_severity"])
+        for name in (
+            "authorized_partitions", "required_claims", "forbidden_claims", "gold_applicable_version_ids",
+            "required_policy_inputs", "allowed_actions", "inaccessible_sources", "track_eligibility", "tags",
+        ):  # fmt: skip
+            if name in values:
+                values[name] = tuple(values[name])
+        return cls(**values)
 
     def __post_init__(self) -> None:
         validate_gold(self)
 
     def to_dict(self) -> dict[str, Any]:
         return {k: to_plain(v) for k, v in self.__dict__.items()}
+
+    @property
+    def digest(self) -> str:
+        """SHA-256 of the canonical record, so a label or a score can be tied to the exact gold it was made against."""
+        return digest_of(self.to_dict())
+
+
+def read_gold(path: Path, *, expected_sha256: str | None = None) -> tuple[GoldRecord, ...]:
+    """Read an annotation file written by ``write_annotations``; the file digest is checked when one is given."""
+    raw = path.read_bytes()
+    if expected_sha256 is not None and sha256_hex(raw.decode("utf-8")) != expected_sha256:
+        raise GoldError(f"{path.name} does not match its recorded digest")
+    return tuple(GoldRecord.from_dict(json.loads(line)) for line in raw.decode("utf-8").splitlines() if line.strip())
 
 
 def derive_minimal_sets(slots: Sequence[EvidenceSlot]) -> tuple[tuple[Citation, ...], ...]:

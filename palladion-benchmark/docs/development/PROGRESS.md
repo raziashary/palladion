@@ -5,7 +5,7 @@ command observations and review receipts live in the [evidence log](EVIDENCE_LOG
 
 ## Current checkpoint
 
-B02 (synthetic world, S-tier corpus and gold) is BUILT with one open card: eleven of twelve cards are done and proven (E-B02-001 to E-B02-004), and B02-T07.02 (pilot label audit) waits for the owner's labels (E-B02-005); the model pass on the final fixture is done (17 of 30 agree with gold). The fixture has 1,200 fictional documents, 100 pilot questions (10 per stratum, all smoke, none test), a four-namespace layout, a read-only live mock and a validation gate that the generator runs before writing. `uv run pytest` passes 654 tests with ruff and strict mypy clean; 24 + 14 planted defects were all killed. B03 starts from the B02 gold schema.
+B03 (evaluation core) is BUILT and audited: all eight cards are done and proven (E-B03-002 to E-B03-004), with the pre-phase adversary in E-B03-001. The scorers cover identity and text alignment, SlotCoverage and CompleteSet, ranking and provenance metrics, paired statistics, latency and cost, scorecards and a score-run driver, and the perfect, empty and shuffled controls run through the real Runner with an injected registry. `uv run pytest` passes 790 tests with ruff and strict mypy clean; every planted defect is killed. B02 is built with one open card: B02-T07.02 (pilot label audit) waits for the owner's labels (E-B02-005); the S-tier fixture has 1,200 fictional documents and 100 pilot questions.
 
 
 B01 (harness foundation) is DONE: all eleven cards are built and proven (E-B01-002 to E-B01-004), the pre-phase Haiku 5.5 adversary (E-B01-001) and the post-phase audit with its resolution check (E-B01-005, E-B01-006) are dispositioned. The harness has typed contracts, strict configs, a 15-arm capability registry, an immutable manifest, tracing and
@@ -26,7 +26,7 @@ Still open and tracked: OQ03 (read Palladion's interface at B04), OQ09 (license,
 | B00 | DONE | E-B00-001 to E-B00-004 |
 | B01 | DONE | E-B01-001 to E-B01-006 |
 | B02 | IN_PROGRESS | Built, E-B02-001 to E-B02-005; B02-T07.02 awaits the owner's labels (the model pass is done) |
-| B03 | PLANNED | Depends on B02 gold schema |
+| B03 | DONE | E-B03-001 to E-B03-004; the metrics are proven against the controls, not yet against any real arm |
 | B04 | PLANNED | Depends on B02, B03; needs Palladion's interface (OQ03) |
 | B05 | PLANNED | Depends on B04 and B01-T05 |
 | B06 | PLANNED | Depends on B04; quota question OQ06 |
@@ -42,8 +42,8 @@ Still open and tracked: OQ03 (read Palladion's interface at B04), OQ09 (license,
 | BG-HARNESS | PASS | E-B01-002 to E-B01-006: contracts, budgets, generator, ITT runner, CLI and the live entry-point proof (3 of 3 models), audited. Covers the B01 contract only; it does not test any system under test |
 | BG-FIXTURE | PARTIAL | E-B02-002, E-B02-003: determinism across processes, referential, contradiction, merge identity, temporal, leakage and realism checks with planted-defect controls on the S tier. The 19 mutations and the M tier remain (B07-T07, B08-T01) |
 | BG-GOLD | PARTIAL | E-B02-002, E-B02-005: schema, mapping, slots, family-grouped partitions and gold-support checks pass; the two-reader audit is open (owner labels pending) |
-| BG-METRIC | NOT_RUN | B03 |
-| BG-STATS | NOT_RUN | B03 |
+| BG-METRIC | PARTIAL | E-B03-002, E-B03-003: retrieval, evidence-set, cost and latency metrics with hand-computed cases and controls; answer-level metrics (B05), graph and system metrics (B06, B07) remain |
+| BG-STATS | PARTIAL | E-B03-002, E-B03-003: known effect, simulated coverage, clustering, exact tests and bounds; power sizing and preregistered pairings remain (B08) |
 | BG-ADAPTER | PARTIAL | Registry, capability matrix and contract tests exist (E-B01-003); no real adapter yet, so B04, B06 and B07 obligations remain |
 | BG-FAIR | NOT_RUN | B04 |
 | BG-TRACKA | NOT_RUN | B04 |
@@ -53,7 +53,7 @@ Still open and tracked: OQ03 (read Palladion's interface at B04), OQ09 (license,
 | BG-PREREG | NOT_RUN | B08 |
 | BG-ABLATION | NOT_RUN | B08 |
 | BG-REPRO | PARTIAL | Manifest and ledger digests, deterministic config digests (E-B01-003); same-seed corpus digests across processes (E-B02-002); result validation remains for B04 |
-| BG-REPORT | NOT_RUN | B03, B08 |
+| BG-REPORT | PARTIAL | E-B03-002: run states beside scores, ITT and conditional tables; the full report with negative findings and fairness deviations is B08 |
 
 ## Blocked or waiting cards (the checker prints these as notices)
 
@@ -63,4 +63,4 @@ B08-T07.01 on OQ09 (dataset license, owner deferred; must be answered before the
 
 ## Next action
 
-Start B03 (its pre-phase adversary has reported; findings are triaged in E-B03-001). Owner action outstanding: label the 30-item packet (see the dataset card). Open decisions that gate later work: OQ03, OQ09, OQ10 and OQ12.
+B04 (retrieval arms and the Track A pilot) needs its own pre-phase adversary and owner scope; it is not started. Owner action outstanding: label the 30-item packet (see the dataset card). Open decisions that gate later work: OQ03, OQ09, OQ10 and OQ12.

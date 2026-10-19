@@ -18,6 +18,7 @@ metric_groups:
   ranking: [precision_at_k, recall_at_k, mrr, ndcg_at_k, map_at_k, success_at_k]
   evidence_sets: [slot_coverage_at_k, complete_set_at_k]
   provenance: [valid_source_recall, wrong_vintage_intrusion, forbidden_source_exposure, authority_confusion, exception_recall, conflicting_pair_recall, citation_locator_resolution]
+  efficiency: [evidence_density, evidence_token_efficiency]
   answer: [unsupported_directive_rate, correct_substantive_coverage, citation_validity, false_answer_rate, false_abstention_rate, selective_risk]
   operations: [latency_p50, latency_p90, latency_p95, latency_p99, cost_per_query, indexing_cost]
 
@@ -26,7 +27,29 @@ statistics:
   confidence: 0.95
   multiplicity: holm
   cluster_by: scenario_family
-  zero_failure_bound_numerator: 3   # about 95% upper bound of 3/n for zero observed failures
+  zero_failure_bound_numerator: 3   # the rule-of-three approximation; the exact bound is computed from n (BADR-0024)
+  bootstrap_seed: 7                 # recorded so an interval is reproducible
+  min_clusters: 8                   # below this many scenario families an interval is labelled descriptive
+
+quantile_method: linear             # linear interpolation between order statistics (BADR-0024 item 9)
+
+slot_kinds:                         # protocol 6.1 kinds for the generator's slot names; a prefix with a trailing number matches
+  window_clause: policy_clause
+  amount_clause: policy_clause
+  state_clause: policy_clause
+  inputs_clause: policy_clause
+  basis_clause: policy_clause
+  policy_clause: policy_clause
+  policy: policy_clause
+  current_policy: policy_clause
+  exception_clause: exception
+  applicable_window: applicable_version
+  authority: conflict_side
+  live_read: verified_transaction_status
+  api_note: reference_document
+  runbook: reference_document
+  proposal_status: proposal_status
+  case_amount: case_input
 
 loss_matrix:                        # protocol 10.3 illustrative weights; sensitivity sweeps are required
   correct_supported_answer: 0.0

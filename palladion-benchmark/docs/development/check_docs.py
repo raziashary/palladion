@@ -38,7 +38,7 @@ EXTRA_FILES = {
     ROOT + "tests/test_generate_data.py",
     ROOT + "benchmark/fixtures/phrasebook.py", ROOT + "benchmark/fixtures/artifacts.py",
     ROOT + "benchmark/fixtures/question_gen.py",
-    ROOT + "benchmark/eval/score_run.py", ROOT + "tests/test_score_run.py", ROOT + "tests/test_evidence_metrics.py",
+    ROOT + "benchmark/eval/score_run.py", ROOT + "tests/test_score_run.py", ROOT + "tests/test_cost_latency.py", ROOT + "tests/test_tables.py", ROOT + "tests/test_evidence_metrics.py",
     ROOT + "tests/test_retrieval_metrics.py",
     ROOT + "tests/conftest.py",
     ROOT + "benchmark/fixtures/entities.py", ROOT + "benchmark/fixtures/knowledge.py",
@@ -435,7 +435,7 @@ def self_test(documents: dict[str, str]) -> int:
         "open question without decision": (risks, documents[risks].replace("| BADR-0006 | OPEN", "| none | OPEN", 1)),
         "PROGRESS done with unchecked cards": (progress, documents[progress].replace(
             f"| {planned} | PLANNED |", f"| {planned} | DONE |", 1)),
-        "PROGRESS gate removed": (progress, documents[progress].replace("| BG-REPORT | NOT_RUN |", "| removed | NOT_RUN |", 1)),
+        "PROGRESS gate removed": (progress, documents[progress].replace("| BG-FAIR | NOT_RUN |", "| removed | NOT_RUN |", 1)),
         "second PROJECT_MEMORY": (ROOT + "docs/PROJECT_MEMORY.md", "# copy\n"),
         "arm registry row removed": (DEV + "RESEARCH_PROTOCOL.md", documents[DEV + "RESEARCH_PROTOCOL.md"].replace("| E2 |", "| removed |", 1)),
     }

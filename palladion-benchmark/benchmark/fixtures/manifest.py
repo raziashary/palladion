@@ -61,6 +61,7 @@ class ManifestRecord:
     approved_by: str | None
     valid_from: str | None
     valid_to: str | None
+    recorded_from: str | None
     supersedes: str | None
     acl_tenants: tuple[str, ...]
     acl_roles: tuple[str, ...]
@@ -111,6 +112,7 @@ def build_records(world: World, corpus: Sequence[Document], seed: int) -> list[M
                 approved_by=version.approved_by if version else None,
                 valid_from=version.valid.start if version else None,
                 valid_to=version.valid.end if version else None,
+                recorded_from=version.recorded.start if version else None,
                 supersedes=version.supersedes if version else None,
                 acl_tenants=doc.acl_tenants,
                 acl_roles=doc.acl_roles,

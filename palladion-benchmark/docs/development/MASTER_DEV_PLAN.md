@@ -541,75 +541,75 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
 
 <a id="b03-t01-01"></a>
 
-- [ ] **B03-T01.01 — Chunk-to-span normalization**
+- [x] **B03-T01.01 — Chunk-to-span normalization**
   - **Files:** `palladion-benchmark/benchmark/eval/__init__.py`, `palladion-benchmark/benchmark/eval/normalize.py`, `palladion-benchmark/benchmark/contracts.py`, `palladion-benchmark/tests/test_span_alignment.py`.
   - **Depends:** B02-T04.01, B02-T03.01, B01-T02.01, BADR-0024.
   - **Change:** Add optional source_document_id and source_sha256 to EvidenceCandidate (default none, so existing arms keep working) and a GoldRecord reader that checks the gold digest; map returned chunks to document, clause and offsets by the locator grammar and the folding and containment rules fixed in BADR-0024; report exact identity and overlap separately, with overlap credit never counted in headline metrics; label alignment-only mappings.
   - **Proof:** UNIT; BG-METRIC, BG-ADAPTER; differently chunked identical text aligns; a clause split across two chunks, a chunk spanning two clauses and a re-flowed table map correctly; a stale copy earns overlap credit and no identity credit; a candidate without provenance never receives a native citation; gold read back from disk equals the gold written.
-  - **Evidence:** Not yet executed.
+  - **Evidence:** E-B03-002, E-B03-004; 38 alignment tests: locator grammar, identity vs text alignment, spanning chunks, live ids, hash and fabricated-locator handling, gold reader; planted defects killed.
 
 <a id="b03-t02-01"></a>
 
-- [ ] **B03-T02.01 — Slot coverage and complete evidence sets**
+- [x] **B03-T02.01 — Slot coverage and complete evidence sets**
   - **Files:** `palladion-benchmark/benchmark/eval/evidence_sets.py`, `palladion-benchmark/tests/test_evidence_metrics.py`.
   - **Depends:** B03-T01.01, BADR-0024.
   - **Change:** SlotCoverage@K and CompleteSet@K over the alternative minimal sets of records that have satisfiable slots; records with no satisfiable evidence (unanswerable, blocked, live-unavailable) return not-applicable, never zero or one; relevance is binary slot match (BADR-0024); the unit of evaluation, deduplication and every denominator are defined in evaluation.yaml.
   - **Proof:** UNIT; BG-METRIC; an oracle retriever scores 1, an empty one 0, and seven relevant chunks missing the exception score CompleteSet 0; a partial record and an unanswerable record each behave as defined; a duplicated candidate adds nothing.
-  - **Evidence:** Not yet executed.
+  - **Evidence:** E-B03-002, E-B03-003; 11 tests on the real fixture: oracle 1, empty 0, not-applicable records, missing exception, duplicates, OR within a slot; planted defects killed.
 
 <a id="b03-t03-01"></a>
 
-- [ ] **B03-T03.01 — Conventional ranking metrics**
+- [x] **B03-T03.01 — Conventional ranking metrics**
   - **Files:** `palladion-benchmark/benchmark/eval/retrieval.py`, `palladion-benchmark/tests/test_retrieval_metrics.py`.
   - **Depends:** B03-T01.01, BADR-0024.
   - **Change:** Precision, recall, MRR, nDCG, MAP and Success at K with binary gain over slot-matched units; short lists, zero relevant units and ideal-DCG zero are defined, not guessed.
   - **Proof:** UNIT; BG-METRIC; hand-computed values match; a shuffled ranking scores below the ideal one; a list shorter than K and a record with no relevant unit follow the written rule.
-  - **Evidence:** Not yet executed.
+  - **Evidence:** E-B03-002, E-B03-003; hand-computed precision, MRR, nDCG, MAP, success; shuffled and repeated chunks; planted defects killed.
 
 <a id="b03-t03-02"></a>
 
-- [ ] **B03-T03.02 — Provenance-aware retrieval metrics**
+- [x] **B03-T03.02 — Provenance-aware retrieval metrics**
   - **Files:** `palladion-benchmark/benchmark/eval/retrieval.py`, `palladion-benchmark/tests/test_retrieval_metrics.py`.
   - **Depends:** B03-T03.01, B03-T02.01, B02-T01.02, B02-T03.01, BADR-0024.
-  - **Change:** Valid-source recall, wrong-vintage intrusion (in the family, not applicable, history not allowed), forbidden-source exposure, authority confusion, exception recall, conflicting-pair recall, locator resolution, evidence density and token efficiency (whitespace-word tokens), and entity-disambiguation error where the fixture has the gold; slot kinds come from a name-to-kind table in evaluation.yaml. Noise slope, paraphrase stability and rank sensitivity need inputs no earlier phase produces and move to B07-T07.01, B08-T01.02 and B09-T01.01. The manifest gains the recorded interval and the gold a history-allowed flag so intrusion can be decided.
-  - **Proof:** UNIT; BG-METRIC, BG-SECURITY; the planted newer-but-inapplicable version is counted as intrusion even though it ranks first; a live citation is excluded from Track A denominators; every card metric sits in exactly one metric group.
-  - **Evidence:** Not yet executed.
+  - **Change:** Valid-source recall, wrong-vintage intrusion (in the family, not applicable, history not allowed), forbidden-source exposure, authority confusion, exception recall, conflicting-pair recall, locator resolution, evidence density and token efficiency (whitespace-word tokens), slot kinds come from a name-to-kind table in evaluation.yaml. Noise slope, paraphrase stability and rank sensitivity need inputs no earlier phase produces and move to B07-T07.01, B08-T01.02 and B09-T01.01. The manifest gains the recorded interval and the gold a history-allowed flag so intrusion can be decided.
+  - **Proof:** UNIT; BG-METRIC, BG-SECURITY; a superseded version of the governing policy ranked first is counted as intrusion; a live citation is excluded from Track A denominators; every card metric sits in exactly one metric group.
+  - **Evidence:** E-B03-002, E-B03-004; provenance metrics against the fixture manifest (exposure by identity and by partial text, ACL, authority, vintage, locator, density); entity-disambiguation error moved out (BADR-0024 amendment); planted defects killed.
 
 <a id="b03-t04-01"></a>
 
-- [ ] **B03-T04.01 — Paired statistics**
+- [x] **B03-T04.01 — Paired statistics**
   - **Files:** `palladion-benchmark/benchmark/eval/statistics.py`, `palladion-benchmark/tests/test_statistics.py`.
   - **Depends:** B01-T02.02.
   - **Change:** Paired cluster bootstrap with a fixed method, seed and minimum cluster count (below it the interval is labelled descriptive), exact McNemar, Holm over an explicit family argument, TOST equivalence with the margin as an input and a harm-direction flag, the exact zero-failure upper bound computed from n, Brier, log loss, ECE with disclosed bins, and Monte Carlo power simulation. Non-completed pairs enter binary endpoints as failures in the intention-to-treat table and are excluded and counted in the conditional table.
   - **Proof:** UNIT; BG-STATS; a synthetic known effect is recovered; simulated CI coverage is near nominal at the pilot and test cluster counts; clustering widens the interval against the naive one; an arm that times out on hard cases changes the intention-to-treat result and not the conditional one.
-  - **Evidence:** Not yet executed.
+  - **Evidence:** E-B03-002, E-B03-003; 25 tests: known effect recovered, simulated coverage near nominal at 12 and 30 clusters, clustered wider than naive, exact McNemar, Holm, TOST, zero-failure bound, calibration, power; planted defects killed.
 
 <a id="b03-t05-01"></a>
 
-- [ ] **B03-T05.01 — Latency and cost accounting**
-  - **Files:** `palladion-benchmark/benchmark/eval/cost_latency.py`.
+- [x] **B03-T05.01 — Latency and cost accounting**
+  - **Files:** `palladion-benchmark/benchmark/eval/cost_latency.py`, `palladion-benchmark/tests/test_cost_latency.py`.
   - **Depends:** B01-T03.03, B01-T04.01.
   - **Change:** p50/p90/p95/p99 by a quantile method fixed in evaluation.yaml, computed over completed calls with timed-out calls counted and reported beside as at least the deadline; online cost from ledger durations and system-reported usage, offline cost from the index record B04 writes, and the amortization formula; marginal-update costs belong to B07-T05.01. Missing values stay missing.
   - **Proof:** UNIT; BG-METRIC; hand-computed quantiles match; null cost is never summed as zero; a TIMEOUT record is not read as an observed latency.
-  - **Evidence:** Not yet executed.
+  - **Evidence:** E-B03-002, E-B03-004; 9 tests: hand-computed quantiles, timeout censored, missing cost never zero, amortization; planted defects killed.
 
 <a id="b03-t06-01"></a>
 
-- [ ] **B03-T06.01 — Scorecards and pairwise effect tables**
-  - **Files:** `palladion-benchmark/benchmark/analysis/__init__.py`, `palladion-benchmark/benchmark/analysis/tables.py`.
+- [x] **B03-T06.01 — Scorecards and pairwise effect tables**
+  - **Files:** `palladion-benchmark/benchmark/analysis/__init__.py`, `palladion-benchmark/benchmark/analysis/tables.py`, `palladion-benchmark/tests/test_tables.py`.
   - **Depends:** B03-T04.01, B03-T02.01, B03-T07.01.
   - **Change:** Stratum-by-arm tables with n, mean, paired difference, interval and severe-failure counts; NOT_RUN, UNSUPPORTED, INVALID_RUN and TIMEOUT listed beside, not inside, accuracy; conditional-on-completion and end-to-end success reported separately over predeclared eligible subsets.
   - **Proof:** UNIT; BG-REPORT; a planted NOT_RUN arm appears as a status, not as a zero score.
-  - **Evidence:** Not yet executed.
+  - **Evidence:** E-B03-002, E-B03-003; 8 tests: run states beside accuracy, ITT vs conditional, harm metrics conditional only, severe counts; planted defects killed.
 
 <a id="b03-t07-01"></a>
 
-- [ ] **B03-T07.01 — Score-run driver and control arms**
+- [x] **B03-T07.01 — Score-run driver and control arms**
   - **Files:** `palladion-benchmark/benchmark/eval/score_run.py`, `palladion-benchmark/tests/test_score_run.py`.
   - **Depends:** B03-T01.01, B03-T02.01, B03-T03.02, B03-T04.01, B03-T05.01, B01-T04.01, B02-T04.01.
   - **Change:** Read a run directory (ledger, immutable manifest, gold) and score it: every ledger record becomes a score or a run state, never a dropped row; a perfect, an empty and a shuffled control arm run through the real Runner with an injected registry that never enters the production registry; per-stratum controls are stated because perfect and empty coincide where no evidence exists.
   - **Proof:** INTEGRATION; BG-METRIC, BG-REPORT; the three controls separate on the strata where evidence exists and are reported as not distinguishable where it does not; a planted ledger hole or a gold digest mismatch stops the scorer.
-  - **Evidence:** Not yet executed.
+  - **Evidence:** E-B03-002, E-B03-004; real Runner with injected control registry, 18 tests: controls separate where evidence exists and coincide where it does not (per stratum), ledger hole, gold, corpus and manifest mismatches stop the scorer.
 
 ### Atomic tasks — B04
 

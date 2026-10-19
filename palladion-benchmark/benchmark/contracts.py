@@ -334,6 +334,9 @@ class RetrievalRequest:
         return cls(**{name: data[name] for name in field_names(cls) if name in data})
 
 
+_CANDIDATE_OPTIONAL = ("evidence_path", "additional_metadata", "source_document_id", "source_sha256")
+
+
 @dataclass(frozen=True)
 class EvidenceCandidate:
     """One ranked piece of evidence. Citation support must be declared, not assumed."""
@@ -347,6 +350,8 @@ class EvidenceCandidate:
     evidence_path: tuple[str, ...]
     native_citation_supported: bool
     additional_metadata: Mapping[str, Any]
+    source_document_id: str | None = None
+    source_sha256: str | None = None
 
     def __post_init__(self) -> None:
         o = "EvidenceCandidate"
@@ -369,8 +374,14 @@ class EvidenceCandidate:
             require_bool(_name(o, "native_citation_supported"), self.native_citation_supported),
         )
         set_(self, "additional_metadata", freeze(_name(o, "additional_metadata"), self.additional_metadata))
-        if self.native_citation_supported and self.source_version_id is None:
-            raise ContractError(f"{o}: a native citation claim needs a source_version_id (no phantom citations)")
+        if self.source_document_id is not None:
+            set_(self, "source_document_id", require_ident(_name(o, "source_document_id"), self.source_document_id))
+        if self.source_sha256 is not None:
+            set_(self, "source_sha256", require_text(_name(o, "source_sha256"), self.source_sha256, max_len=64))
+            if not re.fullmatch(r"[0-9a-f]{64}", self.source_sha256):
+                raise ContractError(f"{o}.source_sha256 must be a lower-case SHA-256")
+        if self.native_citation_supported and self.source_version_id is None and self.source_document_id is None:
+            raise ContractError(f"{o}: a native citation claim needs a source id (no phantom citations)")
 
     def to_dict(self) -> dict[str, Any]:
         return {name: thaw(getattr(self, name)) for name in field_names(type(self))}
@@ -378,7 +389,7 @@ class EvidenceCandidate:
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> EvidenceCandidate:
         reject_unknown(cls.__name__, data, field_names(cls))
-        missing = [n for n in field_names(cls) if n not in data and n not in ("evidence_path", "additional_metadata")]
+        missing = [n for n in field_names(cls) if n not in data and n not in _CANDIDATE_OPTIONAL]
         if missing:
             raise ContractError(f"{cls.__name__} is missing field(s): {', '.join(missing)}")
         values = {name: data[name] for name in field_names(cls) if name in data}

@@ -32,6 +32,12 @@ Accepted: BADR-0001 to BADR-0023 (all; BADR-0018 to BADR-0023 are the B02 decisi
 - The live generator proof (3 calls, 3 of 3 approved models answered) is the only provider use so far; the key lives in the gitignored `palladion-benchmark/.env` and has never been printed.
 - Free-tier limits seen: 8,000 tokens per minute on each approved model. Pre-assignment budgets stay null until daily limits are stated (BADR-0015).
 
+## What exists in code (B03)
+
+- `benchmark/eval/`: `normalize.py` (locator grammar, identity vs text alignment, exposure), `evidence_sets.py` (SlotCoverage, CompleteSet), `retrieval.py` (ranking and provenance metrics), `statistics.py` (cluster bootstrap, McNemar, Holm, TOST, zero-failure bound, calibration, power), `cost_latency.py`, `score_run.py` (driver, integrity checks, control arms, per-stratum separation); `benchmark/analysis/tables.py` (scorecards). Rules are in BADR-0024 and its amendment.
+- Key facts: headline metrics use identity only; harm metrics are conditional-only; a non-completed pair is zero in ITT for benefit metrics the gold says apply; the scorer refuses a ledger hole, a gold, corpus or manifest mismatch; controls live in `score_run.py` and never in the production registry. Evidence E-B03-001 to E-B03-004 (790 tests). Limits: BR18 to BR20.
+- Do not run `ruff format .` from the project root: it reformats the protocol and the checker. Format `benchmark tests scripts` only.
+
 ## What exists in code (B02)
 
 - `benchmark/fixtures/`: `entities.py` (vocabulary), `knowledge.py` (versions, policies, as-of selection, evaluator, graph), `operations.py` (timelines, case histories), `world.py` (aggregate and tier seed), `phrasebook.py` (EN/ID banks and question templates), `documents.py` (rendering, equivalence check, measurement), `artifacts.py` (support documents, noise, corpus pipeline), `manifest.py` (manifests, four namespaces, barrier scan), `questions.py` (gold schema, screening, partitions), `question_gen.py` (ten stratum generators), `live_api.py` (read-only mock), `validation.py` (integrity and realism checks), `audit.py` (label audit). `scripts/generate_data.py` builds the S tier; `docs/dataset_card.md` carries its figures.
