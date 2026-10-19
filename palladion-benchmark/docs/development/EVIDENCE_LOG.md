@@ -391,3 +391,25 @@ Reading. Naming the superseded version at approval changed nothing measurable (r
 
 Process notes. The first attempt failed at `prepare --reset` with a seed error that did not repeat, and a script I stopped left its children running, one of them a Palladion server on the benchmark's own port; I stopped those by their process ids, deleted the partial run directories and repeated the reset. The alias driver first passed relative paths to a job that runs in another directory; found by the real run, fixed with a test, and the two aliased runs were redone after the fix (the two started before it were deleted unscored).
 Limits: one seed, one pass; small strata; the alias set is the coordinator's design (family id plus every identifier-shaped token in each chunk), not Palladion's; the aliased variant departs from HTTP-only setup (BADR-0027).
+
+## E-B05-001 — Pre-phase adversary for B05 (Haiku 5.5, medium effort) and dispositions
+
+One read-only reviewer requested with model `haiku` and effort `medium`. It read the complete protocol, the master plan, the governance documents (not PROJECT_LEARNING, RESEARCH_PROTOCOL, OWNER_LABELLING_GUIDE; ADR_LOG and PALLADION_FIXES in part), the contracts, generator, runner, Track A, results validator, evaluation modules, gold schema and configs; it read no test file. It reported 20 findings (adv-1 to adv-20: 8 HIGH, 10 MEDIUM, 2 LOW) and six claims it could not refute. The coordinator verified adv-1, adv-2, adv-3, adv-9 and adv-17 by reading the code and data (marked V); the rest are accepted on the report and re-checked when their card is built. Dispositions (finding → action):
+
+- adv-1 V (claims, actions and outcomes have no closed vocabulary: `allowed_actions` is empty in all 100 smoke records, `preferred_action` is free text, `policy_outcome` is set for 10 of 100) → new card B05-T07.01, answer-gold sidecar (BADR-0028 item 1) instead of changing the question file.
+- adv-2 V (`score_run` marks any non-list OK payload invalid and the validator rejects it, so a Track B run would score as invalid) → new card B05-T08.01 with a controlled_qa validator branch.
+- adv-3 V (`GenerationError` is a `ContractError`, so a rate limit after retries is classed as an arm contract violation; a slow call can make the whole arm unusable; a timed-out worker can still dispatch) → new card B05-T09.01.
+- adv-4 (no live authorization, quota does not fit) → B05-T06.01 BLOCKED until the owner authorizes; replay stored candidates; size estimate marked an estimate.
+- adv-5 (oracle condition does not fit Track B; re-running the resolver is circular) → oracle moved to B07-T08.01; policy scoring never calls the resolver.
+- adv-6 (contradictory accounting; bounds) → BADR-0028 item 2.
+- adv-7, adv-8 (undefined gate and budget unit; answers self-declare status and citations) → item 3; the scorer recomputes citations against the delivered bundle.
+- adv-9 V (the arm-visible screen is applied in `contracts.py` and `questions.py` only; the generator checks role and length) → B05-T09.01 screens every message and keeps prompt text.
+- adv-10, adv-16 (judge family rule, label store, who labels) → item 6 and the rubric card.
+- adv-11 (citation syntax, entailment depends on later labels, stability) → items 1 and 8; entailment reads labels and counts unlabelled pairs.
+- adv-12, adv-13 (hidden dependencies, incomplete Files) → cards rewritten, run logic moved to `benchmark/track_b.py`, claim scoring split into `claims.py`, test files named.
+- adv-14, adv-15 (loss events and sweeps undefined; AURC without a score) → item 7.
+- adv-17 V (null token budgets send everything to the primary model) → item 10.
+- adv-18 (conditions and R7a variant unspecified) → item 3.
+- adv-19 (leak scan skips short strings and actions) → B05-T08.01 includes action and outcome enums, matched on token boundaries.
+- adv-20 (single run is not a repetition) → B05-T06.01 states outputs are single-run and descriptive.
+- Limits: one model review is not proof; the reviewer read no tests and part of the ADR log; its size estimate is unmeasured.

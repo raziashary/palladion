@@ -560,3 +560,33 @@ show the decision working, and is kept separate from acceptance.
 **My answer (editable):** Accepted as above. Corrections to the register: BR27 and BR28 are restated against the source.
 
 **Verification:** E-B04-006 holds the four re-runs, their validator results and the limits; the tests for the loader and the alias step fail on planted defects.
+
+## BADR-0028 — B05 decisions after the pre-phase adversary
+
+**Status:** ACCEPTED; 2026-10-20.
+
+**Authority:** The owner started B05 ("Start B05: run its pre-phase adversary first, then build it", 2026-10-20) and earlier ruled that no further live provider use is authorized. The items below are coordinator decisions inside B05 scope after E-B05-001; the owner may amend. Live use (item 9) is not decided here.
+
+**Question:** How are Track B answers scored against deterministic gold, run fairly across retrievers, and kept free of leakage, without any live provider call?
+
+**Why:** The adversary (E-B05-001) showed the gold had no closed claim, action or outcome vocabulary, Track B artifacts had no scorer or validator, generator faults were classed as arm faults, prompts were not screened or kept, and the live pilot had no authorization.
+
+**Options:** (a) Extend the question file's schema and regenerate; (b) add an evaluator-only answer-gold file beside it; (c) score claims with a judge.
+
+**Recommendation:** (b), because it leaves the question file and the label-audit digests unchanged and gives deterministic targets.
+
+**What affects what:** ten decisions follow, each owned by the card named.
+1. **Answer-gold sidecar** (B05-T07.01): claim units with a closed kind, required or forbidden and a slot; a closed action; the policy outcome; applicable version ids. Additive optional fields on `CaseResponse`; answer citation syntax `document@version#clause`.
+2. **Accounting** (B05-T01.02): coverage is intention-to-treat (non-completion counts against it); the directive rate is reported conditional on completion and with an intention-to-treat worst-case bound that treats non-completed pairs as unknown. Denominators of the 87 eligible smoke questions are stated with every figure; the pilot is descriptive.
+3. **Gate and budget** (B05-T05.01): every cited or used id must come from the delivered bundle; the unit is whitespace words; C2 for all arms with C1 as a sensitivity run; one named R7a variant per run.
+4. **Faults and barrier** (B05-T09.01): rate-limit and provider HTTP faults are provider-origin invalid runs, budget and disabled are harness-origin not-run; the total rate-limit wait stays below the case deadline; a cancel flag stops a timed-out worker; every prompt message is screened and the prompt text is kept in the run directory.
+5. **Scoring never calls the generator's resolver** (B05-T02.01); the oracle policy-tool condition moves to Track C (B07-T08.01).
+6. **Judges** (B05-T04.02): label sources have fixed precedence (deterministic, human, judge); a judge never overwrites a higher source; at least two judges with distinct model ids, family overlap disclosed (the pool has two families); judge prompts stay outside run directories; judge output counts only after agreement with human labels is reported. Judge calls need the owner's authorization.
+7. **Loss matrix** (B05-T03.01): event rules fixed here. Correct supported answer: all required claims, none forbidden, every cited id delivered and accessible (0). Useful partial: the status states the missing input for a PARTIAL or conflict question (0.2). Unnecessary abstention: gold ANSWERABLE, response not substantive (1). Minor unsupported descriptive claim: a descriptive claim with no valid delivered citation (2). Inapplicable-SOP interpretation: declared version or outcome differs from the answer-gold on a policy question (5). Unauthorized disclosure: a cited or used id the principal cannot access (20). Unsupported directive: an action outside the gold's allowed actions or a forbidden directive claim (25). Sweep: each weight scaled by 0.5 and 2 one at a time, and all weights jointly low and high; a winner that changes is reported as conditional. AURC is dropped from B05 (no harness-observed confidence score is defined); selective risk and coverage are reported at the decision point.
+8. **Stability** is NOT_RUN in B05 (needs two index generations); granularity is reported per arm.
+9. **Live use**: B05-T06.01 is BLOCKED until the owner authorizes calls, tokens, models and the quota assumption; it will replay stored Track A candidates so only generator calls are live. The adversary's size estimate (about 261 calls, roughly 1.3 to 1.6 million prompt tokens) is an estimate, not a measurement.
+10. **Single model**: with the configured null token budgets every question goes to the primary model; the pilot says so, and the NOT_RUN path is tested with an injected budget.
+
+**My answer (editable):** Accepted as above.
+
+**Verification:** Each item has a test with a negative control in its owning card; E-B05-001 records the dispositions.
