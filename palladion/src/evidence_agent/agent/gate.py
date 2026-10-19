@@ -4,6 +4,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
+from evidence_agent.agent.critic import ReviewResult, evidence_digest
 from evidence_agent.agent.draft import Draft
 from evidence_agent.core.errors import EvidenceAgentError
 from evidence_agent.retrieval.coverage import claim_requirements, quote_policy_families
@@ -12,7 +13,7 @@ from evidence_agent.retrieval.evidence import RequestLedger, public_citation
 _SAFE_HYPOTHESES = {"A reconciliation delay is possible; this is unverified."}
 
 
-def release(draft: Draft, ledger: RequestLedger) -> dict[str, Any]:
+def release(draft: Draft, ledger: RequestLedger, *, review: ReviewResult | None = None) -> dict[str, Any]:
     verified: list[dict[str, Any]] = []
     blocked: list[str] = []
     hypotheses: list[dict[str, str]] = []
@@ -40,6 +41,14 @@ def release(draft: Draft, ledger: RequestLedger) -> dict[str, Any]:
                 conflicts[identifier] = item
         elif item["kind"] == "LIVE_OBSERVATION" and not item["valid"] and item["status"] != "NOT_FOUND":
             unavailable = True
+    reviewed = review is not None and review.current(current)
+    if reviewed and review is not None:
+        # Review is advisory, but neither unresolved objections nor a different final
+        # proposal can inherit a claim that the released answer was fully reviewed.
+        if review.draft_sha256 != evidence_digest(draft.model_dump(mode="json")):
+            gaps.add("revised_draft_requires_review")
+        if review.status == "CHALLENGE":
+            gaps.add("unresolved_critic_challenge")
     for claim in draft.claims:
         if len(verified) >= (11 if conflicts else 12):
             blocked.append(claim.id)
@@ -60,8 +69,9 @@ def release(draft: Draft, ledger: RequestLedger) -> dict[str, Any]:
                     available = {r["family_id"] for r in current.values() if r["kind"] == "POLICY_DECISION"}
                     if not families.issubset(available):
                         gaps.add("applicable_policy")
-                    gaps.add("mandatory_critic_review")
-                    unavailable = True
+                    if not reviewed:
+                        gaps.add("mandatory_critic_review")
+                        unavailable = True
                 text = "Approved source states: “" + claim.text + "” (attribution only; no action permission)."
             elif claim.type == "OBSERVED_FACT" and item["kind"] == "LIVE_OBSERVATION":
                 data = item["data"]
@@ -77,17 +87,23 @@ def release(draft: Draft, ledger: RequestLedger) -> dict[str, Any]:
                 if claim.field in item["required_fields"]:
                     text = f"Applicable policy requires {claim.field}; a requirement is not an action authorization."
             elif claim.type == "POLICY_RESULT" and item["kind"] == "POLICY_DECISION":
-                # An executed result still cannot bypass mandatory independent normative review.
-                gaps.add("mandatory_critic_review")
-                unavailable = True
+                if not reviewed:
+                    gaps.add("mandatory_critic_review")
+                    unavailable = True
+                elif item.get("valid") and item.get("outcome") and not item["missing_fields"]:
+                    text = (f"Executed synthetic policy result: {item['outcome']}; "
+                            "this is decision support, not authorization to perform a payment.")
         if text is None:
             blocked.append(claim.id)
         else:
             verified.append({"claim_id": claim.id, "text": text, "evidence_ids": list(claim.evidence_ids)})
             citations.update({i: current[i] for i in claim.evidence_ids})
     if draft.answer_kind == "OPERATIONAL_GUIDANCE":
-        gaps.add("mandatory_critic_review")
-        unavailable = True
+        if not reviewed:
+            gaps.add("mandatory_critic_review")
+            unavailable = True
+        # No invented semantic signoff or human escalation assignment (ADR0046).
+        gaps.add("authorized_human_review")
     # No model-proposed slot can erase trusted policy requirements, nor become a claimed policy requirement.
     if blocked:
         gaps.add("claim_support_not_established")
@@ -129,6 +145,6 @@ def release(draft: Draft, ledger: RequestLedger) -> dict[str, Any]:
             r.slot: r.origin.value for r in claim_requirements(current.values(), draft.required_slots)},
         "citations": [public_citation(item) for item in list(citations.values())[:12]],
         "tool_status": ledger.tool_status, "searched_scope": searched_scope,
-        "inventory_attested": False, "review_status": "UNAVAILABLE_UNTIL_P06",
+        "inventory_attested": False, "review_status": (review.status if reviewed else "UNAVAILABLE") if review else "UNAVAILABLE_UNTIL_P06",
         "next_steps": ["Obtain missing scoped evidence or request authorized human review."],
         "_blocked_claim_ids": blocked}

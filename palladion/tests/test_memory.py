@@ -243,7 +243,9 @@ def test_runtime_consumes_corrected_packet_but_only_releases_new_live_read(p03):
         """Typed proposal injection exercises consumer wiring; not provider proof."""
         def __init__(self):
             self.checked = False
-        async def complete(self, messages, tools, *, final=False):
+        async def complete(self, messages, tools, *, final=False, before_send=None):
+            if before_send is not None:
+                before_send()
             if final:
                 return ModelTurn({"content": messages[-1]["content"] and self.draft}, {})
             if len(messages) == 2:

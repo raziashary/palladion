@@ -80,3 +80,41 @@ def score_continuation(output: Mapping[str, object], packet: Mapping[str, object
         "stale_claim_count": stale, "current_observation_released": current,
         "completion": current and not stale and not answer_missing and
             output.get("disposition") == "PARTIALLY_SUPPORTED" and not output.get("verification_failures")}
+
+
+def score_critic_output(output: Mapping[str, object], *, frozen_hash: str,
+                        consumed_hash: str, expected_quote: str | None,
+                        known_fact_id: str, initial_ids: Sequence[str], final_ids: Sequence[str],
+                        initial_fact_retained: bool | None = None,
+                        reviews: Sequence[Mapping[str, object]] = (),
+                        known_valid_claim_ids: Sequence[str] = (),
+                        known_invalid_claim_ids: Sequence[str] = ()) -> dict[str, object]:
+    """Mechanical fixture outcomes only; unadjudicated semantic judgments stay unknown."""
+    if len(frozen_hash) != 64 or frozen_hash != consumed_hash:
+        raise ValueError("Paired critic inputs differ")
+    claims, citations = output.get("verified_claims"), output.get("citations")
+    failures = output.get("verification_failures")
+    if not isinstance(claims, list) or not isinstance(citations, list):
+        raise ValueError("Actual gate output required")
+    retained = any(isinstance(c, dict) and known_fact_id in c.get("evidence_ids", []) and
+                   "Last observed " in str(c.get("text", "")) for c in claims)
+    corrected = (any(isinstance(c, dict) and expected_quote in str(c.get("text", "")) for c in claims)
+                 if expected_quote is not None else None)
+    findings: list[dict[str, object]] = []
+    for review in reviews:
+        entries = review.get("claim_reviews")
+        if isinstance(entries, list):
+            findings.extend(finding for finding in entries if isinstance(finding, dict))
+    objections = [finding for finding in findings if finding.get("finding") != "SUPPORTED"]
+    return {"initial_input_hash_equal": True, "known_fact_retained": retained,
+        "known_fact_omitted": not retained, "mechanical_exception_quote_corrected": corrected,
+        "scorer_version": "2.0",
+        "known_fact_retention_loss_vs_off": initial_fact_retained and not retained if initial_fact_retained is not None else None,
+        "mechanical_false_veto_vs_off": None,  # Omission alone cannot attribute a veto to the critic.
+        "changed_evidence_ids": sorted(set(final_ids)-set(initial_ids)),
+        "mechanical_false_objections": sum(f.get("claim_id") in known_valid_claim_ids for f in objections),
+        "mechanical_invalid_associations_detected": sorted({str(f["claim_id"]) for f in objections
+            if f.get("claim_id") in known_invalid_claim_ids}),
+        "inventory_attested": output.get("inventory_attested"),
+        "unadjudicated_semantic_correction": None, "unadjudicated_semantic_false_veto": None,
+        "verification_failure_count": len(failures) if isinstance(failures, list) else None}

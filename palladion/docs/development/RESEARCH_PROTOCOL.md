@@ -1,6 +1,6 @@
 # Research and later comparison protocol
 
-Status: **P02 retrieval-only pilot recorded; P05 continuity engineering pilot recorded with failures; no confirmatory answer-system experiment executed**. Governing source: blueprint “Research
+Status: **P02 retrieval-only pilot recorded; P05 continuity and P06 critic pilots recorded with failures; no confirmatory answer-system experiment executed**. Governing source: blueprint “Research
 evaluation,” “Questions deliberately left to experiments,” “Prototype environment.”
 Research records follow [ADR-0007](ADR_LOG.md#adr-0007--research-discipline-and-gate-meanings).
 Protocol metrics are intended measurements; recorded pilot sections identify actual observations and limits.
@@ -235,3 +235,143 @@ inside a run. Lifecycle reruns retain originals. Character bounds are not token 
 actual received provider usage is separate, missing values are not zero. A CLI exit0
 means all conditions were observed and resources closed, not that models passed or
 H04 succeeded. No human-adjudicated semantic usefulness or held-out inference.
+
+## P06 frozen critic pilot preparation
+
+ADR0046 is owner-approved. First actual pilot is retained with its fixture confound
+and full-runtime provider failure; v2 completed all16conditions (E-P06-001). Use a versioned critic_pilot fixture
+manifest with controlled draft templates and explicit mechanical expectations; never
+label synthetic initial mistakes as measured main-model error rates. Bind logical
+fixture IDs to canonical authorized sources, then freeze question, draft, initial ledger,
+requirements, source generation and context once per case. Persist/read back and hash
+that envelope; off/fixed-context/counter-search/blind-requirements readers must report
+equal initial hashes. Changed admissible evidence and finalization outputs are separate
+artifacts. A withheld appendix must actually be absent from the supplied registry/index,
+not merely revoked/inaccessible; no inventory-completeness claim is permitted.
+Record real review/final outputs and shared tool/call/time costs, unknown token usage
+as unknown, rejected fabricated objections and every failed arm. Actual full-runtime
+Groq message runs are separate from controlled frozen-draft pairs. No human labels or
+semantic adequacy are invented, and no narrower check stands in for the phase exit.
+
+ADR0050 corrects the scorer's former omission-as-veto label. Original scores stay
+unchanged in their launch-version artifacts. Scorer2 derived summaries report known
+fact retention loss and structured false objections independently; causal critic veto
+and unadjudicated semantic outcomes remain null. Strict full-clause quote misses are
+not converted to successes when a shorter valid excerpt is present. ADR0051's explicit
+full-message engineering probe is distinct from all frozen paired denominators.
+
+V2 recorded16main/23critic/6counter-search attempts and72163received tokens across
+all16conditions, excluding its separate full-message row. Three review conditions
+retain schema failures; known fact retention15/16, with one loss relative to off and
+zero known-control false objections in valid parsed reviews. Causal/semantic false
+veto rates remain unknown. Strict full-delay-clause quote correction0/4; two exception
+search conditions discovered new appendix and released exact boundary excerpts.
+The experiment does not show an accuracy gain or justify adaptive critic skipping.
+Retain mandatory normative review during prototype evaluation per the blueprint;
+optional blind/counter variants remain explicitly measured treatments. Full-message
+400/429 failures remain retained; ADR0053 pacing is owner-approved. Default20B/120B
+now verify real review/final/readback but not critic discovery (main fetched appendix).
+The lower-cap recovery scenario is a separate engineering condition, not a frozen
+research treatment or replacement for the default-budget generated-draft proof.
+
+Owner approved ADR0053 via async reply2026-10-19 (supersedes earlier pending
+checkpoint text). Opt-in model-call pacing defaults0 and is now implemented, with
+post-wait caller authorization/evidence validation. Focused98checksPASS15.51s;
+actual paced message proof, complete gates and sole end audit remain pending.
+ADR0054 strengthens pre/post critic discovery attribution and safe attempt diagnostics.
+
+## P06 final-source paired receipt — 2026-10-19
+
+All six P06 atomic task proofs are verified; the sole Luna Medium end reviewer has
+resolved R1 and withdrawn R2 (E-P06-002). Phase closure awaits post-fix final gates,
+docs, owned cleanup and a scoped local commit. Pre-audit source290 + actual-Qdrant13 =303 disjoint checks passed; installed290 and one
+installed actual-Qdrant/API control overlap. All50 packaged files match the wheel.
+Owner-approved ADR0045/0046/0053 govern; no P06 main push or P07 GO is inferred.
+
+Real20B strict exact-ID recovery passes31.076s (explicit maincap2,2main/2critic/1search,
+SAFE_TEMPLATE initial); default-budget generated-draft path passes47.949s (4main/1critic,
+MODEL initial). Both release the full canonical exception with citation/timeline readback
+and no verification failures. They prove distinct engineering paths, not reliability.
+
+Final-source20B paired report p06-cb9e66c994dc46b9b0746c7b92c644fd records16/16 observed
+conditions, equal frozen hashes,16/16 known-fact retention,0/4 full exception corrections,
+one critic validation failure,16main/17critic/4searches and66117 known received tokens.
+One attempt lacks usage; totals are lower bounds. Blind requirements discovers new
+appendix evidence but does not release its full clause. Ordinary counter-search-enabled
+review never requests a search in these four cases. No efficacy gain is established;
+retain mandatory review under the existing architecture without adaptive/default changes.
+Semantic accuracy, causal false-veto and H05 remain unknown; P08 owns adjudication.
+Older120B reports remain versioned historical measurements, not final-source results.
+
+Command: `.venv/Scripts/python scripts/evaluate.py --run --critic --enable-live-llm
+--model openai/gpt-oss-20b --model-call-interval 0` exited0: observation completion and
+cleanup, not model success. Raw SHA256
+`c0fa225c5991f75eec61ce5eb29e36b5e1b5e75bd2b299835e7f37b3546e9d7f`;
+raw-preserving scorer2 summary SHA256
+`6d944a9b2703f11a54c5427cf46bd89a353c16f93c61d39a565a9f4352f3a681`.
+Both reside in ignored `runtime/evaluation/` under the report stem above. Automatic
+same-stem launch snapshot hashes verify; source hashes showed zero drift before the qualification-only ADR0062 gate correction.
+Derivation: `.venv/Scripts/python runtime/p06_derive_summary.py
+runtime/evaluation/p06-cb9e66c994dc46b9b0746c7b92c644fd.json`; raw bytes unchanged.
+
+| Arm (four cases each) | Main/critic/search | Known received tokens | Median/max seconds |
+|---|---|---|---|
+| off |4/0/0|7279 (one missing usage)|1.255/1.721|
+| fixed_context |4/4/0|16018|2.212/2.715|
+| counter_search |4/5/0|18105|2.155/3.770|
+| blind_requirements |4/8/4|24715|10.541/14.219|
+
+Counter_search/missing_inputs records CRITIC_SCHEMA_OR_GROUNDING_FAILURE and retains
+settlement_state plus mandatory review gaps. All four missing-input arms retain
+settlement_state. Withheld inventory remains unattested in every arm; some blind outputs
+have no explicit missing requirement, which cannot establish completeness. No known-valid
+parsed claim is falsely challenged by the mechanical classifier; semantic/causal scores
+remain unknown. Ordinary fixed/counter critics mark controlled invalid C2 supported in
+exception/withheld cases; blind conditions detect three C2 invalid associations. These
+misses remain visible: critic agreement is not independent ground truth.
+Full-runtime row returns200/PASS,4main/1critic, resolved citations/no verification failures,
+but omits the full exception. It cannot replace separate strict normal/recovery proofs.
+External60s arm spacing, intra0, original freshness/deadline and no retries/fallback are
+recorded. Models are not compared for quality across source versions.
+
+Actual-Qdrant exact coverage guard later passes1test39.05s (18deselected),
+`runtime/p06-coverage-actual-server.log`: coverage false before exact lookup, true after
+new canonical evidence; protected data absent in timeline. This overlaps303, not an added
+independent check. Production source stayed frozen. Sole end review now dispatched.
+
+P06 arm clarification: blind_requirements is draft-blind first-pass review under
+blueprint §10.1; canonical policy-required slots remain supplied. It does not measure
+independent discovery of unsupplied requirements. End-review R2 is withdrawn.
+
+End-review R1 confirmed: ADR0062 qualifies changed final proposals and unresolved
+CHALLENGE without erasing canonical facts. Final matrix cb9e66 remains its unchanged
+model/prompt/launch-gate version; qualification-only gate correction follows it. Quote,
+fact-retention and model-cost observations are not relabeled as post-correction outputs.
+Post-fix stack/installed/live checks and same-reviewer resolution precede closure.
+
+## P06 closeout interpretation
+
+P06 DONE at E-P06-001/E-P06-002: all six atomic cards, approved critic/status/pacing
+contracts, actual source/installed/API consumers and sole Luna Medium end-review
+resolution are verified. Source294PASS plus13 actual-Qdrant cases pass (12 in the sweep,
+one isolated after a setup connection-abort) =307 disjoint checks. Installed294 and one
+installed real-Qdrant/API case pass as overlapping artifact checks; all50 packaged files
+match the final wheel. Ruff, strict mypy59, dependency81+4controls, foundation CLI and
+final document gates pass. Original failed/skipped runs remain evidence, not PASS.
+
+Post-fix real20B exact recoveryPASS39.827s (2main/2critic/1search, explicit cap2) and
+serialized default-budget MODEL-draft pathPASS37.089s (4main/1critic/2tools) release the
+full exception with original citation/timeline readback and no verification errors.
+Gate qualifies a changed final proposal or unresolved CHALLENGE while preserving
+canonical facts; unchanged current PASS remains eligible for SUPPORTED. Model review
+is advisory, not semantic authority or payment permission.
+
+Frozen prompt-version20B matrix cb9e66:16conditions,16/16known-fact retention,
+0/4full-exception corrections, one critic validation failure,16main/17critic/4searches,
+66117known received tokens (one attempt lacks usage). It precedes ADR0062's gate-only
+qualification fix: no model prompt changed; raw outputs are not relabeled post-fix.
+No efficacy/H05, semantic accuracy, causal false-veto or completeness claim. Mandatory
+review remains enabled; draft-blind first pass sees canonical required slots (§10.1).
+P07 graph/P08 adjudicated research/X01 comparators remain deferred; no P07 GO or P06
+main push is inferred. No unanswered P06 owner ADR. Owned processes stopped, storage
+preserved and ports16333/16334/18080 verified free; foreign benchmark/editor work untouched.

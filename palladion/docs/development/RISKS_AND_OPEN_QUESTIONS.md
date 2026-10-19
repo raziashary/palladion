@@ -1,6 +1,6 @@
 # Risks, accepted answers and verification obligations
 
-Current authority amendment: P04 published4245023; user explicitly authorized P05 end-to-end; ADR-0030 separately approves the additive PolicyDecision extension. Earlier implementation hold below is historical; P04 explicit enabled provider commands are authorized.
+Current authority amendment: P05 published f0507e4; user explicitly authorized P06 end-to-end; ADR-0030 separately approves the additive PolicyDecision extension. Earlier implementation hold below is historical; P04 explicit enabled provider commands are authorized.
 
 Updated 2026-10-17. The user read and accepted all recommendation directions, except
 fake-first runtime: use Groq `qwen/qwen3.8-27b`. uv and package-selection authority are
@@ -82,3 +82,34 @@ The actual pilot has0/3 strict model completions; provider/tool reliability, sem
 usefulness and H04 are unproven. P06/P08 retain every failed condition. Bounded recall
 is non-exhaustive even after current scope filters; exact-ID lookup/narrower queries
 are available. No tenant/private-row flooding can suppress allowed items before scope.
+
+## Active P06 decisions and proof
+
+P06 DONE at E-P06-001/E-P06-002: all six atomic cards, approved critic/status/pacing
+contracts, actual source/installed/API consumers and sole Luna Medium end-review
+resolution are verified. Source294PASS plus13 actual-Qdrant cases pass (12 in the sweep,
+one isolated after a setup connection-abort) =307 disjoint checks. Installed294 and one
+installed real-Qdrant/API case pass as overlapping artifact checks; all50 packaged files
+match the final wheel. Ruff, strict mypy59, dependency81+4controls, foundation CLI and
+final document gates pass. Original failed/skipped runs remain evidence, not PASS.
+
+Post-fix real20B exact recoveryPASS39.827s (2main/2critic/1search, explicit cap2) and
+serialized default-budget MODEL-draft pathPASS37.089s (4main/1critic/2tools) release the
+full exception with original citation/timeline readback and no verification errors.
+Gate qualifies a changed final proposal or unresolved CHALLENGE while preserving
+canonical facts; unchanged current PASS remains eligible for SUPPORTED. Model review
+is advisory, not semantic authority or payment permission.
+
+Frozen prompt-version20B matrix cb9e66:16conditions,16/16known-fact retention,
+0/4full-exception corrections, one critic validation failure,16main/17critic/4searches,
+66117known received tokens (one attempt lacks usage). It precedes ADR0062's gate-only
+qualification fix: no model prompt changed; raw outputs are not relabeled post-fix.
+No efficacy/H05, semantic accuracy, causal false-veto or completeness claim. Mandatory
+review remains enabled; draft-blind first pass sees canonical required slots (§10.1).
+P07 graph/P08 adjudicated research/X01 comparators remain deferred; no P07 GO or P06
+main push is inferred. No unanswered P06 owner ADR. Owned processes stopped, storage
+preserved and ports16333/16334/18080 verified free; foreign benchmark/editor work untouched.
+
+
+No unanswered P06 owner ADR remains. Exact-ID recovery does not establish semantic
+recall, inventory completeness, production readiness or baseline superiority.

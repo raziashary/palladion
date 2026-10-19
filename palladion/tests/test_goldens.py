@@ -281,3 +281,15 @@ def test_p04_actual_domain_gate_never_releases_golden_forbidden_inference(p03, q
     else:
         assert "Historical mock_curated_bi" in result["verified_claims"][0]["text"]
         assert "does not establish current state" in result["verified_claims"][0]["text"]
+
+
+def test_p06_pilot_declares_frozen_controls_without_fabricated_human_labels():
+    import json
+    from pathlib import Path
+    pilot = json.loads((Path(__file__).resolve().parents[1]/"data/demo/retrieval_pilot.json").read_text(encoding="utf-8"))["critic_pilot"]
+    assert pilot["schema_version"] == "2.0" and "NOT_HUMAN_ADJUDICATED" in pilot["status"]
+    assert set(pilot["cases"]) == {"exception","correct_fact","missing_inputs","withheld_appendix"}
+    assert [c["arm"] for c in pilot["conditions"]] == ["off","fixed_context","counter_search","blind_requirements"]
+    assert pilot["conditions"][0]["review"] is False and pilot["conditions"][1]["search"] is False
+    assert pilot["conditions"][2]["search"] is True and pilot["conditions"][3]["blind"] is True
+    assert 0 < pilot["pacing_seconds"] <= 60

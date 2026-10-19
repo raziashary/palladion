@@ -1,4 +1,4 @@
-"""Five-call main loop with a reserved final turn, explicit unavailable review and gate."""
+"""Bounded investigation, independent advisory review, reserved final turn and gate."""
 from __future__ import annotations
 
 import asyncio
@@ -10,7 +10,8 @@ from typing import Any
 
 from pydantic import ValidationError
 
-from evidence_agent.agent.draft import DRAFT_INSTRUCTIONS, Claim, Draft
+from evidence_agent.agent.critic import EvidenceCritic, ReviewResult
+from evidence_agent.agent.draft import DRAFT_INSTRUCTIONS, FINALIZATION_INSTRUCTIONS, Claim, Draft
 from evidence_agent.agent.gate import release
 from evidence_agent.agent.llm import LanguageModel, ModelFailure, ModelTurn
 from evidence_agent.agent.preflight import preflight
@@ -32,6 +33,9 @@ class Budget:
     tools_used: int = 0
     final_used: bool = False
     critic_used: int = 0
+    critic_max: int = 3
+    critic_search_max: int = 2
+    critic_search_used: int = 0
 
     def model(self, *, final: bool = False) -> None:
         # No await between checking and reserving: parallel tasks cannot gain free slots.
@@ -44,6 +48,18 @@ class Budget:
         if self.tools_used >= self.tool_max:
             raise BudgetExceeded
         self.tools_used += 1
+
+    def critic(self) -> None:
+        if self.critic_used >= self.critic_max:
+            raise BudgetExceeded
+        self.critic_used += 1
+
+    def counter_search(self) -> None:
+        # Reserve both resources without yielding; a denied search consumes no tool slot.
+        if self.critic_search_used >= self.critic_search_max:
+            raise BudgetExceeded
+        self.tool()
+        self.critic_search_used += 1
 
 
 def safe_draft(ledger: RequestLedger) -> Draft:
@@ -64,12 +80,17 @@ class AgentRuntime:
         self.model, self.tools, self.store, self.settings = model, tools, store, settings
         self.ledger = tools.ledger
         self.tools.memory_enabled = settings.continuity_enabled
-        self.budget = Budget(settings.main_max_calls, settings.tool_max_calls)
+        self.budget = Budget(settings.main_max_calls, settings.tool_max_calls,
+            critic_max=settings.critic_max_calls, critic_search_max=settings.critic_search_max_calls)
+        self.critic = EvidenceCritic(model, tools, self.budget)
+        self.review = ReviewResult()
 
     async def _call(self, messages: list[dict[str, Any]], *, final: bool) -> ModelTurn:
-        self.store.authorize()
-        if self.ledger.refresh():
-            raise ModelFailure("EVIDENCE_CHANGED")  # Never resend cached prose after revocation or staleness.
+        def before_send() -> None:
+            self.store.authorize()
+            if self.ledger.refresh():
+                raise ModelFailure("EVIDENCE_CHANGED")
+        before_send()
         if self.model is None:
             raise ModelFailure("MODEL_DISABLED")
         self.budget.model(final=final)
@@ -77,19 +98,27 @@ class AgentRuntime:
         self.store.append("ATTEMPT", self.ledger.trace_id,
             {"attempt": number, "role": "main", "stage": "final" if final else "investigate", "status": "STARTED"})
         status = "FAILED"
+        error_code: str | None = None
+        provider_code: str | None = None
         usage: dict[str, int] = {}
         try:
-            turn = await self.model.complete(messages, [] if final else definitions(), final=final)
+            turn = await self.model.complete(messages, [] if final else definitions(), final=final,
+                                             before_send=before_send)
             usage = turn.usage
             status = "RECEIVED"
             return turn
         except asyncio.CancelledError:
             status = "CANCELLED"
             raise
+        except ModelFailure as exc:
+            error_code = exc.code
+            provider_code = exc.provider_code
+            raise
         finally:
             self.store.append("ATTEMPT", self.ledger.trace_id,
                 {"attempt": number, "role": "main", "stage": "final" if final else "investigate",
-                 "status": status, "usage": usage})
+                 "status": status, "usage": usage, "error_code": error_code,
+                 "provider_code": provider_code})
 
     async def _investigate(self, query: str, hints: dict[str, Any]) -> Draft:
         packet = hints["packet"]
@@ -165,13 +194,19 @@ class AgentRuntime:
                 messages.append({"role": "user", "content": "Previous attempt failed. Return valid draft JSON using current evidence only."})
                 if self.model is None:
                     break
+        origin = "MODEL" if draft is not None else "SAFE_TEMPLATE"
         draft = draft or safe_draft(self.ledger)
-        # P06 owns a real independent critic. This explicit unavailable boundary is never PASS.
-        messages = [{"role": "system", "content": DRAFT_INSTRUCTIONS}, {"role": "user",
+        self.store.append("DIAGNOSTIC", self.ledger.trace_id, {
+            "initial_proposed_draft": draft.model_dump(mode="json"), "initial_draft_origin": origin})
+        self.review = await self.critic.run(query, packet, draft)
+        return await self._finalize(query, draft)
+
+    async def _finalize(self, query: str, draft: Draft) -> Draft:
+        """One reserved main turn; also the isolated frozen-draft experiment consumer."""
+        messages = [{"role": "system", "content": FINALIZATION_INSTRUCTIONS}, {"role": "user",
             "content": json.dumps({"question": query, "draft": draft.model_dump(mode="json"),
-                "review": {"status": "UNAVAILABLE_UNTIL_P06", "mandatory_for": "operational guidance"},
-                "current_ledger": self.ledger.snapshot({i for c in draft.claims for i in c.evidence_ids}),
-                "instruction": "Finalize draft JSON; no more tool requests. Omitted document views are not a completeness claim."})}]
+                "review": self.review.finalization_view(),
+                "current_ledger": self.ledger.snapshot()})}]
         try:
             turn = await self._call(messages, final=True)
             if turn.message.get("tool_calls"):
@@ -207,14 +242,14 @@ class AgentRuntime:
             self.store.append("CANCELLED", self.ledger.trace_id, {"status": "CANCELLED",
                 "main_used": self.budget.main_used, "tools_used": self.budget.tools_used})
             raise
-        response = release(draft, self.ledger)
+        response = release(draft, self.ledger, review=self.review)
         blocked = response.pop("_blocked_claim_ids")
         self.store.append("DIAGNOSTIC", self.ledger.trace_id, {"blocked_claim_ids": blocked,
-            "proposal_sha256": hashlib.sha256(draft.model_dump_json().encode()).hexdigest()})
+            "final_proposed_draft": draft.model_dump(mode="json"), "proposal_sha256": hashlib.sha256(draft.model_dump_json().encode()).hexdigest()})
         response["budget"] = {"main_used": self.budget.main_used, "main_max": self.budget.main_max,
             "tools_used": self.budget.tools_used, "tool_max": self.budget.tool_max,
-            "critic_used": 0, "critic_max": self.settings.critic_max_calls,
-            "prefetch_used": 0, "critic_search_used": 0, "adapter_attempt_max_per_lookup": 2}
+            "critic_used": self.budget.critic_used, "critic_max": self.settings.critic_max_calls,
+            "prefetch_used": 0, "critic_search_used": self.budget.critic_search_used, "adapter_attempt_max_per_lookup": 2}
         response["verification_failures"] = sorted(set(self.ledger.failures))
         self.store.append("RELEASE", self.ledger.trace_id, response)
         return response

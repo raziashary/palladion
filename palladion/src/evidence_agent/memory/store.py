@@ -63,6 +63,8 @@ class CaseStore:
         if kind == "RUNTIME_RELEASE":
             return {"trace_id": payload["trace_id"], "schema_version": "1.0",
                 "disposition": payload["disposition"], "budget": payload.get("budget", {}),
+                "review_status": payload.get("review_status") if payload.get("review_status") in {
+                    "UNAVAILABLE_UNTIL_P06", "PASS", "CHALLENGE", "UNAVAILABLE"} else "UNAVAILABLE",
                 "evidence_handles": self._handles(payload.get("citations", [])),
                 "missing_requirements": [v for v in payload.get("missing_requirements", [])[:32]
                     if isinstance(v, str) and re.fullmatch(r"[A-Za-z0-9_]{1,100}", v)],
@@ -75,7 +77,7 @@ class CaseStore:
         # Request text and internal prompts never escape via event evidence/recall.
         return {k: v for k, v in payload.items() if k in {
             "trace_id", "schema_version", "attempt", "role", "stage", "status", "usage",
-            "main_used", "tools_used"}}
+            "main_used", "tools_used", "error_code"}}
 
     def unresolved_questions(self) -> tuple[str, ...]:
         """An empty/outage reply cannot resolve a prior executed incomplete policy."""

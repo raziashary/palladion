@@ -443,3 +443,73 @@ def test_p05_source_backed_memory_reader_rechecks_revocation(runtime):
                 memory.read(identifier)
             response = client.get("/v1/evidence/"+identifier, params={"case_id":"case-42"}, headers=auth("test-reader-a"))
             assert response.status_code == 403 and "SOURCE_MEMORY_CANARY" not in response.text
+
+
+def test_p06_real_counter_search_final_gate_citation_and_redacted_timeline(runtime):
+    """Actual Qdrant/HTTP consumer; injected model data is separate from Groq proof."""
+    import json
+
+    from evidence_agent.agent.critic import CRITIC_INSTRUCTIONS
+    from evidence_agent.agent.draft import Claim, Draft
+    from evidence_agent.agent.llm import ModelTurn
+    from evidence_agent.agent.services import configure_agent
+    from evidence_agent.core.fixtures import load_fixtures
+    from evidence_agent.live.gateway import load_config
+    from evidence_agent.live.mock import MockAdapter
+    from evidence_agent.policy.bootstrap import seed_policy_fixture
+    from evidence_agent.settings import Settings
+    root, index, _ = runtime
+    with Database(root / "registry.sqlite") as database:
+        seed_policy_fixture(Registry(database, OriginalStore(root / "originals")), APP)
+    expected = load_fixtures(APP).source_map()["EX-2026-04"].clauses["EX-SETTLEMENT-DELAY"].text
+    class GuardModel:
+        async def complete(self, messages, tools, *, final=False, before_send=None):
+            if before_send is not None:
+                before_send()
+            if messages[0]["content"] == CRITIC_INSTRUCTIONS:
+                context = json.loads(messages[1]["content"])
+                records = context["evidence_inventory"]["evidence"]
+                found = [key for key, value in records.items() if expected in value.get("text_preview", "")]
+                hint = next(h for h in context["requested_identifier_coverage"] if h["identifier"] == "EX-SETTLEMENT-DELAY")
+                assert hint["represented_in_inventory"] is bool(found)
+                result = {"review_id": "guard-review", "verdict": "CHALLENGE", "proposed_disposition": "PARTIALLY_SUPPORTED"}
+                if not found:
+                    result["counter_searches"] = [{"query": "EX-SETTLEMENT-DELAY", "purpose": "Find scoped exception"}]
+                else:
+                    result["claim_reviews"] = [{"claim_id": "C1", "finding": "CONTRARY_EVIDENCE",
+                        "evidence_ids": [found[0]], "reason": "PRIVATE_REVIEW_CANARY"}]
+                return ModelTurn({"content": json.dumps(result)}, {"total_tokens": 1})
+            if final:
+                records = json.loads(messages[1]["content"])["current_ledger"]["evidence"]
+                found = next(key for key, value in records.items() if expected in value.get("text_preview", ""))
+                draft = Draft(claims=(Claim(id="C1", type="SOURCE_QUOTE", text=expected, evidence_ids=(found,)),))
+                return ModelTurn({"content": draft.model_dump_json()}, {"total_tokens": 1})
+            completed = [m for m in messages if m["role"] == "tool"]
+            if not completed:
+                return ModelTurn({"tool_calls": [{"id": "read-sop", "type": "function", "function": {
+                    "name": "search_knowledge", "arguments": '{"query":"SOP-2026-B"}'}}]}, {"total_tokens": 1})
+            identifier = json.loads(completed[-1]["content"])["data"][0]["evidence_id"]
+            return ModelTurn({"content": Draft(claims=(Claim(id="C1", type="SOURCE_QUOTE",
+                text="INVALID_OLD_QUOTE_CANARY", evidence_ids=(identifier,)),)).model_dump_json()}, {"total_tokens": 1})
+    app = create_app(root, index, TOKENS)
+    configure_agent(app, model=GuardModel(), adapter=MockAdapter({}), config=load_config(APP/"config/adapters.yaml"), settings=Settings())
+    with TestClient(app) as client:
+        result = client.post("/v1/cases/case-42/messages", headers=auth("test-reader-a"), json={"query": "Explain the approved EX-SETTLEMENT-DELAY exception"})
+        assert result.status_code == 200, result.text
+        output = result.json()
+        assert output["budget"]["critic_used"] == 2 and output["budget"]["critic_search_used"] == 1
+        assert output["budget"]["main_used"] == 3 and output["budget"]["tools_used"] == 2
+        # Appendix is bound to the policy family; a quote does not supply its live inputs.
+        assert output["disposition"] == "PARTIALLY_SUPPORTED", output
+        assert "applicable_policy" in output["missing_requirements"]
+        assert "mandatory_critic_review" not in output["missing_requirements"]
+        assert expected in output["verified_claims"][0]["text"]
+        assert "INVALID_OLD_QUOTE_CANARY" not in result.text
+        citation = output["citations"][0]["evidence_id"]
+        assert client.get("/v1/evidence/"+citation, params={"case_id":"case-42"}, headers=auth("test-reader-a")).status_code == 200
+        assert client.get("/v1/evidence/"+citation, params={"case_id":"case-42"}, headers=auth("test-reader-b")).status_code == 403
+        timeline = client.get("/v1/cases/case-42/timeline", headers=auth("test-reader-a"))
+        releases = [e for e in timeline.json() if e["kind"] == "RUNTIME_RELEASE"]
+        assert releases[-1]["review_status"] == "CHALLENGE" and releases[-1]["critic_used"] == 2
+        assert "PRIVATE_REVIEW_CANARY" not in timeline.text and "INVALID_OLD_QUOTE_CANARY" not in timeline.text
+        assert "requested_identifier_coverage" not in timeline.text and "critic_input_inventory" not in timeline.text

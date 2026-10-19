@@ -408,12 +408,37 @@ class ContinuityPacket(VersionedModel):
         return self
 
 
+class CriticClaimFinding(VersionedModel):
+    claim_id: str = Field(min_length=1, max_length=40)
+    finding: Literal["SUPPORTED", "UNSUPPORTED_PRECONDITION", "CONTRARY_EVIDENCE",
+                     "INVALID_ASSOCIATION", "SCOPE_MISMATCH", "MISSING_EVIDENCE"]
+    reason: str = Field(min_length=1, max_length=512)
+    evidence_ids: tuple[str, ...] = Field(default=(), max_length=12)
+    missing_slots: tuple[str, ...] = Field(default=(), max_length=32)
+
+
+class CriticSearch(VersionedModel):
+    query: str = Field(min_length=1, max_length=256)
+    purpose: str = Field(min_length=1, max_length=256)
+
+
+class CriticContradiction(VersionedModel):
+    evidence_ids: tuple[str, ...] = Field(min_length=2, max_length=4)
+    reason: str = Field(min_length=1, max_length=512)
+
+
 class CriticReview(VersionedModel):
     finding_by_claim: dict[str, str] = Field(default_factory=dict)
     missing_slots: tuple[str, ...] = ()
     contrary_evidence_refs: tuple[str, ...] = ()
     suggested_counter_searches: tuple[str, ...] = ()
     proposed_disposition: GateDisposition
+    # Additive v1 fields: legacy envelopes still round-trip; runtime requires bindings.
+    review_id: str | None = Field(default=None, min_length=1, max_length=100)
+    verdict: Literal["PASS", "CHALLENGE"] | None = None
+    claim_reviews: tuple[CriticClaimFinding, ...] = Field(default=(), max_length=12)
+    contradictions: tuple[CriticContradiction, ...] = Field(default=(), max_length=8)
+    counter_searches: tuple[CriticSearch, ...] = Field(default=(), max_length=8)
 
 
 class GateDecision(VersionedModel):

@@ -488,7 +488,7 @@ def run(url: str) -> dict[str, Any]:
     }
 
 
-def run_memory(url: str, model_name: str) -> dict[str, Any]:
+def run_memory(url: str, model_name: str, call_interval_seconds: float = 0) -> dict[str, Any]:
     """Fixed pilot: identical saved history, sources and live state; only memory varies."""
     import shutil
     import sqlite3
@@ -514,7 +514,7 @@ def run_memory(url: str, model_name: str) -> dict[str, Any]:
     run_id = "p05-" + uuid.uuid4().hex
     destination = APP_ROOT / "runtime/evaluation" / (run_id + ".json")
     report: dict[str, Any] = {"run_id": run_id, "status": "PILOT_ONLY",
-        "model": model_name, "provider": "groq", "parent": "B2+policy (reranker enabled; graph off)",
+        "model_call_interval_seconds": call_interval_seconds, "model": model_name, "provider": "groq", "parent": "B2+policy (reranker enabled; graph off)",
         "corpus_sha256": _sha256(PILOT_PATH), "script_sha256": _sha256(Path(__file__)),
         "annotation_status": "PILOT_NOT_HUMAN_ADJUDICATED", "critic": False, "vector_memory": False,
         "conditions": [], "provider_tokenizer_revision": None,
@@ -550,7 +550,7 @@ def run_memory(url: str, model_name: str) -> dict[str, Any]:
             with Database(base / "registry.sqlite") as database:
                 registry = Registry(database, OriginalStore(base / "originals"))
                 seed_policy_fixture(registry, APP_ROOT)
-            model = GroqModel.from_env_file(APP_ROOT.parent / ".env", enabled=True, model=model_name)
+            model = GroqModel.from_env_file(APP_ROOT.parent / ".env", enabled=True, model=model_name, call_interval_seconds=call_interval_seconds)
             settings = Settings.model_validate({"enable_live_llm": True, "model": model_name})
             initial_started = time.perf_counter()
             with TestClient(app_for(base, model, settings, pilot["stale_state"])) as client:
@@ -580,7 +580,7 @@ def run_memory(url: str, model_name: str) -> dict[str, Any]:
                     source.backup(target)
                 shutil.copytree(base / "originals", root / "originals")  # Synthetic immutable bytes only.
                 settings = settings.model_copy(update={"continuity_enabled": enabled, "packet_max_chars": bound})
-                model = GroqModel.from_env_file(APP_ROOT.parent / ".env", enabled=True, model=model_name)
+                model = GroqModel.from_env_file(APP_ROOT.parent / ".env", enabled=True, model=model_name, call_interval_seconds=call_interval_seconds)
                 row: dict[str, Any] = {"arm": arm, "memory_enabled": enabled, "packet_max_chars": bound}
                 with Database(root / "registry.sqlite") as database:
                     registry = Registry(database, OriginalStore(root / "originals"))
@@ -618,21 +618,294 @@ def run_memory(url: str, model_name: str) -> dict[str, Any]:
     return {"report": str(destination), **report}
 
 
+def run_critic(url: str, model_name: str, call_interval_seconds: float = 0) -> dict[str, Any]:
+    """Frozen controlled drafts, actual reviews/finalization, then separate HTTP runtime."""
+    import asyncio
+    import shutil
+    import sqlite3
+    import subprocess
+    from contextlib import closing
+
+    from fastapi.testclient import TestClient
+
+    from evidence_agent.agent.critic import CRITIC_INSTRUCTIONS, evidence_digest
+    from evidence_agent.agent.draft import (
+        DRAFT_INSTRUCTIONS,
+        FINALIZATION_INSTRUCTIONS,
+        Claim,
+        Draft,
+    )
+    from evidence_agent.agent.gate import release
+    from evidence_agent.agent.llm import GroqModel
+    from evidence_agent.agent.services import AgentServices, configure_agent
+    from evidence_agent.core.evaluation import score_critic_output
+    from evidence_agent.ingest.pipeline import IngestPipeline
+    from evidence_agent.live.contracts import CaseScope, Snapshot
+    from evidence_agent.live.gateway import load_config, register_scope, utc_clock
+    from evidence_agent.live.mock import MockAdapter
+    from evidence_agent.main import create_app
+    from evidence_agent.policy.bootstrap import seed_policy_fixture
+    from evidence_agent.settings import Settings
+
+    if not url.startswith("http://127.0.0.1:"):
+        raise ValueError("Critic pilot requires explicit local Qdrant")
+    config = json.loads(PILOT_PATH.read_text(encoding="utf-8"))["critic_pilot"]
+    settings = Settings.model_validate({"enable_live_llm": True, "model": model_name})
+    run_id = "p06-" + uuid.uuid4().hex
+    destination = APP_ROOT / "runtime/evaluation" / (run_id + ".json")
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    source_paths = sorted((APP_ROOT / "src").rglob("*.py")) + sorted((APP_ROOT / "scripts").glob("*.py"))
+    source_paths += sorted((APP_ROOT / "src").rglob("*.sql"))
+    source_paths += sorted((APP_ROOT / "data/demo").glob("*"))
+    source_paths += sorted((APP_ROOT / "config").rglob("*.yaml")) + sorted((APP_ROOT / "config").rglob("*.json"))
+    source_paths += [APP_ROOT / "pyproject.toml", APP_ROOT / "uv.lock"]
+    source_paths = [p for p in source_paths if p.is_file()]
+    snapshot_root = destination.with_suffix("")
+    for source_path in source_paths:
+        copied = snapshot_root / source_path.relative_to(APP_ROOT)
+        copied.parent.mkdir(parents=True, exist_ok=True)
+        copied.write_bytes(source_path.read_bytes())
+    patch = subprocess.check_output(["git", "diff", "HEAD", "--", "AGENTS.md", "README.md", "palladion"], cwd=APP_ROOT.parent)
+    (snapshot_root / "scoped.patch").write_bytes(patch)
+    report: dict[str, Any] = {"schema_version": "2.0", "run_id": run_id,
+        "provider": "groq", "model": model_name, "status": config["status"], "model_call_interval_seconds": call_interval_seconds,
+        "controlled_initial_drafts": True, "critic_prompt_sha256": hashlib.sha256(CRITIC_INSTRUCTIONS.encode()).hexdigest(),
+        "main_prompt_sha256": hashlib.sha256(DRAFT_INSTRUCTIONS.encode()).hexdigest(),
+        "finalization_prompt_sha256": hashlib.sha256(FINALIZATION_INSTRUCTIONS.encode()).hexdigest(),
+        "fixture_sha256": _sha256(PILOT_PATH), "script_sha256": _sha256(Path(__file__)),
+        "git_revision": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=APP_ROOT.parent, text=True).strip(),
+        "dirty_scoped_patch_sha256": hashlib.sha256(patch).hexdigest(),
+        "source_hashes": {str(p.relative_to(APP_ROOT)): _sha256(p) for p in source_paths},
+        "provider_tokenizer_revision": None, "python": platform.python_version(),
+        "settings": settings.model_dump(mode="json"),
+        "cases": [], "runtime": None, "all_conditions_observed": False,
+        "limitations": ["Mechanical controlled pilot, not adjudicated semantic accuracy",
+            "Synthetic initial mistakes are not a measured main-model error rate",
+            "Same-provider separate contexts are not independent truth",
+            "Unknown failed-request token usage is not zero", "No selective retry inside a condition"]}
+    adapter_config = load_config(APP_ROOT / "config/adapters.yaml")
+    bundle = load_fixtures(APP_ROOT)
+    sop = bundle.source_map()["SOP-2026-B"]
+    exception = bundle.source_map()["EX-2026-04"].clauses["EX-SETTLEMENT-DELAY"]
+    headers = {"Authorization": "Bearer synthetic-critic-reader"}
+
+    def save() -> None:
+        destination.write_text(json.dumps(report, indent=2), encoding="utf-8")
+
+    def adapter() -> MockAdapter:
+        return MockAdapter({("get_transaction_status", "TX-DEMO-102"): (Snapshot(status="OK",
+            data={"transaction_id": "TX-DEMO-102", "state": "FAILED",
+                "transaction_occurred_at": "2026-08-15T10:20:00Z"}),)})
+
+    def seed_withheld(root: Path, index: QdrantIndex) -> dict[str, str]:
+        # Supply only one approved SOP; appendix is never registered or indexed in this case.
+        with Database(root / "registry.sqlite") as db:
+            registry = Registry(db, OriginalStore(root / "originals"))
+            for principal in bundle.principals:
+                registry.bootstrap_principal(principal)
+            case = bundle.case_map()["case-42"]
+            registry.bootstrap_case(case.tenant_id, case.case_id)
+            for identifier in case.allowed_principal_ids:
+                registry.bootstrap_membership(registry.access.authenticate(identifier), case.case_id)
+            admin = registry.access.authenticate("admin-a")
+            register_scope(registry, admin, case.case_id, CaseScope(product=case.product,
+                transaction_class=case.transaction_class, targets={"get_transaction_status": case.transaction_id}), utc_clock())
+            revision = registry.register_source(registry.access.authenticate("uploader-a"),
+                tenant_id=sop.tenant_id, case_id=case.case_id, family_id=sop.family_id,
+                content=(APP_ROOT / sop.path).read_bytes(), source_path=sop.path,
+                owner_id="admin-a", allowed_principal_ids=sop.allowed_principal_ids)
+            registry.approve_source(admin, revision)
+            IngestPipeline(Catalog(registry), index).index(admin, revision)
+            return {sop.source_id: revision}
+
+    try:
+        with tempfile.TemporaryDirectory(prefix="palladion-p06-") as temporary:
+            workspace = Path(temporary)
+            for case_name in config["cases"]:
+                collection = "p06_pilot_" + uuid.uuid4().hex
+                index = QdrantIndex(url=url, collection_name=collection,
+                    model_cache_dir=str(APP_ROOT / "runtime/model_cache"))
+                case_report: dict[str, Any] = {"case": case_name, "conditions": []}
+                report["cases"].append(case_report)
+                try:
+                    index.ensure_collection()
+                    case_report["representation_manifest"] = index.representation_manifest
+                    base = workspace / case_name / "base"
+                    base.mkdir(parents=True)
+                    if case_name == "withheld_appendix":
+                        revisions = seed_withheld(base, index)
+                    else:
+                        revisions = seed(base, APP_ROOT, index)
+                        with Database(base / "registry.sqlite") as db:
+                            seed_policy_fixture(Registry(db, OriginalStore(base / "originals")), APP_ROOT)
+                    services = AgentServices(base, index, None, adapter(), adapter_config, settings)
+                    try:
+                        runtime = services.begin("reader-a", "case-42")
+                        registry = runtime.store.registry
+                        chunks = Catalog(registry).chunks_for_revision(runtime.store.principal, revisions[sop.source_id])
+                        clause = sop.clauses["S26-REVERSAL"]
+                        chunk = next(c for c in chunks if c.start_byte <= clause.span_start and c.end_byte >= clause.span_end)
+                        runtime.ledger.add(chunk.chunk_id)
+                        live = asyncio.run(runtime.tools.execute("lookup_live_data", json.dumps({
+                            "operation": "get_transaction_status", "target_id": "TX-DEMO-102"})))
+                        live_id = live["data"]["evidence_id"]
+                        if case_name == "missing_inputs":
+                            asyncio.run(runtime.tools.execute("evaluate_policy", json.dumps({
+                                "family_id": "DEMO.REVERSAL.CHECK", "evidence_ids": [live_id]})))
+                        draft = Draft(claims=(Claim(id="C1", type="OBSERVED_FACT", text="Observed state",
+                            evidence_ids=(live_id,), field="state", value="FAILED"),
+                            Claim(id="C2", type="SOURCE_QUOTE", evidence_ids=(chunk.chunk_id,),
+                                text=clause.text if case_name == "correct_fact" else
+                                "A settlement timeout proves UNSETTLED and permits reversal.")))
+                        question = ("Report the verified current transaction state and the actual missing policy fields; do not assume a missing input is false."
+                            if case_name == "missing_inputs" else config["question"])
+                        frozen = {"schema_version": "2.0", "question": question,
+                            "draft": draft.model_dump(mode="json"), "initial_ledger": runtime.ledger.records,
+                            "collection": collection, "source_revisions": revisions,
+                            "missing_slots": [s for r in runtime.ledger.records.values() for s in r.get("missing_fields", [])]}
+                        case_report["frozen_input"] = frozen
+                        case_report["frozen_sha256"] = evidence_digest(frozen)
+                        case_report["appendix_supplied"] = "EX-2026-04" in revisions
+                        assert case_report["appendix_supplied"] == (case_name != "withheld_appendix")
+                        save()
+                    finally:
+                        services.close()
+                    off_retained: bool | None = None
+                    for condition in config["conditions"]:
+                        time.sleep(config["pacing_seconds"])
+                        root = workspace / case_name / condition["arm"]
+                        root.mkdir()
+                        with closing(sqlite3.connect(base / "registry.sqlite")) as source, closing(sqlite3.connect(root / "registry.sqlite")) as target:
+                            source.backup(target)
+                        shutil.copytree(base / "originals", root / "originals")
+                        row: dict[str, Any] = {"arm": condition["arm"], "status": "STARTED"}
+                        case_report["conditions"].append(row)
+                        model = GroqModel.from_env_file(APP_ROOT.parent / ".env", enabled=True, model=model_name, call_interval_seconds=call_interval_seconds)
+                        services = AgentServices(root, index, model, adapter(), adapter_config, settings)
+                        started = time.perf_counter()
+                        runtime_created = False
+                        try:
+                            runtime = services.begin("reader-a", "case-42")
+                            runtime_created = True
+                            # Consume the persisted frozen envelope, not a regenerated draft/retrieval.
+                            consumed = json.loads(destination.read_text(encoding="utf-8"))["cases"][-1]["frozen_input"]
+                            consumed_hash = evidence_digest(consumed)
+                            if consumed_hash != case_report["frozen_sha256"]:
+                                raise ValueError("Frozen inputs changed")
+                            initial = Draft.model_validate_json(json.dumps(consumed["draft"]))
+                            for identifier in consumed["initial_ledger"]:
+                                runtime.ledger.add(identifier)
+                            if evidence_digest(runtime.ledger.records) != evidence_digest(consumed["initial_ledger"]):
+                                raise ValueError("Canonical initial ledger changed")
+                            async def execute() -> dict[str, Any]:
+                                async with asyncio.timeout(settings.request_timeout_seconds):
+                                    if condition["review"]:
+                                        runtime.review = await runtime.critic.run(consumed["question"], {}, initial,
+                                            allow_search=condition["search"], blind_requirements=condition["blind"])
+                                    final = await runtime._finalize(consumed["question"], initial)
+                                    output = release(final, runtime.ledger, review=runtime.review if condition["review"] else None)
+                                    output.pop("_blocked_claim_ids")
+                                    output["verification_failures"] = sorted(set(runtime.ledger.failures))
+                                    return output
+                            output = asyncio.run(execute())
+                            row.update(status="OBSERVED", response=output,
+                                reviews=[r.model_dump(mode="json") for r in runtime.critic.reviews],
+                                consumed_sha256=consumed_hash,
+                                initial_evidence_ids=list(consumed["initial_ledger"]), final_evidence_ids=list(runtime.ledger.records),
+                                main_calls=runtime.budget.main_used, critic_calls=runtime.budget.critic_used,
+                                counter_searches=runtime.budget.critic_search_used, tools_used=runtime.budget.tools_used)
+                            row["final_ledger"] = runtime.ledger.records
+                            row["score"] = score_critic_output(output, frozen_hash=case_report["frozen_sha256"],
+                                consumed_hash=consumed_hash, expected_quote=exception.text if case_name == "exception" else None,
+                                known_fact_id=live_id, initial_ids=list(consumed["initial_ledger"]),
+                                final_ids=list(runtime.ledger.records), initial_fact_retained=off_retained,
+                                reviews=row["reviews"], known_valid_claim_ids=("C1", "C2") if case_name == "correct_fact" else ("C1",),
+                                known_invalid_claim_ids=() if case_name == "correct_fact" else ("C2",))
+                            if condition["arm"] == "off":
+                                off_retained = bool(row["score"]["known_fact_retained"])
+                            with TestClient(create_app(root, index, {"synthetic-critic-reader": "reader-a"})) as client:
+                                row["citations_resolved"] = all(client.get("/v1/evidence/"+c["evidence_id"],
+                                    params={"case_id": "case-42"}, headers=headers).status_code == 200 for c in output["citations"])
+                            row["received_usage"] = [json.loads(r[0])["usage"] for r in runtime.store.registry.database.connection.execute(
+                                "SELECT payload_json FROM case_events WHERE event_kind='RUNTIME_ATTEMPT' AND json_extract(payload_json,'$.trace_id')=?",
+                                (runtime.ledger.trace_id,)) if json.loads(r[0]).get("usage")]
+                        except Exception as exc:
+                            row.update(status="FAILED", failure_type=type(exc).__name__)
+                        finally:
+                            if runtime_created:
+                                row.update(main_calls=runtime.budget.main_used, critic_calls=runtime.budget.critic_used,
+                                    counter_searches=runtime.budget.critic_search_used, tools_used=runtime.budget.tools_used)
+                                row["attempts"] = [{k: value for k, value in json.loads(r[0]).items() if k in {
+                                    "role", "stage", "status", "attempt", "usage", "error_code"}} for r in runtime.store.registry.database.connection.execute(
+                                    "SELECT payload_json FROM case_events WHERE event_kind='RUNTIME_ATTEMPT' AND json_extract(payload_json,'$.trace_id')=?",
+                                    (runtime.ledger.trace_id,))]
+                            row.update(elapsed_seconds=time.perf_counter()-started,
+                                provider_failure=model.last_failure, rate_limits=model.last_rate_limits)
+                            services.close()
+                            save()
+                        print(json.dumps({"case": case_name, "arm": row["arm"], "status": row["status"]}), flush=True)
+                    if case_name == "exception":
+                        time.sleep(config["pacing_seconds"])
+                        model = GroqModel.from_env_file(APP_ROOT.parent / ".env", enabled=True, model=model_name, call_interval_seconds=call_interval_seconds)
+                        app = create_app(base, index, {"synthetic-critic-reader": "reader-a"})
+                        configure_agent(app, model=model, adapter=adapter(), config=adapter_config, settings=settings)
+                        with TestClient(app) as client:
+                            query = ("Use search_knowledge once for SOP-2026-B, then immediately return a draft quoting its reversal prerequisites. "
+                                "Leave the approved settlement-delay appendix check to independent review. "
+                                "Does a timeout establish UNSETTLED? Report exact source attributions, no payment permission.")
+                            response = client.post("/v1/cases/case-42/messages", headers=headers, json={"query": query})
+                            report["runtime"] = {"http_status": response.status_code}
+                            if response.status_code == 200:
+                                output = response.json()
+                                report["runtime"].update(response=output,
+                                    citations_resolved=all(client.get("/v1/evidence/"+c["evidence_id"], params={"case_id": "case-42"},
+                                        headers=headers).status_code == 200 for c in output["citations"]),
+                                    timeline=client.get("/v1/cases/case-42/timeline", headers=headers).json())
+                                report["runtime"]["exception_quote_released"] = any(exception.text in c["text"] for c in output["verified_claims"])
+                                with Database(base / "registry.sqlite") as db:
+                                    report["runtime"]["attempts"] = [{k: value for k, value in json.loads(r[0]).items()
+                                        if k in {"role", "stage", "status", "attempt", "usage", "error_code"}}
+                                        for r in db.connection.execute("SELECT payload_json FROM case_events WHERE event_kind='RUNTIME_ATTEMPT' "
+                                            "AND json_extract(payload_json,'$.trace_id')=?", (output["trace_id"],))]
+                            report["runtime"].update(provider_failure=model.last_failure, rate_limits=model.last_rate_limits)
+                        save()
+                finally:
+                    index.close()
+                    with closing(QdrantClient(url=url, timeout=30)) as cleanup:
+                        cleanup.delete_collection(collection, timeout=30)
+            report["all_conditions_observed"] = (len(report["cases"]) == len(config["cases"]) and
+                all(len(c["conditions"]) == len(config["conditions"]) for c in report["cases"]))
+    finally:
+        save()
+    return {"report": str(destination), "all_conditions_observed": report["all_conditions_observed"],
+        "conditions": sum(len(c["conditions"]) for c in report["cases"]), "runtime_observed": report["runtime"] is not None}
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--url", default="http://127.0.0.1:16333")
+    parser.add_argument("--critic", action="store_true", help="Explicit P06 real-Groq frozen critic pilot")
     parser.add_argument("--memory", action="store_true", help="Explicit P05 actual-Groq continuity pilot")
     parser.add_argument("--enable-live-llm", action="store_true")
     parser.add_argument("--model", choices=("qwen/qwen3.8-27b", "openai/gpt-oss-120b", "openai/gpt-oss-20b"), default="qwen/qwen3.8-27b")
     parser.add_argument("--run", action="store_true",
                         help="explicitly seed/query/delete only unique p02_eval_* collections")
+    parser.add_argument("--model-call-interval", type=float, default=0, help="Opt-in live Groq dispatch interval within unchanged deadlines")
     args = parser.parse_args(argv)
+    if args.model_call_interval and not (args.critic or args.memory):
+        parser.error("Model call spacing requires an explicit live critic or memory pilot")
     if not args.run:
         parser.error("--run is required before the pilot creates temporary SQLite data and Qdrant collections")
+    if args.critic:
+        if not args.enable_live_llm or args.memory:
+            parser.error("Critic pilot requires --enable-live-llm and cannot combine with --memory")
+        result = run_critic(args.url, args.model, args.model_call_interval)
+        print(json.dumps(result, indent=2))
+        return 0 if result.get("all_conditions_observed") else 1
     if args.memory:
         if not args.enable_live_llm:
             parser.error("Memory pilot requires --enable-live-llm before credentials are read")
-        result = run_memory(args.url, args.model)
+        result = run_memory(args.url, args.model, args.model_call_interval)
         print(json.dumps(result, indent=2))
         return 0 if result.get("all_conditions_observed") else 1
     report = run(args.url)

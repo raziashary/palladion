@@ -37,6 +37,32 @@ Read root AGENTS → [master plan task protocol](MASTER_DEV_PLAN.md#task-reading
 
 ## Current state and next action
 
+P06 DONE at E-P06-001/E-P06-002: all six atomic cards, approved critic/status/pacing
+contracts, actual source/installed/API consumers and sole Luna Medium end-review
+resolution are verified. Source294PASS plus13 actual-Qdrant cases pass (12 in the sweep,
+one isolated after a setup connection-abort) =307 disjoint checks. Installed294 and one
+installed real-Qdrant/API case pass as overlapping artifact checks; all50 packaged files
+match the final wheel. Ruff, strict mypy59, dependency81+4controls, foundation CLI and
+final document gates pass. Original failed/skipped runs remain evidence, not PASS.
+
+Post-fix real20B exact recoveryPASS39.827s (2main/2critic/1search, explicit cap2) and
+serialized default-budget MODEL-draft pathPASS37.089s (4main/1critic/2tools) release the
+full exception with original citation/timeline readback and no verification errors.
+Gate qualifies a changed final proposal or unresolved CHALLENGE while preserving
+canonical facts; unchanged current PASS remains eligible for SUPPORTED. Model review
+is advisory, not semantic authority or payment permission.
+
+Frozen prompt-version20B matrix cb9e66:16conditions,16/16known-fact retention,
+0/4full-exception corrections, one critic validation failure,16main/17critic/4searches,
+66117known received tokens (one attempt lacks usage). It precedes ADR0062's gate-only
+qualification fix: no model prompt changed; raw outputs are not relabeled post-fix.
+No efficacy/H05, semantic accuracy, causal false-veto or completeness claim. Mandatory
+review remains enabled; draft-blind first pass sees canonical required slots (§10.1).
+P07 graph/P08 adjudicated research/X01 comparators remain deferred; no P07 GO or P06
+main push is inferred. No unanswered P06 owner ADR. Owned processes stopped, storage
+preserved and ports16333/16334/18080 verified free; foreign benchmark/editor work untouched.
+
+
 P03 published64d2066; P04 published4245023. Preserve concurrent benchmark/.vscode work.
 
 P05 DONE at E-P05-001; all seven cards and third-turn correction verified with the same reviewer. Approvedv4
@@ -57,7 +83,7 @@ staleFAILED claims; compressed answer omitted settlement. All failures retained,
 H04/reliability/semantic claim. Scorer/guard evidence is separate from actual provider
 proof. OwnedQdrant99335/PID471 stopped,0collections, ports16333/16334/18080 free.
 Ignored wheel environment retained without processes. Benchmark/.vscode untouched.
-P04 pushed4245023; P05 checkpoint local only. Wait for P06 GO and explicit main push.
+P05 now pushed f0507e4 under new owner approval. P06 GO is active; see E-P06-001 and accepted ADR0045/0046 for contract/pilot changes. Another main push and P07 need separate authorization.
 
 Previous P02 state:
 
@@ -92,7 +118,7 @@ P00 completion/old hold is historical at E-DOC-001–E-DOC-004. P01 GO supersede
 that hold for this phase. Source/security gates remain PARTIAL until later consumers;
 no P01 check establishes full message/runtime behavior. At P01 root .env was never read or
 copied; P04 explicit enabled commands now read only the selected Groq credential internally, never print/export it; app .venv is reused/ignored. Unrelated .vscode remains untouched. New main
-publishing requires explicit user approval; P06+ is outside current scope.
+publishing requires explicit user approval; P07+ is outside current scope.
 
 ## Open risks to retain
 
@@ -102,3 +128,15 @@ Q09 actual rubric/escalation assignment, Q10 optional-feature value; Q06/Q11/Q12
 inventory/comparators/real deployment remain deferred. No unanswered recommendation is
 silently promoted into empirical success.
 No performance, completeness or production-readiness claim has been established.
+
+Owner approved ADR0053 via async reply2026-10-19 (supersedes earlier pending
+checkpoint text). Opt-in model-call pacing defaults0 and is now implemented, with
+post-wait caller authorization/evidence validation. Focused98checksPASS15.51s;
+actual paced message proof and phase checks now pass; sole end review resolved R1/withdrew R2; final gates and cleanup verified.
+ADR0054 strengthens pre/post critic discovery attribution and safe attempt diagnostics.
+
+End-review R1 confirmed: ADR0062 qualifies changed final proposals and unresolved
+CHALLENGE without erasing canonical facts. Final matrix cb9e66 remains its unchanged
+model/prompt/launch-gate version; qualification-only gate correction follows it. Quote,
+fact-retention and model-cost observations are not relabeled as post-correction outputs.
+Post-fix stack/installed/live checks and same-reviewer resolution precede closure.

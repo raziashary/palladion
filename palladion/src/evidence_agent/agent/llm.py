@@ -6,10 +6,15 @@ the four scoped read operations. Tool outputs return through that loop, not here
 """
 from __future__ import annotations
 
+import asyncio
 import json
+import math
 import re
+import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
+from threading import Lock
 from typing import Any, Protocol
 
 import httpx
@@ -32,7 +37,8 @@ class ModelTurn:
 
 class LanguageModel(Protocol):
     async def complete(self, messages: list[dict[str, Any]], tools: list[dict[str, Any]],
-                       *, final: bool = False) -> ModelTurn: ...
+                       *, final: bool = False,
+                       before_send: Callable[[], None] | None = None) -> ModelTurn: ...
 
 
 class GroqModel:
@@ -41,18 +47,23 @@ class GroqModel:
     allowed_models = ("qwen/qwen3.8-27b", "openai/gpt-oss-120b", "openai/gpt-oss-20b")
 
     def __init__(self, api_key: str, *, enabled: bool = False, timeout: float = 25,
-                 model: str = "qwen/qwen3.8-27b") -> None:
+                 model: str = "qwen/qwen3.8-27b", call_interval_seconds: float = 0) -> None:
+        if type(call_interval_seconds) not in {int, float} or not math.isfinite(call_interval_seconds) or not 0 <= call_interval_seconds <= 60:
+            raise ValueError("Model call interval must be finite and between 0 and 60 seconds")
         if model not in self.allowed_models:
             raise ValueError("Unapproved Groq model")
         Settings(enable_live_llm=enabled).require_live_llm(api_key_present=bool(api_key))
         self.model = model
         self._api_key, self.timeout = api_key, timeout
+        self.call_interval_seconds = float(call_interval_seconds)
+        self._pacing_lock = Lock()
+        self._next_dispatch = 0.0
         self.last_failure: dict[str, Any] | None = None
         self.last_rate_limits: dict[str, int | str] = {}
 
     @classmethod
     def from_env_file(cls, path: Path, *, enabled: bool = False,
-                      model: str = "qwen/qwen3.8-27b") -> GroqModel:
+                      model: str = "qwen/qwen3.8-27b", call_interval_seconds: float = 0) -> GroqModel:
         if not enabled:
             raise PermissionError("Explicit model enablement required before reading credentials")
         # Deliberately parse one literal key, without executing shell syntax or exporting it.
@@ -63,10 +74,25 @@ class GroqModel:
                 key = match[1].strip().strip("\"'")
         if not key or any(c.isspace() for c in key):
             raise PermissionError("Enabled command requires a literal GROQ_API_KEY")
-        return cls(key, enabled=True, model=model)
+        return cls(key, enabled=True, model=model, call_interval_seconds=call_interval_seconds)
+
+    async def _pace(self) -> None:
+        if not self.call_interval_seconds:
+            return
+        while True:
+            # Reserve only a dispatch that is ready now. Cancelled waiters leave no
+            # future queue slots; the lock is never held across an await or HTTP call.
+            with self._pacing_lock:
+                now = time.monotonic()
+                delay = self._next_dispatch - now
+                if delay <= 0:
+                    self._next_dispatch = now + self.call_interval_seconds
+                    return
+            await asyncio.sleep(delay)
 
     async def complete(self, messages: list[dict[str, Any]], tools: list[dict[str, Any]],
-                       *, final: bool = False) -> ModelTurn:
+                       *, final: bool = False,
+                       before_send: Callable[[], None] | None = None) -> ModelTurn:
         self.last_rate_limits = {}
         payload: dict[str, Any] = {"model": self.model, "messages": messages,
             "temperature": 0, "max_completion_tokens": 768,
@@ -78,6 +104,9 @@ class GroqModel:
                            parallel_tool_calls=self.model == "qwen/qwen3.8-27b")
         if len(json.dumps(payload, ensure_ascii=False).encode()) > 48 * 1024:
             raise ModelFailure("MODEL_CONTEXT_TOO_LARGE")
+        await self._pace()
+        if before_send is not None:
+            before_send()  # Caller rechecks ACL/freshness after waiting, before HTTP.
         try:
             async with httpx.AsyncClient(timeout=self.timeout, trust_env=False,
                                          follow_redirects=False) as client:

@@ -1,8 +1,8 @@
 # Requirements traceability
 
 Scope: blueprint v0.2 and user's 2026-10-17 suite request. All system coverage below
-mixes verified P01/P02, P03 domain verification, P04 work in progress and planned later consumers; PROGRESS and E-P01-001/E-P02-001
-identify phase-local evidence and still-unrun obligations. References use stable heading/section names rather
+mixes verified P01–P06 and planned later consumers; PROGRESS and the
+phase-local EVIDENCE_LOG receipts distinguish verified paths and still-unrun obligations. References use stable heading/section names rather
 than fragile line numbers. A row is a coverage obligation, not proof of behavior.
 
 ## All blueprint sections
@@ -104,3 +104,30 @@ P05 phase-local closure: E-P05-001 records allseven atomic tasks, installed49fil
 artifact,258disjoint automated checks, actual model pilot (including0/3 strict
 completions), sole end review and R1/R2 plus third-turn correction resolution. Full research/semantic/critic/graph
 obligations remain with their later phases; no broad integrity guarantee inferred.
+
+P06 E-P06-001 extends I08/I11/I12/I15 through structured advisory review, shared bounded
+search, canonical revalidation, redacted consumers and frozen paired evidence.
+P06 DONE at E-P06-001/E-P06-002: all six atomic cards, approved critic/status/pacing
+contracts, actual source/installed/API consumers and sole Luna Medium end-review
+resolution are verified. Source294PASS plus13 actual-Qdrant cases pass (12 in the sweep,
+one isolated after a setup connection-abort) =307 disjoint checks. Installed294 and one
+installed real-Qdrant/API case pass as overlapping artifact checks; all50 packaged files
+match the final wheel. Ruff, strict mypy59, dependency81+4controls, foundation CLI and
+final document gates pass. Original failed/skipped runs remain evidence, not PASS.
+
+Post-fix real20B exact recoveryPASS39.827s (2main/2critic/1search, explicit cap2) and
+serialized default-budget MODEL-draft pathPASS37.089s (4main/1critic/2tools) release the
+full exception with original citation/timeline readback and no verification errors.
+Gate qualifies a changed final proposal or unresolved CHALLENGE while preserving
+canonical facts; unchanged current PASS remains eligible for SUPPORTED. Model review
+is advisory, not semantic authority or payment permission.
+
+Frozen prompt-version20B matrix cb9e66:16conditions,16/16known-fact retention,
+0/4full-exception corrections, one critic validation failure,16main/17critic/4searches,
+66117known received tokens (one attempt lacks usage). It precedes ADR0062's gate-only
+qualification fix: no model prompt changed; raw outputs are not relabeled post-fix.
+No efficacy/H05, semantic accuracy, causal false-veto or completeness claim. Mandatory
+review remains enabled; draft-blind first pass sees canonical required slots (§10.1).
+P07 graph/P08 adjudicated research/X01 comparators remain deferred; no P07 GO or P06
+main push is inferred. No unanswered P06 owner ADR. Owned processes stopped, storage
+preserved and ports16333/16334/18080 verified free; foreign benchmark/editor work untouched.

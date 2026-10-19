@@ -26,13 +26,16 @@ def main() -> None:
     parser.add_argument("--rerank", action="store_true")
     parser.add_argument("--model", choices=GroqModel.allowed_models, default=settings.model)
     parser.add_argument("--enable-live-llm", action="store_true", help="Explicitly load root .env and enable real Groq messages")
+    parser.add_argument("--model-call-interval", type=float, default=0, help="Opt-in seconds between Groq dispatches")
     args = parser.parse_args()
+    if args.model_call_interval and not args.enable_live_llm:
+        parser.error("Model call spacing requires --enable-live-llm")
     index = QdrantIndex(url=args.url, collection_name=args.collection, bm25_profile=settings.bm25_profile)
     try:
         app = create_app(args.root, index, load_demo_tokens(args.root), FastEmbedReranker(enabled=args.rerank))
         if args.enable_live_llm:
             app_root = Path(__file__).resolve().parents[1]
-            configure_agent(app, model=GroqModel.from_env_file(app_root.parent / ".env", enabled=True, model=args.model),
+            configure_agent(app, model=GroqModel.from_env_file(app_root.parent / ".env", enabled=True, model=args.model, call_interval_seconds=args.model_call_interval),
                 adapter=fixture_adapter(app_root), config=load_config(app_root / "config/adapters.yaml"),
                 settings=settings.model_copy(update={"enable_live_llm": True, "model": args.model}))
         uvicorn.run(app, host="127.0.0.1", port=args.port, log_level="warning")

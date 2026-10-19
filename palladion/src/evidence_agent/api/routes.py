@@ -237,7 +237,10 @@ def timeline(case_id: str, request: Request, authorization: str | None = Header(
         return [{"event_id": e["event_id"], "kind": e["kind"], "at": e["at"],
             "trace_id": e["payload"]["trace_id"],
             "status": e["payload"].get("status") or e["payload"].get("disposition"),
-            "main_used": e["payload"].get("main_used")} for e in events]
+            "main_used": e["payload"].get("main_used"),
+            "review_status": e["payload"].get("review_status"),
+            "critic_used": e["payload"].get("budget", {}).get("critic_used"),
+            "critic_search_used": e["payload"].get("budget", {}).get("critic_search_used")} for e in events]
 
 
 @router.get("/v1/evidence/{evidence_id}/clauses/{clause_index}")

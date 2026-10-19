@@ -55,7 +55,7 @@ class MessageResponse(RequestModel):
     tool_status: dict[str, str]
     searched_scope: str
     inventory_attested: Literal[False]
-    review_status: Literal["UNAVAILABLE_UNTIL_P06"]
+    review_status: Literal["UNAVAILABLE_UNTIL_P06", "PASS", "CHALLENGE", "UNAVAILABLE"]
     next_steps: list[str]
     budget: dict[str, int]
     verification_failures: list[str]

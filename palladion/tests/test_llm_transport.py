@@ -151,3 +151,79 @@ def test_explicit_model_selection_preserves_provider_capabilities(monkeypatch, n
 def test_unapproved_model_is_rejected_before_dispatch():
     with pytest.raises(ValueError, match="Unapproved"):
         GroqModel("synthetic-test-credential", enabled=True, model="unapproved-model")
+
+
+@pytest.mark.parametrize("value", [-1, 61, float("nan"), float("inf"), True, "10"])
+def test_call_pacing_rejects_invalid_config_before_http(value):
+    with pytest.raises(ValueError, match="interval"):
+        GroqModel("synthetic", enabled=True, call_interval_seconds=value)
+
+
+def test_shared_model_paces_main_critic_and_final_without_retry(monkeypatch):
+    import time
+    times = []
+    def handler(request):
+        times.append(time.monotonic())
+        return httpx.Response(200, json={"choices": [{"message": {"content": "{}"}}]})
+    _, calls = transport_model(monkeypatch, handler)
+    model = GroqModel("synthetic", enabled=True, call_interval_seconds=0.03)
+    async def run():
+        await asyncio.gather(model.complete([], definitions()), model.complete([], []),
+                             model.complete([], [], final=True))
+    asyncio.run(run())
+    assert len(calls) == 3
+    assert all(b-a >= 0.024 for a,b in zip(times,times[1:]))
+
+
+def test_pacing_wait_cancels_without_http_or_abandoned_future_slots(monkeypatch):
+    _, calls = transport_model(monkeypatch, lambda request: httpx.Response(200,
+        json={"choices": [{"message": {"content": "{}"}}]}))
+    model = GroqModel("synthetic", enabled=True, call_interval_seconds=0.04)
+    async def run():
+        await model.complete([], [])
+        next_dispatch = model._next_dispatch
+        with pytest.raises(TimeoutError):
+            async with asyncio.timeout(0.005):
+                await model.complete([], [])
+        assert len(calls) == 1 and model._next_dispatch == next_dispatch
+        await asyncio.sleep(0.05)
+        await model.complete([], [])
+    asyncio.run(run())
+    assert len(calls) == 2
+
+
+def test_after_pacing_caller_revalidates_before_any_http(monkeypatch):
+    _, calls = transport_model(monkeypatch, lambda request: httpx.Response(200,
+        json={"choices": [{"message": {"content": "{}"}}]}))
+    model = GroqModel("synthetic", enabled=True, call_interval_seconds=0.04)
+    checked = []
+    def revalidate():
+        checked.append(True)
+        raise PermissionError("Revoked during wait")
+    async def run():
+        await model.complete([], [])
+        task = asyncio.create_task(model.complete([], [], before_send=revalidate))
+        await asyncio.sleep(0.005)
+        assert checked == [] and len(calls) == 1
+        with pytest.raises(PermissionError):
+            await task
+    asyncio.run(run())
+    assert checked == [True] and len(calls) == 1
+
+
+def test_same_model_pacing_supports_separate_event_loops(monkeypatch):
+    import time
+    from concurrent.futures import ThreadPoolExecutor
+    times = []
+    def handler(request):
+        times.append(time.monotonic())
+        return httpx.Response(200, json={"choices": [{"message": {"content": "{}"}}]})
+    _, calls = transport_model(monkeypatch, handler)
+    model = GroqModel("synthetic", enabled=True, call_interval_seconds=0.03)
+    def run():
+        return asyncio.run(model.complete([], []))
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        tasks = [pool.submit(run), pool.submit(run)]
+        for task in tasks:
+            task.result()
+    assert len(calls) == 2 and times[1]-times[0] >= 0.024

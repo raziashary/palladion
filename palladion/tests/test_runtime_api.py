@@ -133,3 +133,36 @@ def test_event_evidence_and_recall_redact_requests_but_own_packet_preserves_unve
     assert own.reported_facts[0].verification_status.value == "UNVERIFIED"
     other = build_packet(CaseStore(p03.registry, p03.reader, "case-42"), "follow up")
     assert other.reported_facts == ()
+
+
+def test_p06_review_status_and_counts_reach_timeline_without_raw_review(api):
+    client, app = api
+    response = client.post("/v1/cases/case-42/messages", headers={"Authorization":"Bearer reader-test"}, json={"query":"hello"})
+    assert response.status_code == 200 and response.json()["review_status"] == "PASS"
+    assert response.json()["budget"]["critic_used"] == 1
+    timeline = client.get("/v1/cases/case-42/timeline", headers={"Authorization":"Bearer reader-test"})
+    release = next(e for e in reversed(timeline.json()) if e["kind"] == "RUNTIME_RELEASE")
+    assert release["review_status"] == "PASS" and release["critic_used"] == 1
+    assert "guard-review" not in timeline.text and "evidence_inventory" not in timeline.text
+
+
+
+def test_actual_rejected_proposals_are_protected_from_all_public_readers(api):
+    import json
+    client,app = api
+    bad = {"claims":[{"id":"bad", "type":"HYPOTHESIS", "text":"PRIVATE_DRAFT_CANARY"}]}
+    app.state.agent_services.model = ScriptedModel([{"content":json.dumps(bad)},{"content":json.dumps(bad)}])
+    headers = {"Authorization":"Bearer reader-test"}
+    response = client.post("/v1/cases/case-42/messages",headers=headers,json={"query":"hello"})
+    assert response.status_code == 200 and "PRIVATE_DRAFT_CANARY" not in response.text
+    from evidence_agent.storage.sqlite import Database
+    with Database(app.state.runtime_root / "registry.sqlite") as database:
+        rows = database.connection.execute("SELECT event_id,payload_json FROM case_events WHERE event_kind='RUNTIME_DIAGNOSTIC'").fetchall()
+    assert any("PRIVATE_DRAFT_CANARY" in row[1] for row in rows)
+    for row in rows:
+        for token in ("reader-test","admin-test"):
+            read = client.get("/v1/evidence/"+row[0],params={"case_id":"case-42"},headers={"Authorization":"Bearer "+token})
+            assert read.status_code == 403 and "PRIVATE_DRAFT_CANARY" not in read.text
+    timeline = client.get("/v1/cases/case-42/timeline",headers=headers)
+    trace = client.get("/v1/traces/"+response.json()["trace_id"],params={"case_id":"case-42"},headers={"Authorization":"Bearer admin-test"})
+    assert "PRIVATE_DRAFT_CANARY" not in timeline.text + trace.text

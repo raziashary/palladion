@@ -35,19 +35,29 @@ class UnavailableIndex:
 
 
 class ScriptedModel:
-    """Invalid-output injection only; never a runtime or provider smoke substitute."""
+    """Role-separated guard injection; never a runtime or provider smoke substitute."""
 
-    def __init__(self, turns, delay=0):
+    def __init__(self, turns, delay=0, critic_turns=None):
         self.turns, self.delay, self.calls, self.cancelled = list(turns), delay, [], False
+        self.critic_turns = list(critic_turns) if critic_turns is not None else []
+        self.critic_calls = []
 
-    async def complete(self, messages, tools, *, final=False):
-        self.calls.append(final)
+    async def complete(self, messages, tools, *, final=False, before_send=None):
+        from evidence_agent.agent.critic import CRITIC_INSTRUCTIONS
+        critic = messages[0].get("content") == CRITIC_INSTRUCTIONS
+        (self.critic_calls if critic else self.calls).append(messages if critic else final)
         try:
             await asyncio.sleep(self.delay)
         except asyncio.CancelledError:
             self.cancelled = True
             raise
-        item = self.turns.pop(0) if self.turns else {"content": Draft().model_dump_json()}
+        if before_send is not None:
+            before_send()
+        if critic:
+            item = self.critic_turns.pop(0) if self.critic_turns else {"content": json.dumps({
+                "review_id": "guard-review", "verdict": "PASS", "proposed_disposition": "NOT_ESTABLISHED"})}
+        else:
+            item = self.turns.pop(0) if self.turns else {"content": Draft().model_dump_json()}
         if isinstance(item, Exception):
             raise item
         return ModelTurn(item, {"total_tokens": 1})
@@ -126,7 +136,8 @@ def test_malformed_and_failed_attempts_count_and_finalize(p03):
     assert result["disposition"] == "VERIFICATION_UNAVAILABLE"
     assert result["verified_claims"] == []
     attempts = runtime.store.recent(limit=20)
-    assert sum(e["payload"].get("status") == "STARTED" for e in attempts) == 5
+    assert sum(e["payload"].get("status") == "STARTED" and e["payload"].get("role") == "main" for e in attempts) == 5
+    assert sum(e["payload"].get("status") == "STARTED" and e["payload"].get("role") == "critic" for e in attempts) == 1
 
 
 def test_four_tools_and_nonexclusive_zero_call_preflight(p03):
@@ -246,9 +257,9 @@ def test_malformed_native_function_types_are_counted_without_dispatch(p03, funct
 def test_tool_result_returns_matching_native_name_and_id_to_model(p03):
     seen = []
     class RecordingModel(ScriptedModel):
-        async def complete(self, messages, tools, *, final=False):
+        async def complete(self, messages, tools, *, final=False, before_send=None):
             seen.extend(m for m in messages if m.get("role") == "tool")
-            return await super().complete(messages, tools, final=final)
+            return await super().complete(messages, tools, final=final, before_send=before_send)
     turn = tool_turn("recall_memory", {})
     model = RecordingModel([turn, {"content": "{}"}, {"content": "{}"}])
     fixture = make_runtime(p03, model)
@@ -257,3 +268,71 @@ def test_tool_result_returns_matching_native_name_and_id_to_model(p03):
     assert seen and seen[0]["name"] == "recall_memory"
     assert seen[0]["tool_call_id"] == turn["tool_calls"][0]["id"]
     assert json.loads(seen[0]["content"])["status"] == "SUCCEEDED"
+
+
+def test_critic_reservations_bound_failed_attempts_and_keep_main_final():
+    budget = Budget(critic_max=3, critic_search_max=2)
+    for _ in range(3):
+        budget.critic()
+    with pytest.raises(BudgetExceeded):
+        budget.critic()
+    for _ in range(4):
+        budget.model()
+    budget.model(final=True)
+    assert budget.critic_used == 3 and budget.main_used == 5
+    budget.counter_search()
+    budget.counter_search()
+    with pytest.raises(BudgetExceeded):
+        budget.counter_search()
+    assert budget.critic_search_used == budget.tools_used == 2
+
+
+def test_critic_search_reserves_shared_tool_atomically():
+    budget = Budget(tool_max=1)
+    budget.tool()
+    with pytest.raises(BudgetExceeded):
+        budget.counter_search()
+    assert budget.critic_search_used == 0 and budget.tools_used == 1
+
+
+def test_parallel_critic_and_search_reservations_do_not_oversubscribe():
+    budget = Budget()
+    async def reserve(method):
+        try:
+            method()
+            return True
+        except BudgetExceeded:
+            return False
+    async def run():
+        calls = await asyncio.gather(*(reserve(budget.critic) for _ in range(20)))
+        searches = await asyncio.gather(*(reserve(budget.counter_search) for _ in range(20)))
+        return sum(calls), sum(searches)
+    assert asyncio.run(run()) == (3, 2)
+    assert budget.critic_used == 3 and budget.critic_search_used == budget.tools_used == 2
+
+
+def test_runtime_uses_configured_lower_critic_budgets(p03):
+    runtime = make_runtime(p03, critic_max_calls=1, critic_search_max_calls=0).runtime
+    runtime.budget.critic()
+    with pytest.raises(BudgetExceeded):
+        runtime.budget.critic()
+    with pytest.raises(BudgetExceeded):
+        runtime.budget.counter_search()
+    assert runtime.budget.critic_used == 1 and runtime.budget.tools_used == 0
+
+
+
+def test_reserved_finalizer_owns_phase_instruction_and_keeps_question_as_data(p03):
+    class BoundaryModel(ScriptedModel):
+        async def complete(self, messages, tools, *, final=False, before_send=None):
+            assert final and tools == []
+            assert messages[0]["role"] == "system"
+            assert "Backend phase: FINALIZATION" in messages[0]["content"]
+            data = json.loads(messages[1]["content"])
+            assert "instruction" not in data and data["question"] == "UNTRUSTED_QUESTION_CANARY"
+            assert "UNTRUSTED_QUESTION_CANARY" not in messages[0]["content"]
+            return await super().complete(messages,tools,final=final,before_send=before_send)
+    model = BoundaryModel([{"content":"{}"}])
+    fixture = make_runtime(p03,model)
+    asyncio.run(fixture.runtime._finalize("UNTRUSTED_QUESTION_CANARY",Draft()))
+    assert fixture.runtime.budget.main_used == 1 and fixture.runtime.budget.final_used

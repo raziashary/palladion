@@ -73,3 +73,41 @@ def test_stage_error_cannot_be_reported_as_a_completed_pilot(monkeypatch) -> Non
         "bm25_profile": "english", "cases": [{"stages": {"lexical": {"status": "ERROR"}},
                                                "exact_identifier_result": None}]})
     assert module.run("http://127.0.0.1:1")["status"] == "INCOMPLETE_FAILURE_RECORDED"
+
+
+def test_critic_pair_scorer_preserves_unknown_semantics_and_falsifies_inputs():
+    from evidence_agent.core.evaluation import score_critic_output
+    output = {"verified_claims": [{"text":"Last observed state: FAILED", "evidence_ids":["live-known"]},
+        {"text":"Approved source states: exact exception", "evidence_ids":["exception"]}],
+        "citations":[{"evidence_id":"exception"}],"inventory_attested":False,"verification_failures":[]}
+    kwargs = dict(frozen_hash="a"*64,consumed_hash="a"*64,expected_quote="exact exception",known_fact_id="live-known",
+                  initial_ids=["live-known"],final_ids=["live-known","exception"],initial_fact_retained=True)
+    score = score_critic_output(output, **kwargs)
+    assert score["mechanical_exception_quote_corrected"] is True and score["known_fact_retained"] is True
+    assert score["changed_evidence_ids"] == ["exception"] and score["unadjudicated_semantic_correction"] is None
+    output["verified_claims"] = []
+    score = score_critic_output(output, **kwargs)
+    assert score["mechanical_exception_quote_corrected"] is False and score["known_fact_retention_loss_vs_off"] is True
+    assert score["mechanical_false_veto_vs_off"] is None
+    output["verification_failures"] = ["PROVIDER_HTTP_429"]
+    failed_score = score_critic_output(output, **kwargs)
+    assert failed_score["known_fact_retention_loss_vs_off"] is True
+    assert failed_score["mechanical_false_veto_vs_off"] is None
+    assert failed_score["verification_failure_count"] == 1
+    import pytest
+    with pytest.raises(ValueError, match="inputs differ"):
+        score_critic_output(output, **{**kwargs,"consumed_hash":"b"*64})
+    with pytest.raises(ValueError, match="Actual gate output"):
+        score_critic_output({}, **kwargs)
+
+
+
+def test_critic_discovery_smoke_rejects_presupplied_and_unreviewed_sources():
+    spec = importlib.util.spec_from_file_location("p06_smoke_predicate", Path(__file__).parents[1]/"scripts/validate_agent.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    source = {"evidence_id":"approved-chunk", "revision_id":"appendix-revision"}
+    assert module.critic_discovered_revision([[],[source]],"appendix-revision")
+    assert not module.critic_discovered_revision([[source],[source]],"appendix-revision")
+    assert not module.critic_discovered_revision([[]],"appendix-revision")
+    assert not module.critic_discovered_revision([],"appendix-revision")

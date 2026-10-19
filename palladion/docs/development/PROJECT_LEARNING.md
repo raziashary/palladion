@@ -367,3 +367,42 @@ traces and retain generic nonempty case questions; only an executed resolving re
 can clear a policy requirement. Prove both persistence after failure and resolution
 after real policy execution. Main retracted premature closure openly before commit,
 kept the red regressions, rebuilt the artifact and reused the same end reviewer.
+
+## L032 — Freeze every route that can carry the supposedly missing evidence
+
+The first critic discovery fixture already carried appendix clause previews through
+its policy decision. Freezing a draft and standalone document IDs did not remove that
+confound. Inspect the complete canonical model view before claiming an evidence gap;
+version the fixture and preserve the original measured rows and loaded source snapshot.
+
+## L033 — Output omission does not identify the cause of a veto
+
+A supported fact absent from a final answer is an observable retention loss. It can
+come from finalization, quota failure or review; naming it a critic veto invents a
+causal result. Report retention and known-control false objections separately, leave
+causal/semantic judgments unknown, and derive corrected summaries without modifying
+original artifacts. A shorter correct exception excerpt is also not the full-clause
+match required by a preregistered strict scorer.
+
+## L034 — Trusted phases, exact clauses and final-source evidence
+
+Finalization instructions belong in the trusted system phase, not an untrusted data key.
+A document ID can retrieve an introduction rather than the required clause: prove full
+canonical clause recovery, later review and final readback. Prompt changes invalidate
+claims that an earlier experiment measures final source. Preserve old receipts and repeat
+the complete matrix. Final20B16conditions retain all known facts but0/4full-clause
+corrections and one validation failure; targeted positive engineering checks cannot
+supersede neutral research results. E-P06-001 and ADR0058–0061 preserve both boundaries.
+
+## L035 — Completed review is not final-proposal review
+
+End auditor R1 found a stored draft digest with no gate consumer. Compare the actual
+final proposal to that digest and qualify changed proposals; likewise qualify unresolved
+CHALLENGE. Keep canonical facts visible without inventing conflict or semantic veto.
+Unchanged PASS positive controls must still work. Source/installed tests plus both actual
+Groq consumers verify the fix (ADR0062/E-P06-002). R2 was refuted by reading exact §10.1:
+the permitted blind first pass withholds the draft, not canonical policy requirements.
+
+A suite exit0 can mean SKIPPED: check enable flags and counts before reporting PASS.
+Concurrent model/index tests also confound latency: retain connection-abort/deadline
+failures and run missing checks serially rather than changing timeouts or model budgets.

@@ -319,9 +319,9 @@ def model_view(item: dict[str, Any]) -> dict[str, Any]:
                     clauses_truncated=len(clauses) > 4 or any(len(text) > 400 for text in clauses))
     elif item.get("kind") == "CASE_EVENT":
         event = item["event"]
-        payload = event["payload"]
-        view["event"] = {"event_id": event["event_id"], "kind": event["kind"], "at": event["at"],
+        payload = event.get("payload", {})
+        view["event"] = {"event_id": event["event_id"], "kind": event["kind"], "at": event.get("at", event.get("set_at")),
             "status": payload.get("status") or payload.get("disposition"),
-            "reported_statement_preview": str(payload.get("query", ""))[:400],
+            "reported_statement_preview": str(event.get("content", payload.get("query", "")))[:400],
             "authority": "NONE", "verification": "REQUIRES_RECHECK"}
     return view

@@ -1,11 +1,11 @@
 # Palladion master development plan
 
-Version 8, 2026-10-19. Scope anchor: [blueprint v0.2](../vision/palladion-blueprint-v2.md),
+Version 10, 2026-10-19. Scope anchor: [blueprint v0.2](../vision/palladion-blueprint-v2.md),
 especially “Locked decisions,” “Build plan,” “System invariants,” and the full walkthrough.
-Current checkpoint: **P05 DONE** from published4245023; E-P05-001 records source/consumer/measurement/audit proof and failures.
+Current checkpoint: P05 published f0507e4; **P06 DONE** locally, all six atomic cards verified at E-P06-001/E-P06-002 with sole Luna Medium end audit/resolution,307disjoint checks, installed/live proof and cleanup. Paired results remain neutral for full exception correction; no research success is claimed. P07 needs GO; no P06 main push authorized.
 P04 includes actual Groq, four tools, packet/ledger, bounded investigation/finalization,
 deterministic gate and authenticated message/citation/timeline/trace consumers.
-P04 push completed; no new main push inferred. P06–P08/X01/UI remain outside scope.
+P05 push completed; no further main push inferred. P07–P08/X01/UI remain outside scope.
 ADR-0011 governs; ADR-0013 selects uv and real Groq generation. E-P04-001 records work.
 
 ## Document authority and ownership
@@ -295,8 +295,13 @@ Owner: critic/loop integration, paired evaluator and audit.
 | P06-T02 | Mandatory normative/operational review, failure policy, revision/finalization wiring | Critic outage/malformed responses cannot yield unsupported approval; no budget escape; G-GATE, G-CRITIC |
 | P06-T03 | Frozen draft+initial evidence paired critic on/off, fixed-context vs counter-search, blind-requirements variant | Attribute genuine corrections/false vetoes and changed evidence; report shared blind spots and extra cost; G-RESEARCH |
 
-Exit: supported exception correction demonstrated with failures preserved; false-veto and
-cost measured. Do not claim reliability from agreement or silently activate adaptive bypass.
+Exit: supported exception correction demonstrated with failures preserved; cost, controlled
+false objections and retention loss recorded. Semantic/causal false-veto rate remains
+unknown under owner-approved ADR0046 and P08 adjudication. Do not claim reliability
+from agreement or silently activate adaptive bypass.
+P06 exit verified at E-P06-001/002: independent real exact-ID exception recovery and
+default-budget generated-draft consumers pass after ADR0062; all six cards and phase-local
+gates/audit resolved. Frozen critic matrix retains neutral results and every failure.
 
 ## P07 — Optional source-linked graph (Slice 6)
 
@@ -1007,51 +1012,51 @@ order. Shared-file tasks are sequential. Each proof names the observation that c
 
 <a id="p06-t01-01"></a>
 
-- [ ] **P06-T01.01 — Validate independent-context critic review output**
-  - **Files:** `palladion/src/evidence_agent/agent/critic.py`, `palladion/tests/test_critic.py`.
+- [x] **P06-T01.01 — Validate independent-context critic review output**
+  - **Files:** `palladion/src/evidence_agent/agent/critic.py`, `palladion/src/evidence_agent/core/models.py`, `palladion/src/evidence_agent/retrieval/evidence.py`, `palladion/tests/test_contracts.py`, `palladion/tests/test_critic.py`.
   - **Depends:** P05-T03.02.
   - **Change:** Build question/state/requirements/evidence/draft context and validate structured findings against current claim/evidence objects for finalization reader.
   - **Proof:** UNIT; [G-CRITIC](TESTING_GATES.md#g-critic-task-coverage); grounded challenge stays advisory; invented source/claim and unsupported veto cannot fabricate authoritative conflict.
 
 <a id="p06-t01-02"></a>
 
-- [ ] **P06-T01.02 — Bound critic calls and authorized counter-search**
-  - **Files:** `palladion/src/evidence_agent/agent/critic.py`, `palladion/src/evidence_agent/agent/tools.py`, `palladion/tests/test_critic.py`, `palladion/tests/test_agent_budget.py`.
+- [x] **P06-T01.02 — Bound critic calls and authorized counter-search**
+  - **Files:** `palladion/src/evidence_agent/agent/critic.py`, `palladion/src/evidence_agent/agent/loop.py`, `palladion/src/evidence_agent/agent/tools.py`, `palladion/src/evidence_agent/agent/llm.py`, `palladion/scripts/serve.py`, `palladion/scripts/evaluate.py`, `palladion/scripts/validate_agent.py`, `palladion/tests/test_llm_transport.py`, `palladion/tests/test_critic.py`, `palladion/tests/test_agent_budget.py`.
   - **Depends:** P06-T01.01.
-  - **Change:** Normally review once; cap total critic calls at three/counter-searches at two under shared tool/time budgets; revalidate new ledger evidence.
+  - **Change:** Normally review once; cap total critic calls at three/counter-searches at two under shared tool/time budgets; revalidate new ledger evidence. Owner-approved opt-in pacing defaults0, shares the model boundary and remains inside the existing deadline; caller authority rechecks after any wait.
   - **Proof:** INTEGRATION; [G-CRITIC](TESTING_GATES.md#g-critic-task-coverage), [G-BUDGET](TESTING_GATES.md#g-budget-task-coverage); valid exception enters ledger, fourth review/third search/cross-scope target denied with counted failure.
 
 #### P06-T02 execution tasks
 
 <a id="p06-t02-01"></a>
 
-- [ ] **P06-T02.01 — Enforce mandatory review and critic outage policy**
-  - **Files:** `palladion/src/evidence_agent/agent/loop.py`, `palladion/src/evidence_agent/agent/gate.py`, `palladion/tests/test_critic.py`, `palladion/tests/test_gate.py`.
+- [x] **P06-T02.01 — Enforce mandatory review and critic outage policy**
+  - **Files:** `palladion/src/evidence_agent/agent/loop.py`, `palladion/src/evidence_agent/agent/gate.py`, `palladion/src/evidence_agent/api/schemas.py`, `palladion/tests/test_critic.py`, `palladion/tests/test_gate.py`.
   - **Depends:** P06-T01.02.
   - **Change:** Replace early unavailable boundary with real critic consumer; operational/normative drafts require review and deterministic gate after finalization.
   - **Proof:** INTEGRATION; [G-CRITIC](TESTING_GATES.md#g-critic-task-coverage), [G-GATE](TESTING_GATES.md#g-gate-task-coverage); PASS cannot bypass missing slot, timeout/malformed review yields safe partial/unavailable, no unchecked directive.
 
 <a id="p06-t02-02"></a>
 
-- [ ] **P06-T02.02 — Revalidate revisions after critic evidence changes**
-  - **Files:** `palladion/src/evidence_agent/agent/loop.py`, `palladion/src/evidence_agent/agent/draft.py`, `palladion/tests/test_end_to_end.py`.
+- [x] **P06-T02.02 — Revalidate revisions after critic evidence changes**
+  - **Files:** `palladion/src/evidence_agent/agent/loop.py`, `palladion/src/evidence_agent/agent/draft.py`, `palladion/scripts/validate_agent.py`, `palladion/src/evidence_agent/memory/store.py`, `palladion/src/evidence_agent/api/routes.py`, `palladion/tests/test_runtime_api.py`, `palladion/tests/test_end_to_end.py`.
   - **Depends:** P06-T02.01.
   - **Change:** Incorporate supported review in reserved final call, revalidate affected claims when counter-search changes evidence, persist review/outcome for timeline.
-  - **Proof:** SMOKE; [G-E2E](TESTING_GATES.md#g-e2e-task-coverage), [G-CRITIC](TESTING_GATES.md#g-critic-task-coverage); T10 correction visible through answer/citation API; T11 fabricated objection cannot erase valid evidence or escape budget.
+  - **Proof:** SMOKE; [G-E2E](TESTING_GATES.md#g-e2e-task-coverage), [G-CRITIC](TESTING_GATES.md#g-critic-task-coverage); explicit enabled approved-model Groq authenticated message → independent critic → scoped counter-search → reserved final → deterministic gate; T10 correction visible through answer/citation/timeline API readback; T11 fabricated objection cannot erase valid evidence or escape budget. Failures retained, no mock integration substitute.
 
 #### P06-T03 execution tasks
 
 <a id="p06-t03-01"></a>
 
-- [ ] **P06-T03.01 — Pair critic on/off using saved draft and ledger**
+- [x] **P06-T03.01 — Pair critic on/off using saved draft and ledger**
   - **Files:** `palladion/scripts/evaluate.py`, `palladion/src/evidence_agent/core/evaluation.py`, `palladion/data/demo/retrieval_pilot.json`, `palladion/tests/test_evaluation.py`, `palladion/tests/test_goldens.py`, `palladion/tests/test_critic.py`.
   - **Depends:** P06-T02.02.
-  - **Change:** Add frozen-input controls for same-context review, independent counter-search and optional blind-requirements variant; scorer isolates critique from changed retrieval.
-  - **Proof:** MEASUREMENT; [G-RESEARCH](TESTING_GATES.md#g-research-task-coverage); initial inputs hashed equal, true corrections/false vetoes/changed evidence/misses reported, withheld-appendix blind spot retained.
+  - **Change:** Create versioned controlled critic fixtures and freeze actual canonical draft+initial ledger bindings once per case, hash/read back equal inputs across off/fixed-context/counter-search/blind-requirements conditions; actual output scorer separates changed retrieval, mechanical corrections/false objections from unadjudicated semantic outcomes (owner-approved ADR0046).
+  - **Proof:** MEASUREMENT; [G-RESEARCH](TESTING_GATES.md#g-research-task-coverage); initial inputs hashed equal, mechanical corrections/false objections/retention loss/changed evidence/misses reported; semantic/causal veto unknown under ADR0046/0050; withheld-appendix blind spot retained.
 
 <a id="p06-t03-02"></a>
 
-- [ ] **P06-T03.02 — Report critic cost, failures and retention conclusion**
+- [x] **P06-T03.02 — Report critic cost, failures and retention conclusion**
   - **Files:** `palladion/scripts/evaluate.py`, `palladion/src/evidence_agent/core/evaluation.py`, `palladion/data/demo/retrieval_pilot.json`, `palladion/tests/test_evaluation.py`, `palladion/docs/development/EVIDENCE_LOG.md`, `palladion/docs/development/PROJECT_LEARNING.md`.
   - **Depends:** P06-T03.01.
   - **Change:** Report extra calls/searches/tokens/latency and correction tradeoffs beside full-runtime results; do not silently change mandatory normative-review default.

@@ -80,7 +80,7 @@ and full gate behavior belong to later phases. G-SOURCE/G-SECURITY stay PARTIAL.
 | G-BUDGET | P04/P06/P08; Exact call budget, Orchestration warning | Implemented P04 subset in `tests/test_agent_budget.py`; P06/P08 extensions remain: 0–5 main incl final; failed/timeout/invalid JSON consume reserved attempts; concurrent calls cannot oversubscribe. ≤3 critic, ≤2 critic searches initial limit, all tools/prefetch/searches/retries included under explicit accounting, final slot reserved, no sixth repair. Deadline/cancellation stops work and safely persists state. |
 | G-GATE | P04/P06; Claim-level assessment, Gate invariant | Implemented necessary-condition subset in `tests/test_gate.py`; semantic/critic coverage remains P06/P08: five dispositions; every released verified material claim references admissible current-request evidence/rule trace. Unknown/wrong-scope/revoked/irrelevant refs, unmet policy slots, critical contradictions and unsupported actions blocked. PASS/score/answer-kind/hypothesis label cannot bypass checks. Final downgrade renders deterministic safe output. Semantic support checked against gold; not implied by ID existence. |
 | G-MEMORY | P05; Continuity and Memory write protocol | Planned `tests/test_memory.py`: categories/scopes, append-only attempts incl failures, controlled promotion, user validity provenance/UNSPECIFIED, fresh-vs-historical observations, bounded regenerated packet, correction/close/revocation. Next API message reads actual persisted events then revalidates handles. Tampered grants and cross-user hot cache rejected. |
-| G-CRITIC | P06; Structured reviewer contract | Planned `tests/test_critic.py`: normally one review, structured known claim/evidence refs, bounded scoped counter-search, revalidate new sources, invented challenge ≠ established conflict, supported exception revises claims. Required-review outage safely unavailable/partial; false-veto measurement and same-blind-spot fixture. |
+| G-CRITIC | P06; Structured reviewer contract | Implemented guards in `tests/test_critic.py`; actual provider/full-runtime and audit closure tracked below: normally one review, structured known claim/evidence refs, bounded scoped counter-search, revalidate new sources, invented challenge ≠ established conflict, supported exception revises claims. Required-review outage safely unavailable/partial; false-veto measurement and same-blind-spot fixture. |
 | G-GRAPH | P07; Knowledge graph | Planned `tests/test_graph_identity.py`: real Neo4j constraints with concurrent duplicate verified identity; distinct IDs/similar names remain separate; provisional ID and reviewed merge trace. Allowed edge types, source-backed paths, hop/fan-out/node/time bounds, scope before exposure and after source resolution, graph-off/outage explicit. |
 | G-SECURITY | Every runtime phase; Trust boundaries, Threat model | Planned `tests/test_security.py`: tenant/case/role/target scope at every boundary, source/graph/memory/tool prompt injection and poisoned approval, denied citation and mid-session revocation, tampered packet/arguments. Inspect prompts/responses/cache/diagnostics/audit for leaked content/existence; trace endpoint role-gated/redacted; zero unapproved operational side effects in written tests. |
 | G-E2E | P04 onward, final P08; Full lifecycle, Walkthrough and ADR-0013 override | Implemented P04 subset in `tests/test_end_to_end.py`; later lifecycle obligations remain: actual Groq-backed authenticated message endpoint to domain tools/ledger/gate, evidence GET and next-session packet. Supported informational, partial, conflict, not-established and unavailable cases; normative support still requires P06 critic. No evidence/tools, malformed results, outage/deadline yield useful safe outcomes. Deliberate deterministic failure tests are separate evidence and cannot replace actual-provider HTTP proof. Record model/quota/attempts; health/ready and cleanup smoke. |
@@ -288,3 +288,40 @@ memory API revocation and third-turn incomplete→empty failure→executed resol
 controls pass. Actual pilot recorded0/3 strict completions; model reliability and H04
 remain unproven. G-RESEARCH/G-E2E retain later P06/P07/P08 obligations; phase completion
 is not a successful research conclusion.
+
+## P06 current proof contract
+
+P06 DONE at E-P06-001/E-P06-002: all six atomic cards, approved critic/status/pacing
+contracts, actual source/installed/API consumers and sole Luna Medium end-review
+resolution are verified. Source294PASS plus13 actual-Qdrant cases pass (12 in the sweep,
+one isolated after a setup connection-abort) =307 disjoint checks. Installed294 and one
+installed real-Qdrant/API case pass as overlapping artifact checks; all50 packaged files
+match the final wheel. Ruff, strict mypy59, dependency81+4controls, foundation CLI and
+final document gates pass. Original failed/skipped runs remain evidence, not PASS.
+
+Post-fix real20B exact recoveryPASS39.827s (2main/2critic/1search, explicit cap2) and
+serialized default-budget MODEL-draft pathPASS37.089s (4main/1critic/2tools) release the
+full exception with original citation/timeline readback and no verification errors.
+Gate qualifies a changed final proposal or unresolved CHALLENGE while preserving
+canonical facts; unchanged current PASS remains eligible for SUPPORTED. Model review
+is advisory, not semantic authority or payment permission.
+
+Frozen prompt-version20B matrix cb9e66:16conditions,16/16known-fact retention,
+0/4full-exception corrections, one critic validation failure,16main/17critic/4searches,
+66117known received tokens (one attempt lacks usage). It precedes ADR0062's gate-only
+qualification fix: no model prompt changed; raw outputs are not relabeled post-fix.
+No efficacy/H05, semantic accuracy, causal false-veto or completeness claim. Mandatory
+review remains enabled; draft-blind first pass sees canonical required slots (§10.1).
+P07 graph/P08 adjudicated research/X01 comparators remain deferred; no P07 GO or P06
+main push is inferred. No unanswered P06 owner ADR. Owned processes stopped, storage
+preserved and ports16333/16334/18080 verified free; foreign benchmark/editor work untouched.
+
+
+Source/installed tests cover typed review, scoped search, current-ledger binding, trusted
+finalization, canonical release, privacy and rejection of excess calls/searches, native
+critic verbs, invented IDs and revoked evidence. Opt-in pacing defaults0; caller
+authority and evidence are checked again after waiting.
+
+P06 arm clarification: blind_requirements is draft-blind first-pass review under
+blueprint §10.1; canonical policy-required slots remain supplied. It does not measure
+independent discovery of unsupplied requirements. End-review R2 is withdrawn.

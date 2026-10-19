@@ -113,5 +113,44 @@
         "packet_max_chars": 1500
       }
     ]
+  },
+  "critic_pilot": {
+    "schema_version": "2.0",
+    "status": "PILOT_MECHANICAL_NOT_HUMAN_ADJUDICATED",
+    "controlled_initial_drafts": true,
+    "cases": [
+      "exception",
+      "correct_fact",
+      "missing_inputs",
+      "withheld_appendix"
+    ],
+    "conditions": [
+      {
+        "arm": "off",
+        "review": false,
+        "search": false,
+        "blind": false
+      },
+      {
+        "arm": "fixed_context",
+        "review": true,
+        "search": false,
+        "blind": false
+      },
+      {
+        "arm": "counter_search",
+        "review": true,
+        "search": true,
+        "blind": false
+      },
+      {
+        "arm": "blind_requirements",
+        "review": true,
+        "search": true,
+        "blind": true
+      }
+    ],
+    "pacing_seconds": 60,
+    "question": "Report the current transaction state and correct any invalid source quote. Check whether an approved appendix adds a settlement-delay exception. Preserve supported observations; do not authorize a payment."
   }
 }

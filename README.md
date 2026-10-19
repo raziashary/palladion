@@ -13,7 +13,7 @@ hypotheses until tested against controlled baselines and held-out cases.
 **Current state:** P01–P03 are verified. P04's bounded runtime, four read tools, claim
 gate, messages/citations, scoped developer traces/readiness and cancellable search worker
 are verified through actual provider/HTTP/wheel checks and independent end-review
-resolution. P04 is published; P05 scoped memory/continuity is verified complete. No UI or research-hypothesis success is claimed. All passing and failed model
+resolution. P04/P05 are published; scoped memory/continuity is verified complete. P06 independent critic, bounded counter-search and final gate are verified with installed/live checks and end-review resolution. Its paired synthetic experiment remains neutral for full exception correction. No UI or research-hypothesis success is claimed. All passing and failed model
 checks and current gates are recorded in [progress](palladion/docs/development/PROGRESS.md).
 Retrieval uses real dense/BM25 Qdrant; the Docker-free WSL launcher is documented in the
 [application README](palladion/README.md). Generative commands explicitly enable Groq
@@ -34,6 +34,7 @@ Qwen3.8-27B, GPT-OSS120B or GPT-OSS20B; retrieval-only checks need no provider c
 - Authenticated messages, current citation readback, redacted timelines and scoped admin traces.
 - Explicit dependency readiness, persisted failures and cancellable local search workers.
 - Scoped memory, auditable owner/admin validity controls, FTS recall and bounded continuity packets.
+- Independent advisory critique, bounded counter-search, review-aware finalization and canonical qualification of changed/unresolved proposals.
 
 Search results are discovery candidates. Before returning text, Palladion rechecks stored
 identity, scope, approval, applicability, generation and original bytes. Search scores and
@@ -52,9 +53,9 @@ flowchart LR
 
 P04 implements the bounded agent loop, four read-tool handlers, generated drafts and
 necessary-condition release gate. P05 adds scoped memory, owner-controlled validity,
-FTS recall and revalidated continuity/cache. Later phases add independent-context
-criticism, optional graph traversal and scientific answer-system
-evaluation. Enterprise identity integration remains outside this synthetic prototype.
+FTS recall and revalidated continuity/cache. P06 implements independent-context
+criticism, scoped counter-search and review-aware finalization/gating. Optional graph
+traversal and confirmatory scientific answer-system evaluation remain later phases. Enterprise identity integration remains outside this synthetic prototype.
 
 ## Run and explore
 
@@ -113,4 +114,4 @@ The current pilot has eight synthetic queries over a tiny corpus and lacks indep
 adjudicated labels. English/Indonesian query coverage does not establish general multilingual
 quality. Retrieval metrics do not establish answer correctness, production readiness or
 superiority. External comparator implementations and full answer-system experiments remain
-future work. P03 domain verification is recorded in the evidence log; Phase 4 is complete with recorded limits; Phase 5 is complete; Phase 6 awaits GO.
+future work. P03 domain verification is recorded in the evidence log; Phase 4 is complete with recorded limits; Phase 5 is complete; Phase 6 is authorized and in progress.

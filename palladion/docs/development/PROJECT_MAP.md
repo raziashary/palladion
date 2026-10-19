@@ -1,6 +1,6 @@
 # Project map
 
-Updated 2026-10-19; current P04 proof is E-P04-001. **Actual documentation is distinct from planned runtime components.**
+Updated 2026-10-19; current P06 proof is E-P06-001/E-P06-002. **Actual documentation is distinct from planned runtime components.**
 Source: blueprint “Concrete prototype repository,” “Directory responsibilities,” and “System
 architecture.” No diagram node below implies shipped code.
 
@@ -52,7 +52,7 @@ ACL/approval/time/generation and supports bounded learned rerank/context expansi
 `api/` and main factory expose authenticated source/search/citations; telemetry has an
 internal correlated reader. Seed/reconcile/serve/evaluate scripts use those actual owners.
 WSL standalone launcher verifies Qdrant release hashes and preserves Linux-owned storage.
-Compose is optional. P03 now implements the policy/live domain path below; P04 message/LLM/gate runtime is implemented and verified pending end review; critic/graph remain future.
+Compose is optional. P03 now implements the policy/live domain path below; P04 runtime and P05 continuity are verified; P06 critic is verified at E-P06-002; graph remains future.
 
 ## Foundation now implemented (P01)
 
@@ -65,7 +65,7 @@ CLI state is temporary and cleaned; no API/search/provider process is started.
 
 ## Runtime ownership and later planned components
 
-Paths are relative to `palladion/`; P01/P02 and the P03 domain path are implemented; P04 agent/gate/minimal memory are implemented with phase proof pending end review; full memory/critic/graph remain planned. ADR-0001 maps the
+Paths are relative to `palladion/`; P01/P02 and the P03 domain path are implemented; P04 runtime and P05 scoped memory are verified; P06 critic is verified at E-P06-002; graph remains planned. ADR-0001 maps the
 blueprint's illustrative `evidence-agent/` root here; do not create a duplicate project.
 
 | Area and phase ownership | Owns | Producers / consumers | Build phase |
@@ -93,7 +93,7 @@ Current owner choices: uv environment remains inside the application. Explicit G
 commands select Qwen3.8-27B, GPT-OSS120B or GPT-OSS20B (ADR-0036); no hidden fallback.
 Transport→loop→Tools.execute handles native calls with server identity and persisted
 results. Root .env is read only by enabled commands. P01/P02/P03 and current P04
-engineering proofs exist; P06 independent critic and P08 scientific evaluation remain.
+engineering proofs exist; P06 independent critic is verified; P08 scientific evaluation remains.
 The root also contains separately owned palladion-benchmark work; it is outside P04.
 
 ## Planned request and evidence flow
@@ -190,3 +190,53 @@ character counts. evaluate.py --memory → real model/API outputs → score_cont
 PILOT report with all failed conditions. P06 critic/P07 graph/P08 confirmation remain.
 
 E-P05-001 verifies the above consumer paths. Recall scope/active metadata filters before its bounded candidate window; full source checks remain afterward. Non-exhaustive coverage reaches the model. Provider pilot strictcompletion0/3 is retained; no semantic or H04 improvement claim.
+
+## P06 implemented path (verified at E-P06-001/E-P06-002)
+
+Budget → independent critic(question, canonical requirements, scoped identifier coverage,
+evidence, initial draft) → at most2backend-scoped knowledge searches → later real review
+of changed ledger → trusted reserved main finalization → canonical re-read/digest-bound
+necessary-condition gate → safe message/citation/timeline. Pacing is opt-in/shared and
+cancellable; caller authorization/freshness rechecks after waiting. Protected initial/
+final proposals and reviews are excluded from all public event/recall/trace readers.
+Critic verdict cannot create authority/conflict or waive human adequacy for operations.
+
+Versioned evaluator saves question/draft/initial ledger once, readbacks equal hashes
+across four conditions, persists actual outputs/attempts/usage and scores mechanical
+controls. V2 launch-version16conditions retain negative/unknown outcomes. Current-source
+real20B exact-clause recovery verifies a new appendix, subsequent review, full exception
+quote and canonical API readback; it is not semantic ANN or general reliability proof.
+Default-budget real generated-draft proof and lower-cap recovery are distinct. Graph,
+adaptive trigger, held-out semantic accuracy and independent annotators remain P07/P08.
+
+## Final-source P06 evidence boundary
+
+P06 DONE at E-P06-001/E-P06-002: all six atomic cards, approved critic/status/pacing
+contracts, actual source/installed/API consumers and sole Luna Medium end-review
+resolution are verified. Source294PASS plus13 actual-Qdrant cases pass (12 in the sweep,
+one isolated after a setup connection-abort) =307 disjoint checks. Installed294 and one
+installed real-Qdrant/API case pass as overlapping artifact checks; all50 packaged files
+match the final wheel. Ruff, strict mypy59, dependency81+4controls, foundation CLI and
+final document gates pass. Original failed/skipped runs remain evidence, not PASS.
+
+Post-fix real20B exact recoveryPASS39.827s (2main/2critic/1search, explicit cap2) and
+serialized default-budget MODEL-draft pathPASS37.089s (4main/1critic/2tools) release the
+full exception with original citation/timeline readback and no verification errors.
+Gate qualifies a changed final proposal or unresolved CHALLENGE while preserving
+canonical facts; unchanged current PASS remains eligible for SUPPORTED. Model review
+is advisory, not semantic authority or payment permission.
+
+Frozen prompt-version20B matrix cb9e66:16conditions,16/16known-fact retention,
+0/4full-exception corrections, one critic validation failure,16main/17critic/4searches,
+66117known received tokens (one attempt lacks usage). It precedes ADR0062's gate-only
+qualification fix: no model prompt changed; raw outputs are not relabeled post-fix.
+No efficacy/H05, semantic accuracy, causal false-veto or completeness claim. Mandatory
+review remains enabled; draft-blind first pass sees canonical required slots (§10.1).
+P07 graph/P08 adjudicated research/X01 comparators remain deferred; no P07 GO or P06
+main push is inferred. No unanswered P06 owner ADR. Owned processes stopped, storage
+preserved and ports16333/16334/18080 verified free; foreign benchmark/editor work untouched.
+
+
+P06 arm clarification: blind_requirements is draft-blind first-pass review under
+blueprint §10.1; canonical policy-required slots remain supplied. It does not measure
+independent discovery of unsupplied requirements. End-review R2 is withdrawn.

@@ -17,10 +17,10 @@ repository from the blueprint's illustrative tree.
 
 ## Scope and integrity
 
-- Current checkpoint: P05 memory and continuity verified complete (E-P05-001) from published
-  P04 commit4245023 (E-P04-001). Scoped memory, FTS recall, packet/cache, follow-up
-  and honest long-session measurements are authorized; P06+, UI and enterprise writes
-  remain excluded. Explicit enabled commands may use the approved Groq models.
+- Current mandate: owner GO for P06 end-to-end adversarial critic, bounded counter-search,
+  mandatory review/final gate, authenticated consumers and frozen paired measurements.
+  P05 is published at f0507e4 (E-P05-001), P04 at4245023. P07+, UI and enterprise
+  writes remain excluded. Explicit enabled commands may use the approved Groq models.
   `baseline/` is reserved for
   later comparator implementations; do not populate it as part of this setup.
 - Preserve the [vision](palladion/docs/vision/palladion-blueprint-v2.md). Do not silently
@@ -133,8 +133,8 @@ For P04, exercise real Groq messages, four domain tools, final gate and citation
 multi-phase source/security gates remain PARTIAL until later runtime/graph obligations pass. A checkpoint never expands the user's current mandate.
 The mandatory pre-phase adversary precedes this sequence. The P00 full-suite review is
 historical. Every future pre-adversary and post-auditor still reads the complete blueprint
-and applies the canonical review contract. P04 is published and P05 is verified complete. P06 requires its own scope authorization.
-P04 push approval was fulfilled at4245023; P05 GO does not authorize another main push.
+and applies the canonical review contract. P04/P05 are published; P06 is verified complete locally (E-P06-001/002). P07 requires its own scope authorization.
+P05 push approval was fulfilled at f0507e4; P06 GO does not authorize another main push.
 
 ## Close every task
 

@@ -1,10 +1,11 @@
 # Palladion application
 
-P01 foundations and P02 ingestion/retrieval have real consumers: strict contracts,
-transactional SQLite, immutable originals, dense/BM25 Qdrant search and authenticated
-source/search/citation endpoints. P02 phase verification and audit resolution passed. P04 now has a message API,
-main loop and gate under verification; selected real Groq outputs are recorded, not phase completion. P03 now adds approved temporal policy
-execution and read-only mock operational observations; phase-local validation and single work review are complete (E-P03-001).
+P01–P05 have completed phase-local implementation and independent review: canonical
+sources and contracts, dense/BM25 retrieval, temporal policy execution, bounded Groq
+messages and scoped continuity. P06 adds independent advisory review, bounded
+counter-search and reserved finalization; its phase-local implementation, validation and independent audit are complete. Actual provider failures and mechanical pilot limits remain visible in the
+development evidence; these checkpoints do not establish production readiness or
+semantic accuracy.
 
 Phase ownership and evidence are in the [development plan](docs/development/MASTER_DEV_PLAN.md)
 and [current progress](docs/development/PROGRESS.md).
@@ -212,7 +213,7 @@ search cancellation are verified. Single end review and finding resolution are c
 critic remains a later phase. Five dispositions and document citation paths have actual
 provider proofs, with every model/quota/schema failure retained (E-P04-001).
 Two final no-evidence refreshes failed strict assertions while safely abstaining;
-these engineering path checks do not establish model reliability. P05 is authorized; P06 requires its own GO.
+these engineering path checks do not establish model reliability. P05 is published; P06 is verified complete locally.
 Use `python scripts/seed.py --policies` to explicitly seed trusted synthetic case/policy
 fixtures. After setup, `python scripts/serve.py --enable-live-llm` explicitly enables
 root .env credential loading and real model calls; omitting the flag disables messages.
@@ -265,6 +266,37 @@ Explicit real-provider pilot: `python scripts/evaluate.py --run --memory
 its own UUID collection, and records all B4/B5/compressed outputs, usage and failures.
 The current pilot retained the critical gap in B5 packets, but strict completion was
 0/3 due model/tool errors. This establishes measurements, not a memory-improvement or
-reliability claim. See E-P05-001. Full critic and scientific evaluation remain later.
+reliability claim. See E-P05-001. Critic integration is verified in P06; confirmatory scientific evaluation remains P08.
 
-Final P05 evidence: E-P05-001,246source+12actual-Qdrant checks, updated wheel and single audit resolution. Recall applies current scope before its bounded window and reports non-exhaustive coverage. P06 requires owner GO; pilot0/3 strict completions remain disclosed.
+Final P05 evidence: E-P05-001,246source+12actual-Qdrant checks, updated wheel and single audit resolution. Recall applies current scope before its bounded window and reports non-exhaustive coverage. P06 is verified complete locally; pilot0/3 strict completions remain disclosed.
+
+## Independent evidence review (P06)
+
+The runtime drafts with four read tools, sends a fresh question/evidence/draft context
+to an advisory critic, executes only backend-scoped knowledge counter-searches, and
+uses one reserved main call to finalize. The deterministic gate re-reads canonical
+sources before release. Critic PASS never grants authority or clears missing policy
+inputs; consequential guidance remains qualified under the synthetic pilot boundary.
+
+Limits are five main calls including finalization, three critic calls, two critic
+searches within eight total tools, and the configured request deadline. Message and
+redacted timeline readers expose review status and consumed counts, never raw reviews.
+The isolated critic-off experiment does not disable mandatory review in the runtime.
+
+Run the controlled measurement explicitly, using an owner-approved model:
+
+```powershell
+uv run --locked --no-env-file python scripts/evaluate.py --run --critic --enable-live-llm --model openai/gpt-oss-20b
+```
+
+Every condition and failure is retained. Equal saved initial hashes support paired
+comparison; synthetic draft errors and exact quote checks are mechanical controls,
+not human-adjudicated semantic accuracy. See E-P06-001 and ADR0046/0049/0050.
+
+P06 verification:307disjoint source/integration checks, installed-wheel checks, real Groq
+normal and exact-recovery paths, and sole independent audit/resolution (E-P06-002).
+A changed final proposal or unresolved advisory challenge qualifies the answer while
+canonical facts remain visible. The16-condition frozen pilot retained all known facts,
+but full exception correction was0/4 and one critic validation failed; this is not a
+reliability or hypothesis-success claim. The draft-blind experimental first pass still
+receives canonical policy-required slots. P07 graph and P08 adjudication remain planned.

@@ -1004,6 +1004,225 @@ Current P04 closeout (2026-10-19): ADR-0031/0032/0034/0036/0037/0038 implementat
 **My answer (editable):** Coordinator fixes confirmed packet producer/reader bug under existing P05 authority; no new source of policy authority.
 **Verification:** E-P05-001: two controls first fail for erased settlement_state, then17memory/246nonserver/65installed overlapping tests pass; exact rebuilt artifact and same-reviewer code/documentation resolution verified. No new model success inferred.
 
+## ADR-0045 — P06 structured review and public status consumers
+
+**Status:** ACCEPTED; owner response2026-10-19; implementation not yet verified.
+**Authority:** P06 GO; pre-phase adversary findings3/4; Universal Rule4 for shipped contracts.
+**Question:** May the existing critic/message contracts gain structured optional review fields and real review statuses?
+**Why:** CriticReview currently holds unbound string maps; MessageResponse only accepts UNAVAILABLE_UNTIL_P06. The declared timeline consumer drops review state.
+**Options:** Preserve the unavailable boundary (cannot complete P06), or add compatible optional critic fields and additional response status values, with safe persisted/readback metadata.
+**Recommendation:** Preserve legacy CriticReview fields/defaults; add typed bounded claim findings (claim, reason, evidence refs, missing slots), verdict/review identity, contradictions and purpose-bearing scoped counter-search proposals. Handler validates all IDs against the actual draft/current ledger. Extend review_status with PASS/CHALLENGE/UNAVAILABLE while retaining UNAVAILABLE_UNTIL_P06 for legacy readers. Expose only safe status/call counts in case timeline; raw prompts/reasons/rejected contents stay protected. Use existing current case/admin rules, no new authority or fifth tool. No schema migration/dependency.
+**What affects what:** core/models.py, api/schemas.py, agent/critic.py/loop.py/gate.py, memory/store.py safe release projection, api/routes.py timeline and contract/gate/API/critic compatibility tests. Critic failures count, counter-search uses existing scoped worker/shared budgets, all final evidence revalidates.
+**My answer (editable):** Approve compatible review/status extensions (Recommended)
+**Amendment history:** Originally PENDING; owner approved via the corresponding async decision card on2026-10-19.
+**Verification:** Owner approved; pending  implementation, legacy round trips, strict ID/budget/privacy negatives, actual Groq message/timeline/citation consumers and end audit.
+
+## ADR-0046 — P06 pilot labels and consequential support boundary
+
+**Status:** ACCEPTED; owner response2026-10-19; implementation not yet verified.
+**Authority:** P06 GO, pre-phase adversary finding1, accepted ADR0020/0033 and blueprint§10/14.
+**Question:** Which outcomes can P06 measure without invented independent human adjudication?
+**Why:** No human annotators or escalation assignee are named. A source ID or critic agreement cannot establish semantic sufficiency or general accuracy.
+**Options:** Obtain independent human labels/assignment before semantic scores, or run explicitly pilot-only mechanical fixtures now and keep semantic/operational adequacy qualified until those labels exist.
+**Recommendation:** Complete all P06 runtime, search, finalization and paired-artifact work. Freeze controlled synthetic drafts and canonical initial ledgers once per case; compare critic off, fixed-context, authorized counter-search and blind-requirements conditions, then run actual end-to-end Groq messages separately. Measure exact missing schema fields, typed observation associations and exact source/exception quote corrections/false objections; retain unsupported objections, changed evidence, failures, withheld-appendix uncertainty and usage costs. Unadjudicated semantic correction/false-veto fields remain unknown, not zero or success. A real exception correction must be visible through the authenticated answer/citation reader. Critic PASS never substitutes for human adequacy: only controlled attributions/typed results may be released, never a payment instruction; consequential free prose stays qualified with the unassigned escalation limitation. Full semantic/hypothesis claims retain P08 independent-label prerequisites. Mandatory normative review remains enabled by default; no adaptive bypass.
+**What affects what:** P06-T03 fixture manifest/evaluator/scorer, P06-T02 gate safe templates, RESEARCH_PROTOCOL/TESTING_GATES and actual evidence. This records a pilot limitation rather than a model-quality result or waived runtime requirement.
+**My answer (editable):** Approve pilot boundary and full P06 implementation (Recommended)
+**Amendment history:** Originally PENDING; owner approved via the corresponding async decision card on2026-10-19.
+**Verification:** Owner approved; pending  frozen input hash equality and negative controls, actual provider correction/search/message/citation readback, measured all-condition artifacts and end audit.
+
+## ADR-0047 — Extend the existing budget owner for critic reservations
+
+**Status:** ACCEPTED coordinator detail within P06 bounds;2026-10-19.
+**Authority:** Blueprint§11.4, accepted ADR0005, P06-T01.02; no new dependency/authority.
+**Question:** Which owner counts critic calls and counter-searches against shared resources?
+**Why:** Budget in agent/loop.py already owns main/tool reservations; reporting critic_used=0 is a placeholder.
+**Options:** Duplicate counters in a critic (rejected), or add atomic critic/search reservations to Budget.
+**Recommendation:** Keep one existing Budget owner. Add critic and search maxima/used counts, reserve before each actual dispatch including failed calls, and reserve a shared tool slot atomically with each authorized critic search. Disallowed fourth review/third search or exhausted tool budget never reaches a model/search; its rejection is logged by the runtime caller. Main final slot is unaffected. Settings remains the validated hard-cap configuration.
+**What affects what:** agent/loop.py Budget, P06 critic caller and test_agent_budget.py cap/concurrency/failure controls. No shipped public response field is changed before ADR0045 approval.
+**My answer (editable):** Coordinator implements the already-required shared accounting in its existing owner.
+**Verification:** Test-first reservations and downstream critic dispatch checks; no runtime critic completion claim yet.
+
+## ADR-0048 — Bind advisory review to current canonical evidence
+
+**Status:** ACCEPTED coordinator implementation detail under ADR0045/0046;2026-10-19.
+**Authority:** P06-T01/T02, blueprint§10/11, owner-approved structured review and pilot boundary.
+**Question:** What does a completed critic assessment permit the final gate to consume?
+**Why:** Known refs and a PASS are insufficient semantic proof; finalization may revise a draft and source state may change.
+**Options:** Trust verdict/free prose (rejected), or current-evidence-bound advisory review plus unchanged deterministic ownership.
+**Recommendation:** Each independent review records draft and canonical ledger digests. The gate re-reads all evidence and only recognizes a completed structured review if the ledger still matches. Typed observations, exact attributions, canonical missing fields and executed policy trace own support; unsupported critic objections never manufacture conflict or erase a valid typed fact. New counter-search evidence requires a subsequent real review before reserved finalization. Final claims always revalidate; no extra main repair. A literal determined synthetic policy result may render through a controlled decision-support template after current review, never a payment authorization. OPERATIONAL_GUIDANCE remains qualified for unassigned human adequacy; no human signature invented.
+**What affects what:** critic.py/loop.py/gate.py, canonical model fields, safe API/timeline metadata and guard tests. Raw reviews stay protected diagnostics, never timeline/evidence prompts. Existing Groq transport uses fresh critic messages and no native tools; only backend-scoped knowledge searches run under shared counters. No new provider/dependency/schema migration.
+**My answer (editable):** Coordinator implements the approved authority boundaries in existing owners.
+**Verification:** Independent-context, invented-ref, grounded-but-false objection, canonical gap, cap/cancellation/revocation and artifact tests; actual Groq/API/citation correction still required.
+
+## ADR-0049 — Correct the frozen critic treatment before a fresh run
+
+**Status:** ACCEPTED coordinator fixture/prompt correction within ADR0046;2026-10-19.
+**Authority:** Actual first P06 pilot source/response inspection; P06-T03 input integrity.
+**Question:** Was the supposedly missing appendix already present through another evidence route?
+**Why:** First exception fixture added an incomplete PolicyDecision whose canonical clause previews already contained the exception. No new search was necessary. It also elicited inappropriate knowledge searches for live settlement status. Full-runtime smoke then hit400/429 (8000TPM); all original rows remain failures/observations, not a critic win.
+**Options:** Claim a search win anyway (rejected), or correct the producing fixture and run a separately identified revision with all prior results retained.
+**Recommendation:** Version2 separates exception discovery (initial SOP/live only, no policy trace carrying appendix), valid-fact control, genuine missing-input policy control, and genuinely withheld appendix. Keep all four paired review modes. Ask the reviewer to search for a requested document absent from its inventory; missing live facts remain missing and are not knowledge-search targets. Typed missing-slot fields must come from supplied policy requirements; semantic inquiries remain reasons, never new authority. Use60s inter-condition pacing (within the allowed wait cap), preserve60s per-request deadline and original freshness limits. Full-runtime source/appendix test is separate from frozen inputs and earlier P04/P05 domain checks; no hidden native-tool/model fallback. Capture scoped Git/source/prompt/fixture/index manifests before calls. Preserve first run and exact loaded source snapshot.
+**What affects what:** critic prompt/repair hint, evaluate.py setup and manifest, critic_pilot fixture version and falsifying tests. Six P06 tasks and positive actual correction/citation requirement unchanged; no benchmark/graph/default-budget/dependency expansion.
+**My answer (editable):** Coordinator fixes a confirmed input-integrity error before relying on the measurement; no research-success inference.
+**Verification:** Original report/source sidecar retained. Fresh v2 completed16conditions with equal frozen hashes and source snapshots; raw/scorer2 hashes and failures at E-P06-001. Actual full-message proof remains open.
+
+## ADR-0050 — Separate observed retention loss from a causal critic veto
+
+**Status:** ACCEPTED coordinator measurement correction;2026-10-19.
+**Authority:** P06-T03.01/02, ADR0046 unknown semantic judgments and claims discipline.
+**Question:** Does loss of a known fact relative to the off arm prove a critic veto?
+**Why:** The first scorer named simple output omission mechanical_false_veto_vs_off. A finalizer omission or provider failure can produce that observation without any critic veto. That causal label was unsupported and is retracted; original reports remain byte-for-byte unchanged.
+**Options:** Retain a misleading causal label (rejected), or distinguish observable retention loss, structured false objections and unknown causal veto.
+**Recommendation:** Scorer version2 reports known_fact_retention_loss_vs_off, measured false objections against controlled valid claims, and null mechanical_false_veto_vs_off pending actual veto attribution. Preserve semantic unknowns. Derive a separately identified summary from saved raw artifacts after the active v2 experiment finishes; never overwrite its launch snapshot, source hashes or original scores. Strict full-exception-quote matching remains strict: a valid shorter excerpt is not relabeled a full-quote success.
+**What affects what:** core/evaluation.py, its negative controls, evaluate.py future manifests and derived report; RESEARCH_PROTOCOL/EVIDENCE_LOG. Current active run p06-3202bf9ad06143478590fdedd298fdfb uses its frozen original scorer snapshot, not this subsequent version.
+**My answer (editable):** Coordinator corrects an evidenced measurement error; no new hypothesis or acceptance threshold.
+**Verification:** Seven scorer controls pass, including omission with/without provider failure; raw-preserving scorer2 derivation verifies all launch hashes, frozen envelopes and original bytes (E-P06-001). Original v1/v2 artifacts unchanged.
+
+## ADR-0051 — Separate a targeted full-message engineering probe from paired experiments
+
+**Status:** ACCEPTED coordinator verification detail;2026-10-19.
+**Authority:** P06-T02.02 actual message proof and owner-approved explicit GPT-OSS20B alternative (ADR0036).
+**Question:** How will the remaining full-entry-point correction be checked after the v2 pilot's full-message HTTP400?
+**Why:** Frozen pairs showed actual appendix discovery and final exact attributed excerpts, but the separate full message did not counter-search and recorded a provider failure. It cannot close the real runtime gate.
+**Options:** Hide the failed message (rejected), or retain it and run a separately named, bounded explicit engineering scenario.
+**Recommendation:** Add critic scenario to existing validate_agent.py: one SOP search/draft requested, overall question explicitly requests the missing approved appendix. Use explicit openai/gpt-oss-20b after the active120B experiment ends. Require actual critic counter-search and subsequent review, appendix-backed final citation, authenticated citation GET and matching persisted timeline counts, with no verification failures. Existing request deadline, call limits, gate and transport remain unchanged. Each invocation is one separately retained engineering receipt, never a selective replacement for paired measurements or a reliability estimate.
+**What affects what:** scripts/validate_agent.py, P06-T02.02 ownership/evidence and final smoke. No runtime fallback, new dependency or gate relaxation. Earlier provider failures and strict full-quote misses remain visible.
+**My answer (editable):** Coordinator implements required entry-point proof through the existing explicit smoke command.
+**Verification:** Actual20B invocation exited1 with two critic schema failures and final429; original/extracted receipts retained at E-P06-001. Separate120B r3 also failed400/429. Positive full-message proof remains open; no successful condition substituted.
+
+## ADR-0052 — Give the bounded critic repair a safe actionable cause
+
+**Status:** ACCEPTED in-scope owning-layer correction;2026-10-19.
+**Authority:** Blueprint11.5 one bounded corrected schema repair; P06-T01/T02 verification.
+**Question:** Can a boolean repair flag correct repeated grounding/schema errors?
+**Why:** Explicit20B full-message probe failed both critic validations and then hit8000TPM (used6445/requested1961). Raw rejected output was intentionally absent; the caller supplied only a boolean repair flag, so no specific validation correction reached the next review. No success is inferred from this failure.
+**Options:** Retry blindly (rejected), or pass a bounded allowlisted validator cause to the one existing repair and retain it only in protected diagnostics.
+**Recommendation:** Reuse existing validation owner and attempt cap. Controlled known grounding errors become repair hints; Pydantic schema failures use a fixed schema hint. Never reflect arbitrary exception/provider/model prose into instructions or public readers. Add a falsifying unknown-required-slot repair control. Preserve original v1/v2 artifacts. The next separately retained engineering smoke asks for a single SOP candidate (existing tool limit1) to avoid unnecessary context; record explicit model/query/source versions and do not change runtime defaults or budgets.
+**What affects what:** critic.py context/error diagnostics, test_critic.py and validate_agent.py engineering question. No new tools, retries, authority, dependency or shipped contract.
+**My answer (editable):** Coordinator fixes unambiguous missing repair context and improves safe observability at the owning validator.
+**Verification:** Focused39PASS8.32s, source274PASS42.97s, rebuilt exact50file artifact and installed35focusedPASS12.69s. Separate120B r3 failed400/429 without critic validation errors; it does not prove positive full-message correction. Original20B failure retained.
+
+## ADR-0053 — Optional shared model-call pacing under the existing deadline
+
+**Status:** ACCEPTED; owner async reply2026-10-19: Approve opt-in call pacing (Recommended). Implementation/proof remains required.
+**Authority:** Actual P06 free-quota failures; Rule4 transport/configuration contract escalation.
+**Question:** May explicitly enabled live checks space main/critic calls, initially10seconds, while preserving the existing60second deadline and attempt caps?
+**Why:** Full-message20B and120B probes consumed the shared8000TPM before reserved finalization. The latter also made extra investigator calls and provider400; pacing cannot itself prove that separate model-output failure is fixed. Immediate bursts do not establish required positive full-runtime proof.
+**Options:** Opt-in shared transport pacing; preserve unchanged transport; another owner-selected approach. Higher quota or a hidden model fallback is not assumed.
+**Recommendation:** Add explicit configurable pacing, default0, shared across main and critic on the same model boundary. Waiting is cancellable and included in the existing request deadline; no failed HTTP request retry, call-limit increase or automatic model switch. Record actual timing/configuration. Start at10seconds as a separately identified engineering condition, retaining every prior failure and making no reliability inference.
+**What affects what:** If approved, agent/llm.py explicit transport configuration, existing enabled serve/validate/evaluate consumers as scoped, cancellation/concurrency tests and actual live proof. P06 full-message gate remains open; no phase closeout or main push implied.
+**My answer (editable):** Approve opt-in call pacing (Recommended)
+**Amendment history:** Previously PENDING; owner approved the async question on2026-10-19.
+**Verification:** Approved, not yet verified. Transport spacing is shared by main/critic; an existing caller-owned before-send validation callback will recheck authorization/evidence after any wait. No abandoned future reservations, retry, default pacing or deadline widening. End audit waits for complete checks.
+
+## ADR-0054 — Prove critic discovery from canonical pre-review inventory
+
+**Status:** ACCEPTED coordinator proof/diagnostic correction;2026-10-19.
+**Authority:** P06-T02.02, ADR0049 confound prevention and existing protected diagnostics.
+**Question:** Does a final appendix citation plus a critic search prove that the critic found previously absent evidence?
+**Why:** The investigator may already have retrieved another chunk of that appendix. The existing smoke predicate did not distinguish this route. Per-attempt provider codes were also lost when a later quota error replaced the transport's last failure, obstructing diagnosis of400.
+**Options:** Infer discovery from counters (rejected), or retain protected canonical inventory bindings and test the actual transition.
+**Recommendation:** Record each critic input's evidence IDs/kinds/revision IDs and digest in existing DIAGNOSTIC events. The smoke requires no appendix revision in the first critic inventory and a later reviewed appendix revision, plus final canonical citation readback. Never expose these diagnostics in timeline/recall/evidence views. Preserve safe provider error code per counted model attempt, without provider prose. Add negative controls for pre-supplied appendix, no subsequent review and repair-prose privacy.
+**What affects what:** critic.py/loop.py internal events, validate_agent.py proof reader and focused tests; the existing main prompt now explicitly describes initial draft → independent exception review → finalization, without restricting any of the four tools; no authority, public API, dependency or fifth tool. Pacing approval ADR0053 is independent; old receipts remain unchanged.
+**My answer (editable):** Coordinator closes a confirmed measurement gap and keeps failure diagnosis at the existing owner.
+**Verification:** Pending positive/negative controls and actual paced entry-point proof.
+
+## ADR-0055 — Supplement default-budget proof with bounded main-exhaustion recovery
+
+**Status:** ACCEPTED coordinator test configuration within existing Settings;2026-10-19.
+**Authority:** P06-T02.02 actual counter-search proof; existing validated lower main-call caps and safe draft exhaustion path.
+**Question:** How can the remaining critic-discovery path be exercised when the investigator already fetched the requested appendix?
+**Why:** Paced20B completes the default-budget native investigator → generated draft → independent review → reserved final → gate/API path without verification failures, but correctly fails the discovery predicate because the appendix was already present. This is a measurement condition mismatch, not evidence that the critic found it. The complete three-model grid is retained.
+**Options:** Call a main discovery a critic win (rejected), or supplement the default-budget run with an explicitly lower existing main-call cap and report that narrower condition honestly.
+**Recommendation:** Expose existing Settings.main_max_calls through the synthetic smoke CLI, default5 unchanged. A separate recovery scenario uses cap2: one real native investigator call, existing safe-draft exhaustion, independent real critic discovery/review and the reserved real finalization call, inside the same60s and shared tool limits. No fake model, injected tool output or new runtime path. This recovery probe supplements, rather than replaces, the default-budget real generated-draft proof and frozen paired measurements. Record source/settings/model, initial inventory, new appendix evidence, final exact quote, current citation GET and timeline counts. No natural main-model error rate or research superiority claim.
+**What affects what:** scripts/validate_agent.py explicit CLI settings/report, P06-T02.02 evidence; runtime, shipped defaults, four tools and authority remain unchanged. Full-scope end reviewer must assess both default and recovery evidence before phase closure.
+**My answer (editable):** Coordinator selects an existing supported test configuration; no new architectural decision or owner quota change.
+**Verification:** Default20B52.9s noverificationfailures; three-model grid retained. Separate actual recovery proof pending; no completion inferred from intent.
+
+## ADR-0056 — Make the critic's admissible slot set explicit
+
+**Status:** ACCEPTED coordinator prompt/schema alignment;2026-10-19.
+**Authority:** Existing typed-slot validation, ADR0049/0052 and actual lower-cap120B errors.
+**Question:** Why did the reviewer repeat Unknown critic requirement after a repair hint?
+**Why:** The lower-cap120B probe proposed schema slots even though its supplied requirements list was empty. Both attempts were rejected, and finalization later returned400/json_validate_failed. The valid-JSON structured allowlist needs to be explicit; no source/slot authority is being broadened.
+**Options:** Relax validation (rejected), or state the already-enforced admissible names directly in the model context.
+**Recommendation:** Supply allowed_missing_slots from the same canonical requirement producer. Explicitly require all missing_slots arrays empty when that list is empty, and claim_reviews empty for an empty initial draft. Missing-document counter-search remains available. Existing unsupported-ID/slot rejection, one repair/caps and deterministic authority stay unchanged. Record the failed120B recovery and a separately identified20B check; no hidden retry or success claim.
+**What affects what:** critic prompt/context, existing guard assertions and subsequent actual proof. Earlier frozen measurements retain their exact launch-version prompts; they are not measurements of this subsequent revision.
+**My answer (editable):** Coordinator clarifies existing strict constraints without weakening acceptance or claiming semantic accuracy.
+**Verification:** Pending guard/current-profile live checks. Original lower-cap120B failure retained in runtime/evaluation/p06-message-120b-recovery.json.
+
+## ADR-0057 — Ground requested-source gaps and the intended clause in the live probe
+
+**Status:** ACCEPTED coordinator input/proof correction;2026-10-19.
+**Authority:** P06 critic question/inventory context, existing ExactIndex and deterministic nonexclusive preflight principles.
+**Question:** Did the recovery reviewer receive the intended reversal clause, and can it identify a concrete unrepresented request?
+**Why:** Actual20B recovery has no verification errors but returns vacuous PASS/NOT_ESTABLISHED without search. Its only initial document is the introductory SOP chunk: source-ID exact union plus limit1 is not clause selection. Frozen v2 explicitly used the reversal clause. A source-ID string in a long untrusted question is also not an explicit coverage observation.
+**Options:** Infer clause coverage from whole-source ID (rejected), relax search success criteria (rejected), or correct the probe and expose bounded scoped coverage hints using the existing exact reader.
+**Recommendation:** The live recovery question targets exact S26-REVERSAL, not whole-SOP limit1. Critic context carries at most8 requested identifiers from ExactIndex.identifiers and whether each matches an already admitted inventory ID through the current authorized exact reader. False means not represented in this supplied ledger, never nonexistent/known outside scope. Unknown and inaccessible references remain indistinguishable. Prompt an empty draft to investigate concrete unrepresented document requests rather than treating no claims as question completion. Four tools, validator and gate stay unchanged; no automatic search or new authority.
+**What affects what:** critic context/prompt, validate_agent.py synthetic query and bounded/privacy controls. Default generated-draft proof and all prior failed recovery receipts remain separate; source/prompt versions are explicit.
+**My answer (editable):** Coordinator fixes the demonstrated producer gap using existing canonical readers, without redefining success.
+**Verification:** Pending positive/negative controls and separately identified actual recovery. Original20Bcap2 run23.467s had no errors but no search/correction; it remains a failed discovery check.
+
+## ADR-0058 — Own finalization instructions in the trusted role
+
+**Status:** ACCEPTED coordinator wiring fix within P06-T02.02;2026-10-19.
+**Authority:** Blueprint draft → advisory review/new evidence → reserved finalization; protected rejected-claim diagnostics.
+**Question:** Where does the backend instruct the reserved finalizer to use the revised ledger?
+**Why:** The finalization action was a field inside the user-data payload, while the system prompt treats user text as data. Actual clause-recovery20B discovers/reviews the new appendix with no errors (31.014s,2main/2critic/1search) but final output has no claims. This identifies an instruction-ownership defect; it does not prove the cause of every model omission.
+**Options:** Treat user/source data as instructions (rejected), or place the backend phase instruction in the trusted system role.
+**Recommendation:** Reuse the existing draft schema/safety rules plus a trusted explicit finalization phase instruction: build a substantive evidence-bound draft from current ledger even when the initial draft is empty; include supported exception and preserve valid observations; no more tools, payment permission or completeness claim. Remove the backend instruction field from untrusted data. Retain bounded initial/final proposed claims in existing protected DIAGNOSTIC events, including MODEL versus SAFE_TEMPLATE origin; public readers must reject those handles. Future evaluator manifests hash the finalization prompt separately. No extra model call or changed gate.
+**What affects what:** draft.py/loop.py, evaluate.py prompt manifest, synthetic smoke diagnostics and privacy/role tests. Existing budget/deadline/provider/defaults remain unchanged; prior failed runs stay intact.
+**My answer (editable):** Coordinator fixes trusted instruction placement at its owning layer and completes the planned protected proposal diagnostics.
+**Verification:** Pending guard/API negative controls and separately identified actual recovery. Prior clause-recovery report remains failed because no final appendix citation was released.
+
+## ADR-0059 — Ask for the exact exception clause without conflicting output constraints
+
+**Status:** ACCEPTED coordinator smoke-fixture correction;2026-10-19.
+**Authority:** P06-T02.02/T10 exact exception and citation proof; source/alias inspection.
+**Question:** Did the live question request an unambiguous final output and retrieve the intended exception span?
+**Why:** The prior question said an initial draft should contain only S26 while later asking for an appendix quote. Source-ID EX-2026-04 lookup also returned introductory/boundary chunks rather than EX-SETTLEMENT-DELAY. After the trusted-finalizer fix, actual20B31–34s runs discover/review appendix and emit a valid SOP quote but omit the requested exception. They remain failed full-correction checks.
+**Options:** Count any appendix presence as the full exception (rejected), or name the intended clause and remove the conflicting only-S26 output wording.
+**Recommendation:** A clear question starts with exact S26-REVERSAL/limit1 and asks the final answer for separate exact S26-REVERSAL and EX-SETTLEMENT-DELAY attributions. The critic must still choose/execute its scoped search; no evidence is injected. Tighten the smoke predicate to require the complete canonical exception clause in released claims, actual new revision/review, citation GET and timeline counts. This is exact-ID mechanical integration evidence, not semantic ANN discovery, natural model-error correction or research accuracy. Frozen semantic search results retain their original versioned measurements.
+**What affects what:** validate_agent.py question/strict expected quote and receipts only. Production runtime, budgets, model roles and gate unchanged. Default-budget generated-draft proof remains separately required on final source.
+**My answer (editable):** Coordinator fixes known producer ambiguity and strengthens observable acceptance without hiding failed rows.
+**Verification:** Pending explicit20Bcap2/10s exact-clause recovery and final default-budget document smoke. Prior source snapshots and failures retained.
+
+## ADR-0060 — Distinguish correct normal review from discovery recovery
+
+**Status:** ACCEPTED coordinator verification detail;2026-10-19.
+**Authority:** P06-T02.02 full-flow evidence and ADR0055's supplemental recovery boundary.
+**Question:** Should a normal message fail simply because its investigator already found the requested exception?
+**Why:** The strict critic scenario rightly requires a new appendix revision. Normal default-budget messages can already contain it, so that predicate cannot demonstrate their correct generated-draft/review/final behavior. The final-source20B document check separately hit60s after seven reservations at10s spacing; the limit held and its failure stays visible.
+**Options:** Weaken discovery acceptance (rejected), or use separate explicit predicates for the two required paths.
+**Recommendation:** Keep critic scenario strict unchanged. Add reviewed_exception using the same exact-clause question, requiring a nonempty MODEL-origin initial draft, actual current review, full final exception quote, canonical citations and matching timeline with zero verification errors. Use default maincap5. Explicit8s pacing is a separately recorded configuration within approved0–60s range; it is based on the observed seven-call10s deadline, not a shipped-default change. The existing cap2 critic recovery already strictly passes and remains separate. No failed condition is replaced or counted as research success.
+**What affects what:** validate_agent.py verification scenario/report and final normal-path live check. Runtime/policy/gate/default budgets/model selection remain unchanged.
+**My answer (editable):** Coordinator separates complementary observable outcomes rather than requiring a redundant critic search when coverage already exists.
+**Verification:** Strict cap2 exact recoveryPASS31.076s; final-source default normal proofPASS47.949s,4main/1critic,MODEL draft/full clause/readback/noerrors. Failed document/deadline receipt retained.
+
+## ADR-0061 — Refresh paired evidence on the final source version
+
+**Status:** ACCEPTED coordinator verification correction;2026-10-19.
+**Authority:** Source-version fidelity, P06-T03 and no-stale/completion audit.
+**Question:** Can the earlier120B pilot alone measure the final critic/context/finalizer revision?
+**Why:** It accurately measures its launch version, but subsequent allowed-slot hints, exact coverage and trusted finalization changed the prompts. Treating its statistics as final-build measurements would be unsupported.
+**Options:** Relabel old results as current (rejected), or retain them and run the complete matrix on final source.
+**Recommendation:** Reopen T03.01/02 proof pending a fresh full four-case/four-mode run on explicitly selected owner-approved GPT-OSS20B. Keep all16conditions,60s external pacing, original source freshness/global deadline, and intra-model pacing0 as in the original frozen comparison. Capture source/prompts/fixture/configuration before provider calls. Preserve every failure and unknown semantic/causal score. This is not a cross-model quality comparison or best-of-N success selection; final positive default and exact-recovery consumers are already separate engineering proofs.
+**What affects what:** Research receipts/current task status only; source/runtime/fixture/defaults unchanged and frozen during execution. Single end reviewer follows completed final checks.
+**My answer (editable):** Coordinator corrects the evidence-version boundary before claiming completion.
+**Verification:** Final-source default20B reviewed_exceptionPASS47.949s,4main/1critic/2tools, MODEL initial draft/full exception/two citations/timeline/noerrors. Full final-source20B matrix complete16conditions:16/16known-fact retention,0/4full-clause correction, one validation failure. Raw/scorer2 summary recorded at E-P06-001. Older120B results remain version-specific.
+
+## ADR-0062 — Qualify changed proposals and unresolved advisory challenges
+
+**Status:** ACCEPTED coordinator in-scope gate correction;2026-10-19.
+**Authority:** P06-T02, blueprint §10.5 no unresolved challenge for SUPPORTED; sole end review R1.
+**Question:** Can evidence-bound review alone certify a changed final proposal or an unresolved CHALLENGE?
+**Why:** The stored draft digest was not consumed by the release gate. A completed CHALLENGE was treated identically to PASS for disposition, despite canonical claims still needing honest review coverage.
+**Options:** Add post-finalizer model calls/change budgets (rejected), or conservatively qualify final output using existing review/draft bindings.
+**Recommendation:** When a current review's draft digest differs from the final draft, add revised_draft_requires_review. A current CHALLENGE adds unresolved_critic_challenge. Preserve independently canonical facts/attributions, never infer conflict or semantic falsity; such output is PARTIALLY_SUPPORTED, not SUPPORTED. Exact unchanged PASS remains eligible. No prompt, tool, dependency, authorization, schema or budget change.
+**What affects what:** agent/gate.py consumes existing ReviewResult.draft_sha256; test_critic.py proves changed policy/fact and unresolved challenge controls. Public missing_requirements already carries bounded qualification strings. Model experiment prompts/frozen ledger and mechanical quote/fact scores are unchanged; previous raw run remains its launch gate version, not retroactively current output. Final gate checks and live entry points must be verified after correction.
+**My answer (editable):** Coordinator implements the verified in-scope review finding; no semantic veto authority or new model stage is introduced.
+**Verification:** Source294PASS, installed294PASS, actual-Qdrant13PASS and installed1overlap, post-fix real20B recovery39.827s/default-budget37.089sPASS, same-reviewer R1 resolution and final cleanup verified at E-P06-002. R2 blind arm objection withdrawn against §10.1; docs clarify draft-blind, supplied canonical requirements, no independent unsupplied-requirement discovery claim.
+
 ## Future decision template
 
 ```text
@@ -1020,4 +1239,4 @@ Verification: planned proof, result, evidence and execution/deferred state
 Amendment history: old answer/date/reason and superseding decision
 ```
 
-Next free ADR number: 0045. Accepted directions do not grant implementation GO.
+Next free ADR number: 0063. Accepted directions do not grant implementation GO.

@@ -1488,3 +1488,438 @@ Main now closes all seven P05 cards and phase-local memory obligations against t
 final source/artifact/consumer evidence above. Current docs consistently reflect this
 verified closeout; historical premature closure stays struck and explained. No owner
 ADR awaits an answer. P04 push is fulfilled; P05 local commit only, P06/main push need GO.
+
+## E-P06-001 — Adversarial critic phase
+
+2026-10-19, owner GO: push P05 then finish P06. P05 commit
+f0507e467efab9b58f292f65257507bd329df714 pushed to established origin/main; ls-remote
+confirms same SHA. Full outgoing message inspected; only37 scoped Palladion/root files.
+Benchmark/editor changes preserved. P06 has six atomic cards; P07+/UI/enterprise writes
+and a further main push remain outside this mandate.
+
+Sole start adversary GPT6LunaMedium, fresh context, directly read full blueprint§1–18
+and its locks/I01–I15, all development docs and relevant live source. Read-only, ambient
+credential variable count0, no .env/runtime credentials/network/services/tests or git
+writes. Main confirms six findings: (1) semantic labels/escalation unassigned, needs
+explicit pilot boundary ADR0046; (2) actual Groq critic entry-point proof must be named,
+not inferred from mocks/P05 failures; (3) MessageResponse only accepts unavailable and
+timeline strips review status, requiring approved compatible consumers ADR0045;
+(4) canonical CriticReview lacks structured bindings and owning-file task coverage,
+ADR0045; (5) no frozen critic-case artifact/scorer exists, needs versioned manifest and
+canonical producer/reader equality proof before measurement; (6) prior P06 hold records
+are stale under new GO and must be amended before dependent work.
+Task→consumer→gate: T01.01 typed review→finalizer/G-CRITIC; T01.02 counters/scoped search→
+ledger/G-BUDGET; T02.01 review→gate/message/G-GATE; T02.02 revised evidence→final/citation/
+timeline/G-E2E; T03.01/.02 frozen pairs→actual output scorer/G-RESEARCH. Preserve critic
+≤3 normally1, searches≤2 under tools≤8/time, main≤5 including reserved final; context is
+independent, ground truth is not. P07 graph/P08 human-adjudicated scientific obligations
+remain explicit. No tasks/gates closed by this receipt. Owner contract/pilot answers
+requested via async tool; independent grounding/documentation continues.
+
+Independent budget work while ADR0045/0046 await owner answers: three new controls
+first fail because critic reservations do not exist (3FAIL/14deselected); existing
+Budget owner now reserves critic/search/shared tool slots atomically. All17budget
+testsPASS3.48s, RuffPASS, strictmypy58PASS. Added configured-lower-limit consumer control
+and wired existing validated Settings limits into Budget. This proves reservations,
+not a critic producer, dispatch consumer, actual Groq review or phase closure.
+Document checker initially rejected empty proposed ADR answer fields. Retained their
+unanswered state with explicit PENDING/no-approval placeholders; no owner decision
+fabricated or checker weakened. New pending-contract records remain reviewable.
+Configured lower-limit consumer and all existing non-server regression checks now pass:
+`.venv/Scripts/python -m pytest --ignore=tests/test_end_to_end.py -q --tb=short -W error::pytest.PytestUnraisableExceptionWarning`
+→250PASS20.79s, one existing Starlette/httpx warning only. Ruff and strictmypy58PASS;
+doc checker17MD/93cards/20negativecontrolsPASS after explicit pending ADR placeholders.
+No provider or Qdrant service started; ports16333/16334/18080 have no listeners. Contract
+and pilot implementation remain gated on the two owner answers, not claimed complete.
+
+Owner answered both async cards2026-10-19: ADR0045 compatible review/status extensions
+and ADR0046 explicit pilot boundary/full P06 implementation approved. Original pending
+state retained in amendment history. Resume P06 from250nonserverPASS checkpoint;
+no new start adversary, dependency, schema migration or expanded later-phase authority.
+P06 structured critic producer and loop/final/gate consumers now implemented under
+approved ADR0045/0046; ADR0048 records binding/templates. Prior P04 guard tests initially
+failed3/24 because the test model pooled main/critic turns and expected only main events;
+role-separated explicit guard injections preserve those main assertions and independently
+record critic calls. New focused suite then2FAIL/50PASS8.66s: one fixture incorrectly
+constructed a strict enum from a Python string, another counted critic STARTED as main.
+Corrected the fixtures and asserted both roles separately; no production schema relaxed.
+
+Integration exposed a P05 owning-reader defect: model_view(CASE_EVENT) assumed every
+memory item had runtime payload/at, but canonical controlled memory uses content/set_at.
+Fixed its projection in retrieval/evidence.py and added actual recall→ledger→critic
+context regression; permissions/authorityNONE remain canonical. This is not a synthetic
+model integration substitute. Current full regression/actual-server proof is pending.
+P06 runtime/guard regression now267nonserverPASS38.28s, including role-separated
+review attempts and recalled-memory projection. RuffPASS, strictmypy59PASS;
+dependency81files+fournegativecontrolsPASS. Explicit critic CLI without live enablement
+rejects before reading credentials (expected exit2). No dependency/schema migration.
+Frozen critic fixture v1 has three controlled cases and four declared conditions;
+actual120B run selected explicitly, pacing45s between arms, one60s deadline per arm,
+source freshness still enforced. Identical frozen readback hashes are required before
+comparison; stale-source/failed arms remain failures, never repaired by clock changes.
+Actual full authenticated runtime is separate from controlled frozen drafts. Raw
+reports stay in ignored runtime/evaluation; output self-grades are not semantic gold.
+P06 actual Qdrant/HTTP correction control initially403 because test omitted the canonical
+case-scope seed; after correct trusted setup, it correctly returnedPARTIALLY_SUPPORTED
+rather than the test's mistaken SUPPORTED expectation: appendix is policy-bound and a
+quote alone lacks applicable policy/live inputs. Confirmed EX clause bindings in the
+policy fixture. Corrected expected missing applicable_policy, retained no mandatory-
+critic gap, actual appendix quote/citation and safe metadata. Test now1PASS21.20s.
+No gate weakened. New scorer/API/critic focused31PASS8.80s.
+First actual pilot inputs contained exception text through policy trace clauses,
+invalidating a discovery claim even when the standalone appendix chunk was absent.
+ADR0049 fixes this producer, documents generic prompt/search guidance and fresh-run
+configuration before execution. Earlier full-runtime400/429 failure is preserved,
+including limit8000/used6621/requested2140 and6s Retry-After; no automatic provider retry.
+Original source/fixture snapshot retained beside p06-372838f5ea1d4df1bc14f80556c82dbb.
+Original actual critic run completed exit0 with all12 conditions and full runtime row;
+report p06-372838f5ea1d4df1bc14f80556c82dbb SHA256
+7170320e05b4bd32633310fbb02360bdd29f639635667570635c211c804eb583.
+No exception quote correction in its four exception conditions. It exposed the producer
+confound already documented (policy supplied appendix clauses) and live-status knowledge
+queries. Fixed-context/counter-search retained observed facts; blind/withheld review
+schema failures remain. Full runtime returned VERIFICATION_UNAVAILABLE after400/429,
+not successful generative integration. Its exact old source/fixture snapshot is retained
+beside the report, manifest explicitly captured during run rather than claimed at launch.
+
+Separate v2 explicit120B run started (exec87131), now four cases including genuine
+missing-input control, four paired modes,60s pacing,60s arm deadlines, unmodified source
+freshness and actual full message after exception case. Complete source/config/data/
+Git scoped patch hashes and bytes captured at launch; unknown semantic scores remain
+unknown. No source-clock workaround, budget expansion, fake runtime or hidden model retry.
+
+Continuation checkpoint: source273nonserverPASS29.12s; document CLI17Markdown/
+93tasks/20negativecontrolsPASS. V2 actual run remains live on exec87131; first
+exception conditions show new appendix evidence and exact boundary excerpts, but
+strict full-delay-clause score remains false. Fullmessage still recordsHTTP400,
+so no positive full-runtime assertion. ADR0050 retracts omission-as-veto naming;
+new scorer7testsPASS5.48s. ADR0051 adds an explicitly separate20B engineering smoke
+scenario; execution waits for the active120B run. Initial docs-update helper hit
+Windows cp1252 decode error after source edit; rerun with explicitUTF8 immediately
+records its decision/ownership. RuffPASS and strictmypy59PASS.
+
+Source actual local Qdrant suite:13PASS/6providercasesdeselected153.12s. Build via
+python -m build --installer uv PASS. Reinstalled exact wheel into retained isolated
+environment; -I nonserver suite273PASS32.33s. Source/wheel/installed50Python+SQL
+files byte-equal; wheelSHA2569d5146cffdec230bb2a3f20ec370ec3ba97ead278047b090e16718c0109f4cb1.
+Dependency81files/fournegativecontrolsPASS. Foundation CLI retains24golden cases,
+three original readbacks/nine denied reads/reopen/zero model calls/temporary cleanup.
+Scorer changes after v2 launch are separately versioned; its source snapshot remains
+immutable. Current full-message proof and single end audit are still required.
+
+Actual v2 matrix completed exit0/all16conditions: runtime/evaluation/
+p06-3202bf9ad06143478590fdedd298fdfb.json SHA256
+d2c2544f8f7de20193abbdbd9b8384b6889cab950d25d04b38698f36f630470a.
+No selective retry. Corrected scorer2 derivation command:
+`.venv/Scripts/python runtime/p06_derive_summary.py runtime/evaluation/p06-3202bf9ad06143478590fdedd298fdfb.json`
+verified launch snapshot hashes, frozen envelopes and unchanged raw bytes. Derived
+p06-3202bf9ad06143478590fdedd298fdfb-scorer2-summary.json SHA256
+5805042f6a7be756fa0295d7004bc38b0b29d4b4b1641b83e0c5d7e23e384855.
+All16initial hashes equal;16main/23critic/6search attempts;72163known received tokens.
+Three conditions retain schema/grounding failures (correct_fact blind; withheld
+counter/blind). One fixed-context missing-input condition omits the valid live fact
+with no critic objection to it: retention loss, not demonstrated causal veto. No
+known-control false objections in valid parsed reviews; semantic/causal false-veto
+rate remains unknown. Full-exception-delay-clause exact matches0/4. Counter-search
+and blind exception arms retrieve new appendix and release exact boundary excerpts;
+this is narrower than full-clause correction. No inventory attestation in any arm.
+Separate120Bfullmessage stillHTTP400/no counter-search. Actual20B targeted smoke
+exit1 retained at runtime/p06-critic-message-20b.log and extracted JSON:3main/2critic/
+1tool/0countersearch, two schema failures and final429(8000TPM,used6445,requested1961,
+RetryAfter4s). No positive full-runtime gate assertion. ADR0052 adds safe bounded
+repair cause and one-candidate engineering question. Focused39PASS8.32s, Ruff/mypy59
+PASS. New separate explicit120B invocation uses source snapshot
+runtime/evaluation/p06-message-120b-r3-source; its result remains pending.
+
+Separate120B r3 full-message invocation exited1:4main/1critic/2tools/0criticsearch;
+received main1154+1995tokens, critic2719tokens, subsequent400and final429.429reports
+limit8000/used5866/requested2915/RetryAfter6s; no citation or positive correction.
+Original runtime/p06-critic-message-120b-r3.log and extracted JSON retained with launch
+snapshot. Source regression after repair hint274PASS42.97s. ADR0053 asks owner for
+opt-in call spacing under unchanged caps/deadline; pending, not implemented. No final
+work auditor yet because required live entry-point proof remains open.
+
+Final pending-decision checkpoint: rebuilt wheelSHA256
+d39c36d9aca1936b07b0f004d1c839afd9090964f96238e4885b39e98671d0fe;
+all50Python+SQL files match current source and installed bytes. Installed P06 actual
+Qdrant/HTTP control1PASS26.58s after repair-hint correction; installed critic/scorer/
+API35PASS12.69s. Source274PASS42.97s. Three cards T01.01/T01.02/T02.01 marked verified;
+remaining cards/phase/end audit stay open. Documentation checker17Markdown/93cards/
+20negativecontrolsPASS before final factual updates; whitespace diff checkPASS.
+No collection remained after own UUID cleanup. Supported launcher stopped recorded
+QdrantPID512; exec24281 exited0. TCP16333/16334/18080 free. Active experiment handles
+87131/41811/34717 all terminal; no test service left running. Benchmark/editor dirty
+files are untouched, no staging/commit/push of this in-progress phase. ADR0053 is the
+pending owner decision. Restart the documented Qdrant launcher only when further
+approved live checking is needed, not because an old handle stopped naturally.
+
+Owner replied Approve opt-in call pacing (Recommended); ADR0053 accepted. One shared
+Groq instance spaces all roles, default0, with cancellable waits inside existing60s.
+No future queue reservations survive cancelled waiters; a synchronous caller callback
+rechecks ACL/current ledger after waiting and before HTTP. Default one-attempt/caps
+unchanged. Focused98PASS15.51s. ADR0054 fixes full-smoke discovery attribution: protected
+canonical pre-review inventories must lack the appendix revision, a later review must
+see it, and final citation must resolve. Known presupply/no-later-review controls reject.
+Safe provider codes now persist per attempt. Main prompt explicitly describes its
+existing initial-draft/independent-review/finalize stages without constraining tools.
+Separate paced Qwen engineering proof is next; no model switch within an invocation.
+
+Paced Qwen engineering check exited1 under original60s:5main reservations/1critic/
+4tools/0criticsearch; no provider failure, GLOBAL_DEADLINE during reserved final.
+Received main4thencriticPASS; full appendix correction/discovery predicate false.
+Original log/extracted JSON and source snapshot retained as p06-message-qwen-paced.
+First readiness read raced WSL startup and was refused before credential/model access;
+repolled same live launcher91194 (PID501), ready200, no restart. Source287PASS29.23s,
+dependency81/fournegativecontrolsPASS. Remaining compatibility grid is declared now:
+one explicit paced20B and one paced120B invocation with the same query/configuration,
+all three receipts retained. This is entry-point engineering proof, not best-of-N
+research accuracy or a reliability estimate; no failing condition is overwritten.
+
+Paced20B default5main run returned no verification failures,52.905s,5main/1critic/
+3tools/0criticsearch; appendix already in first critic inventory, final citation/timeline
+readback true. Strict discovery predicate correctlyfails. Paced120B grid row similarly
+retained separately; original three-model matrix is complete, no row overwritten.
+ADR0055 selects existing lower-cap2 for a separate bounded exhaustion-recovery proof,
+supplementing default20B generated-draft integration rather than substituting for it.
+Source287PASS29.23s +actualserver13PASS169.58s (sixproviderpytest deselected), installed
+287PASS63.08s plus P06actualserver1PASS26.58s; exact50file wheelSHA256
+25aa6280262a673700b6c273adfa327b613fd5496b4ad4f76ecf3db0423a2198.
+
+Paced120B default-budget grid row:42.439s,4main/1critic/2tools/0criticsearch, noverification
+failures, appendix final citation/timeline true but appendix already in first inventory.
+Thus real generated-draft/review/final/readback is demonstrated on20B and120B, while
+critic discovery is not inferred. Lower-cap120B recovery exited1:34.424s,2main/2critic/
+1tool/0search, two Unknowncriticrequirement rejections; final400/json_validate_failed.
+Its exact source/report retained. ADR0056 makes admissible missing-slot names explicit,
+without loosening the validator;56focusedPASS8.29s,mypy59PASS.20Bcap2/10s recovery is
+now live exec85781 under fresh retained source snapshot. No source clock/budget/authority
+workaround. Earlier frozen16conditions use their launch-version prompts, not this later
+revision; no final-build semantic accuracy claim is made from them.
+
+Clause-recovery20B (old finalizer)31.014s:2main/2critic/1search/noerrors, actual new
+appendix revision followed by real review; no final claims, so strict checkFAIL.
+Trusted-system finalizer20B33.553s: same bounded real discovery/review, no errors;
+protected final proposal now a valid exact SOP quote, still no appendix quote. Prior
+question only-S26 constraint and whole-appendix alias selected wrong exception section.
+ADR0059 removes that ambiguity, targets exact EX-SETTLEMENT-DELAY and strengthens
+full canonical exception quote acceptance. No failed row relabeled or overwritten.
+New proposal-privacy test firstfailed due using event-loop SQLite connection on test
+thread(1FAIL49PASS8.59s); fixed TEST to reopen own connection, no production thread
+checks relaxed. Role/private API focused51PASS9.46s. All raw proposals remain protected.
+
+Strict exact20B recovery nowPASS31.076s,2main/2critic/1countersearch/2tools, noerrors.
+Report runtime/evaluation/p06-message-20b-exact-exception.json SHA256
+ab249298461ae34e0d0a225caef9b6b36c9b2858c4b90773678ac7cf4269e978;
+full canonical EX-SETTLEMENT-DELAY quote released, two citationGETs/timeline match,
+no appendix before critic and later reviewed appendix. Its source snapshot explicitly
+captured DURING_RUN, not falsely described as launch-time. Source290PASS39.30s,
+installed290PASS31.01s and P06actualserver1PASS37.21s; exact50file artifactSHA256
+9694a0405d0d9ef824b31804672291b00e27a5cd9b897c172b18420cdc86cf12.
+Final-source default20B document check retains GLOBAL_DEADLINE60.087s after4native
+turns+2critic+final reservation; no quota error/unsafe output. ADR0060 adds a separate
+normal reviewed_exception predicate requiring actual nonempty MODEL-origin draft,
+current review/full final clause/citation/timeline. Strict discovery unchanged. Explicit
+120B/defaultcap5/8s normal check is next; all failure receipts remain separate.
+
+Final-source default20B reviewed_exception strictPASS47.949s,4main/1critic/2tools,
+nonempty MODEL-origin initial draft, current review/full EX clause/two citationGETs/
+timeline and zero verification failures. ReportSHA256
+516c4eb1663bcae1de627fbd0070833915559b37764ba03e597cb8b550d03a6d;
+source snapshot captured before launch at p06-reviewed-exception-20b-final-source.
+Current complete source suite290PASS39.30s +actualQdrant13PASS172.01s=303disjoint;
+installed290PASS31.01s +P06actualserver1PASS37.21s overlap. Six opt-in provider pytest
+cases deselected, never counted as passed. Source/wheel/installed50files match.
+
+Completion audit reopens T03.01/02: earlier120B paired metrics are valid historical
+launch-version observations, not measurements of later prompt/finalizer changes.
+ADR0061 declares a full final-source20B matrix with all16conditions/external60s/
+intra0/original freshness/deadline, every failure retained. No production source changes
+while it runs. Four implementation/consumer cards remain verified. No end reviewer
+has yet been dispatched; final review follows this fresh research receipt.
+
+## P06 final-source paired receipt — 2026-10-19
+
+All six P06 atomic task proofs are verified; the sole Luna Medium end reviewer is
+running. Phase closure awaits resolution, final docs, owned cleanup and a scoped local
+commit. Source290 + actual-Qdrant13 =303 disjoint checks pass; installed290 and one
+installed actual-Qdrant/API control overlap. All50 packaged files match the wheel.
+Owner-approved ADR0045/0046/0053 govern; no P06 main push or P07 GO is inferred.
+
+Real20B strict exact-ID recovery passes31.076s (explicit maincap2,2main/2critic/1search,
+SAFE_TEMPLATE initial); default-budget generated-draft path passes47.949s (4main/1critic,
+MODEL initial). Both release the full canonical exception with citation/timeline readback
+and no verification failures. They prove distinct engineering paths, not reliability.
+
+Final-source20B paired report p06-cb9e66c994dc46b9b0746c7b92c644fd records16/16 observed
+conditions, equal frozen hashes,16/16 known-fact retention,0/4 full exception corrections,
+one critic validation failure,16main/17critic/4searches and66117 known received tokens.
+One attempt lacks usage; totals are lower bounds. Blind requirements discovers new
+appendix evidence but does not release its full clause. Ordinary counter-search-enabled
+review never requests a search in these four cases. No efficacy gain is established;
+retain mandatory review under the existing architecture without adaptive/default changes.
+Semantic accuracy, causal false-veto and H05 remain unknown; P08 owns adjudication.
+Older120B reports remain versioned historical measurements, not final-source results.
+
+Command: `.venv/Scripts/python scripts/evaluate.py --run --critic --enable-live-llm
+--model openai/gpt-oss-20b --model-call-interval 0` exited0: observation completion and
+cleanup, not model success. Raw SHA256
+`c0fa225c5991f75eec61ce5eb29e36b5e1b5e75bd2b299835e7f37b3546e9d7f`;
+raw-preserving scorer2 summary SHA256
+`6d944a9b2703f11a54c5427cf46bd89a353c16f93c61d39a565a9f4352f3a681`.
+Both reside in ignored `runtime/evaluation/` under the report stem above. Automatic
+same-stem launch snapshot hashes verify; current source hashes show zero drift.
+Derivation: `.venv/Scripts/python runtime/p06_derive_summary.py
+runtime/evaluation/p06-cb9e66c994dc46b9b0746c7b92c644fd.json`; raw bytes unchanged.
+
+| Arm (four cases each) | Main/critic/search | Known received tokens | Median/max seconds |
+|---|---|---|---|
+| off |4/0/0|7279 (one missing usage)|1.255/1.721|
+| fixed_context |4/4/0|16018|2.212/2.715|
+| counter_search |4/5/0|18105|2.155/3.770|
+| blind_requirements |4/8/4|24715|10.541/14.219|
+
+Counter_search/missing_inputs records CRITIC_SCHEMA_OR_GROUNDING_FAILURE and retains
+settlement_state plus mandatory review gaps. All four missing-input arms retain
+settlement_state. Withheld inventory remains unattested in every arm; some blind outputs
+have no explicit missing requirement, which cannot establish completeness. No known-valid
+parsed claim is falsely challenged by the mechanical classifier; semantic/causal scores
+remain unknown. Ordinary fixed/counter critics mark controlled invalid C2 supported in
+exception/withheld cases; blind conditions detect three C2 invalid associations. These
+misses remain visible: critic agreement is not independent ground truth.
+Full-runtime row returns200/PASS,4main/1critic, resolved citations/no verification failures,
+but omits the full exception. It cannot replace separate strict normal/recovery proofs.
+External60s arm spacing, intra0, original freshness/deadline and no retries/fallback are
+recorded. Models are not compared for quality across source versions.
+
+Actual-Qdrant exact coverage guard later passes1test39.05s (18deselected),
+`runtime/p06-coverage-actual-server.log`: coverage false before exact lookup, true after
+new canonical evidence; protected data absent in timeline. This overlaps303, not an added
+independent check. Production source stayed frozen. Sole end review now dispatched.
+
+P06 arm clarification: blind_requirements is draft-blind first-pass review under
+blueprint §10.1; canonical policy-required slots remain supplied. It does not measure
+independent discovery of unsupplied requirements. End-review R2 is withdrawn.
+
+End-review R1 confirmed: ADR0062 qualifies changed final proposals and unresolved
+CHALLENGE without erasing canonical facts. Final matrix cb9e66 remains its unchanged
+model/prompt/launch-gate version; qualification-only gate correction follows it. Quote,
+fact-retention and model-cost observations are not relabeled as post-correction outputs.
+Post-fix stack/installed/live checks and same-reviewer resolution precede closure.
+
+## E-P06-002 — Sole end work review and resolution, 2026-10-19
+
+Reviewer `/root/p06_end_review`, GPT6Luna Medium, fresh context, read-only; no
+credentials, .env, network, services, tests, benchmark/editor or git mutations. Main
+verified zero credential-named ambient variables before dispatch. Same reviewer reused
+for resolution; no extra agent. Reviewer directly read full blueprint §§1–18/I01–I15,
+root instructions, review contract, accepted0045/0046/0053 and subsequent ADRs, all12
+development records' P06-relevant sections, root/app READMEs, changed implementation,
+tests, installed/real-server logs and frozen artifacts. Coordinator owns executed proof.
+
+Coverage: §1 Executive architecture/§17 invariants authority boundaries; §3 Complete
+runtime flow/§11 tools/§13.5 budget total; §4 source and §5 retrieval/§7 policy/§8 live
+and §9 continuity consumers; §10 Adversarial Evidence Critic and answer statuses;
+§14 evaluation and hard cases; §15 build sequence; §16 security/observability;
+§18 walkthrough. §2 boundaries, §6 deferred graph and §12 environment were included.
+Exactly four read tools; zero-LLM deterministic preflight;≤5main including final,
+≤3critic/≤2search within≤8tools; no extra final review stage or adaptive bypass.
+
+| Task | Implemented consumer and proof reviewed |
+|---|---|
+| T01.01 | structured critic validation/current IDs → protected review → finalizer; critic tests |
+| T01.02 | shared atomic budget → scoped Tools search → subsequent review; rejection/cancellation tests |
+| T02.01 | mandatory review failures → canonical gate → safe API; privacy/missing-fact controls |
+| T02.02 | changed ledger/final draft → gate → citation/timeline readback; real Groq and actual-Qdrant paths |
+| T03.01 | saved draft/ledger/hash → four actual model conditions → scorer; frozen manifests |
+| T03.02 | all successes/failures/costs → versioned neutral conclusion; raw-preserving summary |
+
+R1 CONFIRMED: evidence-bound completed review alone did not qualify changed proposals
+or unresolved CHALLENGE. Main read owning code, logged ADR0062, consumed existing draft
+hash and added explicit qualification gaps; canonical facts remain, conflict is not
+fabricated, unchanged PASS retains positive eligibility. Focused28PASS9.71s. Same
+reviewer re-read source/tests and confirmed resolved against §10.5/§10.6/ADR0046;
+post-fix source/installed/live receipts below remain main-owned verification.
+R2 REFUTED/WITHDRAWN: reviewer initially interpreted blind_requirements as requiring
+unsupplied-slot discovery. Main checked exact §10.1, which explicitly supplies policy
+slots and permits draft-blind first pass. Reviewer withdrew; docs clarify this limit.
+Initial checkbox/ADR drift suspicion was withdrawn after re-reading concurrent doc edits.
+
+No remaining material finding in reviewed source. Confirmed static trust/budget/privacy
+and frozen-equality paths are not universal security/semantic proofs. PARTIAL/UNKNOWN:
+shared blind spots, model failures, semantic/causal scores, inventory completeness,
+ANN-scale performance and human adjudication. P07 owns graph, P08 semantic/held-out
+research and broader fault/security matrix; X01 later comparator work remains deferred.
+No author/reviewer claim of H05 success, production readiness or baseline superiority.
+
+Post-fix source294PASS62.24s (one existing Starlette warning); focused28 overlap.
+One attempted Qdrant sweep omitted explicit test enablement:13SKIPPED/6deselected,
+not PASS. Coordinator retracted its premature commentary and reran with command-local
+PALLADION_TEST_QDRANT_URL; receipt follows. Installed294PASS61.76s; all50Python+SQL
+source/wheel/installed bytes match, wheelSHA256
+`eca1b1afa0cbc75205990a1bd508e038e15f09d8a735bcd0edce68cf7d5439de`.
+RuffPASS; strict mypy src+scripts59filesPASS; dependency81+4negative controlsPASS.
+Foundation real CLI preserves24goldens/3originalreadbacks/9denials/reopen/0modelcalls/
+temporary cleanup. Existing provider failures remain retained, never replaced as scores.
+
+Post-fix real20B strict recoveryPASS39.827s,2main/2critic/1search/2tools; reviewPASS,
+fullEXclause/citations/timeline, zero verification failures. Final proposal is correctly
+qualified by applicable_policy and revised_draft_requires_review. Raw extraction
+runtime/evaluation/p06-audit-live-recovery.json SHA256
+`7c3e9b5518809e053e2748ff0ba85249f8bba4ff7e236dedca3aa428080cd8d7`.
+Command: `.venv/Scripts/python scripts/validate_agent.py --enable-live-llm --scenario
+critic --model openai/gpt-oss-20b --model-call-interval 10 --main-max-calls 2` exited0.
+No changed prompts, hidden provider retry, semantic search or natural error-rate claim.
+
+Post-fix default-cap20B/8s reviewed_exception attempt retains GLOBAL_DEADLINE60.119s,
+4main/1critic/2tools, no provider failure, and no full exception quote (exit1). Raw log
+runtime/p06-audit-live-normal.log is preserved. It ran concurrently with the main's
+source/installed Qdrant integration sweeps, so its latency is not a controlled benchmark.
+Do not substitute the prior positive result for this failure. After owned sweeps finish,
+one serialized normal-path engineering check is planned; all conditions remain reported.
+
+Concurrent repository owner committed benchmark-only9d356fc atop P05f0507e4 while P06
+was dirty. Main verified the new HEAD and preserved it; P06 commit will follow the current
+branch without reset/rewrite or staging benchmark/editor work. No push is inferred.
+
+Enabled post-fix source-Qdrant sweep:12PASS/1setupERROR/6providerdeselected296.39s.
+The setup error was WinError10053/HTTP read abort in create_payload_index before
+seeding test_discovery_failure_keeps_exact_evidence_and_honest_scope; no assertion ran
+for that case. Preserve runtime/p06-audit-server-enabled.log. Installed real P06
+Qdrant/API casePASS83.06s (18deselected), runtime/p06-audit-wheel-server.log. No source
+workaround or retries added. Re-run only the missing isolated case after current
+serialized normal smoke; prior twelve passing cases remain evidence, not rerun counts.
+
+Serialized post-fix default-budget20B normal consumerPASS37.089s,4main/1critic/2tools,
+MODEL-origin nonempty draft, full exception, citation/timeline readback and zero
+verification errors. ReviewPASS, applicable_policy remains a qualification. This is a
+separate engineering repeat after competing owned sweeps finished, not a replacement
+research score; prior60.119s deadline failure remains above. Command identical to prior
+normal attempt: `.venv/Scripts/python scripts/validate_agent.py --enable-live-llm
+--scenario reviewed_exception --model openai/gpt-oss-20b --model-call-interval 8` exit0.
+Report runtime/evaluation/p06-audit-live-normal-serialized.json SHA256
+`b23ac99830d108cbec9792200d38ea5efc03b57fa0bd7ecc4d5ed8732e5dd4a1`.
+No further provider checks planned; both final guard/runtime paths are now proven.
+
+Final missing actual-Qdrant case ran alone with command-local
+PALLADION_TEST_QDRANT_URL=http://127.0.0.1:16333:
+`.venv/Scripts/python -m pytest tests/test_end_to_end.py -k
+test_discovery_failure_keeps_exact_evidence_and_honest_scope -q --tb=short
+-W error::pytest.PytestUnraisableExceptionWarning` →1PASS/18deselected12.85s.
+Together with the12passing cases in the enabled sweep, all13actual-server obligations
+are verified after the fix; source294 +13 =307 disjoint, installed294+1 overlap.
+No repeated run counts are added; connection abort and skipped sweep remain above.
+
+Final cleanup: actual Qdrant collections=[] before stop. Existing recorded owned WSL
+PID501 terminated via scripts/qdrant_server.py --wsl --stop, launcher exec91194 exits0;
+storage preserved. Get-NetTCPConnection verifies16333/16334/18080free and no task
+search_worker/qdrant_server/validate_agent process remains. Unrelated user/editor and
+benchmark processes left untouched. No migration, user data reset, package dependency
+change, UI, graph, benchmark edit or remote publication occurred in P06.
+All six atomic cards, phase exit and GOAL updated after proof; no unanswered owner ADR.
+
+Final no-stale/structural check: `.venv/Scripts/python docs/development/check_docs.py
+--self-test` →17Markdown,93atomic cards,18sections/15invariants/24hardcases mapped,
+20negative controls PASS. Current status/navigation/README sweep has no pending P06
+review/experiment handoff; historical evidence remains dated. Blueprint bytes unchanged.
+Scope-verified local commit follows current benchmark9d356fc without touching it; no
+main push authorized. Final staged secret/whitespace review is required before commit.
