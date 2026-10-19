@@ -732,12 +732,12 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
 
 <a id="b04-t05-01"></a>
 
-- [ ] **B04-T05.01 — Track A pilot measurement**
+- [x] **B04-T05.01 — Track A pilot measurement**
   - **Files:** `palladion-benchmark/scripts/score_track_a.py`, `palladion-benchmark/benchmark/eval/score_run.py`, `palladion-benchmark/tests/test_score_run.py`, `palladion-benchmark/docs/development/EVIDENCE_LOG.md`, `palladion-benchmark/docs/development/PROGRESS.md`.
   - **Depends:** B04-T04.03, B02-T07.02.
   - **Change:** Withdraw the three synthesis questions whose gold omits policies the question asks for (BADR-0026, BR29) through a recorded exclusion list the scorer applies, so every score states 97 of 100 questions; then run R0, R1, R2, R3 and R7a on the pilot (smoke partition only; the S-tier test partition stays unread), inspect failures by hand, and record scores with denominators; pilot results are excluded from held-out claims.
   - **Proof:** MEASUREMENT; BG-TRACKA, BG-METRIC; exact commands, counts and raw failures preserved; no superiority claim.
-  - **Evidence:** Not yet executed.
+  - **Evidence:** E-B04-005; pilot-c2 and pilot-c1 on the smoke split, 500 of 500 pairs each, both pass the validator, 97 questions scored after the BADR-0026 withdrawal; no ranking claim.
 
 ### Atomic tasks — B05
 

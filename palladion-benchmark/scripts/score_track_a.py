@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from collections.abc import Mapping
 from dataclasses import asdict
 from pathlib import Path
 
@@ -26,6 +27,23 @@ from benchmark.runner import RunnerError
 from benchmark.track_a import RUNNABLE_SPLITS
 
 PROJECT = Path(__file__).resolve().parents[1]
+WITHDRAWN = PROJECT / "configs" / "withdrawn_questions.json"
+
+
+def read_withdrawn(path: Path) -> dict[str, str]:
+    """Question ids the label audit found defective, with the reason (BADR-0026); empty when the file is absent."""
+    if not path.exists():
+        return {}
+    questions = json.loads(path.read_text(encoding="utf-8"))["questions"]
+    return {str(q): str(reason) for q, reason in questions.items()}
+
+
+def withdrawn_note(withdrawn: Mapping[str, str]) -> str:
+    if not withdrawn:
+        return ""
+    lines = [f"Withdrawn before scoring ({len(withdrawn)}; BADR-0026): every denominator below excludes them.", ""]
+    lines += [f"- {question}: {reason}" for question, reason in sorted(withdrawn.items())]
+    return "\n".join(lines) + "\n\n"
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -34,6 +52,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--k", type=int, required=True)
     parser.add_argument("--reference", default=None, help="arm to compare the others against")
+    parser.add_argument(
+        "--withdrawn", type=Path, default=WITHDRAWN, help="questions left out of the scores, with reasons"
+    )
     options = parser.parse_args(argv)
     try:
         config = json.loads((options.run_dir / "run_config.json").read_text(encoding="utf-8"))
@@ -51,14 +72,24 @@ def main(argv: list[str] | None = None) -> int:
             roles={p.principal_id: p.role_id for p in identity.principals},
             kinds=evaluation.slot_kinds,
             k=options.k,
+            withdrawn=read_withdrawn(options.withdrawn),
         )
         card = build_scorecard(
             score, metrics=RETRIEVAL_METRICS, stats=evaluation.statistics, reference=options.reference
         )
-        (options.run_dir / "scorecard.md").write_text(render_markdown(card), encoding="utf-8")
+        (options.run_dir / "scorecard.md").write_text(
+            withdrawn_note(score.withdrawn) + render_markdown(card), encoding="utf-8"
+        )
         (options.run_dir / "scores.json").write_text(
             json.dumps(
-                {"run_id": score.run_id, "k": score.k, "pairs": [asdict(p) for p in score.pairs]}, default=str, indent=1
+                {
+                    "run_id": score.run_id,
+                    "k": score.k,
+                    "withdrawn": score.withdrawn,
+                    "pairs": [asdict(p) for p in score.pairs],
+                },
+                default=str,
+                indent=1,
             ),
             encoding="utf-8",
         )

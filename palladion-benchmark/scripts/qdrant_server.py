@@ -181,13 +181,20 @@ def start(root: Path, port: int, *, detach: bool) -> int:
         return 0
 
 
+def process_executable(pid: int, proc_root: Path) -> Path | None:
+    """The executable behind a PID, or None when there is no such process or it is not ours to read."""
+    try:
+        return (proc_root / str(pid) / "exe").resolve(strict=True)
+    except (FileNotFoundError, PermissionError):
+        return None
+
+
 def recorded_process_alive(root: Path, proc_root: Path = Path("/proc")) -> bool:
     marker = root / "server.json"
     if not marker.exists():
         return False
     record = json.loads(marker.read_text(encoding="utf-8"))
-    executable = proc_root / str(int(record["pid"])) / "exe"
-    return executable.exists() and executable.resolve() == Path(record["executable"]).resolve()
+    return process_executable(int(record["pid"]), proc_root) == Path(record["executable"]).resolve()
 
 
 def stop(root: Path, proc_root: Path = Path("/proc")) -> str:
@@ -197,10 +204,10 @@ def stop(root: Path, proc_root: Path = Path("/proc")) -> str:
         return "no recorded server"
     record = json.loads(marker.read_text(encoding="utf-8"))
     pid = int(record["pid"])
-    executable = proc_root / str(pid) / "exe"
-    if not executable.exists():
+    executable = process_executable(pid, proc_root)
+    if executable is None:
         return "the recorded server is already stopped"
-    if executable.resolve() != Path(record["executable"]).resolve():
+    if executable != Path(record["executable"]).resolve():
         raise LauncherError("the recorded PID belongs to a different executable; refusing to stop it")
     os.kill(pid, signal.SIGTERM)
     return f"termination requested for recorded PID {pid}; storage preserved"

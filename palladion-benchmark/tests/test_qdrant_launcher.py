@@ -210,6 +210,28 @@ def test_stop_signals_only_the_recorded_matching_process(tmp_path: Path, monkeyp
     assert launcher.recorded_process_alive(tmp_path, tmp_path / "proc")
 
 
+def test_a_recorded_pid_whose_executable_cannot_be_read_is_not_our_server(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A reused PID owned by another user raises PermissionError on /proc/<pid>/exe; it must read as not ours."""
+    killed: list[int] = []
+    monkeypatch.setattr(launcher.os, "kill", lambda pid, sig: killed.append(pid))
+    (tmp_path / "proc" / "482").mkdir(parents=True)
+    (tmp_path / "proc" / "482" / "exe").write_bytes(b"x")
+    write_marker(tmp_path, 482, tmp_path / "qdrant")
+    real_resolve = Path.resolve
+
+    def deny(self: Path, strict: bool = False) -> Path:
+        if self.name == "exe":
+            raise PermissionError(13, "Permission denied", str(self))
+        return real_resolve(self, strict=strict)
+
+    monkeypatch.setattr(Path, "resolve", deny)
+    assert launcher.recorded_process_alive(tmp_path, tmp_path / "proc") is False
+    assert "already stopped" in launcher.stop(tmp_path, proc_root=tmp_path / "proc")
+    assert killed == []
+
+
 # --------------------------------------------------------------------------- the real server under WSL
 
 

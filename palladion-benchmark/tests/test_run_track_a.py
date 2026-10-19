@@ -183,17 +183,43 @@ def run_script(name: str, *args: str) -> subprocess.CompletedProcess[str]:
     )
 
 
-def test_the_command_line_runs_scores_and_validates_a_run(s_root: Path, tmp_path: Path, n: int) -> None:
+def none_withdrawn(tmp_path: Path) -> Path:
+    path = tmp_path / "none.json"
+    path.write_text(json.dumps({"questions": {}}), encoding="utf-8")
+    return path
+
+
+def test_the_shipped_withdrawal_list_names_three_questions_with_reasons() -> None:
+    data = json.loads((ROOT / "configs" / "withdrawn_questions.json").read_text(encoding="utf-8"))
+    assert data["decision"] == "BADR-0026" and len(data["questions"]) == 3
+    assert all(q.startswith("q-") and len(q) == 18 and reason for q, reason in data["questions"].items())
+
+
+def test_the_command_line_runs_scores_and_validates_a_run(
+    s_root: Path, tmp_path: Path, n: int, s_questions: tuple[GoldRecord, ...]
+) -> None:
     out = tmp_path / "cli-run"
     ran = run_script("run_track_a.py", "--root", str(s_root), "--split", "smoke", "--out", str(out),
                      "--run-id", "run-a-0003", "--arms", "R0", "--k", "10", "--budget", "4000")  # fmt: skip
     assert ran.returncode == 0, ran.stderr
     summary = json.loads(ran.stdout)
     assert summary["questions"] == n and summary["arms"] == ["R0"] and summary["status_counts"] == {"OK": n}
-    scored = run_script("score_track_a.py", "--run-dir", str(out), "--root", str(s_root), "--k", "10")
+    scored = run_script("score_track_a.py", "--run-dir", str(out), "--root", str(s_root), "--k", "10",
+                        "--withdrawn", str(none_withdrawn(tmp_path)))  # fmt: skip
     assert scored.returncode == 0, scored.stderr
     card = (out / "scorecard.md").read_text(encoding="utf-8")
     assert "Run states and severe failures" in card and "R0" in card and "NOT_RUN" not in card
+    assert not card.startswith("Withdrawn")
+    assert len(json.loads((out / "scores.json").read_text(encoding="utf-8"))["pairs"]) == n
+    first = s_questions[0].question_id
+    listed = tmp_path / "listed.json"
+    listed.write_text(json.dumps({"questions": {first: "a gold defect"}}), encoding="utf-8")
+    again = run_script("score_track_a.py", "--run-dir", str(out), "--root", str(s_root), "--k", "10",
+                       "--withdrawn", str(listed))  # fmt: skip
+    assert again.returncode == 0, again.stderr
+    assert (out / "scorecard.md").read_text(encoding="utf-8").startswith("Withdrawn before scoring (1; BADR-0026)")
+    pairs = json.loads((out / "scores.json").read_text(encoding="utf-8"))["pairs"]
+    assert len(pairs) == n - 1 and first not in {p["question_id"] for p in pairs}
     checked = run_script("validate_results.py", "--run-dir", str(out), "--root", str(s_root))
     assert checked.returncode == 0 and checked.stdout.startswith("PASS"), checked.stdout
 
@@ -205,7 +231,8 @@ def test_the_command_line_refuses_the_test_split_and_a_different_k(s_root: Path,
     ran = run_script("run_track_a.py", "--root", str(s_root), "--split", "smoke", "--out", str(tmp_path / "y"),
                      "--run-id", "run-a-0005", "--arms", "R0", "--k", "10")  # fmt: skip
     assert ran.returncode == 0, ran.stderr
-    wrong = run_script("score_track_a.py", "--run-dir", str(tmp_path / "y"), "--root", str(s_root), "--k", "5")
+    wrong = run_script("score_track_a.py", "--run-dir", str(tmp_path / "y"), "--root", str(s_root), "--k", "5",
+                       "--withdrawn", str(none_withdrawn(tmp_path)))  # fmt: skip
     assert wrong.returncode == 2 and "K=10" in wrong.stderr
 
 

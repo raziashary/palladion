@@ -143,7 +143,7 @@ class Run:
         cases = [RunnerCase(retrieval_request(q, limit=K, max_evidence_tokens=4000)) for q in self.questions]
         runner.run(cases, split="pilot")
 
-    def score(self, manifests: dict[str, Path] | None = None) -> RunScore:
+    def score(self, manifests: dict[str, Path] | None = None, withdrawn: dict[str, str] | None = None) -> RunScore:
         used = manifests or {arm: self.manifests[arm] for arm in {r.arm for r in RunLedger(self.ledger_path).records}}
         return score_run(
             ledger_path=self.ledger_path,
@@ -153,6 +153,7 @@ class Run:
             roles=self.roles,
             kinds=self.kinds,
             k=K,
+            withdrawn=withdrawn,
         )
 
 
@@ -215,6 +216,23 @@ def test_every_ledger_final_becomes_a_pair_with_a_state_or_a_score(run: Run) -> 
     assert all(p.status is RunStatus.OK and p.metrics for p in score.pairs)
     assert set(score.pairs[0].metrics) <= set(RETRIEVAL_METRICS)
     assert set(RETRIEVAL_METRICS) >= HARM_METRICS
+
+
+def test_a_withdrawn_question_leaves_the_scored_pairs_but_stays_on_the_result(run: Run) -> None:
+    run.execute()
+    gone = run.questions[0].question_id
+    score = run.score(withdrawn={gone: "gold defect"})
+    assert len(score.pairs) == len(CONTROL_IDS) * (len(run.questions) - 1)
+    assert gone not in {p.question_id for p in score.pairs}
+    assert score.withdrawn == {gone: "gold defect"}
+    assert gone in {r.question_id for r in score.ledger_records}, "it still ran; only the scoring leaves it out"
+    assert run.score().withdrawn == {} and len(run.score().pairs) == len(CONTROL_IDS) * len(run.questions)
+
+
+def test_a_withdrawn_id_that_is_not_in_the_gold_stops_the_scorer(run: Run) -> None:
+    run.execute()
+    with pytest.raises(ScoreRunError, match="not in the gold"):
+        run.score(withdrawn={"q-0000000000000000": "typo"})
 
 
 def test_a_non_completed_pair_is_a_state_with_no_values(run: Run) -> None:

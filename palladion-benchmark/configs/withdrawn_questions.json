@@ -1,0 +1,10 @@
+{
+  "decision": "BADR-0026",
+  "evidence": "E-B02-006",
+  "risk": "BR29",
+  "questions": {
+    "q-37408703671b8a8f": "synthesis question (120 hours or less): the gold lists only the clean-pool policies, five short of the policies the question asks for",
+    "q-69cbbe3aa40264ac": "synthesis question (168 hours or less): the gold lists only the clean-pool policies, eight short of the policies the question asks for",
+    "q-b52a2062a20fcada": "synthesis question (336 hours or less): the gold lists only the clean-pool policies, eight short of the policies the question asks for"
+  }
+}

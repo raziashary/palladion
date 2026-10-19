@@ -14,7 +14,7 @@ empty arm returns nothing, and the shuffled arm returns another question's gold 
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -76,6 +76,7 @@ class RunScore:
     gold_sha256: str
     pairs: tuple[PairScore, ...]
     ledger_records: tuple[LedgerRecord, ...]
+    withdrawn: Mapping[str, str] = field(default_factory=dict)
 
     def arm_pairs(self, arm: str) -> list[PairScore]:
         return [p for p in self.pairs if p.arm == arm]
@@ -230,12 +231,22 @@ def score_run(
     kinds: Mapping[str, str],
     k: int,
     run_id: str | None = None,
+    withdrawn: Mapping[str, str] | None = None,
 ) -> RunScore:
-    """Score every final record of a Track A run. Raises ``ScoreRunError`` (or a gold error) on any inconsistency."""
+    """Score every final record of a Track A run. Raises ``ScoreRunError`` (or a gold error) on any inconsistency.
+
+    ``withdrawn`` maps question ids found defective by the label audit to the reason. Those questions still ran (the
+    ledger must be complete for them) but leave the scored pairs; they are kept on the result so a report can state
+    the denominator and what was left out. An id that is not in the gold is an error, never silently ignored.
+    """
     if k < 1:
         raise ScoreRunError("K must be at least 1")
     gold_sha256 = gold_digest(gold_path)
     gold = {r.question_id: r for r in read_gold(gold_path)}
+    withdrawn = dict(withdrawn or {})
+    unknown = sorted(set(withdrawn) - set(gold))
+    if unknown:
+        raise ScoreRunError(f"withdrawn question ids are not in the gold: {unknown[:3]}")
     ledger = RunLedger(ledger_path)
     problems = verify_published(published_dir)
     if problems:
@@ -248,12 +259,19 @@ def score_run(
     for ledger_record in ledger.records:
         if not ledger_record.is_final:
             continue
+        if ledger_record.question_id in withdrawn:
+            continue
         record = gold[ledger_record.question_id]
         if record.principal_id not in roles:
             raise ScoreRunError(f"principal {record.principal_id} has no role in the identity manifest")
         pairs.append(score_pair(record, ledger_record, corpus, roles[record.principal_id], kinds, k))
     return RunScore(
-        resolved_run, k, gold_sha256, tuple(sorted(pairs, key=lambda p: (p.arm, p.question_id))), ledger.records
+        resolved_run,
+        k,
+        gold_sha256,
+        tuple(sorted(pairs, key=lambda p: (p.arm, p.question_id))),
+        ledger.records,
+        withdrawn,
     )
 
 
