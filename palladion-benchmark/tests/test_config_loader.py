@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import shutil
 from pathlib import Path
 
@@ -217,15 +218,15 @@ def test_one_floating_pin_among_pinned_ones_still_fails_confirmatory_mode(config
     text = path.read_text(encoding="utf-8").replace(
         '{kind: unpinned, value: "UNPINNED"}', f'{{kind: commit, value: "{COMMIT}"}}'
     )
-    path.write_text(
-        text.replace(
-            f'{{kind: commit, value: "{COMMIT}"}}, eligibility: all}}\n  - {{id: R1',
-            '{kind: unpinned, value: "UNPINNED"}, eligibility: all}\n  - {id: R1',
-            1,
-        ),
-        encoding="utf-8",
+    floated = re.sub(
+        r'(id: R4,.*?pin: )\{kind: commit, value: "' + COMMIT + r'"\}',
+        r'\1{kind: unpinned, value: "UNPINNED"}',
+        text,
+        count=1,
     )
-    with pytest.raises(ConfigError, match="R0"):
+    assert floated != text
+    path.write_text(floated, encoding="utf-8")
+    with pytest.raises(ConfigError, match="R4"):
         load_comparators_config(path, confirmatory=True)
 
 

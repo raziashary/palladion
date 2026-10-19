@@ -78,7 +78,9 @@ class DownArm(ControlArm):
         raise ArmUnavailable("the service is down")
 
 
-def write_manifest(path: Path, arm: str, gold_sha256: str, source_sha256: str) -> None:
+def write_manifest(
+    path: Path, arm: str, gold_sha256: str, source_sha256: str, retrieval_config: dict[str, int] | None = None
+) -> None:
     RunManifest(
         run_id=RUN_ID,
         track=Track.RETRIEVAL_ONLY,
@@ -92,7 +94,7 @@ def write_manifest(path: Path, arm: str, gold_sha256: str, source_sha256: str) -
         container_image_digest=None,
         method_version=None,
         model_versions={},
-        retrieval_config={},
+        retrieval_config={"k": K} if retrieval_config is None else retrieval_config,
         prompt_digest=None,
         hardware={},
         pricing_snapshot=None,
@@ -371,3 +373,25 @@ def test_a_manifest_written_against_another_corpus_stops_the_scorer(run: Run) ->
     write_manifest(other, CONTROL_EMPTY, run.gold_sha, "e" * 64)
     with pytest.raises(ScoreRunError, match="different published corpus"):
         run.score({**run.manifests, CONTROL_EMPTY: other})
+
+
+def test_a_run_scored_at_another_k_stops_the_scorer(run: Run) -> None:
+    run.execute()
+    with pytest.raises(ScoreRunError, match="scored at K=5"):
+        score_run(
+            ledger_path=run.ledger_path,
+            manifests=run.manifests,
+            gold_path=run.gold_path,
+            published_dir=run.published,
+            roles=run.roles,
+            kinds=run.kinds,
+            k=5,
+        )
+
+
+def test_a_manifest_that_does_not_record_k_stops_the_scorer(run: Run) -> None:
+    run.execute()
+    bare = run.tmp / "manifest-no-k.json"
+    write_manifest(bare, CONTROL_EMPTY, run.gold_sha, run.source_sha, retrieval_config={})
+    with pytest.raises(ScoreRunError, match="records K=None"):
+        run.score({**run.manifests, CONTROL_EMPTY: bare})

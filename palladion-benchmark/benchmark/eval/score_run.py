@@ -93,7 +93,7 @@ def gold_digest(gold_path: Path) -> str:
 
 
 def check_manifests(
-    ledger: RunLedger, manifests: Mapping[str, Path], gold_sha256: str, source_sha256: str, run_id: str | None
+    ledger: RunLedger, manifests: Mapping[str, Path], gold_sha256: str, source_sha256: str, k: int, run_id: str | None
 ) -> str:
     """Each arm's manifest must verify, name this run and this gold, and be the one the ledger recorded."""
     arms = {r.arm for r in ledger.records}
@@ -108,6 +108,9 @@ def check_manifests(
             raise ScoreRunError(f"manifest {path.name} names a different arm or run")
         if manifest.gold_manifest_sha256 != gold_sha256:
             raise ScoreRunError(f"manifest {path.name} was written against a different gold file")
+        recorded_k = manifest.retrieval_config.get("k")
+        if recorded_k != k:
+            raise ScoreRunError(f"manifest {path.name} records K={recorded_k}, but the run is scored at K={k}")
         if manifest.source_manifest_sha256 != source_sha256:
             raise ScoreRunError(f"manifest {path.name} was written against a different published corpus")
         recorded = {r.manifest_sha256 for r in ledger.records if r.arm == arm}
@@ -237,7 +240,7 @@ def score_run(
     problems = verify_published(published_dir)
     if problems:
         raise ScoreRunError(f"the published corpus does not match its manifest: {problems[:3]}")
-    resolved_run = check_manifests(ledger, manifests, gold_sha256, manifest_digest(published_dir), run_id)
+    resolved_run = check_manifests(ledger, manifests, gold_sha256, manifest_digest(published_dir), k, run_id)
     arms = sorted(manifests)
     ledger.verify_complete([(arm, q) for arm in arms for q in gold])
     corpus = PublishedCorpus.load(published_dir)

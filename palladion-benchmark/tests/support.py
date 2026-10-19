@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import hashlib
+import math
+import re
 from collections.abc import Sequence
 
 from benchmark.contracts import EvidenceCandidate
@@ -45,5 +48,21 @@ def oracle(corpus: PublishedCorpus, record: GoldRecord, first: int = 1) -> list[
     return [cited(corpus, c, first + i) for i, c in enumerate(picks)]
 
 
-def renumber(candidates: Sequence[EvidenceCandidate]) -> list[EvidenceCandidate]:
-    return [make_candidate(**{**c.to_dict(), "rank": i}) for i, c in enumerate(candidates, start=1)]
+class HashingEncoder:
+    """A deterministic stand-in embedding: hashed bag of words, unit length. For tests of the index, not of quality."""
+
+    dimension = 384
+    fingerprint = "hashing-encoder-test-only"
+
+    def _vector(self, text: str) -> list[float]:
+        vector = [0.0] * self.dimension
+        for word in re.findall(r"[^\W_]+", text.casefold()):
+            vector[int.from_bytes(hashlib.sha256(word.encode()).digest()[:4], "big") % self.dimension] += 1.0
+        norm = math.sqrt(sum(x * x for x in vector)) or 1.0
+        return [x / norm for x in vector]
+
+    def embed_documents(self, texts: Sequence[str]) -> list[list[float]]:
+        return [self._vector(t) for t in texts]
+
+    def embed_query(self, text: str) -> list[float]:
+        return self._vector(text)

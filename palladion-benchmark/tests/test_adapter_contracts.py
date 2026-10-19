@@ -520,7 +520,7 @@ def test_matrix_for_a_subset_and_unknown_arm() -> None:
 def test_unverified_capability_blocks_the_run_and_is_recorded_as_not_run() -> None:
     registry = default_registry()
     with pytest.raises(CapabilityNotVerified) as caught:
-        registry.require_runnable("R0", [Capability.ACL_FILTER])
+        registry.require_runnable("R4", [Capability.ACL_FILTER])
     assert classify_exception(caught.value)[0] is RunStatus.NOT_RUN
 
 

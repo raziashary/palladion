@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import shutil
+import subprocess
+from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
@@ -57,3 +60,32 @@ def s_published(tmp_path_factory: pytest.TempPathFactory, s_world: World, s_corp
 @pytest.fixture(scope="session")
 def s_published_corpus(s_published: Path) -> PublishedCorpus:
     return PublishedCorpus.load(s_published)
+
+
+QDRANT_URL = "http://127.0.0.1:17333"
+
+
+def _wsl_ubuntu() -> bool:
+    if shutil.which("wsl") is None:
+        return False
+    listing = subprocess.run(["wsl", "-l", "-q"], capture_output=True, text=True, check=False).stdout
+    return "Ubuntu" in listing.replace("\x00", "")
+
+
+@pytest.fixture(scope="module")
+def qdrant_server() -> Iterator[str]:
+    """The benchmark's own Qdrant under WSL for the tests of one module; stopped when the module ends."""
+    if not _wsl_ubuntu():
+        pytest.skip("WSL Ubuntu is not available")
+    script = str(Path(__file__).resolve().parents[1] / "scripts" / "qdrant_server.py")
+
+    def run(*args: str) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(["python", script, *args], capture_output=True, text=True, check=False, timeout=180)
+
+    run("stop")
+    started = run("start", "--detach")
+    assert started.returncode == 0, started.stderr
+    try:
+        yield QDRANT_URL
+    finally:
+        run("stop")

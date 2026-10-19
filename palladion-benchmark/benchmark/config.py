@@ -11,7 +11,7 @@ import hashlib
 import json
 import re
 from collections.abc import Mapping
-from dataclasses import dataclass, fields, is_dataclass
+from dataclasses import dataclass, field, fields, is_dataclass
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -25,6 +25,7 @@ APPROVED_MODELS = ("qwen/qwen3.8-27b", "openai/gpt-oss-120b", "openai/gpt-oss-20
 
 _FLOATING_WORDS = frozenset({"latest", "main", "master", "head", "stable", "nightly", "dev", "current"})
 _COMMIT = re.compile(r"[0-9a-f]{40}")
+_SHA256 = re.compile(r"[0-9a-f]{64}")
 _VERSION = re.compile(r"\d+(?:\.\d+){1,3}(?:[A-Za-z0-9.+_-]*)")
 _MODEL = re.compile(r"[A-Za-z0-9][A-Za-z0-9._/-]{0,100}")
 _IMAGE = re.compile(r"[a-z0-9][a-z0-9./_-]*:v?\d[A-Za-z0-9._-]*")
@@ -155,10 +156,18 @@ class Pin:
 
     kind: str
     value: str
+    revision: str | None = None  # a model's 40-character commit in its repository
+    digests: Mapping[str, str] = field(default_factory=dict)  # SHA-256 of each file the arm loads
 
     def __post_init__(self) -> None:
         if self.kind not in ("commit", "version", "model", "image_tag", "unpinned"):
             raise ConfigError("pin kind is not recognised")
+        if self.revision is not None and not _COMMIT.fullmatch(self.revision):
+            raise ConfigError("a pin revision is a 40-character lower-case commit")
+        if not all(_SHA256.fullmatch(d) for d in self.digests.values()):
+            raise ConfigError("a pin digest is a 64-character lower-case SHA-256")
+        if self.kind == "unpinned" and (self.revision or self.digests):
+            raise ConfigError("an unpinned entry carries no revision or digests")
         if not isinstance(self.value, str):
             raise ConfigError("pin value must be a quoted string (an unquoted 3.10 would load as the float 3.1)")
         if self.kind == "unpinned":
@@ -177,12 +186,27 @@ class Pin:
     def is_pinned(self) -> bool:
         return self.kind != "unpinned"
 
+    @property
+    def is_verifiable(self) -> bool:
+        """A pin the loader can check: a model needs its revision and file digests, a binary its digests."""
+        if not self.is_pinned:
+            return False
+        if self.kind == "model":
+            return self.revision is not None and bool(self.digests)
+        return True
+
 
 def _pin(reader: _Reader) -> Pin:
     kind = reader.text("kind")
     value = reader._get("value")
+    revision = reader.text("revision") if "revision" in reader.data else None
+    digests: dict[str, str] = {}
+    if "digests" in reader.data:
+        digest_reader = reader.sub("digests")
+        digests = {name: digest_reader.text(name) for name in sorted(digest_reader.data)}
+        digest_reader.finish()
     reader.finish()
-    return Pin(kind, value)
+    return Pin(kind, value, revision, digests)
 
 
 # --------------------------------------------------------------------------- benchmark.yaml
@@ -396,6 +420,9 @@ class ComparatorsConfig:
         floating = [name for name, pin in pins if not pin.is_pinned]
         if floating:
             raise ConfigError(f"confirmatory mode refuses unpinned entries: {', '.join(floating)}")
+        unverifiable = [name for name, pin in self.shared_models.items() if not pin.is_verifiable]
+        if unverifiable:
+            raise ConfigError(f"confirmatory mode needs a revision and file digests for: {', '.join(unverifiable)}")
 
 
 def _track(value: str) -> Track:

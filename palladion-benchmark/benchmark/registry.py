@@ -145,6 +145,19 @@ def _unverified(phase: str) -> tuple[Support, str]:
     return Support.UNVERIFIED, f"behavior is verified when the adapter is built ({phase})"
 
 
+def _harness_arm(test_file: str) -> Mapping[str, tuple[Support, str]]:
+    """Capabilities of an arm built on the shared Track A harness (BADR-0025), each proven in ``test_file``."""
+    return {
+        "native_citation": (
+            Support.UNSUPPORTED,
+            "provenance comes from the harness chunker, not from the method itself",
+        ),
+        "acl_filter": (Support.SUPPORTED, f"the neutral filter acts inside ranking and is tested in {test_file}"),
+        "temporal_filter": (Support.UNSUPPORTED, "no as-of selection; the method ranks text and the clock is not used"),
+        "offline_cost": (Support.SUPPORTED, f"index_stats reports build time and size, tested in {test_file}"),
+    }
+
+
 def _arm(
     arm_id: str,
     name: str,
@@ -183,10 +196,10 @@ def default_registry() -> ArmRegistry:
     )
     registry = ArmRegistry()
     for spec in (
-        _arm("R0", "BM25 lexical", (a,), "B04"),
-        _arm("R1", "Dense", (a,), "B04"),
-        _arm("R2", "Hybrid RRF", (a, b), "B04"),
-        _arm("R3", "Hybrid plus reranker", (a, b), "B04"),
+        _arm("R0", "BM25 lexical", (a,), "B04", overrides=_harness_arm("tests/test_bm25.py")),
+        _arm("R1", "Dense", (a,), "B04", overrides=_harness_arm("tests/test_dense.py")),
+        _arm("R2", "Hybrid RRF", (a, b), "B04", overrides=_harness_arm("tests/test_hybrid.py")),
+        _arm("R3", "Hybrid plus reranker", (a, b), "B04", overrides=_harness_arm("tests/test_hybrid.py")),
         _arm("R4", "HippoRAG 2", (a,), "B06", graph=graph_by_definition),
         _arm("R5", "GraphRAG Local", (a,), "B06", graph=graph_by_definition),
         _arm("R6", "LightRAG", (a,), "B06", graph=graph_by_definition),

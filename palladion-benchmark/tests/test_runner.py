@@ -639,7 +639,7 @@ def test_run_fails_when_the_ledger_holds_a_final_for_a_pair_outside_the_plan(tmp
 
 def test_the_registry_blocks_arms_with_unverified_capabilities_before_any_call(tmp_path: Path) -> None:
     arm = Good()
-    world = build(tmp_path, {"R0": arm})
+    world = build(tmp_path, {"R4": arm})
     world.runner.required_capabilities = (Capability.ACL_FILTER,)
     summary = world.run(2)
     assert arm.calls == 0 and summary.status_counts == {"NOT_RUN": 2}
@@ -781,14 +781,14 @@ def test_an_over_budget_self_report_is_flagged_in_the_ledger_and_not_clamped(tmp
 
 def test_a_no_call_final_after_an_interrupted_attempt_resumes_with_the_next_attempt_number(tmp_path: Path) -> None:
     arm = Good()
-    world = build(tmp_path, {"R0": arm})
+    world = build(tmp_path, {"R4": arm})
     world.runner.required_capabilities = (Capability.ACL_FILTER,)  # the registry will block this arm
-    digest = read_digest(tmp_path / "manifest-R0.json")
+    digest = read_digest(tmp_path / "manifest-R4.json")
     world.ledger.append(
         LedgerRecord(
             RUN_ID,
             digest,
-            "R0",
+            "R4",
             qid(1),
             1,
             False,
@@ -803,7 +803,7 @@ def test_a_no_call_final_after_an_interrupted_attempt_resumes_with_the_next_atte
         )
     )
     world.run(1)
-    records = [r for r in world.ledger.records if r.arm == "R0"]
+    records = [r for r in world.ledger.records if r.arm == "R4"]
     assert [(r.attempt, r.is_final) for r in records] == [(1, False), (2, True)]
     assert records[1].initial_status is RunStatus.INVALID_RUN and arm.calls == 0
 
