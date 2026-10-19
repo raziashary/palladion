@@ -1,0 +1,371 @@
+"""R7a: Palladion's retrieval over its HTTP API (B04-T03.01, B04-T03.02, BADR-0002, BADR-0025).
+
+Nothing here imports Palladion. The arm sends authenticated requests to a running Palladion (the isolated runtime of
+``scripts/palladion_runtime.py``) and maps what comes back onto the published corpus.
+
+What the arm declares rather than hides:
+
+* Palladion has no role-level access control that can express the benchmark's 17 principals, so every benchmark
+  principal is mapped to one Palladion reader in one case (``PrincipalMap``). Under condition C2 the neutral filter is
+  applied to Palladion's output (after its ranking), and the number of dropped candidates is recorded.
+* Palladion's search takes at most 12 results, no token budget and no clock. K above 12 is refused as unsupported, the
+  evidence budget is applied on the harness side, and validity follows Palladion's wall clock (BR22).
+* A response is a run state when it is not a usable answer: an unreachable server, an index that cannot be read, or a
+  reranked request on a server without the reranker is ``NOT_RUN``; a partial index is a transient fault. An empty
+  list is returned only when Palladion itself reports an unknown identifier or finds nothing.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import time
+from collections.abc import Mapping
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, Literal
+
+import httpx
+
+from benchmark.adapters.common import (
+    AccessFilter,
+    AdapterError,
+    Condition,
+    PublishedView,
+    count_words,
+    enforce_budget,
+)
+from benchmark.contracts import (
+    ArmUnavailable,
+    CapabilityUnsupported,
+    ContractError,
+    EvidenceCandidate,
+    RetrievalRequest,
+    TransientInfrastructureError,
+)
+from benchmark.fixtures.manifest import ManifestRecord
+
+Mode = Literal["lexical", "dense", "hybrid", "reranked"]
+MAX_PALLADION_LIMIT = 12
+MAX_UPLOAD_CHARACTERS = 65536
+DEFAULT_VALID_FROM = "2026-01-01T00:00:00Z"
+READER = "reader-a"
+UPLOADER = "uploader-a"
+APPROVER = "admin-a"
+CASE = "case-42"
+UNAVAILABLE_WARNINGS = frozenset({"INDEX_UNAVAILABLE", "INDEX_MANIFEST_MISMATCH"})
+RETRYABLE_WARNINGS = frozenset({"ACCEPTED_BUT_UNINDEXED"})
+APPROVE_STATES = frozenset({"approved", "retired", "non_normative", "withdrawn"})
+REVOKE_STATES = frozenset({"withdrawn"})
+TIMEOUT_SECONDS = 60.0
+TABLE_FILE = "palladion_revisions.json"
+
+
+@dataclass(frozen=True)
+class PrincipalMap:
+    """Which Palladion principal and case answer for a benchmark principal. Default: one reader in one case."""
+
+    reader: str = READER
+    case_id: str = CASE
+    overrides: Mapping[str, tuple[str, str]] = field(default_factory=dict)
+
+    def resolve(self, benchmark_principal: str) -> tuple[str, str]:
+        return self.overrides.get(benchmark_principal, (self.reader, self.case_id))
+
+
+@dataclass(frozen=True)
+class LoadReport:
+    uploaded: int
+    approved: int
+    revoked: int
+    left_as_draft: int
+    revisions: Mapping[str, str]  # published document id -> Palladion revision id
+    states: Mapping[str, str]  # published document id -> state it was given in Palladion
+
+
+def utf8_to_character_offsets(text: str, start_byte: int, end_byte: int) -> tuple[int, int]:
+    """Palladion reports byte offsets into the uploaded UTF-8; the locator grammar counts characters."""
+    raw = text.encode("utf-8")
+    if not 0 <= start_byte <= end_byte <= len(raw):
+        raise ContractError("a Palladion passage lies outside the document it names")
+    return len(raw[:start_byte].decode("utf-8")), len(raw[:end_byte].decode("utf-8"))
+
+
+class PalladionArm:
+    """The R7a arm over a running Palladion. ``tokens`` maps Palladion principal ids to bearer tokens."""
+
+    arm_id = "R7a"
+
+    def __init__(
+        self,
+        view: PublishedView,
+        base_url: str,
+        tokens: Mapping[str, str],
+        *,
+        mode: Mode = "hybrid",
+        condition: Condition = Condition.C2,
+        principals: PrincipalMap | None = None,
+        client: httpx.Client | None = None,
+    ) -> None:
+        if mode not in ("lexical", "dense", "hybrid", "reranked"):
+            raise AdapterError("unknown Palladion search mode")
+        self.view = view
+        self.base_url = base_url.rstrip("/")
+        self._tokens = dict(tokens)
+        self.mode: Mode = mode
+        self.condition = condition
+        self.principals = principals or PrincipalMap()
+        self.access = AccessFilter(view, condition)
+        self._client = client or httpx.Client(timeout=TIMEOUT_SECONDS)
+        self._owns_client = client is None
+        self._revisions: dict[str, str] = {}  # Palladion revision id -> published document id
+        self._table_states: dict[str, str] = {}  # published document id -> state it was given in Palladion
+        self._stats: dict[str, Any] = {}
+        self.last_notes: dict[str, Any] = {}
+
+    # -- plumbing --------------------------------------------------------------------------------
+
+    def _call(self, method: str, path: str, principal: str, body: dict[str, Any] | None = None) -> httpx.Response:
+        if principal not in self._tokens:
+            raise AdapterError(f"no token for Palladion principal {principal}")
+        try:
+            return self._client.request(
+                method, self.base_url + path, json=body, headers={"Authorization": f"Bearer {self._tokens[principal]}"}
+            )
+        except httpx.TimeoutException as exc:
+            raise TimeoutError("Palladion did not answer in time") from exc
+        except httpx.TransportError as exc:
+            raise ArmUnavailable("Palladion is not reachable") from exc
+
+    def close(self) -> None:
+        if self._owns_client:
+            self._client.close()
+
+    def describe(self) -> dict[str, Any]:
+        return {
+            "arm": self.arm_id,
+            "mode": self.mode,
+            "condition": self.condition.value,
+            "principal_map": {"reader": self.principals.reader, "case": self.principals.case_id},
+            "max_limit": MAX_PALLADION_LIMIT,
+            "acl": "harness post-filter on Palladion output (C2); Palladion's own role ACL is not exercised",
+            "clock": "Palladion wall clock; no as-of parameter (BR22)",
+            "ingestion": "native: each document uploaded whole and chunked by Palladion",
+        }
+
+    # -- loading (B04-T03.02) --------------------------------------------------------------------
+
+    def load_corpus(self, table_path: Path) -> LoadReport:
+        """Upload every published document as the uploader and approve it as the distinct admin where its state allows.
+
+        draft and unapproved_proposal stay unapproved; withdrawn documents are approved and then revoked. The
+        revision table is written next to the index so a later run maps passages back to documents.
+        """
+        if table_path.exists():
+            raise AdapterError("the corpus is already loaded; verify it or use a fresh runtime")
+        revisions: dict[str, str] = {}
+        states: dict[str, str] = {}
+        approved = revoked = 0
+        for document in self.view.documents():
+            record = document.record
+            if len(document.text) > MAX_UPLOAD_CHARACTERS:
+                raise AdapterError(f"{record.doc_id} exceeds Palladion's upload limit; split it and record how")
+            revision = self._upload(record, document.text)
+            revisions[record.doc_id] = revision
+            if record.registry_state not in APPROVE_STATES:
+                states[record.doc_id] = "DRAFT"
+                continue
+            self._expect(self._call("POST", f"/sources/{revision}/approve", APPROVER), 200, "approve", record.doc_id)
+            approved += 1
+            states[record.doc_id] = "APPROVED"
+            if record.registry_state in REVOKE_STATES:
+                self._expect(self._call("POST", f"/sources/{revision}/revoke", APPROVER), 200, "revoke", record.doc_id)
+                revoked += 1
+                states[record.doc_id] = "REVOKED"
+        table_path.write_text(json.dumps({"revisions": revisions, "states": states}, sort_keys=True), encoding="utf-8")
+        self._revisions = {revision: doc for doc, revision in revisions.items()}
+        self._table_states = states
+        return LoadReport(len(revisions), approved, revoked, len(revisions) - approved, revisions, states)
+
+    def map_revisions(self, revision_to_document: Mapping[str, str]) -> None:
+        """Tell the arm which Palladion revision holds which published document."""
+        self._revisions = dict(revision_to_document)
+
+    def read_table(self, table_path: Path) -> None:
+        data = json.loads(table_path.read_text(encoding="utf-8"))
+        self.map_revisions({revision: doc for doc, revision in data["revisions"].items()})
+        self._table_states = dict(data["states"])
+
+    def _upload(self, record: ManifestRecord, text: str) -> str:
+        body = {
+            "case_id": self.principals.case_id,
+            "family_id": record.family_id or record.doc_id,
+            "filename": f"{record.doc_id}.md",
+            "mime_type": "text/markdown",
+            "content": text,
+            "owner_id": UPLOADER,
+            "valid_from": record.valid_from or DEFAULT_VALID_FROM,
+            "valid_to": record.valid_to,
+            "sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
+        }
+        response = self._call("POST", "/sources", UPLOADER, body)
+        self._expect(response, 201, "upload", record.doc_id)
+        revision = str(response.json()["revision_id"])
+        return revision
+
+    @staticmethod
+    def _expect(response: httpx.Response, status: int, action: str, doc_id: str) -> None:
+        if response.status_code != status:
+            raise AdapterError(f"Palladion refused to {action} {doc_id} (HTTP {response.status_code})")
+
+    def verify_load(self, sample: int = 25) -> dict[str, Any]:
+        """Check the load by reading it back: table completeness, index coverage warnings, passage integrity.
+
+        Integrity means a returned passage's text and hash equal the published bytes at the offsets it reports.
+        Reachability of a sampled document by its own title is measured and reported, not required (ranking is not
+        loading). Any mismatch of counts or bytes raises.
+        """
+        if not self._revisions:
+            raise AdapterError("no revision table: load the corpus first")
+        documents = {r.doc_id for r in self.view.records}
+        if set(self._revisions.values()) != documents:
+            raise AdapterError("the revision table does not cover exactly the published corpus")
+        health = self._call("GET", f"/index-health?case_id={self.principals.case_id}", self.principals.reader)
+        self._expect(health, 200, "read index health for", self.principals.case_id)
+        coverage = health.json()
+        blocking = sorted(set(coverage["warnings"]) & (UNAVAILABLE_WARNINGS | RETRYABLE_WARNINGS))
+        if blocking:
+            raise AdapterError(f"Palladion's index reports {blocking}")
+        step = max(1, len(self.view.records) // sample)
+        probes = list(self.view.records)[::step][:sample]
+        reached = checked = 0
+        for record in probes:
+            if self._table_state(record.doc_id) != "APPROVED":
+                continue
+            principal = self.view.identity.principals[0].principal_id
+            request = RetrievalRequest(
+                "q-0000000000000000", record.title, principal, "load-check", "2026-10-18T03:00:00Z", None, {},
+                MAX_PALLADION_LIMIT, 100000,
+            )  # fmt: skip
+            hits = self._search(request, "lexical")
+            checked += 1
+            reached += any(h.source_document_id == record.doc_id for h in hits)
+        return {
+            "documents": len(documents),
+            "index_warnings": coverage["warnings"],
+            "sampled": checked,
+            "reachable_by_title": reached,
+        }
+
+    def _table_state(self, doc_id: str) -> str:
+        return self._table_states.get(doc_id, "APPROVED")
+
+    # -- retrieval (B04-T03.01) ------------------------------------------------------------------
+
+    def build_index(self, source_manifest_uri: str, index_namespace: str) -> None:
+        """Palladion indexes at upload and approval; this records the namespace and refuses a different corpus."""
+        if Path(source_manifest_uri).resolve() != self.view.root.resolve():
+            raise AdapterError("the index is built from the published directory this arm was created with")
+        started = time.perf_counter()
+        self._stats = {
+            "arm": self.arm_id,
+            "namespace": index_namespace,
+            "documents": len(self.view.records),
+            "mapped_revisions": len(self._revisions),
+            "mode": self.mode,
+            "condition": self.condition.value,
+            "build_ms": (time.perf_counter() - started) * 1000,
+            "note": "indexing happened at load time inside Palladion; build_ms is the check only",
+        }
+
+    def index_stats(self) -> dict[str, Any]:
+        return dict(self._stats)
+
+    def retrieve(self, request: RetrievalRequest) -> list[EvidenceCandidate]:
+        if request.limit > MAX_PALLADION_LIMIT:
+            raise CapabilityUnsupported(f"Palladion returns at most {MAX_PALLADION_LIMIT} passages; K={request.limit}")
+        if not self._revisions:
+            raise AdapterError("no revision table: load the corpus first")
+        found = self._search(request, self.mode)
+        shown = [c for c in found if self._allowed(c, request.principal_id)]
+        dropped = len(found) - len(shown)
+        renumbered = [EvidenceCandidate.from_dict({**c.to_dict(), "rank": i}) for i, c in enumerate(shown, start=1)]
+        bundle = enforce_budget(renumbered, request.max_evidence_tokens)
+        self.last_notes = {
+            **self.last_notes,
+            "filtered_after_ranking": dropped,
+            "truncated": bundle.truncated,
+            "dropped": bundle.dropped,
+            "cut_words": bundle.cut_words,
+            "words": bundle.words,
+        }
+        return list(bundle.kept)
+
+    def _allowed(self, candidate: EvidenceCandidate, principal_id: str) -> bool:
+        if candidate.source_document_id is None:
+            return self.condition is Condition.C1
+        return self.access.allows(principal_id, candidate.source_document_id)
+
+    def _search(self, request: RetrievalRequest, mode: Mode) -> list[EvidenceCandidate]:
+        principal, case_id = self.principals.resolve(request.principal_id)
+        response = self._call(
+            "POST",
+            "/search",
+            principal,
+            {"case_id": case_id, "query": request.query, "mode": mode, "limit": request.limit},
+        )
+        if response.status_code >= 500:
+            raise TransientInfrastructureError(f"Palladion answered HTTP {response.status_code}")
+        if response.status_code != 200:
+            raise ContractError(f"Palladion refused the search (HTTP {response.status_code})")
+        body = response.json()
+        warnings = set(body.get("warnings", ()))
+        if warnings & UNAVAILABLE_WARNINGS or body.get("status") == "UNAVAILABLE":
+            raise ArmUnavailable("Palladion's index is unavailable")
+        if mode == "reranked" and "RERANK_UNAVAILABLE" in warnings:
+            raise ArmUnavailable("Palladion was asked to rerank but its reranker is unavailable")
+        if warnings & RETRYABLE_WARNINGS:
+            raise TransientInfrastructureError("Palladion reports accepted sources that are not indexed")
+        self.last_notes = {"palladion_status": body.get("status"), "palladion_warnings": sorted(warnings)}
+        return [self._candidate(passage, rank) for rank, passage in enumerate(body["passages"], start=1)]
+
+    def _candidate(self, passage: Mapping[str, Any], rank: int) -> EvidenceCandidate:
+        doc_id = self._revisions.get(str(passage["revision_id"]))
+        meta: dict[str, Any] = {
+            "citation_id": passage["citation_id"],
+            "revision_id": passage["revision_id"],
+            "section_id": passage["section_id"],
+            "words": count_words(str(passage["text"])),
+        }
+        if doc_id is None:
+            return EvidenceCandidate(
+                None,
+                None,
+                str(passage["text"]),
+                rank,
+                None,
+                f"palladion_{self.mode}",
+                (),
+                False,  # without a published id there is nothing a native citation could point to
+                {**meta, "foreign": True},
+            )
+        document = self.view.document(doc_id)
+        start, end = utf8_to_character_offsets(document.text, int(passage["start_byte"]), int(passage["end_byte"]))
+        if (
+            document.text[start:end] != passage["text"]
+            or hashlib.sha256(str(passage["text"]).encode()).hexdigest() != passage["sha256"]
+        ):
+            raise ContractError(f"a Palladion passage differs from the published bytes of {doc_id}")
+        return EvidenceCandidate(
+            source_version_id=document.record.version_id,
+            locator=f"chars:{start}-{end}",
+            content=str(passage["text"]),
+            rank=rank,
+            native_score=None,
+            retrieval_channel=f"palladion_{self.mode}",
+            evidence_path=(),
+            native_citation_supported=True,
+            additional_metadata=meta,
+            source_document_id=doc_id,
+            source_sha256=document.record.sha256,
+        )
