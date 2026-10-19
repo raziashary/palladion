@@ -9,8 +9,10 @@ from typing import Literal, Protocol, Sequence
 from evidence_agent.core.errors import DependencyUnavailable, PermissionDenied, ResourceConflict
 from evidence_agent.core.models import Principal, VersionedModel
 from evidence_agent.core.retrieval import Chunk, SearchIndex
+from evidence_agent.graph.relations import GraphPath
 from evidence_agent.retrieval.coverage import Coverage, source_coverage
 from evidence_agent.retrieval.evidence import EvidenceResolver, Passage
+from evidence_agent.retrieval.graph_expand import GraphExpansion
 from evidence_agent.storage.catalog import Catalog
 from evidence_agent.storage.exact import ExactIndex
 from evidence_agent.telemetry.audit import AuditLog
@@ -32,20 +34,24 @@ class SearchResult(VersionedModel):
     warnings: tuple[str, ...]
     stage_counts: dict[str, int]
     elapsed_ms: float
+    graph_paths: tuple[GraphPath, ...] = ()
 
 
 class HybridSearch:
-    def __init__(self, catalog: Catalog, index: SearchIndex, ranker: Ranker | None = None) -> None:
+    def __init__(self, catalog: Catalog, index: SearchIndex, ranker: Ranker | None = None,
+                 graph: GraphExpansion | None = None) -> None:
         self.catalog = catalog
         self.registry = catalog.registry
         self.index = index
         self.resolver = EvidenceResolver(catalog, index.fingerprint)
         self.exact = ExactIndex(catalog)
         self.ranker = ranker
+        self.graph = graph
 
     def search(self, principal: Principal, case_id: str, query: str, *,
                mode: Literal["lexical", "dense", "hybrid", "reranked"] = "hybrid",
-               limit: int = 12, as_of: datetime | None = None) -> SearchResult:
+               limit: int = 12, as_of: datetime | None = None,
+               require_graph: bool = False) -> SearchResult:
         if not query.strip() or len(query) > 2048 or not 1 <= limit <= 12:
             raise ValueError("Search bounds exceeded")
         self.registry.access.authorize(principal, tenant_id=principal.tenant_id,
@@ -103,6 +109,24 @@ class HybridSearch:
                     except (PermissionDenied, ResourceConflict):
                         excluded += 1
             selected = list(expanded.values())[:limit]
+        graph_paths: tuple[GraphPath,...] = ()
+        if self.graph is not None:
+            try:
+                expansion=self.graph.expand(self.resolver,principal,case_id,tuple(selected),as_of=as_of)
+                # Preserve the primary anchor; source-linked neighbors get the next slots.
+                # This explicit treatment ordering is measured against unchanged B2.
+                combined=selected[:1]+list(expansion.passages)+selected[1:]
+                selected=list({p.citation_id:p for p in combined}.values())[:limit]
+                returned={p.citation_id for p in selected}
+                graph_paths=tuple(p for p in expansion.paths if p.target_chunk_id in returned)
+                if expansion.bounded:
+                    warnings.append("GRAPH_BOUNDED")
+            except (DependencyUnavailable,PermissionDenied,ResourceConflict):
+                warnings.append("GRAPH_UNAVAILABLE")
+        elif require_graph:
+            warnings.append("GRAPH_UNAVAILABLE")
+        if require_graph and "GRAPH_UNAVAILABLE" in warnings:
+            warnings.append("GRAPH_REQUIRED_UNAVAILABLE")
         # Recheck again at release, including references fetched before a mid-request revocation.
         selected = [self.resolver.resolve(principal, case_id, p.citation_id,
                                          generation=p.generation, as_of=as_of) for p in selected]
@@ -110,7 +134,7 @@ class HybridSearch:
         warnings.extend(coverage.warnings)
         elapsed = (time.perf_counter() - started) * 1000
         stages = {"discovered": len(candidates), "resolved": resolved_count,
-                  "reranked": len(ordered), "expanded": len(selected)}
+                  "reranked": len(ordered), "expanded": len(selected), "graph_paths":len(graph_paths)}
         trace_id = f"retrieval_{uuid.uuid4().hex}"
         AuditLog(self.registry).append(principal, trace_id, {
             "generations": tuple(sorted({passage.generation for passage in selected})),
@@ -118,12 +142,14 @@ class HybridSearch:
             "mode": mode, "candidate_count": len(candidates), "returned_count": len(selected),
             "excluded_count": excluded, "elapsed_ms": elapsed, "stage_counts": stages,
             "failure": "INDEX_UNAVAILABLE" if "INDEX_UNAVAILABLE" in warnings else
-                       "RERANK_UNAVAILABLE" if "RERANK_UNAVAILABLE" in warnings else "NONE",
+                       "RERANK_UNAVAILABLE" if "RERANK_UNAVAILABLE" in warnings else
+                       "GRAPH_UNAVAILABLE" if "GRAPH_UNAVAILABLE" in warnings else "NONE",
             "index_coverage": coverage.index_coverage,
         })
         status: Literal["OK", "DEGRADED", "UNAVAILABLE"] = "OK"
         if warnings:
-            status = "UNAVAILABLE" if not selected and "INDEX_UNAVAILABLE" in warnings else "DEGRADED"
+            status = "UNAVAILABLE" if (not selected and "INDEX_UNAVAILABLE" in warnings or
+                                        "GRAPH_REQUIRED_UNAVAILABLE" in warnings) else "DEGRADED"
         return SearchResult(trace_id=trace_id, status=status, mode=mode, passages=tuple(selected),
                             coverage=coverage, warnings=tuple(dict.fromkeys(warnings)),
-                            stage_counts=stages, elapsed_ms=elapsed)
+                            stage_counts=stages, elapsed_ms=elapsed,graph_paths=graph_paths)

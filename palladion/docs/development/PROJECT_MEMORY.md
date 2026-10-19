@@ -1,5 +1,7 @@
 # Palladion working memory
 
+Current checkpoint2026-10-19: P06 published6444345; P07 graph and owner-added automatic memory implementation, consumer proof and sole LunaMedium end-review resolution verified (E-P07-001/002). ADR0063–0066 owner approvals preserved. Graph stays off after zero incremental recoveries. P08/UI/benchmark edits and another main push remain excluded. Older phase snapshots below are historical.
+
 Updated 2026-10-19. Navigation aid only; user/vision/source/ADRs retain authority.
 
 ## Stable facts
@@ -37,106 +39,20 @@ Read root AGENTS → [master plan task protocol](MASTER_DEV_PLAN.md#task-reading
 
 ## Current state and next action
 
-P06 DONE at E-P06-001/E-P06-002: all six atomic cards, approved critic/status/pacing
-contracts, actual source/installed/API consumers and sole Luna Medium end-review
-resolution are verified. Source294PASS plus13 actual-Qdrant cases pass (12 in the sweep,
-one isolated after a setup connection-abort) =307 disjoint checks. Installed294 and one
-installed real-Qdrant/API case pass as overlapping artifact checks; all50 packaged files
-match the final wheel. Ruff, strict mypy59, dependency81+4controls, foundation CLI and
-final document gates pass. Original failed/skipped runs remain evidence, not PASS.
+P07 DONE, all11cards verified at E-P07-001/002; verified checkpoint is recorded in scoped git history. P06 published6444345. Foreign benchmark commits advanced shared main during this phase; preserve their history/dirt and detached benchmark artifact worktree. No P07 main push or P08/UI/enterprise authorization.
 
-Post-fix real20B exact recoveryPASS39.827s (2main/2critic/1search, explicit cap2) and
-serialized default-budget MODEL-draft pathPASS37.089s (4main/1critic/2tools) release the
-full exception with original citation/timeline readback and no verification errors.
-Gate qualifies a changed final proposal or unresolved CHALLENGE while preserving
-canonical facts; unchanged current PASS remains eligible for SUPPORTED. Model review
-is advisory, not semantic authority or payment permission.
+One LunaMedium start adversary read the complete blueprint and re-reviewed owner-added memory scope. One LunaMedium end reviewer independently read all18sections/I01–I15, source, all12developmentdocs and evidence. Three current-facing docs contradictions fixed and same reviewer confirmed resolved; graph stale-generation exposure suspicion refuted by active-generation READY checks. No confirmed source defect remained. Accepted ADR0063–66 cover graph/v5/admin ACL/isolated WSL and memory/v6/private USER semantics/explicit sessions/primary deterministic PathA. ADR0067–70 cover physical projection, frozen promotion profile, bounded local job and navigation versus incremental recovery.
 
-Frozen prompt-version20B matrix cb9e66:16conditions,16/16known-fact retention,
-0/4full-exception corrections, one critic validation failure,16main/17critic/4searches,
-66117known received tokens (one attempt lacks usage). It precedes ADR0062's gate-only
-qualification fix: no model prompt changed; raw outputs are not relabeled post-fix.
-No efficacy/H05, semantic accuracy, causal false-veto or completeness claim. Mandatory
-review remains enabled; draft-blind first pass sees canonical required slots (§10.1).
-P07 graph/P08 adjudicated research/X01 comparators remain deferred; no P07 GO or P06
-main push is inferred. No unanswered P06 owner ADR. Owned processes stopped, storage
-preserved and ports16333/16334/18080 verified free; foreign benchmark/editor work untouched.
+Graph: canonical SQLite attestations/reviews/merge history; exact projection/publication physical Neo4j readback; source-backed typed bounded traversal through opt-in HybridSearch/API and real credential-free worker. Paths navigation_only; canonical source/policy/gate authority retained. Defaults graph off/2seconds unchanged; positive pilot explicitly uses10seconds. Frozen4pair B2/B3 run finds0incremental recoveries (both expected appendices already found by B2), so graph stays off. Actual worker6.93s/OK/1path/original readback and actual CLI/API/Groq consumer proof pass. Initial slow/degraded and seed-timeout runs remain failures, not reliability claims.
 
+Memory: additivev6/session lifecycle; automatic bounded PathA after original event commit, atomic chunks/decisions/MemoryStore/links; exact UTF8 spans/hash/current origin ACL; corrections/revocation prevent resurrection. Episodic packet/recall is session-only; USER preferences cross sessions; procedural experience stays unapproved authorityNONE. Canonical case evidence/audit remains separate. Explicit scripts/promote_memory.py --enable-path-b invokes cached pinned local encoder, max8events/64chunks/30seconds kill/join, no Groq classifier. Frozen uncalibrated rulesweight.8/cos.75/margin.1/combined.65 and full model/profile scores/loss persist. Local6eventpilot4mechanical labels pass/2semantic labels unknown,1embeddingcall12texts/0provider; no Bpromotion. Prototype positive is an integration control, not generalization.
 
-P03 published64d2066; P04 published4245023. Preserve concurrent benchmark/.vscode work.
+Current evidence: default327PASS/25explicit integration-providerSKIP68.40s. Real-server sweep345PASS/1seed-timeoutFAIL/6GroqSKIP379.97s, then same test within10isolatedPASS78.15s:346distinct non-provider checks have positive evidence, not a combined exit0. Final graph guards9PASS24.85s. Installed55PASS/2modelSKIP +actualgraph/localmodel2PASS +latestguard1PASS overlap. Wheel62/62source bytesmatch SHA2560e09cb80cd10ff9908e6b3ceb86f824d4c02df05ce2b984b773c64fa388d582a. Ruff/strictmypy72/dependency96+4controls/doc17MD98cards20controls and actual foundation/policy CLI proof retained.
 
-P05 DONE at E-P05-001; all seven cards and third-turn correction verified with the same reviewer. Approvedv4
-adds immutable memory provenance/team/FTS with checked pre-migration backups; no user
-demo DB migrated. Four scopes require current principal/origin-case/source permissions.
-Owner/admin validity edits, explicit promotion and revisions remain context-only.
-Packet carries historical RECHECK observations, unverified reports, hypotheses, gaps
-and attempts. Empty failed replies cannot clear prior incomplete policy questions;
-current authorized decisive policy traces determine their continuity. Every HotCache hit revalidates source bytes/time/ACL/generation; no speed
-claim. Recall scopes/active state filter before500candidate bound and reports
-non-exhaustive coverage;501private-row starvation controls pass. Same reviewer resolves
-R1/R2 and third-turn correction;17targetedPASS. Latest246source+12actual-Qdrant=258disjointPASS, installed65
-(overlap)PASS, Ruff/mypy58/dependency79+4/doc controlsPASS. Final49file wheel SHA256
-6ab0757572b84aeb51ad24611d746ba45a616ce782b1d90cfa6403b9bcf8775f.
-Actual120B pilot p05-a3c0f62508844c53bb29288c590fb0a4 exits0/allconditions, setup true,
-packet gap recall0/1/1, strictcompletion0/3 due provider400errors. FreshPENDING, no
-staleFAILED claims; compressed answer omitted settlement. All failures retained, no
-H04/reliability/semantic claim. Scorer/guard evidence is separate from actual provider
-proof. OwnedQdrant99335/PID471 stopped,0collections, ports16333/16334/18080 free.
-Ignored wheel environment retained without processes. Benchmark/.vscode untouched.
-P05 now pushed f0507e4 under new owner approval. P06 GO is active; see E-P06-001 and accepted ADR0045/0046 for contract/pilot changes. Another main push and P07 need separate authorization.
+Normal persistent CLI proof: unique-root seed/reconcileall_match → serveHTTP18080 → actual Groq20B paced10s → next explicit session → citationHTTP. First59.92s5main+1critic3tools; next41.95s3main+1critic1search,1path/1citation/noverificationfailures, private preference consumed/reopened and oldepisodeabsent. Both bounded public JSON receipts in docs/development/evidence; rawruntime/provider/storage/model/build artifacts ignored. No truth/personalization accuracy inferred.
 
-Previous P02 state:
+Cleanup: owned HTTP18080 and WSL Neo4j17687/Qdrant16333+16334 stopped; preserve ~/.local/share/palladion/{neo4j-p07,qdrant} and synthetic CLI corpus. Do not touch foreign services or credentials. Final exact port/static/staged verification is in E-P07-002. Next action: await owner P08/mainpush GO; no pending P07 owner ADR.
 
-P02 DONE from published aa4b439; E-P02-001, ADR-0025/0026. All15 children verified:
-canonical ingestion/catalog, approved additive schema v3, actual dense/BM25 Qdrant,
-exact-ID/canonical/ACL retrieval, authenticated upload/approval/revocation/search/citation,
-readback/coverage/audit and honest retrieval-only pilot. Latest117 tests, Ruff, strict
-mypy37 files, build, exact-wheel isolated HTTP/Qdrant smoke and docs20 controls pass.
-Single Medium post-auditor's four findings fixed and rereviewed; historical High reviews
-retain their original effort records. New dispatches exclusively GPT6LunaMedium.
-Docker unusable; checksum-pinned Qdrant1.19.2 musl build in WSL/Linux-owned storage is
-the supported alternative. Owned test servers stopped; persistent test data retained.
-P02 publication and its dependency/generation follow-up completed at f48ad05.
-That prior approval is historical; current P03 GO does not authorize a new main push.
+## Earlier completed boundaries
 
-Previous verified foundation:
-
-P01 is complete under explicit GO from 12dfc3f; package isolation proof and the single
-post-audit resolution pass at E-P01-001. Existing Python 3.14.7 environment is reused;
-uv.lock pins dependencies (Pydantic 2.14.1, PyYAML 6.0.3, pytest 9.1.1,
-Ruff 0.17.1, mypy 1.20.2); build backend is pinned Hatchling 1.32.4.
-Source: strict contracts/errors/IDs/fixture loader, settings, trusted access callbacks,
-SQLite migrations/registry and content-addressed originals. Offline CLI uses actual
-persisted authorization/approval and byte readers, not SQL-only helper assertions.
-75 tests, strict typing/lint and optimized smoke pass; all three audit findings resolved.
-Exact installed-wheel/locked isolated smoke passes (P01 evidence). P02 GO is now given.
-PILOT fixtures: 4 sources, 3 cases/7 principals, 7 observations and exact T01–T24.
-At P01 close no P02 subsystem existed. P02 now has retrieval/API and pilot evidence;
-at that P01 checkpoint no provider call, human gold adjudication or full answer-system result existed.
-
-P00 completion/old hold is historical at E-DOC-001–E-DOC-004. P01 GO supersedes only
-that hold for this phase. Source/security gates remain PARTIAL until later consumers;
-no P01 check establishes full message/runtime behavior. At P01 root .env was never read or
-copied; P04 explicit enabled commands now read only the selected Groq credential internally, never print/export it; app .venv is reused/ignored. Unrelated .vscode remains untouched. New main
-publishing requires explicit user approval; P07+ is outside current scope.
-
-## Open risks to retain
-
-Accepted directions and remaining evidence are separate: Q03/Q04 compatibility/language,
-Q05 audit fixtures, Q07 configured synthetic freshness values, Q08 labels/calibration,
-Q09 actual rubric/escalation assignment, Q10 optional-feature value; Q06/Q11/Q12 external
-inventory/comparators/real deployment remain deferred. No unanswered recommendation is
-silently promoted into empirical success.
-No performance, completeness or production-readiness claim has been established.
-
-Owner approved ADR0053 via async reply2026-10-19 (supersedes earlier pending
-checkpoint text). Opt-in model-call pacing defaults0 and is now implemented, with
-post-wait caller authorization/evidence validation. Focused98checksPASS15.51s;
-actual paced message proof and phase checks now pass; sole end review resolved R1/withdrew R2; final gates and cleanup verified.
-ADR0054 strengthens pre/post critic discovery attribution and safe attempt diagnostics.
-
-End-review R1 confirmed: ADR0062 qualifies changed final proposals and unresolved
-CHALLENGE without erasing canonical facts. Final matrix cb9e66 remains its unchanged
-model/prompt/launch-gate version; qualification-only gate correction follows it. Quote,
-fact-retention and model-cost observations are not relabeled as post-correction outputs.
-Post-fix stack/installed/live checks and same-reviewer resolution precede closure.
+P01–P06 evidence lives in EVIDENCE_LOG; P03 published64d2066, P04at4245023, P05atf0507e4, P06at6444345. P06 final307disjoint checks, installed/live proof and sole end-review resolution. Frozen16condition critic pilot retained16/16knownfacts but0/4full-exception corrections, one critic validation failure; no efficacy/H05/semantic-accuracy claim. No earlier phase receipt closes newly added P07 obligations.

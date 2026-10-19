@@ -28,5 +28,8 @@ Do not create competing plans, memories, or unlinked status files elsewhere.
 
 P02 end-to-end is verified complete under explicit GO; P03 policy/live domain work is verified complete; P04 bounded runtime is verified complete with single audit/resolution (E-P04-001); P05 memory/continuity is verified complete with single audit/resolution (E-P05-001). P01 is published and complete. Foundation code/locked packaging,
 contracts/access/storage and synthetic fixtures are verified complete, with 75 tests,
-installed-wheel smoke and single independent audit/resolution at E-P01-001. P02 retrieval/API/measurement checks are at E-P02-001; P03 policy/live domain verification is at E-P03-001; P04 generative provider proofs are at E-P04-001; P05 continuity implementation/proofs are tracked at E-P05-001; P06 is verified complete locally at E-P06-001/002; P07+ remains outside this mandate.
+installed-wheel smoke and single independent audit/resolution at E-P01-001. P02 retrieval/API/measurement checks are at E-P02-001; P03 policy/live domain verification is at E-P03-001; P04 generative provider proofs are at E-P04-001; P05 continuity implementation/proofs are tracked at E-P05-001; P06 is verified complete locally at E-P06-001/002; P07 graph and automatic memory are phase-locally verified with sole end-review resolution; P08 and another main push remain outside this mandate.
+P07 is now explicitly authorized, including source-linked graph and owner-added automatic
+memory promotion; implementation, actual consumer checks and sole end review are verified. P08 and another main
+push remain outside the current mandate.
 Both phase reviewers read the full blueprint under the master review contract.

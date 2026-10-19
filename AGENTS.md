@@ -17,10 +17,14 @@ repository from the blueprint's illustrative tree.
 
 ## Scope and integrity
 
-- Current mandate: owner GO for P06 end-to-end adversarial critic, bounded counter-search,
-  mandatory review/final gate, authenticated consumers and frozen paired measurements.
-  P05 is published at f0507e4 (E-P05-001), P04 at4245023. P07+, UI and enterprise
-  writes remain excluded. Explicit enabled commands may use the approved Groq models.
+- Current mandate: owner GO for P07 optional source-linked graph end-to-end, including
+  graph-on/off measurement and a retain/disable decision. P06 is published at6444345;
+  P05 atf0507e4. P08+, UI, enterprise writes and benchmark/editor edits remain excluded.
+  Explicit enabled commands may use the approved Groq models.
+  Owner amendment ADR0066 also authorizes P07 automatic memory promotion and additivev6:
+  backend sessions, private USER semantic preferences, session-only episodic context,
+  unapproved procedural experience, deterministic-primary PathA and opt-in local cosine/loss PathB.
+  This adds no Groq classifier, model write tool or automatic shared-policy promotion.
   `baseline/` is reserved for
   later comparator implementations; do not populate it as part of this setup.
 - Preserve the [vision](palladion/docs/vision/palladion-blueprint-v2.md). Do not silently
@@ -133,8 +137,9 @@ For P04, exercise real Groq messages, four domain tools, final gate and citation
 multi-phase source/security gates remain PARTIAL until later runtime/graph obligations pass. A checkpoint never expands the user's current mandate.
 The mandatory pre-phase adversary precedes this sequence. The P00 full-suite review is
 historical. Every future pre-adversary and post-auditor still reads the complete blueprint
-and applies the canonical review contract. P04/P05 are published; P06 is verified complete locally (E-P06-001/002). P07 requires its own scope authorization.
-P05 push approval was fulfilled at f0507e4; P06 GO does not authorize another main push.
+and applies the canonical review contract. P06 is published; P07 has explicit owner GO.
+P08 requires its own scope authorization. P06 push approval was fulfilled at6444345;
+P07 GO does not authorize another main push.
 
 ## Close every task
 

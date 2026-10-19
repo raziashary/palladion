@@ -1,11 +1,13 @@
 # Palladion master development plan
 
-Version 10, 2026-10-19. Scope anchor: [blueprint v0.2](../vision/palladion-blueprint-v2.md),
+Current checkpoint2026-10-19: P06 published6444345; P07 graph and owner-added automatic memory implementation, consumer proof and sole LunaMedium end-review resolution verified (E-P07-001/002). ADR0063–0066 owner approvals preserved. Graph stays off after zero incremental recoveries. P08/UI/benchmark edits and another main push remain excluded. Older phase snapshots below are historical.
+
+Version 11, 2026-10-19. Scope anchor: [blueprint v0.2](../vision/palladion-blueprint-v2.md),
 especially “Locked decisions,” “Build plan,” “System invariants,” and the full walkthrough.
-Current checkpoint: P05 published f0507e4; **P06 DONE** locally, all six atomic cards verified at E-P06-001/E-P06-002 with sole Luna Medium end audit/resolution,307disjoint checks, installed/live proof and cleanup. Paired results remain neutral for full exception correction; no research success is claimed. P07 needs GO; no P06 main push authorized.
+Historical P06 checkpoint: P05 published f0507e4; **P06 DONE** locally, all six atomic cards verified at E-P06-001/E-P06-002 with sole Luna Medium end audit/resolution,307disjoint checks, installed/live proof and cleanup. Paired results remain neutral for full exception correction; no research success is claimed. P06 is now published; P07 GO and ADR0063–65 accepted. P08 and another main push require approval.
 P04 includes actual Groq, four tools, packet/ledger, bounded investigation/finalization,
 deterministic gate and authenticated message/citation/timeline/trace consumers.
-P05 push completed; no further main push inferred. P07–P08/X01/UI remain outside scope.
+P05 push completed; no further main push inferred. P08/X01/UI remain outside scope.
 ADR-0011 governs; ADR-0013 selects uv and real Groq generation. E-P04-001 records work.
 
 ## Document authority and ownership
@@ -307,13 +309,14 @@ gates/audit resolved. Frozen critic matrix retains neutral results and every fai
 
 Goal O06. Read all blueprint “Knowledge graph,” “Graph integration only after baseline,”
 and graph identity/leak/fan-out hard cases. Depends on P06 and P02 baseline evidence.
-Owner: graph, Neo4j storage, graph extraction/expansion and ingest reconciliation.
+Owner: graph, Neo4j storage, graph extraction/expansion and ingest reconciliation; owner-expanded automatic memory promotion/session work below.
 
 | Task | Work and producer → consumer | Acceptance / proof |
 |---|---|---|
 | P07-T01 | Verified namespace keys and uniqueness constraints, provisional IDs, reviewed merge audit, typed provenance edges | Concurrent same identity dedupes; same names distinct IDs never merge; G-GRAPH |
 | P07-T02 | Optional bounded traversal, canonical neighbor resolution, graph on/off publication requirements and outage behavior | Scope/hops/fan-out/time caps; source recheck before model; required relation unavailable vs optional fallback; G-GRAPH, G-SOURCE |
 | P07-T03 | Paired B2/B3 experiment on frozen retrieval corpus, review effort and costs | Recover known missed exception in selected case, evaluate aggregate harm/benefit; record retain/disable decision; G-RESEARCH |
+| P07-T04 | Automatic backend memory promotion: sessions, chunk provenance, primary deterministic PathA and cosine/loss PathB | Actual session-local episodic and USER-wide semantic readers; unapproved procedural context; no fifth tool or authority bypass; G-MEMORY/G-SECURITY/G-RESEARCH |
 
 Exit: evidence and cost justify feature state. If no improvement, keep graph disabled and
 record negative result; do not fabricate a passing aggregate claim from one showcase.
@@ -1068,23 +1071,23 @@ order. Shared-file tasks are sequential. Each proof names the observation that c
 
 <a id="p07-t01-01"></a>
 
-- [ ] **P07-T01.01 — Create Neo4j uniqueness and provenance adapter**
-  - **Files:** `palladion/src/evidence_agent/storage/neo4j.py`, `palladion/compose.yaml`, `palladion/tests/test_graph_identity.py`, `palladion/docs/development/ADR_LOG.md`.
+- [x] **P07-T01.01 — Create Neo4j uniqueness and provenance adapter**
+  - **Files:** `palladion/src/evidence_agent/storage/neo4j.py`, `palladion/scripts/neo4j_server.py`, `palladion/pyproject.toml`, `palladion/uv.lock`, `palladion/compose.yaml`, `palladion/tests/test_graph_identity.py`, `palladion/docs/development/ADR_LOG.md`.
   - **Depends:** P06-T03.02.
   - **Change:** Pin compatible Neo4j after dependency direction; add real namespace uniqueness constraints and bounded typed upsert/read templates for graph domain.
   - **Proof:** INTEGRATION; [G-GRAPH](TESTING_GATES.md#g-graph-task-coverage); concurrent verified key produces one node, unknown relation/raw model Cypher rejected; graph-off needs no running Neo4j.
 
 <a id="p07-t01-02"></a>
 
-- [ ] **P07-T01.02 — Separate verified identity, provisional links and reviewed merges**
-  - **Files:** `palladion/src/evidence_agent/graph/identity.py`, `palladion/tests/test_graph_identity.py`.
+- [x] **P07-T01.02 — Separate verified identity, provisional links and reviewed merges**
+  - **Files:** `palladion/src/evidence_agent/graph/identity.py`, `palladion/src/evidence_agent/graph/registry.py`, `palladion/src/evidence_agent/storage/sqlite.py`, `palladion/src/evidence_agent/storage/graph_schema.sql`, `palladion/tests/test_storage.py`, `palladion/tests/test_graph_identity.py`.
   - **Depends:** P07-T01.01.
   - **Change:** Derive verified namespace keys or source-scoped provisional IDs; require authorized equivalence attestation and preserve reconstructible before/after merge refs.
   - **Proof:** INTEGRATION; [G-GRAPH](TESTING_GATES.md#g-graph-task-coverage); T05/T06 safe under races; same name/category cannot merge, rejected and approved merge history retained.
 
 <a id="p07-t01-03"></a>
 
-- [ ] **P07-T01.03 — Extract typed source-linked relation candidates**
+- [x] **P07-T01.03 — Extract typed source-linked relation candidates**
   - **Files:** `palladion/src/evidence_agent/graph/relations.py`, `palladion/src/evidence_agent/ingest/graph_extract.py`, `palladion/tests/test_graph_identity.py`.
   - **Depends:** P07-T01.02.
   - **Change:** Validate relation allowlist, review/provenance states and exact spans; extraction feeds graph without promoting inferred edges to authority.
@@ -1094,7 +1097,7 @@ order. Shared-file tasks are sequential. Each proof names the observation that c
 
 <a id="p07-t02-01"></a>
 
-- [ ] **P07-T02.01 — Traverse bounded paths back to canonical passages**
+- [x] **P07-T02.01 — Traverse bounded paths back to canonical passages**
   - **Files:** `palladion/src/evidence_agent/retrieval/graph_expand.py`, `palladion/tests/test_graph_identity.py`, `palladion/tests/test_security.py`.
   - **Depends:** P07-T01.03.
   - **Change:** Traverse authorized anchors under hop/edge/node/time caps; resolve neighbors to source passages with current ACL/time before evidence assembly.
@@ -1102,8 +1105,8 @@ order. Shared-file tasks are sequential. Each proof names the observation that c
 
 <a id="p07-t02-02"></a>
 
-- [ ] **P07-T02.02 — Wire optional graph into retrieval and publication**
-  - **Files:** `palladion/src/evidence_agent/retrieval/hybrid.py`, `palladion/src/evidence_agent/ingest/pipeline.py`, `palladion/config/settings.yaml`, `palladion/tests/test_retrieval.py`, `palladion/tests/test_ingest.py`.
+- [x] **P07-T02.02 — Wire optional graph into retrieval and publication**
+  - **Files:** `palladion/src/evidence_agent/retrieval/hybrid.py`, `palladion/src/evidence_agent/ingest/pipeline.py`, `palladion/src/evidence_agent/storage/catalog.py`, `palladion/src/evidence_agent/settings.py`, `palladion/src/evidence_agent/main.py`, `palladion/src/evidence_agent/api/routes.py`, `palladion/src/evidence_agent/agent/services.py`, `palladion/src/evidence_agent/agent/search_worker.py`, `palladion/src/evidence_agent/telemetry/audit.py`, `palladion/scripts/serve.py`, `palladion/scripts/seed.py`, `palladion/scripts/reconcile.py`, `palladion/tests/test_end_to_end.py`, `palladion/config/settings.yaml`, `palladion/tests/test_retrieval.py`, `palladion/tests/test_ingest.py`.
   - **Depends:** P07-T02.01.
   - **Change:** Enable graph only as declared treatment; required-backend set/status markers reflect graph on/off; optional outage falls back explicitly through hybrid reader.
   - **Proof:** INTEGRATION; [G-GRAPH](TESTING_GATES.md#g-graph-task-coverage), [G-SOURCE](TESTING_GATES.md#g-source-task-coverage); graph-off reconciles, required-relation failure unavailable, graph hit cannot bypass canonical resolver.
@@ -1112,11 +1115,54 @@ order. Shared-file tasks are sequential. Each proof names the observation that c
 
 <a id="p07-t03-01"></a>
 
-- [ ] **P07-T03.01 — Measure graph's incremental evidence against B2**
-  - **Files:** `palladion/scripts/evaluate.py`, `palladion/src/evidence_agent/core/evaluation.py`, `palladion/data/demo/retrieval_pilot.json`, `palladion/tests/test_evaluation.py`, `palladion/tests/test_goldens.py`, `palladion/docs/development/EVIDENCE_LOG.md`, `palladion/docs/development/ADR_LOG.md`.
+- [x] **P07-T03.01 — Measure graph's incremental evidence against B2**
+  - **Files:** `palladion/scripts/evaluate_graph.py`, `palladion/data/demo/retrieval_pilot.json`, `palladion/tests/test_end_to_end.py`, `palladion/tests/test_graph_identity.py`, `palladion/docs/development/EVIDENCE_LOG.md`, `palladion/docs/development/ADR_LOG.md`.
   - **Depends:** P07-T02.02.
   - **Change:** Run paired frozen B2/B3 queries; record exception recall, identity/review effort, latency/cost and retained/disabled decision for later treatment reader.
   - **Proof:** MEASUREMENT; [G-RESEARCH](TESTING_GATES.md#g-research-task-coverage); selected missed appendix recovered and aggregate negatives retained; no benefit permits disable decision, never fabricated win.
+  - **Evidence:** E-P07-002 uses the expressly permitted negative-result exit:0incremental appendix recoveries in4frozen pairs, both expected appendices already found byB2. Graph remains disabled. Controlled two-hop anchor recovery is integration evidence, not an empirical retrieval win. Failed/degraded runs remain preserved.
+
+#### P07-T04 execution tasks — owner-added memory promotion
+
+<a id="p07-t04-01"></a>
+
+- [x] **P07-T04.01 — Persist sessions and promotion provenance with additive v6**
+  - **Files:** `palladion/src/evidence_agent/storage/sqlite.py`, `palladion/src/evidence_agent/storage/promotion_schema.sql`, `palladion/src/evidence_agent/memory/sessions.py`, `palladion/tests/test_memory_promotion.py`.
+  - **Depends:** P07-T01.02.
+  - **Change:** Backend-owned session lifecycle and explicit original event/chunk-offset promotion links; preserve v5 graph and older memory data, current scope/provenance and append-only decisions.
+  - **Proof:** INTEGRATION; [G-MEMORY](TESTING_GATES.md#g-memory-task-coverage); fresh schema, populated v5 upgrade/verified backup, failed-transaction rollback, default-client compatibility, unauthorized/closed-session rejection.
+
+<a id="p07-t04-02"></a>
+
+- [x] **P07-T04.02 — Classify bounded event chunks using primary deterministic PathA**
+  - **Files:** `palladion/src/evidence_agent/memory/promotion.py`, `palladion/src/evidence_agent/memory/classification.py`, `palladion/tests/test_memory_promotion.py`.
+  - **Depends:** P07-T04.01.
+  - **Change:** Chunk approved event fields with exact offsets, classify explicit personal preferences as USER semantic, actual tool/workflow experience as unapproved procedural, and all remaining/uncertain material as session episodic. Hard source/scope checks override classification; never promote a case fact globally by repetition.
+  - **Proof:** UNIT; [G-MEMORY](TESTING_GATES.md#g-memory-task-coverage), [G-SECURITY](TESTING_GATES.md#g-security-task-coverage); positive preferences/tool experience and negative case facts, quoted/injected instructions, other-user statements, duplicate/replayed events and oversized inputs.
+
+<a id="p07-t04-03"></a>
+
+- [x] **P07-T04.03 — Add bounded cosine/loss PathB without overriding deterministic rules**
+  - **Files:** `palladion/src/evidence_agent/memory/promotion.py`, `palladion/src/evidence_agent/memory/classification.py`, `palladion/src/evidence_agent/memory/promotion_worker.py`, `palladion/src/evidence_agent/retrieval/embeddings.py`, `palladion/scripts/promote_memory.py`, `palladion/tests/test_memory_promotion.py`.
+  - **Depends:** P07-T04.02.
+  - **Change:** Use existing pinned local encoder and frozen labeled category examples for optional fallback/additional scoring; deterministic-dominant weighting, cosine margin loss, explicit bounds and abstention. Record model/config/scores/loss; no new Groq classifier or training/calibration claim.
+  - **Proof:** INTEGRATION; [G-MEMORY](TESTING_GATES.md#g-memory-task-coverage), [G-RESEARCH](TESTING_GATES.md#g-research-task-coverage); actual encoder comparison plus deterministic controls showing hard rejection cannot be reversed, uncertain margins remain episodic and work is bounded.
+
+<a id="p07-t04-04"></a>
+
+- [x] **P07-T04.04 — Wire automatic writes and session-scoped recall through runtime readers**
+  - **Files:** `palladion/src/evidence_agent/memory/store.py`, `palladion/src/evidence_agent/memory/packet.py`, `palladion/src/evidence_agent/agent/services.py`, `palladion/src/evidence_agent/agent/loop.py`, `palladion/src/evidence_agent/agent/tools.py`, `palladion/src/evidence_agent/api/routes.py`, `palladion/src/evidence_agent/api/schemas.py`, `palladion/scripts/memory.py`, `palladion/tests/test_memory_promotion.py`, `palladion/tests/test_runtime_api.py`.
+  - **Depends:** P07-T04.03.
+  - **Change:** Promote after persisted backend events, no LLM write tool; wire explicit session/default lifecycle and session isolation into event/continuity/episodic readers. Semantic preferences cross sessions for same USER with original source ACL intact; procedural experience stays authorityNONE. Preserve operator correction/revocation and canonical case evidence readers.
+  - **Proof:** INTEGRATION; [G-MEMORY](TESTING_GATES.md#g-memory-task-coverage), [G-SECURITY](TESTING_GATES.md#g-security-task-coverage); real API write→close/reopen→same-user recall, session/user/case negative controls, correction/revocation and no procedural policy/execution privilege.
+
+<a id="p07-t04-05"></a>
+
+- [x] **P07-T04.05 — Measure and prove automatic promotion through actual consumers**
+  - **Files:** `palladion/scripts/promote_memory.py`, `palladion/scripts/evaluate_graph.py`, `palladion/data/demo/memory_promotion_pilot.json`, `palladion/scripts/validate_agent.py`, `palladion/tests/test_memory_promotion.py`, `palladion/tests/test_end_to_end.py`, `palladion/docs/development/EVIDENCE_LOG.md`, `palladion/docs/development/RESEARCH_PROTOCOL.md`, `palladion/docs/development/PROJECT_LEARNING.md`.
+  - **Depends:** P07-T04.04, P07-T03.01.
+  - **Change:** Record fixed synthetic PathA/B pilot outputs, classification/abstention/cost and real next-message memory consumption; retain failures and limits. Same sole end reviewer covers full graph+memory phase and blueprint amendment.
+  - **Proof:** MEASUREMENT; [G-MEMORY](TESTING_GATES.md#g-memory-task-coverage), [G-E2E](TESTING_GATES.md#g-e2e-task-coverage), [G-RESEARCH](TESTING_GATES.md#g-research-task-coverage); actual Groq consumes automatically stored preference/context without authority escalation; session isolation survives persisted reopen; no generalized accuracy claim without P08 labels.
 
 ### Atomic tasks — P08
 
@@ -1126,7 +1172,7 @@ order. Shared-file tasks are sequential. Each proof names the observation that c
 
 - [ ] **P08-T01.01 — Apply approved labels and freeze empirical research choices**
   - **Files:** `palladion/data/demo/goldens.jsonl`, `palladion/docs/development/RESEARCH_PROTOCOL.md`, `palladion/docs/development/ADR_LOG.md`, `palladion/docs/development/RISKS_AND_OPEN_QUESTIONS.md`.
-  - **Depends:** P07-T03.01.
+  - **Depends:** P07-T03.01, P07-T04.05.
   - **Change:** Apply accepted ADR-0019/Q08: evidence two annotators/adjudication or label pilot-only, record disjoint splits, repetitions/uncertainty and B0/B1-calibrated targets before held-out. No new owner vote on the already accepted method or invented numerical outcome.
   - **Proof:** DOC; [G-RESEARCH](TESTING_GATES.md#g-research-task-coverage); owner-approved manifest predates final run, absent independent labels stay pilot-only, near-duplicate split leakage detected.
 

@@ -127,7 +127,9 @@ class AgentRuntime:
             "authorized_targets": hints["authorized_targets"],
             "known_approved_policy_families": hints["known_approved_policy_families"],
             "reported_facts": packet["reported_facts"], "evidence_handles": packet["evidence_handles"],
-            "previous_attempts": [{"status": e["payload"].get("status"), "at": e["at"]}
+            "previous_attempts": [{"status": e["payload"].get("status"), "at": e["at"],
+                **({"unapproved_experience": e["payload"]["content"], "authority":"NONE"}
+                   if e.get("kind")=="UNAPPROVED_PROCEDURAL_EXPERIENCE" else {})}
                                   for e in packet["previous_attempts"]],
             "last_disposition": packet["last_disposition"]}
         messages: list[dict[str, Any]] = [
@@ -251,6 +253,7 @@ class AgentRuntime:
             "critic_used": self.budget.critic_used, "critic_max": self.settings.critic_max_calls,
             "prefetch_used": 0, "critic_search_used": self.budget.critic_search_used, "adapter_attempt_max_per_lookup": 2}
         response["verification_failures"] = sorted(set(self.ledger.failures))
+        response["session_id"] = self.store.session_id
         self.store.append("RELEASE", self.ledger.trace_id, response)
         return response
 

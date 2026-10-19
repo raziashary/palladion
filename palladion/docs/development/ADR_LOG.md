@@ -1223,6 +1223,119 @@ Current P04 closeout (2026-10-19): ADR-0031/0032/0034/0036/0037/0038 implementat
 **My answer (editable):** Coordinator implements the verified in-scope review finding; no semantic veto authority or new model stage is introduced.
 **Verification:** Source294PASS, installed294PASS, actual-Qdrant13PASS and installed1overlap, post-fix real20B recovery39.827s/default-budget37.089sPASS, same-reviewer R1 resolution and final cleanup verified at E-P06-002. R2 blind arm objection withdrawn against §10.1; docs clarify draft-blind, supplied canonical requirements, no independent unsupplied-requirement discovery claim.
 
+## ADR-0063 — P07 canonical provenance and graph publication contracts
+
+**Status:** ACCEPTED owner decision;2026-10-19.
+**Authority:** P07 GO; Rule4 still requires approval for shipped schema/publication/configuration contracts.
+**Question:** May P07 add canonical graph attestations and compatible explicit graph treatment contracts?
+**Why:** Identity hashes prove no attestation. SQLite owns authority; Neo4j is derived. Catalog currently rejects graph-enabled publication/non-Qdrant reconciliation, and the real search worker reconstructs no graph configuration.
+**Options:** Keep P07 blocked, or add v5 graph attestations/review/merge records and explicit optional graph contracts.
+**Recommendation:** Add v5 immutable source-backed identity attestations, relation reviews and merge decisions with reviewer/time and before/after history; preserve existing rows/APIs and default graph-off. Reuse existing backend manifests, include graph mode in generation identity, and require exact Neo4j ID/hash acknowledgment before graph-required READY. Optional traversal outage explicitly degrades to hybrid; required-relation verification fails unavailable. Wire the real search_knowledge worker. Bounded path metadata is navigation, never authority. No fifth tool or user-registry migration without backup.
+**What affects what:** graph registry/identity, SQLite/graph_schema, Catalog/ingest, Settings/HybridSearch/main/API/services/search_worker/audit/scripts. Tests: fresh creation, populated upgrade/rollback preservation, graph publication/outage/cancellation and actual-tool readback.
+**My answer (editable):** Approve additive v5 and graph contracts — explicit async answer2026-10-19.
+**Initial verification snapshot:** Proposed; no implementation claimed. E-P07-001 records source and pre-adversary findings.
+
+**Verification:** Final2026-10-19: E-P07-002 source/migration/real-store/installed/CLI/provider consumer gates and sole end-review resolution verified. Accepted owner answers remain unchanged. Graph negative-result disable decision and unadjudicated memory semantic limits retained.
+
+## ADR-0064 — P07 identity attestation and reviewed-merge authority
+
+**Status:** ACCEPTED owner decision;2026-10-19.
+**Authority:** Rule4 new authorization/authority contract; blueprint §6.
+**Question:** Who may attest stable identity, review relations and approve equivalence merges?
+**Why:** An external-ID string, document self-label or model extraction cannot establish verified identity. Private provenance must survive merges; names are not keys.
+**Options:** Extracted labels grant verification (rejected), or explicit current scoped-admin approval with durable source evidence.
+**Recommendation:** Require an existing current admin with document:approve, case membership and current access to every referenced approved source. Persist exact spans, reviewer/time, reason and accepted/rejected before/after merge decisions. Preserve EXTRACTED_UNREVIEWED for unreviewed relations. Models get no write/review/merge tool. Recheck all original case/source permissions before exposing any path. No merge merely from matching names or metadata.
+**What affects what:** graph registry, identity, relations, trusted local operator/fixture producer, canonical attestation reader and Neo4j projection; revoked source/role/membership, duplicate race, distinct-ID and merge replay tests.
+**My answer (editable):** Approve scoped admin attestation controls — explicit async answer2026-10-19.
+**Initial verification snapshot:** Proposed; no invented independent human review.
+
+**Verification:** Final2026-10-19: E-P07-002 source/migration/real-store/installed/CLI/provider consumer gates and sole end-review resolution verified. Accepted owner answers remain unchanged. Graph negative-result disable decision and unadjudicated memory semantic limits retained.
+
+## ADR-0065 — P07 Docker-free local Neo4j execution
+
+**Status:** ACCEPTED owner decision;2026-10-19.
+**Authority:** User Docker alternative instruction and package delegation within the blueprint; local security boundary requires explicit direction.
+**Question:** May P07 tests use a pinned project-owned portable WSL Neo4j instance?
+**Why:** WSL Ubuntu works but Java is absent; fake stores cannot prove real Neo4j concurrency. Available WSL RAM is about3.6GiB.
+**Options:** Portable local synthetic instance, or require an externally managed Neo4j service.
+**Recommendation:** Pin neo4j Python driver6.4.1 with uv, Neo4j Community2026.09.0 and checksum-verified portable Java21 under ignored runtime storage. Add explicit setup/start/stop, bounded memory, project-owned storage and loopback-only Bolt17687 with HTTP disabled. For this synthetic-only local instance, disable database auth so the cancellable worker remains credential-free; forbid remote URI/real data. No system service, boot-start or global Java change. Preserve storage on stop; tests clean only newly created UUID partitions. Graph-off needs no Neo4j connection. Retain an optional Compose pin for other machines.
+**What affects what:** pyproject/uv.lock, compose, scripts/neo4j_server.py, README and real-store tests. Official references: [driver installation](https://neo4j.com/docs/python-manual/current/install/), [Linux tarball](https://neo4j.com/docs/operations-manual/current/installation/linux/tarball/). PyPI metadata confirms6.4.1/Python>=3.10; official docs list Java21 support.
+**My answer (editable):** Approve isolated synthetic WSL setup — explicit async answer2026-10-19.
+**Initial verification snapshot:** WSL x86_64/curl present, Java absent. No setup/download performed pending boundary choice; actual compatibility remains to prove.
+
+**Verification:** Final2026-10-19: E-P07-002 source/migration/real-store/installed/CLI/provider consumer gates and sole end-review resolution verified. Accepted owner answers remain unchanged. Graph negative-result disable decision and unadjudicated memory semantic limits retained.
+
+## ADR-0066 — P07 expanded automatic memory promotion mandate
+
+**Status:** ACCEPTED owner scope/category/session direction; classifier amended by owner2026-10-19. Additive v6 storage explicitly APPROVED by owner async reply2026-10-19.
+**Authority:** User explicitly adds automatic chunked memory promotion to P07; blueprint §9 and Rule4 govern scope, approval and runtime contracts.
+**Question:** How should automatic episodic/semantic/procedural categorization interact with user scope, sessions, provenance and call budgets?
+**Why:** Current backend persists events automatically, but categorized memory is operator-written. Category is not access scope: global preferences must not leak private case data or become organization policy. Current message API has no session ID, and extraction cannot silently add a sixth main call or bypass approved procedure ownership.
+**Options:** Deterministic bounded promotion now, a separately enabled bounded classifier worker, or consume the existing bounded main response with validated promotion proposals.
+**Recommendation:** Semantic means durable USER memory across that user's sessions, not cross-user organization sharing. Promote only explicit user-stated preferences into this durable lane; case facts stay case-scoped and all source ACLs survive. Procedural means observed tool/workflow experience or explicitly owned plans, always unapproved context until an authorized workflow approval; model/execution success is not company-policy approval. Everything else remains episodic in its owning session. Chunk deterministically by event and bounded text spans, retaining event IDs/offsets and immutable promotion decisions. Add backend-owned explicit session IDs/lifecycle with compatible defaults, preserve canonical case evidence outside conversational memory, and consume bounded classifier proposals under a separately explicit measured budget if owner selects that option. Idempotent promotion/correction/revocation and cross-session/user/case privacy must be tested through real readers.
+**What affects what:** P07 extra memory task cards; CaseStore/MemoryStore/packet, schema/migration, session API, runtime and extraction/budget owner, FTS recall, CLI/tests/evaluator. Main performs implementation; reuse same start adversary to review new premises, then one end reviewer covers graph plus memory. No embedding/vector dependency is implied.
+**My answer (editable):** Owner approved private USER-wide semantic preferences, preserving original case/source ACL, and explicit backend session IDs/lifecycle. Owner overrides the Groq-first recommendation: PathA deterministic rules is primary; PathB cosine similarity plus a loss function is fallback/additional evidence, with greater emphasis on deterministic rules. Add all work to the development suite. Prior options remain above as history; no extra Groq classifier calls are authorized by this answer.
+**Amendment2026-10-19:** Implement deterministic event/span chunking and an auditable PathA result first. Optional PathB uses the existing pinned local dense encoder and labeled category examples, a recorded cosine margin loss and deterministic-dominant weighting. Loss is a comparison/abstention measure, not a claim of trained/calibrated accuracy. Hard privacy/type/eligibility checks cannot be overridden by either score. Uncertain chunks remain episodic. Add v6 session/event-span/promotion-decision provenance, preserving operator memory and v5 graph rows; test fresh creation, populated upgrade and transaction rollback. Keep observed procedural experience explicitly unapproved/authorityNONE, distinct from canonical approved workflows. No vector database or new LLM tool is introduced.
+**Initial verification snapshot:** Current MemorySpec defaults SEMANTIC but has no classifier; runtime has no write tool or session contract. Graph work remains independently authorized under0063–65.
+
+**Verification:** Final2026-10-19: E-P07-002 source/migration/real-store/installed/CLI/provider consumer gates and sole end-review resolution verified. Accepted owner answers remain unchanged. Graph negative-result disable decision and unadjudicated memory semantic limits retained.
+
+## ADR-0067 — Freeze complete graph projection expectations before publication
+
+**Status:** ACCEPTED coordinator implementation detail within approved0063;2026-10-19.
+**Authority:** Existing exact backend-manifest reconciliation and P07 graph source-integrity gate.
+**Question:** Does confirming only Neo4j chunk presence prove that expected relations were indexed?
+**Why:** No. A relation extractor could write nothing while chunks report healthy. Graph publication must cover the relation producer and its actual reader.
+**Options:** Chunk-only acknowledgment (rejected), or a frozen per-generation graph projection manifest including chunk and canonical relation IDs/hashes.
+**Recommendation:** Add index_graph_expectations to unshipped approved v5. Snapshot canonical graph projection before write, incorporate its hash into graph-enabled generation identity, and acknowledge exact chunk+relation readback. Keep graph-off generation identity/backends unchanged. No real registry migration occurs without existing backup discipline. New attestations/reviews need reindex/reconciliation for the changed projection; every runtime edge/source is still revalidated canonically. All inferred paths stay navigation-only.
+**What affects what:** graph_schema.sql/GraphRegistry/extractor/projection, Catalog/ingest and Neo4j adapter readback; missing/extra/tampered relation and interrupted/idempotent retry tests. No authority moves to Neo4j.
+**My answer (editable):** Coordinator grounds graph acknowledgment in the existing exact-manifest pattern instead of treating a healthy producer as proof of consumer coverage.
+**Initial verification snapshot:** Real Neo4j physical projection/alias controls2PASS4.21s, canonical race/graph-off5PASS1.59s. Readback recomputes mentions and physical FROM/TO adjacency; source changes invalidate graph READY. Atomic merge validates canonical sources through Catalog plus OriginalStore, avoiding nested Registry.read_source transactions. Graph runtime/baseline experiment still open.
+
+**Verification:** Final2026-10-19: E-P07-002 source/migration/real-store/installed/CLI/provider consumer gates and sole end-review resolution verified. Accepted owner answers remain unchanged. Graph negative-result disable decision and unadjudicated memory semantic limits retained.
+
+## ADR-0068 — Deterministic-primary promotion profile and transactional write ownership
+
+**Status:** ACCEPTED coordinator implementation profile within owner0066;2026-10-19.
+**Authority:** Owner PathA/PathB amendment, explicit session/USER scope and additivev6 approval.
+**Question:** How do optional similarities supplement rules without granting authority or leaving partially written memory?
+**Why:** A cosine ranking/loss is not semantic truth or trained accuracy. An automatic entry without its session/source-span link could escape the intended reader guard if a write fails halfway.
+**Options:** Unbounded classifier/independent writes (rejected), or deterministic eligibility plus bounded optional local supplement and enlisted atomic persistence.
+**Recommendation:** Freeze promotion-1 prototypes/config before pilot: PathA explicit self-stated preferences, observed allowlisted tool experience, else episodic. Hard quote/attribution/case/authority rejection is final. Only ambiguous eligible personal-style cues enter optional PathB; primary weight0.8, cosine threshold0.75, margin0.1, combined threshold0.65. Loss=max(0,margin-(top-second)); defaults are uncalibrated pilot tunables, not probabilities or training results. Default automatic PathA enabled, local PathB explicitly enabled; no Groq classifier. Backend commits chunk/decision/MemoryStore entry/link atomically using an explicit owner-validated enlisted connection. Preserve the committed runtime event even if promotion fails; expose safe failure metadata rather than pretend stored. Category/scopes stay separate; procedural experience is reported unapproved context, never approved procedure. Session-only episodic readers are distinct from canonical case/source audits/evidence.
+**What affects what:** memory/classification,promotion,sessions, MemoryStore writer/reader, runtime/API/packet, bounded local embedding worker/CLI and tests. Source/migration/unit negatives and actual producer→reopened reader/provider proofs required. Existing statement/source validity and originalcase ACL remain intact.
+**My answer (editable):** Coordinator selects explicit falsifiable defaults and transaction ownership within the accepted direction; owner may edit future calibration choices.
+**Initial verification snapshot:** Classification/session modules are partial; no automatic writer or PathB efficacy claimed until owning consumers and gates execute.
+
+**Verification:** Final2026-10-19: E-P07-002 source/migration/real-store/installed/CLI/provider consumer gates and sole end-review resolution verified. Accepted owner answers remain unchanged. Graph negative-result disable decision and unadjudicated memory semantic limits retained.
+
+## ADR-0069 — Promotion consumer boundaries and explicit local job ownership
+
+**Status:** ACCEPTED coordinator implementation detail;2026-10-19.
+**Authority:** Accepted owner ADR0066/0068; existing four-tool runtime, redacted case audit and cancellable local worker patterns.
+**Question:** Where do session isolation, procedural experience and optional similarity execute?
+**Why:** The redacted audit timeline is case-wide, whereas model episodic continuity must be session-only. A new procedural packet shape must reach the actual loop consumer. Optional local embeddings must not block or expand answer budgets.
+**Options:** Change audit visibility/run embeddings inline (rejected), or retain canonical audit readers and separately bound model continuity and opt-in local jobs.
+**Recommendation:** Message APIs accept/return compatible optional session IDs, with owner-only start/close. CaseStore/recalled episodic rows and packet releases/reports filter session. Canonical redacted case timeline remains case-wide. Unapproved procedural experience uses the existing previous_attempts payload and is explicitly consumed with authorityNONE. Private preferences reserve packet slots before repetitive events. PathB runs only via scripts/promote_memory.py --enable-path-b in a credential-free subprocess, max8events/64chunks/30seconds with kill/join; no provider calls. Record model/prototype/config/scores/loss and failure/timeout, retry via immutable idempotent ledger. No new dependency or service. Explicit correction/revocation beats later automatic jobs. Unscoped historical episodic rows remain audit/control data rather than model recall.
+**What affects what:** memory/store,packet,promotion,promotion_worker; agent/services,loop,tools; api/routes,schemas; scripts/promote_memory.py; owning tests. No source authority or operational write capability changes.
+**My answer (editable):** Coordinator chooses existing consumer shapes and a separate explicitly enabled local job within approved scope.
+**Initial verification snapshot:** runtime/p07-memory-runtime-r2.log66PASS; runtime/p07-memory-model-controls.log25PASS including actual child encoder and timeout guard. Broader P07/generative proof remains pending.
+
+**Verification:** Final2026-10-19: E-P07-002 source/migration/real-store/installed/CLI/provider consumer gates and sole end-review resolution verified. Accepted owner answers remain unchanged. Graph negative-result disable decision and unadjudicated memory semantic limits retained.
+
+## ADR-0070 — Distinguish graph navigation proof from incremental recovery
+
+**Status:** ACCEPTED coordinator implementation correction;2026-10-19.
+**Authority:** P07 graph contracts0063/0067, canonical-path and consumer proof gates.
+**Question:** How should a graph path to an already selected passage be represented and measured?
+**Why:** Skipping every visited target suppressed valid navigation metadata when ordinary retrieval already found both endpoints. Counting such a path as a novel recovery would inflate graph benefit. Early live runs also hit real Neo4j transaction deadlines and cannot be marked successful.
+**Options:** Hide existing-endpoint paths/count them as recovery (rejected), or validate paths separately from admitting new passages and preserve failures.
+**Recommendation:** Validate each unique bounded edge and its source proofs even when its target was already selected; only unseen targets enter the traversal frontier. Return paths only when their explicit target_chunk_id survives selection. Keep navigation_only=true and infer no authority. Add graph path counts and GRAPH_UNAVAILABLE to redacted existing telemetry. Per-query remaining time constrains Neo4j execution; runtime process cancellation remains the outer deadline. Keep default graph off and timeout2seconds unchanged; pilot positive controls explicitly configure10seconds. No retry or silent timeout expansion. Retain r1/r2 failures and compare frozen B2/B3 outputs, not path count alone.
+**What affects what:** graph/relations, retrieval/graph_expand,hybrid, storage/neo4j, agent/tools, telemetry/audit; actual subprocess/API/Groq and bounded/poisoned/revoked graph controls. Pilot script remains scripts/evaluate_graph.py to avoid a cross-script import layer; task ownership includes this explicit CLI.
+**My answer (editable):** Coordinator separates validated navigation from new evidence and retains measured failures within approved graph scope.
+**Initial verification snapshot:** Controlled actual Neo4j two-hop positive passed27.23s across multiple traversals after explicit10second operation budgets; early2second/10second transaction failures retained. First paired pilot1308125b:0incremental exception recoveries, B2 already has context link; worker65.19s/degraded is a failure, not passed runtime proof. WSL logs show VM pauses and TransactionTimedOutClientConfiguration; source/cause inference remains bounded. Refreshed successful consumer proof still required.
+
+**Verification:** Final2026-10-19: E-P07-002 source/migration/real-store/installed/CLI/provider consumer gates and sole end-review resolution verified. Accepted owner answers remain unchanged. Graph negative-result disable decision and unadjudicated memory semantic limits retained.
+
 ## Future decision template
 
 ```text
@@ -1239,4 +1352,9 @@ Verification: planned proof, result, evidence and execution/deferred state
 Amendment history: old answer/date/reason and superseding decision
 ```
 
-Next free ADR number: 0063. Accepted directions do not grant implementation GO.
+Next free ADR number: 0071. Accepted directions do not grant implementation GO.
+
+
+## P07 final phase-local disposition (2026-10-19)
+
+E-P07-002 records all11cards, actual source/installed/CLI/provider and original-reader proof, the sole GPT6LunaMedium end audit and same-reviewer resolution. The reviewer read the full blueprint (§1–§18), I01–I15, graph and memory amendment; three current-facing document contradictions were fixed and rechecked. No confirmed source defect remained. Graph has0incremental recoveries in4paired queries and stays off by default; controlled path recovery proves integration only. PathA automatic promotion and opt-in bounded local PathB retain original ACL/authorityNONE;4mechanical pilot labels pass,2semantic labels remain unknown. Historical failures and intermediate pending statuses above remain dated snapshots, not current scope. No unanswered P07 owner ADR; P08 adjudication, generalization and external comparisons remain excluded.

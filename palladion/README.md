@@ -7,6 +7,11 @@ counter-search and reserved finalization; its phase-local implementation, valida
 development evidence; these checkpoints do not establish production readiness or
 semantic accuracy.
 
+P07 phase-local implementation and review are complete: optional source-linked graph,
+backend sessions and automatic memory promotion have actual reader/provider proof.
+The paired graph pilot added zero recoveries, so graph stays off by default. Semantic
+memory classification accuracy remains unadjudicated.
+
 Phase ownership and evidence are in the [development plan](docs/development/MASTER_DEV_PLAN.md)
 and [current progress](docs/development/PROGRESS.md).
 
@@ -53,8 +58,8 @@ If the environment is absent, first verify `.venv/` is ignored, then run `uv ven
 is declared; executed compatibility evidence identifies the actual tested interpreter.
 
 `config/settings.yaml` selects Groq `qwen/qwen3.8-27b`, with live generation explicitly
-disabled. The actual key stays only in the ignored repository-root `../.env`. A later
-P04 enabled command will explicitly load that file and check access/quotas; key existence
+disabled. The actual key stays only in the ignored repository-root `../.env`. An
+explicitly enabled command loads that file and checks access/quotas; key existence
 alone does not permit dispatch. Current retrieval makes no generative-provider or operational-service request.
 
 All business documents/data are fictional. Approval comes from stored authenticated
@@ -167,8 +172,9 @@ retrieval substrate comparisons; full answer arms and held-out evaluation remain
 
 ## Development boundary
 
-P03 implements temporal policy execution and mock observations under explicit GO. Later phases
-cover bounded tools/agent/release gate, continuity, critic and optional graph experiments.
+P01–P06 implement canonical sources, retrieval, temporal policy execution, mock observations,
+bounded tools/agent/release gate, scoped continuity and advisory critique. P07 graph and
+automatic memory consumers have completed phase-local verification and independent review.
 No provider key is needed for the implemented retrieval slice. Keep live credentials out
 of verification commands and stop any test servers you start. See
 [testing gates](docs/development/TESTING_GATES.md) and
@@ -210,10 +216,10 @@ P04 implementation and phase-local checks now cover real Groq transport, bounded
 four scoped tools, request ledger, necessary-condition gate and message/timeline/citation
 readers. Scoped admin developer traces, dependency/config readiness and owned-process
 search cancellation are verified. Single end review and finding resolution are complete. P05 adds scoped continuity;
-critic remains a later phase. Five dispositions and document citation paths have actual
+critic is implemented in P06. Five dispositions and document citation paths have actual
 provider proofs, with every model/quota/schema failure retained (E-P04-001).
 Two final no-evidence refreshes failed strict assertions while safely abstaining;
-these engineering path checks do not establish model reliability. P05 is published; P06 is verified complete locally.
+these engineering path checks do not establish model reliability. P05 is published; P06 is published and verified complete.
 Use `python scripts/seed.py --policies` to explicitly seed trusted synthetic case/policy
 fixtures. After setup, `python scripts/serve.py --enable-live-llm` explicitly enables
 root .env credential loading and real model calls; omitting the flag disables messages.
@@ -268,7 +274,7 @@ The current pilot retained the critical gap in B5 packets, but strict completion
 0/3 due model/tool errors. This establishes measurements, not a memory-improvement or
 reliability claim. See E-P05-001. Critic integration is verified in P06; confirmatory scientific evaluation remains P08.
 
-Final P05 evidence: E-P05-001,246source+12actual-Qdrant checks, updated wheel and single audit resolution. Recall applies current scope before its bounded window and reports non-exhaustive coverage. P06 is verified complete locally; pilot0/3 strict completions remain disclosed.
+Final P05 evidence: E-P05-001,246source+12actual-Qdrant checks, updated wheel and single audit resolution. Recall applies current scope before its bounded window and reports non-exhaustive coverage. P06 is published and verified complete; pilot0/3 strict completions remain disclosed.
 
 ## Independent evidence review (P06)
 
@@ -299,4 +305,56 @@ A changed final proposal or unresolved advisory challenge qualifies the answer w
 canonical facts remain visible. The16-condition frozen pilot retained all known facts,
 but full exception correction was0/4 and one critic validation failed; this is not a
 reliability or hypothesis-success claim. The draft-blind experimental first pass still
-receives canonical policy-required slots. P07 graph and P08 adjudication remain planned.
+receives canonical policy-required slots. P07 is verified within its phase-local boundary; P08 adjudication remains planned.
+
+## Optional graph and automatic memory (P07)
+
+Neo4j is a derived navigation index; SQLite and immutable original spans remain canonical.
+Verified identities, provisional source mentions, relation reviews and accepted/rejected
+merges retain provenance. Traversal rechecks current source access, generation and bytes;
+paths cannot authorize a claim. Graph is off by default. The small paired development
+pilot found zero incremental exception recoveries over B2 and retained all degradation.
+
+Docker-free local setup uses a pinned Neo4j Community archive and portable Java21 in
+WSL-owned `~/.local/share/palladion/neo4j-p07/`. The approved synthetic setup disables
+database auth and HTTP, exposing only loopback Bolt17687. Do not use it with real data.
+
+```powershell
+uv run --locked --no-env-file python scripts/neo4j_server.py --wsl
+uv run --locked --no-env-file python scripts/seed.py --enable-graph
+uv run --locked --no-env-file python scripts/reconcile.py --enable-graph
+uv run --locked --no-env-file python scripts/serve.py --enable-graph --enable-live-llm
+```
+
+Stop the owned graph process with the launcher plus `--stop`; data is preserved.
+`--require-graph` makes unavailable relation verification explicit rather than silently
+using graph-off behavior. Qdrant must also be running. These commands are opt-in; the
+recorded pilot does not justify enabling graph by default. Seed, reconcile and serve
+accept matching `--graph-partition` and `--graph-timeout` settings; defaults remain
+partition `palladion_graph_v1`, timeout2seconds. The positive consumer pilot explicitly used
+10seconds; seed transaction timeouts at that cap remain recorded failures.
+
+The backend automatically categorizes bounded chunks after persisting request/tool/release
+events. Path A uses deterministic rules: explicit personal preferences become private USER
+semantic memory, observed allowlisted tool experience becomes unapproved procedural
+context, and remaining/uncertain chunks stay episodic. Original event IDs, UTF-8 offsets,
+hashes and classification decisions are persisted atomically. Failed promotion preserves
+the original event and records a diagnostic.
+
+Messages accept an optional `session_id` and return the resolved ID. Omitting it reuses
+the owner's active case session. `POST /v1/cases/{case_id}/sessions` starts a new session;
+`POST /v1/cases/{case_id}/sessions/{session_id}/close` closes an owned session. Episodic
+model recall is session-local. Preferences can cross sessions for the same user while
+retaining original case access. Redacted canonical case audits remain separate.
+
+Path B is an additional explicitly enabled local job, using the existing pinned encoder:
+
+```powershell
+uv run --locked --no-env-file python scripts/promote_memory.py --enable-path-b --root runtime/demo --principal reader-a --case case-42 --session SESSION_ID --event EVENT_ID
+```
+
+It has a 30-second process deadline and at most eight events/64 chunks, makes no Groq
+calls, and records cosine scores plus margin loss. Rules retain weight0.8 and hard
+boundaries cannot be overridden. Uncertain scores abstain. Defaults are frozen pilot
+settings, not trained or calibrated accuracy. Models still have only four read tools;
+procedural experience never becomes approved policy or executable instructions.

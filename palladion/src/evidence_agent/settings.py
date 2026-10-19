@@ -24,6 +24,14 @@ class Settings(BaseModel):
     tool_max_calls: int = Field(default=8, ge=1, le=8)
     critic_search_max_calls: int = Field(default=2, ge=0, le=2)
     graph_max_hops: int = Field(default=2, ge=0, le=2)
+    graph_enabled: StrictBool = False
+    graph_required: StrictBool = False
+    neo4j_uri: str = Field(default="bolt://127.0.0.1:17687", pattern=r"^bolt://127\.0\.0\.1:[0-9]{4,5}$")
+    graph_partition: str = Field(default="palladion_graph_v1", pattern=r"^[A-Za-z0-9_]{1,100}$")
+    graph_fanout: int = Field(default=8, ge=1, le=32)
+    graph_max_nodes: int = Field(default=24, ge=1, le=64)
+    graph_max_edges: int = Field(default=32, ge=1, le=128)
+    graph_timeout_seconds: float = Field(default=2.0, gt=0, le=10)
     max_draft_revisions: int = Field(default=1, ge=0, le=1)
     max_source_passages: int = Field(default=12, ge=1, le=12)
     request_timeout_seconds: int = Field(default=60, ge=1, le=300)

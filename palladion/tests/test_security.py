@@ -145,5 +145,6 @@ def test_all_four_valid_domain_paths_and_memory_not_authority(p03):
         assert "UNAVAILABLE" in fixture.ledger.failures
     asyncio.run(run())
     assert all("INJECTION_CANARY" not in str(v) for v in fixture.ledger.records.values() if v["kind"] != "CASE_EVENT")
-    assert len(fixture.ledger.envelopes) == 3
+    # Automatic memory and the redacted original event are separate context handles.
+    assert len(fixture.ledger.envelopes) == 4
     assert any(e.authority.value == "NONE" for e in fixture.ledger.envelopes.values())

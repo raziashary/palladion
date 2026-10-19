@@ -28,18 +28,22 @@ def build_packet(store: CaseStore, query: str, *, max_chars: int = 6000) -> Cont
     events = store.recent(limit=20)
     release = store.registry.database.connection.execute(
         "SELECT payload_json FROM case_events WHERE tenant_id=? AND case_id=? "
+        "AND event_id IN (SELECT event_id FROM memory_event_sessions WHERE session_id=?) "
         "AND event_kind='RUNTIME_RELEASE' ORDER BY occurred_at DESC,event_id DESC LIMIT 1",
-        (store.principal.tenant_id, store.case_id)).fetchone()
+        (store.principal.tenant_id, store.case_id,store.session_id)).fetchone()
     prior = store._safe_payload("RUNTIME_RELEASE", json.loads(release[0])) if release else {}
     handles = [SourceRef.model_validate_json(json.dumps(h)) for h in prior.get("evidence_handles", [])][:3]
-    memories = memory.recall(limit=20)
-    reported = [ReportedFact(fact_id=m["memory_id"], statement=m["content"][:512],
+    # Category reservations prevent repeated tool/turn events starving durable preferences.
+    memories = (memory.recall(category="SEMANTIC",limit=4)+memory.recall(category="EPISODIC",limit=4))
+    procedures = memory.recall(category="PROCEDURAL",limit=2)
+    reported = [ReportedFact(fact_id=m["original_event_id"] or m["memory_id"], statement=m["content"][:512],
         source=m["owner_id"], validity_policy_id=m["validity_policy_id"],
-        provenance=(m["source_event_id"],)) for m in memories if m["claim_kind"] == "REPORTED"][:4]
+        provenance=(m["original_event_id"] or m["source_event_id"],)) for m in memories if m["claim_kind"] == "REPORTED"][:4]
     # Explicitly controlled facts replace raw prior-query reminders, even after revocation.
     controlled = store.registry.database.connection.execute(
         "SELECT 1 FROM memory_provenance p JOIN memory_entries e USING(memory_id) "
-        "WHERE e.tenant_id=? AND p.origin_case_id=? AND p.owner_id=? LIMIT 1",
+        "WHERE e.tenant_id=? AND p.origin_case_id=? AND p.owner_id=? "
+        "AND NOT EXISTS(SELECT 1 FROM memory_promotion_links l WHERE l.memory_id=e.memory_id) LIMIT 1",
         (store.principal.tenant_id, store.case_id, store.principal.principal_id)).fetchone()
     if not reported and not controlled:
         reported = [f.model_copy(update={"statement": f.statement[:512]}) for f in store.own_reported_facts()]
@@ -73,7 +77,10 @@ def build_packet(store: CaseStore, query: str, *, max_chars: int = 6000) -> Cont
         verified_observations=tuple(observations[:3]), reported_facts=tuple(reported),
         hypotheses=tuple(hypotheses[:2]), open_questions=store.unresolved_questions(),
         evidence_handles=tuple(handles), last_disposition=GateDisposition(prior["disposition"]) if prior else None,
-        previous_attempts=tuple(e for e in events if e["kind"] in {"RUNTIME_ATTEMPT", "RUNTIME_TOOL_RESULT"})[-4:],
+        previous_attempts=tuple({"kind":"UNAPPROVED_PROCEDURAL_EXPERIENCE", "authority":"NONE",
+            "at":m["set_at"], "payload":{"status":"UNAPPROVED_CONTEXT", "memory_id":m["memory_id"],
+            "content":m["content"],"original_event_id":m["original_event_id"]}}
+            for m in procedures)+tuple(e for e in events if e["kind"] in {"RUNTIME_ATTEMPT", "RUNTIME_TOOL_RESULT"})[-2:],
         generated_at=utc_clock())
     # Keep critical unresolved slots first; omit lower-priority context explicitly in metrics.
     for field in ("previous_attempts", "evidence_handles", "reported_facts", "hypotheses", "verified_observations"):

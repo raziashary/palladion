@@ -16,6 +16,7 @@ from evidence_agent.live.mock import MockAdapter, ReadAdapter
 from evidence_agent.memory.hotcache import HotCache
 from evidence_agent.memory.store import CaseStore
 from evidence_agent.retrieval.evidence import RequestLedger
+from evidence_agent.retrieval.graph_expand import GraphExpansion
 from evidence_agent.retrieval.hybrid import HybridSearch, Ranker
 from evidence_agent.settings import Settings
 from evidence_agent.storage.catalog import Catalog
@@ -27,15 +28,16 @@ from evidence_agent.storage.sqlite import Database
 class AgentServices:
     def __init__(self, root: Path, index: SearchIndex, model: LanguageModel | None,
                  adapter: ReadAdapter, config: AdapterConfig, settings: Settings,
-                 ranker: Ranker | None = None) -> None:
+                 ranker: Ranker | None = None, graph: GraphExpansion | None = None) -> None:
         self.root, self.index, self.model = root, index, model
         self.adapter, self.config, self.settings, self.ranker = adapter, config, settings, ranker
         self.hotcache = HotCache()
+        self.graph = graph
         self.database: Database | None = None
         self.registry: Registry | None = None
         self.gateway: LiveGateway | None = None
 
-    def begin(self, principal_id: str, case_id: str) -> AgentRuntime:
+    def begin(self, principal_id: str, case_id: str, session_id: str | None = None) -> AgentRuntime:
         if self.database is None:
             # Created on the serving event loop; never share a sqlite connection across threads.
             self.database = Database(self.root / "registry.sqlite").open()
@@ -43,11 +45,15 @@ class AgentServices:
             self.gateway = LiveGateway(self.registry, self.adapter, self.config)
         assert self.registry is not None and self.gateway is not None
         principal = self.registry.access.authenticate(principal_id)
-        store = CaseStore(self.registry, principal, case_id)
+        from evidence_agent.memory.sessions import Sessions
+        session_id = Sessions(self.registry,principal,case_id).resolve(session_id)
+        store = CaseStore(self.registry, principal, case_id,session_id)
         store.authorize()
-        ledger = RequestLedger(HybridSearch(Catalog(self.registry), self.index, self.ranker),
+        ledger = RequestLedger(HybridSearch(Catalog(self.registry), self.index, self.ranker, self.graph),
             principal, case_id, new_trace(), {k: v.max_age_seconds for k, v in self.config.operations.items()}, hotcache=self.hotcache)
-        return AgentRuntime(self.model, Tools(ledger, self.gateway, store), store, self.settings)
+        tools = Tools(ledger,self.gateway,store)
+        tools.graph_required = self.settings.graph_required
+        return AgentRuntime(self.model, tools, store, self.settings)
 
     def close(self) -> None:
         self.hotcache.clear()
@@ -60,8 +66,11 @@ class AgentServices:
 def configure_agent(app: FastAPI, *, model: LanguageModel | None, adapter: ReadAdapter,
                     config: AdapterConfig, settings: Settings) -> None:
     """Explicit wiring; model credentials merely existing never enable runtime calls."""
+    if settings.graph_enabled != (app.state.graph is not None):
+        raise ValueError("Graph treatment and explicit application wiring disagree")
+    app.state.graph_required = settings.graph_required
     app.state.agent_services = AgentServices(app.state.runtime_root, app.state.index,
-        model, adapter, config, settings, app.state.ranker)
+        model, adapter, config, settings, app.state.ranker, app.state.graph)
 
 
 def fixture_adapter(app_root: Path) -> MockAdapter:

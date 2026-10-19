@@ -1,7 +1,9 @@
 # Testing gates
 
+Current checkpoint2026-10-19: P06 published6444345; P07 graph and owner-added automatic memory implementation, consumer proof and sole LunaMedium end-review resolution verified (E-P07-001/002). ADR0063–0066 owner approvals preserved. Graph stays off after zero incremental recoveries. P08/UI/benchmark edits and another main push remain excluded. Older phase snapshots below are historical.
+
 P01/P02 foundations and retrieval plus P03 policy/temporal/live domain checks are runnable. Real-server
-checks require explicit local-server enablement. P04 bounded agent consumers are verified; later memory/critic/graph/full research obligations remain planned. Gate catalog rows
+checks require explicit local-server enablement. P04–P06 agent/memory/critic consumers are verified; P07 graph and automatic-memory mechanisms have current evidence below, with phase audit pending. Full semantic research remains P08. Gate catalog rows
 describe full obligations; current phase-local results never imply full runtime proof. Gate states
 and evidence are recorded in [PROGRESS](PROGRESS.md) and [EVIDENCE_LOG](EVIDENCE_LOG.md).
 Read source and test fixtures before running anything with stateful-resource access.
@@ -312,7 +314,7 @@ Frozen prompt-version20B matrix cb9e66:16conditions,16/16known-fact retention,
 qualification fix: no model prompt changed; raw outputs are not relabeled post-fix.
 No efficacy/H05, semantic accuracy, causal false-veto or completeness claim. Mandatory
 review remains enabled; draft-blind first pass sees canonical required slots (§10.1).
-P07 graph/P08 adjudicated research/X01 comparators remain deferred; no P07 GO or P06
+At the historical P06 checkpoint, P07 graph/P08 adjudicated research/X01 comparators remained deferred; no P07 GO or P06
 main push is inferred. No unanswered P06 owner ADR. Owned processes stopped, storage
 preserved and ports16333/16334/18080 verified free; foreign benchmark/editor work untouched.
 
@@ -325,3 +327,13 @@ authority and evidence are checked again after waiting.
 P06 arm clarification: blind_requirements is draft-blind first-pass review under
 blueprint §10.1; canonical policy-required slots remain supplied. It does not measure
 independent discovery of unsupplied requirements. End-review R2 is withdrawn.
+
+## P07 automatic memory promotion extension
+
+Owner amendment ADR0066 adds [P07-T04.01](MASTER_DEV_PLAN.md#p07-t04-01), [P07-T04.02](MASTER_DEV_PLAN.md#p07-t04-02), [P07-T04.03](MASTER_DEV_PLAN.md#p07-t04-03), [P07-T04.04](MASTER_DEV_PLAN.md#p07-t04-04), [P07-T04.05](MASTER_DEV_PLAN.md#p07-t04-05) to G-MEMORY/G-SECURITY/G-E2E/G-RESEARCH. P05 PASS does not close these new obligations. Prove explicit session ownership/lifecycle, default compatibility, original event/span provenance, idempotence after failures, same-user cross-session preferences and denial across users/origin ACL revocation. Procedural experience must stay authorityNONE and cannot grant tool/policy permission. Test PathA positive/negative classification, injection/quoted/other-user/case-fact rejection; actual local cosine/loss PathB, deterministic dominance and uncertainty abstention; record all pilot errors, unknown labels and costs. Source case audit/live/policy readers remain canonical while episodic packet/recall is session-filtered. No paid/hidden classifier calls; extra inference requires explicit opt-in/bounds. End audit covers graph and this amendment.
+
+### P07 phase-local gate receipt (end review resolved)
+
+E-P07-002 records verified v6 sessions/provenance, deterministic chunk limits and rule negatives, actual local encoder/profile/loss, owner-corrected session readers and real next-session provider consumption. All six graph cards and five memory cards are verified: eleven of eleven P07 cards, including sole end-review resolution. The graph card uses its documented negative-result exit: both arms recover both expected appendices, zero incremental recoveries, graph stays defaultoff. Controlled navigation proves integration, not an empirical retrieval win. The local memory pilot has4mechanical controls and2unadjudicated labels, not measured semantic accuracy.
+
+Full real-server r2 yielded345PASS/1FAIL/6explicitGroqSKIP379.97s; the failure is a Neo4j seed MERGE transaction timing out at the unchanged explicitly configured10second client cap, before the restricted-appendix assertion. This remains a failed setup, not an ACL success. The same failed test plus nine graph controls subsequently passed in isolation (10PASS78.15s); 346distinct non-provider checks therefore have positive evidence, without claiming a combined sweep exit0. Default suite327PASS/25explicit integration-providerSKIP68.40s. Final published-anchor/fanout/merge controls9PASS24.85s. Installed offline55PASS/2modelSKIP34.22s, actual graph/local-model consumers2PASS61.93s, and final installed anchor guard1PASS7.93s are overlapping artifact checks. Latest wheel62/62source bytes match, SHA2560e09cb80cd10ff9908e6b3ceb86f824d4c02df05ce2b984b773c64fa388d582a. Actual persistent seed→reconcile→serve→Groq two-session→original citation proof passed (E-P07-002); failures remain recorded. Do not relabel skipped provider cases PASS.

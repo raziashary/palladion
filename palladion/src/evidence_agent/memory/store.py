@@ -3,7 +3,9 @@ from __future__ import annotations
 
 import json
 import re
+import sqlite3
 import uuid
+from contextlib import nullcontext
 from datetime import datetime, timezone
 from typing import Any, Literal
 
@@ -16,42 +18,72 @@ from evidence_agent.storage.sqlite import utc_now
 
 
 class CaseStore:
-    def __init__(self, registry: Registry, principal: Principal, case_id: str) -> None:
+    def __init__(self, registry: Registry, principal: Principal, case_id: str,
+                 session_id: str | None = None, *, promotion_enabled: bool = True) -> None:
         self.registry, self.principal, self.case_id = registry, principal, case_id
+        self._session_id=session_id
+        self.promotion_enabled=promotion_enabled
+        self.promotion_counts={"processed":0,"promoted":0,"failed":0}
+
+    @property
+    def session_id(self) -> str:
+        from evidence_agent.memory.sessions import Sessions
+        if self._session_id is None:
+            self._session_id=Sessions(self.registry,self.principal,self.case_id).resolve()
+        return self._session_id
 
     def memory(self) -> MemoryStore:
         return MemoryStore(self)
 
-    def authorize(self) -> None:
+    def authorize(self, *, allow_closed_session: bool = False) -> None:
         self.registry.access.authorize(self.principal, tenant_id=self.principal.tenant_id,
                                        case_id=self.case_id, grant="case:read")
+        if self._session_id is not None:
+            from evidence_agent.memory.sessions import Sessions
+            Sessions(self.registry,self.principal,self.case_id).read(self._session_id,
+                allow_closed=allow_closed_session)
 
     def append(self, kind: str, trace_id: str, payload: dict[str, Any]) -> str:
-        self.authorize()
+        audit=kind not in {"REQUEST","RELEASE"}
+        self.authorize(allow_closed_session=audit)
         if kind not in {"REQUEST", "ATTEMPT", "TOOL_RESULT", "RELEASE", "CANCELLED", "DIAGNOSTIC"}:
             raise ValueError("Unknown runtime event")
-        envelope = {**payload, "schema_version": "1.0", "trace_id": trace_id}
+        session=self.session_id
+        envelope = {**payload, "schema_version": "1.0", "trace_id": trace_id,"session_id":session}
         encoded = json.dumps(envelope, ensure_ascii=False)
         if len(encoded.encode()) > 65536:
             raise ValueError("Event exceeds bound")
         identifier = "evt_" + uuid.uuid4().hex
         with self.registry.database.transaction() as connection:
-            self.authorize()
+            self.authorize(allow_closed_session=audit)
             connection.execute("INSERT INTO case_events VALUES(?,?,?,?,?,?,?)", (
                 identifier, self.principal.tenant_id, self.case_id, self.principal.principal_id,
                 "RUNTIME_" + kind, encoded, utc_now()))
+            connection.execute("INSERT INTO memory_event_sessions VALUES(?,?)",(identifier,session))
+        if self.promotion_enabled and kind in {"REQUEST","TOOL_RESULT","RELEASE"}:
+            from evidence_agent.memory.promotion import PromotionEngine
+            try:
+                result=PromotionEngine(self).process(identifier)
+                self.promotion_counts["processed"]+=result["processed"]
+                self.promotion_counts["promoted"]+=result["promoted"]
+            except (EvidenceAgentError,ValueError,sqlite3.Error):
+                self.promotion_counts["failed"]+=1
+                # Event stays committed; safe failure accounting is distinct from success.
+                self.append("DIAGNOSTIC",trace_id,{"memory_promotion_status":"FAILED",
+                    "source_event_id":identifier})
         return identifier
 
-    def recent(self, *, limit: int = 12) -> list[dict[str, Any]]:
+    def recent(self, *, limit: int = 12, session_only: bool = True) -> list[dict[str, Any]]:
         self.authorize()
         if not 1 <= limit <= 20:
             raise ValueError("Recall limit exceeded")
         rows = self.registry.database.connection.execute(
             "SELECT event_id,event_kind,payload_json,occurred_at FROM case_events "
-            "WHERE tenant_id=? AND case_id=? AND event_kind IN "
+            "WHERE tenant_id=? AND case_id=? AND (?=0 OR event_id IN "
+            "(SELECT event_id FROM memory_event_sessions WHERE session_id=?)) AND event_kind IN "
             "('RUNTIME_REQUEST','RUNTIME_ATTEMPT','RUNTIME_TOOL_RESULT','RUNTIME_RELEASE','RUNTIME_CANCELLED') "
             "ORDER BY occurred_at DESC,event_id DESC LIMIT ?",
-            (self.principal.tenant_id, self.case_id, limit)).fetchall()
+            (self.principal.tenant_id, self.case_id, int(session_only),self.session_id, limit)).fetchall()
         results = []
         for row in reversed(rows):
             payload = self._safe_payload(row[1], json.loads(row[2]))
@@ -114,9 +146,10 @@ class CaseStore:
         row = self.registry.database.connection.execute(
             "SELECT payload_json FROM case_events WHERE tenant_id=? AND case_id=? "
             "AND event_kind='RUNTIME_RELEASE' "
+            "AND event_id IN (SELECT event_id FROM memory_event_sessions WHERE session_id=?) "
             "AND json_array_length(json_extract(payload_json,'$.missing_requirements'))>0 "
             "ORDER BY occurred_at DESC,event_id DESC LIMIT 1",
-            (self.principal.tenant_id, self.case_id)).fetchone()
+            (self.principal.tenant_id, self.case_id, self.session_id)).fetchone()
         if row:
             previous = self._safe_payload("RUNTIME_RELEASE", json.loads(row[0]))["missing_requirements"]
             questions.update(set(previous) - policy_fields)
@@ -128,8 +161,9 @@ class CaseStore:
         rows = self.registry.database.connection.execute(
             "SELECT event_id,payload_json FROM case_events WHERE tenant_id=? AND case_id=? "
             "AND actor_id=? AND event_kind='RUNTIME_REQUEST' "
+            "AND event_id IN (SELECT event_id FROM memory_event_sessions WHERE session_id=?) "
             "ORDER BY occurred_at DESC,event_id DESC LIMIT 4",
-            (self.principal.tenant_id, self.case_id, self.principal.principal_id)).fetchall()
+            (self.principal.tenant_id, self.case_id, self.principal.principal_id, self.session_id)).fetchall()
         reports = []
         for row in reversed(rows):
             query = json.loads(row[1]).get("query")
@@ -278,7 +312,10 @@ class MemoryStore:
             CaseStore(self.registry, self.case.principal, origin).read_event(ref.source_id)
 
     def write(self, spec: MemorySpec, *, supersedes_id: str | None = None,
-              general: bool = False) -> str:
+              general: bool = False, _connection: sqlite3.Connection | None = None) -> str:
+        if _connection is not None and (_connection is not self.registry.database.connection or
+                not _connection.in_transaction or spec.source_ref is not None):
+            raise ValueError("Enlisted memory writes require the owning transaction and event-span provenance")
         self.case.authorize()
         if self.closed():
             raise PermissionDenied
@@ -314,13 +351,17 @@ class MemoryStore:
         if spec.valid_until and spec.valid_until <= start:
             raise ValueError("Invalid memory validity interval")
         identifier = "mem_" + uuid.uuid4().hex
-        with self.registry.database.transaction() as db:
+        session_id = self.case.session_id
+        transaction=self.registry.database.transaction() if _connection is None else nullcontext(_connection)
+        with transaction as db:
             self.case.authorize()
             if supersedes_id and db.execute("SELECT 1 FROM memory_provenance WHERE supersedes_id=?",
                                            (supersedes_id,)).fetchone():
                 raise ValueError("Memory already superseded")
             event = self._event(db, "WRITTEN", {"memory_id": identifier, "supersedes_id": supersedes_id,
-                "scope_kind": spec.scope_kind, "validity_policy_id": spec.validity_policy_id})
+                "scope_kind": spec.scope_kind, "validity_policy_id": spec.validity_policy_id,
+                "automatic_promotion":_connection is not None})
+            db.execute("INSERT INTO memory_event_sessions VALUES(?,?)", (event,session_id))
             db.execute("INSERT INTO memory_entries VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)", (
                 identifier, spec.memory_kind, principal.tenant_id, spec.scope_kind, spec.scope_id,
                 event, spec.source_ref.source_id if spec.source_ref else None, "UNVERIFIED",
@@ -329,6 +370,11 @@ class MemoryStore:
             db.execute("INSERT INTO memory_provenance VALUES(?,?,?,?,?,?,?,?,?)", (
                 identifier, owner, origin, principal.principal_id, now, start.isoformat(),
                 supersedes_id, spec.claim_kind, spec.source_ref.model_dump_json() if spec.source_ref else None))
+            if supersedes_id and _connection is None:
+                # Carry original event/session provenance through arbitrarily many owner
+                # corrections instead of relying on a bounded ancestry search to find it.
+                db.execute("UPDATE memory_promotion_links SET memory_id=? WHERE memory_id=?",
+                    (identifier,supersedes_id))
         return identifier
 
     def read(self, identifier: str, *, for_control: bool = False) -> dict[str, Any]:
@@ -348,6 +394,10 @@ class MemoryStore:
             origin_case=row["origin_case_id"], current_case=self.case.case_id,
             kind=row["scope_kind"], scope_id=row["scope_id"], owner_id=row["owner_id"])
         db = self.registry.database.connection
+        if not for_control and row["memory_kind"] == "EPISODIC" and not db.execute(
+                "SELECT 1 FROM memory_event_sessions WHERE event_id=? AND session_id=?",
+                (row["source_event_id"], self.case.session_id)).fetchone():
+            raise PermissionDenied
         if not for_control and db.execute("SELECT 1 FROM memory_provenance WHERE supersedes_id=?", (identifier,)).fetchone():
             raise PermissionDenied
         if not for_control and db.execute("SELECT 1 FROM case_events WHERE tenant_id=? AND event_kind='MEMORY_REVOKED' "
@@ -361,11 +411,26 @@ class MemoryStore:
             raise PermissionDenied
         ref = SourceRef.model_validate_json(row["source_ref_json"]) if row["source_ref_json"] else None
         self._source(ref, row["origin_case_id"])
+        provenance = db.execute("WITH RECURSIVE ancestors(memory_id,depth) AS ("
+            "SELECT ?,0 UNION ALL SELECT p.supersedes_id,a.depth+1 FROM memory_provenance p "
+            "JOIN ancestors a ON p.memory_id=a.memory_id WHERE p.supersedes_id IS NOT NULL AND a.depth<16) "
+            "SELECT c.chunk_id,c.session_id,c.event_id FROM ancestors a JOIN memory_promotion_links l "
+            "ON l.memory_id=a.memory_id JOIN memory_event_chunks c USING(chunk_id) LIMIT 1", (identifier,)).fetchone()
+        original: dict[str, Any] | None = None
+        if provenance:
+            from evidence_agent.memory.promotion import source_chunk
+            original, _ = source_chunk(self.case, provenance["chunk_id"],owner_id=row["owner_id"])
+            if not for_control and row["memory_kind"] == "EPISODIC" and provenance["session_id"] != self.case.session_id:
+                raise PermissionDenied
         return {"memory_id": identifier, "event_id": identifier, "kind": row["memory_kind"],
             "scope_kind": row["scope_kind"], "scope_id": row["scope_id"], "owner_id": row["owner_id"],
             "origin_case_id": row["origin_case_id"], "content": row["content"],
             "claim_kind": row["claim_kind"], "verification_status": "UNVERIFIED", "authority": "NONE",
+            "verification":"REQUIRES_RECHECK",
             "source_event_id": row["source_event_id"], "source_ref": ref.model_dump(mode="json") if ref else None,
+            "original_event_id": original["event_id"] if original else None,
+            "original_chunk_id": original["chunk_id"] if original else None,
+            "session_id": original["session_id"] if original else None,
             "validity_policy_id": row["validity_policy_id"], "valid_from": row["valid_from"],
             "valid_until": row["user_valid_until"], "set_by": row["set_by"], "set_at": row["set_at"]}
 
@@ -392,6 +457,11 @@ class MemoryStore:
             else:
                 condition = ""
             sql += "WHERE e.tenant_id=?" + condition
+            # Session filtering precedes the bounded candidate window. Manual memories
+            # retain their approved legacy behavior; automatically episodic rows do not.
+            sql += " AND (e.memory_kind!='EPISODIC' OR EXISTS(SELECT 1 FROM memory_event_sessions s "
+            sql += "WHERE s.event_id=e.source_event_id AND s.session_id=?))"
+            params.append(self.case.session_id)
             # Scope before ranking/windowing: denied users/cases must not starve eligible memories.
             sql += """
                 AND ((e.scope_kind='USER' AND e.scope_id=? AND p.owner_id=?)

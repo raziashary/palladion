@@ -1,5 +1,7 @@
 # Project goal
 
+Current checkpoint2026-10-19: P06 published6444345; P07 graph and owner-added automatic memory implementation, consumer proof and sole LunaMedium end-review resolution verified (E-P07-001/002). ADR0063–0066 owner approvals preserved. Graph stays off after zero incremental recoveries. P08/UI/benchmark edits and another main push remain excluded. Older phase snapshots below are historical.
+
 As of 2026-10-19 (Asia/Bangkok). Owner: user; coordinator maintains evidence.
 
 ## Development-suite outcomes
@@ -33,7 +35,7 @@ A null or adverse result is a valid research outcome.
 | O03: Bounded, honestly qualified answers | P04 agent/gate and selected actual Groq consumers exist; phase-local implementation/proof and single audit/resolution complete; model failures retained | P04; G-BUDGET, G-GATE, G-SECURITY; actual explicitly selected Groq three-model message API and canonical citation readback |
 | O04: Safe continuity | P05 scoped memory/packet/cache/follow-up consumers and third-turn correction verified with sole audit/resolution; actual pilot failures retained; developer memory is separate | P05; G-MEMORY; second authorized request consumes persisted state |
 | O05: Measured self-challenge | Critic/runtime/guards implemented;16actual frozen conditions recorded with failures; default-budget real review/final/readback verified; exact-clause recovery verified; final-source16-condition matrix neutral for full correction; sole end audit resolved;307disjoint checks and final live/installed proofs; no semantic accuracy claim | P06; G-CRITIC; frozen-draft paired evaluation, correction and false-veto rates |
-| O06: Tested graph value | No graph exists; optional discovery layer | P07; G-GRAPH; graph-on/off paired evidence and cost; disable if unjustified |
+| O06: Tested graph value | Optional canonical source-linked graph implemented; actual paired pilot finds0incremental exception recoveries, graph remains defaultoff. Live worker/API/Groq proof and final phase gates/audit resolution recorded; negative-result disable exit verified | P07; G-GRAPH; graph-on/off paired evidence and cost; disable if unjustified |
 | O07: Reproducible conclusion | Retrieval-only pilot recorded; adjudicated/full-answer benchmark and general performance claims remain absent | P08; G-RESEARCH and G-E2E; pinned run manifest, held-out results and failure taxonomy |
 | O08: Honest external comparison later | `baseline/` empty; no comparator performance known | X01 deferred; shared evaluation adapter, capability and resource disclosures |
 
@@ -60,9 +62,9 @@ compatibility is verified; P03 policy/live domain proof is at E-P03-001. Provide
 The existing app .venv is reused and ignored. Runtime model access needs explicit command enablement,
 not merely credentials. User's root `.env` and `.gitignore` are preserved.
 
-Current user instruction explicitly authorizes P05 publication and P06 end-to-end. P05 is published at f0507e4. Both future review roles must read the full blueprint and report traceable coverage.
+Current user instruction explicitly authorizes P07 graph and owner-added automatic memory work. P06 is published at6444345. Both review roles read the full blueprint and report traceable coverage; P07 sole end-review documentation corrections are verified.
 
-Excluded now: P07+ implementation, UI, actual payments or mutations, private data,
+Excluded now: P08+ implementation, UI, actual payments or mutations, private data,
 real enterprise connectors, production signoff, and comparator implementations. Later
 system work follows the plan; later external comparisons require their own concrete scope.
 
@@ -75,7 +77,7 @@ system work follows the plan; later external comparisons require their own concr
 - [x] P04 — bounded runtime and gate (Slice 3); E-P04-001, phase-local proof and single audit/resolution
 - [x] P05 — memory and continuity (Slice 4); E-P05-001, phase-local proof and single audit/resolution; no H04 success claim
 - [x] P06 — critic experiment (Slice 5); E-P06-001/002, all6cards, final consumer proof/audit, neutral pilot retained
-- [ ] P07 — optional graph experiment (Slice 6)
+- [x] P07 — optional graph experiment and owner-added automatic memory (Slice 6); E-P07-001/002, negative graph exit and sole review resolution
 - [ ] P08 — scientific evaluation and fault injection (Slice 7)
 - [ ] X01 — external baseline systems, deferred
 
@@ -87,3 +89,7 @@ checkpoint text). Opt-in model-call pacing defaults0 and is now implemented, wit
 post-wait caller authorization/evidence validation. Focused98checksPASS15.51s;
 post-fix recovery/default-budget proofs, sole review resolution, final gates and cleanup are verified.
 ADR0054 strengthens pre/post critic discovery attribution and safe attempt diagnostics.
+
+## P07 owner-added automatic memory outcome
+
+O09: backend event persistence automatically produces bounded, attributable memory decisions. PathA deterministic rules is primary; local cosine/loss PathB is fallback/additional evidence with lower influence and cannot override eligibility/ACL/authority. Explicit user preferences persist USER-wide across sessions, with original case/source permissions retained. Procedural tool/workflow experience is unapproved context; remaining chunks are session-local episodic. Explicit backend session start/end and compatible old message clients are implemented. P07-T04.01–05 are verified, including sole end-review resolution. E-P07-002 records v6 preservation/backup/rollback, idempotent chunk links, writer→reopened reader, session/user/revocation negatives, the bounded category/cost/abstention pilot and actual Groq next-turn consumption. No new LLM classifier/tool or organization policy promotion. Semantic accuracy remains unadjudicated.

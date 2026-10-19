@@ -67,6 +67,9 @@ def ready(request: Request) -> dict[str, str]:
         agent = getattr(request.app.state, "agent_services", None)
         if agent is None:
             raise RuntimeError("Model boundary not explicitly configured")
+        if request.app.state.graph_required and (request.app.state.graph is None or
+                not request.app.state.graph.backend.ready()):
+            raise RuntimeError("Required graph unavailable")
     except Exception as exc:
         raise HTTPException(503, "Required dependency or runtime configuration unavailable") from exc
     return {"status": "ready", "model_boundary": "enabled" if agent.model is not None else "disabled"}
@@ -126,7 +129,9 @@ def approve(revision_id: str, request: Request,
             raise ResourceConflict
         registry.access.authorize(principal, tenant_id=principal.tenant_id,
                                    case_id=str(row["case_id"]), grant="document:approve", role="admin")
-        generation = IngestPipeline(catalog, request.app.state.index).index(principal, revision_id)
+        graph = request.app.state.graph
+        generation = IngestPipeline(catalog, request.app.state.index,
+            graph.backend if graph is not None else None).index(principal, revision_id)
         return {"revision_id": revision_id, "generation": generation, "state": "READY"}
 
 
@@ -150,8 +155,9 @@ def search(body: Search, request: Request, authorization: str | None = Header(de
     invoked; ranking/no hits establish neither truth nor organization-wide absence.
     """
     with services(request, authorization) as (_, catalog, principal):
-        return HybridSearch(catalog, request.app.state.index, request.app.state.ranker).search(
-            principal, body.case_id, body.query, mode=body.mode, limit=body.limit)
+        return HybridSearch(catalog, request.app.state.index, request.app.state.ranker,
+            request.app.state.graph).search(principal, body.case_id, body.query, mode=body.mode,
+            limit=body.limit,require_graph=body.require_graph or request.app.state.graph_required)
 
 
 @router.get("/evidence/{chunk_id}")
@@ -193,8 +199,36 @@ async def message(case_id: str, body: Message, request: Request,
     runtime_services = getattr(request.app.state, "agent_services", None)
     if runtime_services is None:
         raise HTTPException(503, "Agent runtime explicitly disabled")
-    runtime = runtime_services.begin(principal.principal_id, case_id)
+    runtime = runtime_services.begin(principal.principal_id, case_id,body.session_id)
     return await runtime.answer(body.query)
+
+
+@router.post("/v1/cases/{case_id}/sessions", status_code=201)
+def start_session(case_id: str, request: Request,
+                  authorization: str | None = Header(default=None)) -> dict[str,str]:
+    """Start a private conversation for the authenticated current case member.
+
+    Closes only that owner's previous active case session, preserving all audit rows.
+    Episodic recall starts empty; authorized private preferences and case evidence remain.
+    No model call or company-policy promotion occurs.
+    """
+    from evidence_agent.memory.sessions import Sessions
+    with services(request,authorization) as (registry,_,principal):
+        return {"session_id":Sessions(registry,principal,case_id).start(),"status":"ACTIVE"}
+
+
+@router.post("/v1/cases/{case_id}/sessions/{session_id}/close")
+def close_session(case_id: str, session_id: str, request: Request,
+                  authorization: str | None = Header(default=None)) -> dict[str,str]:
+    """Close an owned conversation idempotently under current case membership.
+
+    Another member, including an admin, cannot close this owner's session. Further
+    messages using its ID are denied; omitted IDs resolve to a new active session.
+    """
+    from evidence_agent.memory.sessions import Sessions
+    with services(request,authorization) as (registry,_,principal):
+        Sessions(registry,principal,case_id).close(session_id)
+        return {"session_id":session_id,"status":"CLOSED"}
 
 
 @router.get("/v1/evidence/{evidence_id}")
@@ -233,7 +267,7 @@ def timeline(case_id: str, request: Request, authorization: str | None = Header(
     from evidence_agent.memory.store import CaseStore
     with services(request, authorization) as (registry, _, principal):
         # Timeline omits prompts, rejected proposals, raw tool data and developer diagnostics.
-        events = CaseStore(registry, principal, case_id).recent(limit=20)
+        events = CaseStore(registry, principal, case_id).recent(limit=20,session_only=False)
         return [{"event_id": e["event_id"], "kind": e["kind"], "at": e["at"],
             "trace_id": e["payload"]["trace_id"],
             "status": e["payload"].get("status") or e["payload"].get("disposition"),

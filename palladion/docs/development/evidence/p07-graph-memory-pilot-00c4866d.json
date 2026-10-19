@@ -1,0 +1,341 @@
+{
+  "api_graph": {
+    "http_status": 200,
+    "paths": 1
+  },
+  "completed": true,
+  "failures": [],
+  "graph_default": "DISABLED",
+  "graph_records": {
+    "graph_entity_attestations": 15,
+    "graph_merge_decisions": 0,
+    "graph_relation_reviews": 0,
+    "graph_relations": 1
+  },
+  "graph_timeout_seconds": 10,
+  "identity_review_effort": "synthetic registered structural links; no independent human adjudication",
+  "incremental_exception_recoveries": 0,
+  "model_invocations": 10,
+  "pairs": [
+    {
+      "conditions": {
+        "B2": {
+          "elapsed_ms": 458.0674000317231,
+          "expected_recovered": true,
+          "ids": [
+            "chunk_6b67fd2b34ab93eb5ad9b53ebf678c4226888ddcecf89a07e689c65edf0950cc",
+            "chunk_8a96ad68323905093f964b22a78c9ef945d0bc675fcd8d4bcdaae321b05958a0",
+            "chunk_d311e8b3b33e913071bec3a1ea3c266f1c23b41775a2200677e5affd97ba63c5",
+            "chunk_48aef511d676043f7402cf40401be9ed8187317d4b462fa5b3c2c8f4ea200f78"
+          ],
+          "path_count": 0,
+          "stage_counts": {
+            "discovered": 14,
+            "expanded": 4,
+            "reranked": 8,
+            "resolved": 8
+          },
+          "status": "OK",
+          "warnings": []
+        },
+        "B3": {
+          "elapsed_ms": 2328.791000007186,
+          "expected_recovered": true,
+          "ids": [
+            "chunk_6b67fd2b34ab93eb5ad9b53ebf678c4226888ddcecf89a07e689c65edf0950cc",
+            "chunk_8a96ad68323905093f964b22a78c9ef945d0bc675fcd8d4bcdaae321b05958a0",
+            "chunk_d311e8b3b33e913071bec3a1ea3c266f1c23b41775a2200677e5affd97ba63c5",
+            "chunk_48aef511d676043f7402cf40401be9ed8187317d4b462fa5b3c2c8f4ea200f78"
+          ],
+          "path_count": 1,
+          "stage_counts": {
+            "discovered": 14,
+            "expanded": 4,
+            "reranked": 8,
+            "resolved": 8
+          },
+          "status": "OK",
+          "warnings": []
+        }
+      },
+      "query": "S26-REVERSAL",
+      "reference_ids": [
+        "chunk_8a96ad68323905093f964b22a78c9ef945d0bc675fcd8d4bcdaae321b05958a0"
+      ]
+    },
+    {
+      "conditions": {
+        "B2": {
+          "elapsed_ms": 391.14790002349764,
+          "expected_recovered": true,
+          "ids": [
+            "chunk_8a96ad68323905093f964b22a78c9ef945d0bc675fcd8d4bcdaae321b05958a0",
+            "chunk_ac109630e1ec5fee397d38a1365cf1a6e0920a44923a5595de46b7f171265ab0",
+            "chunk_d311e8b3b33e913071bec3a1ea3c266f1c23b41775a2200677e5affd97ba63c5",
+            "chunk_2f637308cd085453cc15dac257c40717ceec08dfa26d9d4614ca1b5b687d1872"
+          ],
+          "path_count": 0,
+          "stage_counts": {
+            "discovered": 13,
+            "expanded": 4,
+            "reranked": 8,
+            "resolved": 8
+          },
+          "status": "OK",
+          "warnings": []
+        },
+        "B3": {
+          "elapsed_ms": 510.6983999721706,
+          "expected_recovered": true,
+          "ids": [
+            "chunk_8a96ad68323905093f964b22a78c9ef945d0bc675fcd8d4bcdaae321b05958a0",
+            "chunk_6b67fd2b34ab93eb5ad9b53ebf678c4226888ddcecf89a07e689c65edf0950cc",
+            "chunk_ac109630e1ec5fee397d38a1365cf1a6e0920a44923a5595de46b7f171265ab0",
+            "chunk_d311e8b3b33e913071bec3a1ea3c266f1c23b41775a2200677e5affd97ba63c5"
+          ],
+          "path_count": 1,
+          "stage_counts": {
+            "discovered": 13,
+            "expanded": 4,
+            "reranked": 8,
+            "resolved": 8
+          },
+          "status": "OK",
+          "warnings": []
+        }
+      },
+      "query": "settlement timeout investigation",
+      "reference_ids": [
+        "chunk_8a96ad68323905093f964b22a78c9ef945d0bc675fcd8d4bcdaae321b05958a0"
+      ]
+    },
+    {
+      "conditions": {
+        "B2": {
+          "elapsed_ms": 48.843399970792234,
+          "expected_recovered": null,
+          "ids": [],
+          "path_count": 0,
+          "stage_counts": {
+            "discovered": 0,
+            "expanded": 0,
+            "reranked": 0,
+            "resolved": 0
+          },
+          "status": "DEGRADED",
+          "warnings": [
+            "EXACT_IDENTIFIER_NOT_FOUND"
+          ]
+        },
+        "B3": {
+          "elapsed_ms": 62.14860000181943,
+          "expected_recovered": null,
+          "ids": [],
+          "path_count": 0,
+          "stage_counts": {
+            "discovered": 0,
+            "expanded": 0,
+            "reranked": 0,
+            "resolved": 0
+          },
+          "status": "DEGRADED",
+          "warnings": [
+            "EXACT_IDENTIFIER_NOT_FOUND"
+          ]
+        }
+      },
+      "query": "ERR-NOTIN-CORPUS-999",
+      "reference_ids": []
+    },
+    {
+      "conditions": {
+        "B2": {
+          "elapsed_ms": 276.47240000078455,
+          "expected_recovered": null,
+          "ids": [
+            "chunk_d311e8b3b33e913071bec3a1ea3c266f1c23b41775a2200677e5affd97ba63c5",
+            "chunk_2f637308cd085453cc15dac257c40717ceec08dfa26d9d4614ca1b5b687d1872",
+            "chunk_6b67fd2b34ab93eb5ad9b53ebf678c4226888ddcecf89a07e689c65edf0950cc",
+            "chunk_23e30c55584bc3c3687582d9e4adf4ad5ea22e1ade0f22c2608a0ba8e6e21939"
+          ],
+          "path_count": 0,
+          "stage_counts": {
+            "discovered": 13,
+            "expanded": 4,
+            "reranked": 8,
+            "resolved": 8
+          },
+          "status": "OK",
+          "warnings": []
+        },
+        "B3": {
+          "elapsed_ms": 425.60580000281334,
+          "expected_recovered": null,
+          "ids": [
+            "chunk_d311e8b3b33e913071bec3a1ea3c266f1c23b41775a2200677e5affd97ba63c5",
+            "chunk_8a96ad68323905093f964b22a78c9ef945d0bc675fcd8d4bcdaae321b05958a0",
+            "chunk_2f637308cd085453cc15dac257c40717ceec08dfa26d9d4614ca1b5b687d1872",
+            "chunk_6b67fd2b34ab93eb5ad9b53ebf678c4226888ddcecf89a07e689c65edf0950cc"
+          ],
+          "path_count": 1,
+          "stage_counts": {
+            "discovered": 13,
+            "expanded": 4,
+            "reranked": 8,
+            "resolved": 8
+          },
+          "status": "OK",
+          "warnings": []
+        }
+      },
+      "query": "duplicate capture verification",
+      "reference_ids": []
+    }
+  ],
+  "provider_calls": null,
+  "queries_sha256": "f1bfa4766d7f8eef35bed64b7bf7b22c8553ebc599f9a65459ba55e0d2f525fb",
+  "received_model_responses": 10,
+  "representation": {
+    "bm25_model": "Qdrant/bm25",
+    "bm25_options": {
+      "avg_len": 256.0,
+      "b": 0.75,
+      "k": 1.2,
+      "language": "english",
+      "lowercase": true
+    },
+    "bm25_profile": "english",
+    "dense": {
+      "dimension": 384,
+      "files": {
+        "config.json": "c8ec081fdad2df991bf5abbf18418fec7a5cdaa421f60ffb060a30040b8c376f",
+        "model_optimized.onnx": "634d0f66c29dc934c8fa72b8a4fe91dd4d420a22f1d82a241058d4316e659a99",
+        "tokenizer.json": "fa685fc160bbdbab64058d4fc91b60e62d207e8dc60b9af5c002c5ab946ded00",
+        "tokenizer_config.json": "0666eebf692422757e1dddf3c9fb1ded73ba3dc726c5828671fc89e45bf3609f"
+      },
+      "model": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+      "normalization": "FastEmbed model output",
+      "repository": "Qdrant/paraphrase-multilingual-MiniLM-L12-v2-onnx-Q",
+      "revision": "faf4aa4225822f3bc6376869cb1164e8e3feedd0",
+      "threads": 2
+    },
+    "dense_vector": "dense",
+    "qdrant_client_version": "1.19.1",
+    "qdrant_server_version": "1.19.2",
+    "rrf_k": 60,
+    "sparse_vector": "bm25"
+  },
+  "reranker": {
+    "files": {
+      "config.json": "d827779a72d27ae68cf878a6fc2e954542663fe21ca515d9f4783fc96be2d37e",
+      "onnx/model.onnx": "c623d0bcb99f4622beb413eaef00cfbe5db20df9f1dd982da4b4f26022881870",
+      "tokenizer.json": "d241a60d5e8f04cc1b2b3e9ef7a4921b27bf526d9f6050ab90f9267a1f9e5c66",
+      "tokenizer_config.json": "0b29c7bfc889e53b36d9dd3e686dd4300f6525110eaa98c76a5dafceb2029f53",
+      "vocab.txt": "07eced375cec144d27c900241f3e339478dec958f92fddbc551f295c992038a3"
+    },
+    "model": "Xenova/ms-marco-MiniLM-L-6-v2",
+    "revision": "a09144355adeed5f58c8ed011d209bf8ee5a1fec",
+    "threads": 2
+  },
+  "retention_decision": "DISABLED: small development fixture does not justify default graph cost",
+  "run_id": "p07_00c4866d27684be6bcd701831448256f",
+  "runtime": {
+    "disposition": "PARTIALLY_SUPPORTED",
+    "first_budget": {
+      "adapter_attempt_max_per_lookup": 2,
+      "critic_max": 3,
+      "critic_search_used": 0,
+      "critic_used": 1,
+      "main_max": 5,
+      "main_used": 5,
+      "prefetch_used": 0,
+      "tool_max": 8,
+      "tools_used": 3
+    },
+    "http_status": 200,
+    "model": "openai/gpt-oss-20b",
+    "old_episode_absent": true,
+    "original_preference_read_back": true,
+    "provider_failure": null,
+    "rate_limits": {
+      "limit-requests": 1000,
+      "limit-tokens": 8000,
+      "remaining-requests": 990,
+      "remaining-tokens": 2649,
+      "reset-requests": "14m24s",
+      "reset-tokens": "40.132s"
+    },
+    "second_budget": {
+      "adapter_attempt_max_per_lookup": 2,
+      "critic_max": 3,
+      "critic_search_used": 0,
+      "critic_used": 1,
+      "main_max": 5,
+      "main_used": 3,
+      "prefetch_used": 0,
+      "tool_max": 8,
+      "tools_used": 1
+    },
+    "second_turn_attempts": [
+      {
+        "final": false,
+        "old_episode_present": false,
+        "preference_present": true,
+        "received": true,
+        "usage": {
+          "completion_tokens": 50,
+          "prompt_tokens": 1452,
+          "total_tokens": 1502
+        }
+      },
+      {
+        "final": false,
+        "old_episode_present": false,
+        "preference_present": true,
+        "received": true,
+        "usage": {
+          "completion_tokens": 213,
+          "prompt_tokens": 2240,
+          "total_tokens": 2453
+        }
+      },
+      {
+        "final": false,
+        "old_episode_present": false,
+        "preference_present": true,
+        "received": true,
+        "usage": {
+          "completion_tokens": 163,
+          "prompt_tokens": 2191,
+          "total_tokens": 2354
+        }
+      },
+      {
+        "final": true,
+        "old_episode_present": false,
+        "preference_present": false,
+        "received": true,
+        "usage": {
+          "completion_tokens": 224,
+          "prompt_tokens": 1569,
+          "total_tokens": 1793
+        }
+      }
+    ],
+    "tool_status": {
+      "search_knowledge": "OK"
+    },
+    "verification_failures": []
+  },
+  "scope": "frozen synthetic development pilot",
+  "selected_miss_limit": "Registered exception is already B2 context-linked; no fabricated novel recovery. Two-hop controlled-anchor recovery is a separate integration control.",
+  "semantic_accuracy": "UNKNOWN",
+  "top_k": 4,
+  "worker": {
+    "citation_readback": true,
+    "elapsed_ms": 6932.89310002001,
+    "path_count": 1,
+    "status": "OK",
+    "warnings": []
+  }
+}

@@ -10,6 +10,14 @@ critic_max_calls: 3
 tool_max_calls: 8
 critic_search_max_calls: 2
 graph_max_hops: 2
+graph_enabled: false
+graph_required: false
+neo4j_uri: bolt://127.0.0.1:17687
+graph_partition: palladion_graph_v1
+graph_fanout: 8
+graph_max_nodes: 24
+graph_max_edges: 32
+graph_timeout_seconds: 2.0
 max_draft_revisions: 1
 max_source_passages: 12
 request_timeout_seconds: 60

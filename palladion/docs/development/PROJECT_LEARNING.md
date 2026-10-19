@@ -1,5 +1,7 @@
 # Project learning and corrections
 
+Current checkpoint2026-10-19: P06 published6444345; P07 graph and owner-added automatic memory implementation, consumer proof and sole LunaMedium end-review resolution verified (E-P07-001/002). ADR0063–0066 owner approvals preserved. Graph stays off after zero incremental recoveries. P08/UI/benchmark edits and another main push remain excluded. Older phase snapshots below are historical.
+
 This records engineering/research learning, not runtime agent memory or company policy.
 An observation needs evidence; a conjecture is labeled. Never convert an untested idea
 or copied research reference into a Palladion result. Preserve failed experiments.
@@ -406,3 +408,22 @@ the permitted blind first pass withholds the draft, not canonical policy require
 A suite exit0 can mean SKIPPED: check enable flags and counts before reporting PASS.
 Concurrent model/index tests also confound latency: retain connection-abort/deadline
 failures and run missing checks serially rather than changing timeouts or model budgets.
+
+## P07 source-grounded distinction to preserve
+
+Current CaseStore appends events automatically, while MemorySpec category was previously operator-provided with SEMANTIC as a default. That default was not classification evidence. Owner adds a separate automatic promotion system: category and ACL scope remain separate, session memory does not replace canonical case evidence, and learned/observed procedural experience is not approved workflow authority. E-P07-001/ADR0066/P07-T04 preserve these distinctions before implementation.
+
+## P07 coordinator learning checkpoint
+
+- A memory entry's insertion event is not its original evidence. Keep separate original runtime event/UTF8 span/hash and revalidate it under the original owner/case. Enlist derived entry/link writes atomically; an inserted row without its reader guard is unsafe partial success.
+- Owner correction/revocation must beat later automatic similarity. Carry original chunk provenance through corrections; update only derived current links while immutable decisions/history persist.
+- Episodic continuity and canonical redacted case audit have different consumers. Session-filter the former; preserve the latter's current case authorization. Feed procedural experience through the packet shape the real loop actually reads.
+- First frozen nonprototype pilot assumption of two embedding calls was wrong: fixed eligibility recognizes suits me, not suit me. Correct the expected mechanism and keep the unchanged query/rules/abstention. The other unknown cue misses thresholds; no tuning or semantic-accuracy claim follows.
+- A successful source graph with both endpoints already retrieved still provides navigation metadata, but zero novel evidence. Separate path count from incremental recovery and retain graph-off default after neutral paired results.
+- Query/source deadlines must remain explicit. Failed65second worker and Neo4j seed transaction are retained; later6.93second successful subprocess does not erase them. WSL pause logs are observations, not a universal diagnosis.
+- Tests must create serving SQLite on its serving event loop. The first new tool test used the TestClient caller thread and failed shutdown; fix the test's dispatch through the portal, never disable SQLite thread ownership to hide it.
+
+
+## P07 final phase-local disposition (2026-10-19)
+
+E-P07-002 records all11cards, actual source/installed/CLI/provider and original-reader proof, the sole GPT6LunaMedium end audit and same-reviewer resolution. The reviewer read the full blueprint (§1–§18), I01–I15, graph and memory amendment; three current-facing document contradictions were fixed and rechecked. No confirmed source defect remained. Graph has0incremental recoveries in4paired queries and stays off by default; controlled path recovery proves integration only. PathA automatic promotion and opt-in bounded local PathB retain original ACL/authorityNONE;4mechanical pilot labels pass,2semantic labels remain unknown. Historical failures and intermediate pending statuses above remain dated snapshots, not current scope. No unanswered P07 owner ADR; P08 adjudication, generalization and external comparisons remain excluded.

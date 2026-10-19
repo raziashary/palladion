@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import secrets
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from evidence_agent.core.fixtures import load_fixtures
 from evidence_agent.core.retrieval import SearchIndex
@@ -13,8 +14,12 @@ from evidence_agent.storage.originals import OriginalStore
 from evidence_agent.storage.registry import Registry
 from evidence_agent.storage.sqlite import Database
 
+if TYPE_CHECKING:
+    from evidence_agent.storage.neo4j import Neo4jIndex
 
-def seed(runtime_root: Path, fixture_root: Path, index: SearchIndex) -> dict[str, str]:
+
+def seed(runtime_root: Path, fixture_root: Path, index: SearchIndex,
+         graph: Neo4jIndex | None = None) -> dict[str, str]:
     """Idempotently register fixtures. Never restore revoked grants/approvals or reset a store."""
     bundle = load_fixtures(fixture_root)
     runtime_root.mkdir(parents=True, exist_ok=True)
@@ -49,7 +54,7 @@ def seed(runtime_root: Path, fixture_root: Path, index: SearchIndex) -> dict[str
                 registry.approve_source(admin, revision)
             if metadata["approval_status"] == "REVOKED":
                 continue
-            IngestPipeline(catalog, index).index(admin, revision)
+            IngestPipeline(catalog, index, graph).index(admin, revision)
             chunks = catalog.chunks_for_revision(admin, revision)
             indexed_chunks[source.source_id] = chunks
             for chunk in chunks:
@@ -63,6 +68,19 @@ def seed(runtime_root: Path, fixture_root: Path, index: SearchIndex) -> dict[str
             origin = next(chunk for chunk in indexed_chunks["SOP-2026-B"] if "S26-REVERSAL" in chunk.text)
             target = next(chunk for chunk in indexed_chunks["EX-2026-04"] if "EX-SETTLEMENT-DELAY" in chunk.text)
             catalog.add_context_link(admin, origin.chunk_id, target.chunk_id)
+        if graph is not None:
+            from evidence_agent.graph.registry import GraphRegistry
+            from evidence_agent.ingest.graph_extract import extract_registered_links
+            for case in bundle.cases:
+                case_admin=next((p for p in bundle.principals if p.tenant_id==case.tenant_id and
+                    "admin" in p.roles and case.case_id in p.allowed_case_ids),None)
+                if case_admin is not None:
+                    extract_registered_links(GraphRegistry(catalog,
+                        registry.access.authenticate(case_admin.principal_id),case.case_id))
+            for source in bundle.sources:
+                if source.source_id in indexed_chunks:
+                    actor=registry.access.authenticate(source.approved_by or "")
+                    IngestPipeline(catalog,index,graph).index(actor,revisions[source.source_id])
     token_path = runtime_root / "demo_auth.json"
     if not token_path.exists():
         # Exclusive create avoids overwriting a concurrent seed's credential mapping.

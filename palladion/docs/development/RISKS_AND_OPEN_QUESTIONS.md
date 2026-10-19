@@ -1,5 +1,7 @@
 # Risks, accepted answers and verification obligations
 
+Current checkpoint2026-10-19: P06 published6444345; P07 graph and owner-added automatic memory implementation, consumer proof and sole LunaMedium end-review resolution verified (E-P07-001/002). ADR0063–0066 owner approvals preserved. Graph stays off after zero incremental recoveries. P08/UI/benchmark edits and another main push remain excluded. Older phase snapshots below are historical.
+
 Current authority amendment: P05 published f0507e4; user explicitly authorized P06 end-to-end; ADR-0030 separately approves the additive PolicyDecision extension. Earlier implementation hold below is historical; P04 explicit enabled provider commands are authorized.
 
 Updated 2026-10-17. The user read and accepted all recommendation directions, except
@@ -106,10 +108,27 @@ Frozen prompt-version20B matrix cb9e66:16conditions,16/16known-fact retention,
 qualification fix: no model prompt changed; raw outputs are not relabeled post-fix.
 No efficacy/H05, semantic accuracy, causal false-veto or completeness claim. Mandatory
 review remains enabled; draft-blind first pass sees canonical required slots (§10.1).
-P07 graph/P08 adjudicated research/X01 comparators remain deferred; no P07 GO or P06
+At the historical P06 checkpoint, P07 graph/P08 adjudicated research/X01 comparators remained deferred; no P07 GO or P06
 main push is inferred. No unanswered P06 owner ADR. Owned processes stopped, storage
 preserved and ports16333/16334/18080 verified free; foreign benchmark/editor work untouched.
 
 
 No unanswered P06 owner ADR remains. Exact-ID recovery does not establish semantic
 recall, inventory completeness, production readiness or baseline superiority.
+
+## P07 memory promotion risks and accepted boundaries
+
+Owner0066 answers global=private USER-wide, explicit backend sessions, primary deterministic PathA plus lower-influence cosine/loss PathB, and additive v6. No unanswered category/scope/strategy/storage decision remains. Calibration thresholds/weighting/loss are explicit pilot tunables, not measured optimal values. Main must prove privacy under source revocation/closed sessions, chunk-provenance idempotence, uncertain/quoted/injected preference rejection and no procedural-policy escalation. Existing case-wide packet readers are insufficient. No automatic organization promotion, extra Groq classifier, hidden write tool or embedding-store dependency. Unresolved empirical classification/benefit questions remain research limits, not permission to claim success.
+
+### P07 measured boundaries and remaining research (2026-10-19)
+
+Owner0066/0068 profile is frozen, uncalibrated. The deterministic backend path is automatic; local PathB is an explicitly enabled separate process. The nonprototype six-event pilot keeps4mechanically specified boundaries and2unknown semantic labels. It made1embeddingcall/12texts/0provider calls,5.91seconds, no additional promotion. One weak English cue is not eligible under frozen rules; the eligible detailed-example cue abstains on cosine.74109/combined.62822/loss0. Preserve these false-negative possibilities rather than tune after seeing outputs. Generalization/calibration requires P08 independent labels; no new owner decision is needed for the accepted implementation.
+
+Paired actual graph run00c4866d has0incremental exception recoveries because B2 context expansion already supplies the appendix. Default graph remains disabled. Canonical two-hop navigation, positive/negative ACL/tool/API consumer and cost evidence are engineering results; they are not an adjudicated retrieval or answer-quality win. Paths may describe already selected evidence and never count as new recovery. Initial provider-free pilot had slow/degraded worker; first live attempt failed graph seed; these stay in E-P07-002. Successful20B run proves automatic preference reaches real next-session input with old episode absent, not the truth or quality of a preference-based response.
+
+Known downstream concern from the concurrent benchmark owner's publishedb1209f8 receipt: generic HTTP-loaded source metadata does not necessarily create ExactIndex aliases. Current P07 trusted synthetic seed explicitly registers aliases; no general exact-ID upload guarantee is claimed. Owner: future P08/source retrieval follow-up under Rule4 if a shipped lookup contract changes; do not silently change it in this graph/memory phase.
+
+
+## P07 final phase-local disposition (2026-10-19)
+
+E-P07-002 records all11cards, actual source/installed/CLI/provider and original-reader proof, the sole GPT6LunaMedium end audit and same-reviewer resolution. The reviewer read the full blueprint (§1–§18), I01–I15, graph and memory amendment; three current-facing document contradictions were fixed and rechecked. No confirmed source defect remained. Graph has0incremental recoveries in4paired queries and stays off by default; controlled path recovery proves integration only. PathA automatic promotion and opt-in bounded local PathB retain original ACL/authorityNONE;4mechanical pilot labels pass,2semantic labels remain unknown. Historical failures and intermediate pending statuses above remain dated snapshots, not current scope. No unanswered P07 owner ADR; P08 adjudication, generalization and external comparisons remain excluded.

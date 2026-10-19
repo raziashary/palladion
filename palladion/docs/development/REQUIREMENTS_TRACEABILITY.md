@@ -1,5 +1,7 @@
 # Requirements traceability
 
+Current checkpoint2026-10-19: P06 published6444345; P07 graph and owner-added automatic memory implementation, consumer proof and sole LunaMedium end-review resolution verified (E-P07-001/002). ADR0063–0066 owner approvals preserved. Graph stays off after zero incremental recoveries. P08/UI/benchmark edits and another main push remain excluded. Older phase snapshots below are historical.
+
 Scope: blueprint v0.2 and user's 2026-10-17 suite request. All system coverage below
 mixes verified P01–P06 and planned later consumers; PROGRESS and the
 phase-local EVIDENCE_LOG receipts distinguish verified paths and still-unrun obligations. References use stable heading/section names rather
@@ -128,6 +130,15 @@ Frozen prompt-version20B matrix cb9e66:16conditions,16/16known-fact retention,
 qualification fix: no model prompt changed; raw outputs are not relabeled post-fix.
 No efficacy/H05, semantic accuracy, causal false-veto or completeness claim. Mandatory
 review remains enabled; draft-blind first pass sees canonical required slots (§10.1).
-P07 graph/P08 adjudicated research/X01 comparators remain deferred; no P07 GO or P06
+At the historical P06 checkpoint, P07 graph/P08 adjudicated research/X01 comparators remained deferred; no P07 GO or P06
 main push is inferred. No unanswered P06 owner ADR. Owned processes stopped, storage
 preserved and ports16333/16334/18080 verified free; foreign benchmark/editor work untouched.
+
+## Owner amendment: automatic memory promotion in P07
+
+ADR0066 supplements blueprint §9.1/§9.2 and I09/I10 scope/authority controls without editing the vision. P07-T04.01 owns sessions/provenance migration6; T04.02 deterministic chunk classifier; T04.03 cosine/loss supplement; T04.04 automatic write→session packet/recall; T04.05 actual-reader/provider and pilot proof. Semantic means USER-wide preference continuity, not shared organization policy; procedural experience is unapproved tooling/workflow context, distinct from blueprint-approved canonical templates. Both preserve original case/source ACL. Episodic recall is session-local even though canonical case audit/evidence persist. Existing operator-written MemorySpec entries and P05 proof do not establish this new automation.
+
+
+## P07 final phase-local disposition (2026-10-19)
+
+E-P07-002 records all11cards, actual source/installed/CLI/provider and original-reader proof, the sole GPT6LunaMedium end audit and same-reviewer resolution. The reviewer read the full blueprint (§1–§18), I01–I15, graph and memory amendment; three current-facing document contradictions were fixed and rechecked. No confirmed source defect remained. Graph has0incremental recoveries in4paired queries and stays off by default; controlled path recovery proves integration only. PathA automatic promotion and opt-in bounded local PathB retain original ACL/authorityNONE;4mechanical pilot labels pass,2semantic labels remain unknown. Historical failures and intermediate pending statuses above remain dated snapshots, not current scope. No unanswered P07 owner ADR; P08 adjudication, generalization and external comparisons remain excluded.

@@ -15,6 +15,9 @@ gate, messages/citations, scoped developer traces/readiness and cancellable sear
 are verified through actual provider/HTTP/wheel checks and independent end-review
 resolution. P04/P05 are published; scoped memory/continuity is verified complete. P06 independent critic, bounded counter-search and final gate are verified with installed/live checks and end-review resolution. Its paired synthetic experiment remains neutral for full exception correction. No UI or research-hypothesis success is claimed. All passing and failed model
 checks and current gates are recorded in [progress](palladion/docs/development/PROGRESS.md).
+P07 is complete within its engineering scope: opt-in source graph, backend sessions and
+automatic memory promotion passed actual consumer checks and independent review. The
+paired graph pilot found no incremental exception recovery; graph stays disabled by default.
 Retrieval uses real dense/BM25 Qdrant; the Docker-free WSL launcher is documented in the
 [application README](palladion/README.md). Generative commands explicitly enable Groq
 Qwen3.8-27B, GPT-OSS120B or GPT-OSS20B; retrieval-only checks need no provider call.
@@ -54,8 +57,10 @@ flowchart LR
 P04 implements the bounded agent loop, four read-tool handlers, generated drafts and
 necessary-condition release gate. P05 adds scoped memory, owner-controlled validity,
 FTS recall and revalidated continuity/cache. P06 implements independent-context
-criticism, scoped counter-search and review-aware finalization/gating. Optional graph
-traversal and confirmatory scientific answer-system evaluation remain later phases. Enterprise identity integration remains outside this synthetic prototype.
+criticism, scoped counter-search and review-aware finalization/gating. P07 adds optional
+graph navigation and deterministic memory categorization, with a separately enabled local
+cosine supplement. Confirmatory evaluation remains P08. Enterprise identity integration
+remains outside this synthetic prototype.
 
 ## Run and explore
 
@@ -114,4 +119,4 @@ The current pilot has eight synthetic queries over a tiny corpus and lacks indep
 adjudicated labels. English/Indonesian query coverage does not establish general multilingual
 quality. Retrieval metrics do not establish answer correctness, production readiness or
 superiority. External comparator implementations and full answer-system experiments remain
-future work. P03 domain verification is recorded in the evidence log; Phase 4 is complete with recorded limits; Phase 5 is complete; Phase 6 is authorized and in progress.
+future work. P01–P07 are complete within their recorded engineering boundaries. Check the progress record for current evidence and unresolved gates.

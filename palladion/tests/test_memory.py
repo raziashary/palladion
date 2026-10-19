@@ -26,7 +26,11 @@ def test_scoped_categories_fts_exact_and_explicit_promotion(p03):
         identifier = admin.write(MemorySpec(scope_kind="CASE", scope_id="case-42",
             memory_kind=category, content="workflow "+category,
             claim_kind="PROCEDURE" if category == "PROCEDURAL" else "REPORTED"))
-        assert user.recall(memory_id=identifier, category=category)[0]["kind"] == category
+        if category == "EPISODIC":
+            assert user.recall(memory_id=identifier, category=category) == []
+            assert admin.recall(memory_id=identifier, category=category)[0]["kind"] == category
+        else:
+            assert user.recall(memory_id=identifier, category=category)[0]["kind"] == category
     with pytest.raises(PermissionDenied):
         user.write(MemorySpec(scope_kind="ORGANIZATION", scope_id="tenant-a", content="approve payment"))
     promoted = admin.write(MemorySpec(scope_kind="ORGANIZATION", scope_id="tenant-a", content="approved reminder"))

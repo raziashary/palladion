@@ -1,6 +1,8 @@
 """Real local Qdrant/HTTP integration, explicitly enabled and temporary synthetic state."""
 from __future__ import annotations
 
+import asyncio
+import json
 import os
 import subprocess
 import sys
@@ -29,6 +31,53 @@ pytestmark = pytest.mark.skipif(not URL, reason="Explicit local Qdrant integrati
 TOKENS = {"test-admin-a": "admin-a", "test-upload-a": "uploader-a",
           "test-reader-a": "reader-a", "test-limited-a": "reader-a-limited",
           "test-reader-b": "reader-b"}
+
+
+@pytest.mark.skipif(os.environ.get("PALLADION_TEST_NEO4J")!="1",reason="Explicit actual graph integration")
+def test_actual_graph_tool_and_api_never_expose_restricted_appendix(runtime):
+    from evidence_agent.agent.services import configure_agent
+    from evidence_agent.graph.relations import TraversalLimits
+    from evidence_agent.live.gateway import load_config
+    from evidence_agent.live.mock import MockAdapter
+    from evidence_agent.retrieval.graph_expand import GraphExpansion
+    from evidence_agent.settings import Settings
+    from evidence_agent.storage.neo4j import Neo4jIndex
+    root,index,revisions=runtime
+    partition="p07_test_"+uuid.uuid4().hex
+    backend=Neo4jIndex(partition=partition,timeout_seconds=10)
+    try:
+        seed(root,APP,index,backend)
+        app=create_app(root,index,TOKENS,graph=GraphExpansion(backend,TraversalLimits(timeout_seconds=10)))
+        configure_agent(app,model=None,adapter=MockAdapter({}),config=load_config(APP/"config/adapters.yaml"),
+            settings=Settings(graph_enabled=True,graph_timeout_seconds=10))
+        with TestClient(app) as client:
+            positive=client.post("/search",headers=auth("test-reader-a"),json={
+                "case_id":"case-42","query":"S26-REVERSAL","limit":2,"require_graph":True})
+            assert positive.status_code==200 and positive.json()["graph_paths"],positive.text
+            restricted=client.post("/search",headers=auth("test-limited-a"),json={
+                "case_id":"case-42","query":"S26-REVERSAL","limit":2})
+            assert restricted.status_code==200
+            assert revisions["EX-2026-04"] not in restricted.text
+            async def read_tool():
+                runtime_agent=app.state.agent_services.begin("reader-a-limited","case-42")
+                return await runtime_agent.tools.execute("search_knowledge",json.dumps({"query":"S26-REVERSAL","limit":2}))
+            assert client.portal is not None
+            tool=client.portal.call(read_tool)
+            assert tool["status"]=="SUCCEEDED" and tool["data"]
+            assert revisions["EX-2026-04"] not in json.dumps(tool)
+            assert tool["graph_navigation"]==[]
+            with Database(root/"registry.sqlite") as database:
+                registry=Registry(database,OriginalStore(root/"originals"))
+                admin=registry.access.authenticate("admin-a")
+                denied=Catalog(registry).chunks_for_revision(admin,revisions["EX-2026-04"])[0].chunk_id
+            assert client.get(f"/evidence/{denied}?case_id=case-42",headers=auth("test-limited-a")).status_code==403
+    finally:
+        cleanup=Neo4jIndex(partition=partition,timeout_seconds=10)
+        try:
+            cleanup._run("MATCH(n) WHERE n.partition=$partition DETACH DELETE n")
+        finally:
+            cleanup.close()
+            backend.close()
 
 
 def auth(token: str) -> dict[str, str]:
@@ -265,7 +314,6 @@ def test_p04_actual_groq_walkthrough_and_citation_reader(scenario):
 
 
 def test_p04_four_domain_tools_and_original_reader_without_provider(runtime):
-    import asyncio
     import hashlib
     import json
 
@@ -345,7 +393,6 @@ def test_p04_four_domain_tools_and_original_reader_without_provider(runtime):
 
 
 def test_p04_message_deadline_stops_and_persists_blocked_search_process(runtime, monkeypatch):
-    import asyncio
     import json
 
     from evidence_agent.agent.services import configure_agent

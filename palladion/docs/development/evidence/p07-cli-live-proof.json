@@ -1,0 +1,48 @@
+{
+  "entrypoint": "real serve.py HTTP/Groq20B",
+  "failures": [],
+  "first": {
+    "budget": {
+      "adapter_attempt_max_per_lookup": 2,
+      "critic_max": 3,
+      "critic_search_used": 0,
+      "critic_used": 1,
+      "main_max": 5,
+      "main_used": 5,
+      "prefetch_used": 0,
+      "tool_max": 8,
+      "tools_used": 3
+    },
+    "elapsed_seconds": 59.92168189998483,
+    "failures": []
+  },
+  "passed": true,
+  "provider_model": "openai/gpt-oss-20b",
+  "root": "runtime\\p07_cli_d4d0c01f5fa64b13a6081f41dda823f2",
+  "second": {
+    "all_citations_read_back": true,
+    "budget": {
+      "adapter_attempt_max_per_lookup": 2,
+      "critic_max": 3,
+      "critic_search_used": 0,
+      "critic_used": 1,
+      "main_max": 5,
+      "main_used": 3,
+      "prefetch_used": 0,
+      "tool_max": 8,
+      "tools_used": 1
+    },
+    "citation_count": 1,
+    "consumed_preflight_reported_count": 1,
+    "disposition": "PARTIALLY_SUPPORTED",
+    "elapsed_seconds": 41.95199779997347,
+    "failures": [],
+    "graph_path_count": 1,
+    "old_episode_absent": true,
+    "preference_in_reopened_packet": true,
+    "received_provider_attempts": 4,
+    "tool_status": {
+      "search_knowledge": "OK"
+    }
+  }
+}

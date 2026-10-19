@@ -1,5 +1,7 @@
 # Research and later comparison protocol
 
+Current checkpoint2026-10-19: P06 published6444345; P07 graph and owner-added automatic memory implementation, consumer proof and sole LunaMedium end-review resolution verified (E-P07-001/002). ADR0063–0066 owner approvals preserved. Graph stays off after zero incremental recoveries. P08/UI/benchmark edits and another main push remain excluded. Older phase snapshots below are historical.
+
 Status: **P02 retrieval-only pilot recorded; P05 continuity and P06 critic pilots recorded with failures; no confirmatory answer-system experiment executed**. Governing source: blueprint “Research
 evaluation,” “Questions deliberately left to experiments,” “Prototype environment.”
 Research records follow [ADR-0007](ADR_LOG.md#adr-0007--research-discipline-and-gate-meanings).
@@ -372,6 +374,23 @@ Frozen prompt-version20B matrix cb9e66:16conditions,16/16known-fact retention,
 qualification fix: no model prompt changed; raw outputs are not relabeled post-fix.
 No efficacy/H05, semantic accuracy, causal false-veto or completeness claim. Mandatory
 review remains enabled; draft-blind first pass sees canonical required slots (§10.1).
-P07 graph/P08 adjudicated research/X01 comparators remain deferred; no P07 GO or P06
+At the historical P06 checkpoint, P07 graph/P08 adjudicated research/X01 comparators remained deferred; no P07 GO or P06
 main push is inferred. No unanswered P06 owner ADR. Owned processes stopped, storage
 preserved and ports16333/16334/18080 verified free; foreign benchmark/editor work untouched.
+
+## P07 automatic promotion pilot protocol (owner amendment ADR0066)
+
+Freeze synthetic event chunks, exact event/span hashes and labeled examples before comparison. Compare primary deterministic PathA with A+optional local cosine/loss PathB under identical sessions/users/source scope. Record category decisions, hard-rule results, cosine scores, margin loss, weighting/config/model fingerprints, abstentions, false global promotion, procedural authority escapes, latency/calls and retained/disabled choice. Deterministic eligibility/ACL rejection is invariant, not a score that similarity can outvote. Similarity is not truth and a loss formula is not evidence of trained/calibrated classification. Actual local encoder and actual message memory-reader checks are separate from injected controls. All uncertain or failed decisions stay episodic; source/case revocation still applies. No embedding store or Groq classifier is implied. Human-adjudicated generalization stays P08.
+
+## P07 observed development pilots (E-P07-002)
+
+Versioned graph pilot CLI is scripts/evaluate_graph.py, separate from P02/P05/P06 scripts/evaluate.py. Run00c4866d27684be6bcd701831448256f preserves4paired inputs under identical source/index/ranker/scope/top4 conditions. Both arms recover2expected appendices;0incremental recoveries. Unknown-ID negative preserved. Graph default stays disabled. B2 already has the registered context link; a separate injected-anchor two-hop control proves navigation, not incremental semantic recall. Raw percondition timings and failures are retained; one ordered tiny development run does not support throughput, tails, generalization or superiority. Graph-required verification failure is unavailable; optional failure is explicit degradation.
+
+Memory corpus data/demo/memory_promotion_pilot.json SHA25639cea5a9ad1f7d5c9b6c395d13f10e8267a3cfe119715067130c40a12fcdbff4 freezes6queries before the run:4mechanical scope/category controls,2unknown nonprototype semantic labels. Rules plus optional actual local encoder make1call/12texts/0Groq,5.91seconds;4mechanical controls pass and both unknown cues remain episodic. One is ineligible under frozen rules, one misses cosine/combined thresholds. This is not4/4semantic accuracy. Positive prototype-identical integration control is reported separately, never treated as generalization. Weight.8/threshold.75/margin.1/combined.65 and loss formula remain untrained/uncalibrated, with full profile and model/prototype fingerprint persisted.
+
+Real20B next-session consumer test00c4866d receives auto-stored preference and excludes old episodic canary; canonical source/tool release remains authority-controlled. All10model invocations receive responses, bounded main/critic/tool counts and rate-limit headers preserved. This proves context wiring only. P08 human adjudication, held-out outcomes and external comparisons remain prerequisites for hypothesis/accuracy claims.
+
+
+## P07 final phase-local disposition (2026-10-19)
+
+E-P07-002 records all11cards, actual source/installed/CLI/provider and original-reader proof, the sole GPT6LunaMedium end audit and same-reviewer resolution. The reviewer read the full blueprint (§1–§18), I01–I15, graph and memory amendment; three current-facing document contradictions were fixed and rechecked. No confirmed source defect remained. Graph has0incremental recoveries in4paired queries and stays off by default; controlled path recovery proves integration only. PathA automatic promotion and opt-in bounded local PathB retain original ACL/authorityNONE;4mechanical pilot labels pass,2semantic labels remain unknown. Historical failures and intermediate pending statuses above remain dated snapshots, not current scope. No unanswered P07 owner ADR; P08 adjudication, generalization and external comparisons remain excluded.

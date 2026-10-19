@@ -24,7 +24,7 @@ class Database:
     """
 
     APPLICATION_ID = 0x50414C4C  # ASCII "PALL"
-    SCHEMA_VERSION = 4
+    SCHEMA_VERSION = 6
 
     def __init__(self, path: str | Path) -> None:
         self.path = str(path)
@@ -167,17 +167,27 @@ class Database:
             self._migration_3_to_4(connection)
             connection.execute("INSERT INTO schema_versions VALUES (?, ?)", (4, utc_now()))
             connection.execute("PRAGMA user_version = 4")
+            self._migration_4_to_5(connection)
+            connection.execute("INSERT INTO schema_versions VALUES (?, ?)", (5, utc_now()))
+            connection.execute("PRAGMA user_version = 5")
+            self._migration_5_to_6(connection)
+            connection.execute("INSERT INTO schema_versions VALUES (?, ?)", (6, utc_now()))
+            connection.execute("PRAGMA user_version = 6")
 
     def _apply_migration(self, current: int, target: int) -> None:
-        if (current, target) not in {(1, 2), (2, 3), (3, 4)}:
+        if (current, target) not in {(1, 2), (2, 3), (3, 4), (4, 5), (5, 6)}:
             raise DatabaseSchemaError(f"no forward migration from version {current} to {target}")
         with self.transaction() as connection:
             if (current, target) == (1, 2):
                 self._migration_1_to_2(connection)
             elif target == 3:
                 self._migration_2_to_3(connection)
-            else:
+            elif target == 4:
                 self._migration_3_to_4(connection)
+            elif target == 5:
+                self._migration_4_to_5(connection)
+            else:
+                self._migration_5_to_6(connection)
             connection.execute(
                 "INSERT INTO schema_versions(version, applied_at) VALUES (?, ?)",
                 (target, utc_now()),
@@ -308,6 +318,18 @@ class Database:
         for statement in _read_sql_statements(script):
             connection.execute(statement)
 
+    @staticmethod
+    def _migration_4_to_5(connection: sqlite3.Connection) -> None:
+        script = Path(__file__).with_name("graph_schema.sql").read_text(encoding="utf-8")
+        for statement in _read_sql_statements(script):
+            connection.execute(statement)
+
+    @staticmethod
+    def _migration_5_to_6(connection: sqlite3.Connection) -> None:
+        script = Path(__file__).with_name("promotion_schema.sql").read_text(encoding="utf-8")
+        for statement in _read_sql_statements(script):
+            connection.execute(statement)
+
     def _validate_schema_shape(self, version: int) -> None:
         expected = {
             "schema_versions",
@@ -367,6 +389,13 @@ class Database:
         if version >= 4:
             if not {"memory_provenance", "memory_teams", "memory_team_memberships", "memory_fts"}.issubset(actual):
                 raise DatabaseSchemaError("Palladion schema version 4 is missing memory tables")
+        if version >= 5:
+            if not {"index_graph_expectations", "graph_entity_attestations", "graph_relations", "graph_relation_reviews",
+                    "graph_merge_decisions"}.issubset(actual):
+                raise DatabaseSchemaError("Palladion schema version 5 is missing graph tables")
+        if version >= 6 and not {"memory_sessions","memory_event_sessions","memory_event_chunks",
+                "memory_promotion_decisions","memory_promotion_links"}.issubset(actual):
+            raise DatabaseSchemaError("Palladion schema version 6 is missing promotion tables")
 
 
 

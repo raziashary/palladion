@@ -27,6 +27,7 @@ class KnowledgeArgs(VersionedModel):
     query: str = Field(min_length=1, max_length=2048)
     search_mode: Literal["lexical", "dense", "hybrid", "reranked"] = "hybrid"
     limit: int = Field(default=2, ge=1, le=12)
+    require_graph: bool = False
 
 
 class PolicyArgs(VersionedModel):
@@ -71,6 +72,7 @@ class Tools:
     def __init__(self, ledger: RequestLedger, gateway: LiveGateway, store: CaseStore) -> None:
         self.ledger, self.gateway, self.store = ledger, gateway, store
         self.memory_enabled = True
+        self.graph_required = False
 
     async def execute(self, name: str, arguments: str) -> dict[str, Any]:
         correlation = self.ledger.trace_id
@@ -84,9 +86,10 @@ class Tools:
             recall_incomplete = False
             if isinstance(args, KnowledgeArgs):
                 result = await search(self.ledger.search, principal.principal_id, case,
-                                      args.query, args.search_mode, args.limit)
+                                      args.query, args.search_mode, args.limit,
+                                      require_graph=args.require_graph or self.graph_required)
                 data = [self.ledger.add(p.citation_id) for p in result.passages]
-                if any(w in {"INDEX_UNAVAILABLE", "RERANK_UNAVAILABLE"} for w in result.warnings):
+                if any(w in {"INDEX_UNAVAILABLE", "RERANK_UNAVAILABLE", "GRAPH_REQUIRED_UNAVAILABLE"} for w in result.warnings):
                     self.ledger.failures.append("KNOWLEDGE_UNAVAILABLE")
                 self.ledger.tool_status[name] = result.status
             elif isinstance(args, LiveArgs):
@@ -122,9 +125,13 @@ class Tools:
             if isinstance(args, MemoryArgs):
                 result_payload["recall_coverage"] = {"candidate_window_incomplete": recall_incomplete,
                     "exhaustive": False, "source_acl_rechecked": True}
+            if isinstance(args, KnowledgeArgs):
+                result_payload["graph_navigation"] = [p.model_dump(mode="json") for p in result.graph_paths]
+                result_payload["retrieval_warnings"] = list(result.warnings)
             self.store.append("TOOL_RESULT", correlation, {"tool": name, "status": "SUCCEEDED",
                 "evidence_ids": list(self.ledger.records),
                 "retrieval_trace_id": result.trace_id if isinstance(args, KnowledgeArgs) else None,
+                "graph_path_count": len(result.graph_paths) if isinstance(args,KnowledgeArgs) else 0,
                 "retrieval_warnings": list(result.warnings) if isinstance(args, KnowledgeArgs) else []})
             return result_payload
         except asyncio.CancelledError:

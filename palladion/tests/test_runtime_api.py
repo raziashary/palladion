@@ -42,6 +42,28 @@ def test_authenticated_message_to_persisted_timeline(api):
     assert "hello" not in timeline.text and "proposal_sha256" not in timeline.text
 
 
+def test_private_session_lifecycle_denies_foreign_and_closed_ids(api,p03):
+    client,_=api
+    headers={"Authorization":"Bearer reader-test"}
+    created=client.post("/v1/cases/case-42/sessions",headers=headers)
+    assert created.status_code==201
+    session=created.json()["session_id"]
+    route=f"/v1/cases/case-42/sessions/{session}/close"
+    assert client.post(route,headers={"Authorization":"Bearer admin-test"}).status_code==403
+    first=client.post("/v1/cases/case-42/messages",headers=headers,
+        json={"query":"I prefer concise answers.","session_id":session})
+    assert first.status_code==200 and first.json()["session_id"]==session
+    assert client.post(route,headers=headers).status_code==200
+    assert client.post(route,headers=headers).status_code==200
+    assert client.post("/v1/cases/case-42/messages",headers=headers,
+        json={"query":"denied","session_id":session}).status_code==403
+    subsequent=client.post("/v1/cases/case-42/messages",headers=headers,json={"query":"hello again"})
+    assert subsequent.status_code==200 and subsequent.json()["session_id"]!=session
+    current=CaseStore(p03.registry,p03.reader,"case-42",subsequent.json()["session_id"])
+    assert current.memory().recall(category="SEMANTIC")[0]["content"]=="I prefer concise answers."
+    assert all("concise" not in item["content"] for item in current.memory().recall(category="EPISODIC"))
+
+
 def test_wrong_case_token_and_identity_override_do_not_dispatch(api):
     client, app = api
     assert client.post("/v1/cases/case-42/messages", json={"query": "hello"}).status_code == 403

@@ -1,9 +1,21 @@
 # Current progress
 
+Current checkpoint2026-10-19: P06 published6444345; P07 graph and owner-added automatic memory implementation, consumer proof and sole LunaMedium end-review resolution verified (E-P07-001/002). ADR0063–0066 owner approvals preserved. Graph stays off after zero incremental recoveries. P08/UI/benchmark edits and another main push remain excluded. Older phase snapshots below are historical.
+
 Updated 2026-10-19 (Asia/Bangkok). Atomic task state lives in MASTER_DEV_PLAN;
 command observations and review receipts live in EVIDENCE_LOG.
 
-## Current checkpoint
+## Verified P07 checkpoint
+
+P07 DONE: all11 atomic cards verified, including six graph cards through the documented negative-result disable exit and five owner-added automatic memory cards. Owner approvals0063–66 and coordinator decisions0067–70 retained. One LunaMedium start adversary reviewed the complete blueprint and expanded memory scope; one LunaMedium end reviewer read the complete blueprint and checked implementation, consumers, evidence and all12development documents. Three stale scope/status statements were fixed; the same reviewer verified resolution. No confirmed source defect remained.
+
+Default source suite327PASS/25explicit integration-providerSKIP68.40s. Real-server sweep345PASS/1seed-timeoutFAIL/6explicitGroqSKIP379.97s plus that test passed within isolated10PASS78.15s:346distinct non-provider checks have positive evidence, without claiming the combined sweep exited0. Focused final graph guards9PASS24.85s; installed offline55PASS/2modelSKIP, installed actual graph/local encoder2PASS and final installed anchor guard1PASS overlap. Latest wheel62/62source bytes match; exact hashes/commands/failures in E-P07-002. Ruff/mypy/dependency/document gates and foundation/policy CLI proof recorded there.
+
+Frozen paired graph pilot: both B2/B3 recover both expected appendices,0incremental recoveries in4pairs, graph stays defaultoff. Controlled paths prove integration only. Actual persistent seed→reconcile→serve→Groq two-session→original citation proof passes: next-session preference consumed, old episode absent, graph path returned and canonical citation read back. Automatic deterministic PathA and explicit bounded local cosine/loss PathB are implemented without a Groq classifier. Local pilot4mechanical labels pass;2semantic labels remain unknown. No semantic accuracy, graph superiority or production reliability claim.
+
+P06 published6444345; concurrent benchmark commits on shared main are preserved. P07 verified checkpoint is recorded in scoped git history; no new main push authorized. Task-owned HTTP/Qdrant/Neo4j listeners are stopped with storage preserved; final port verification recorded at E-P07-002. P08/UI/enterprise writes and benchmark edits remain excluded.
+
+## Historical P06 closeout
 
 P05 is published **f0507e4**. **P06 DONE**.
 
@@ -28,7 +40,7 @@ Frozen prompt-version20B matrix cb9e66:16conditions,16/16known-fact retention,
 qualification fix: no model prompt changed; raw outputs are not relabeled post-fix.
 No efficacy/H05, semantic accuracy, causal false-veto or completeness claim. Mandatory
 review remains enabled; draft-blind first pass sees canonical required slots (§10.1).
-P07 graph/P08 adjudicated research/X01 comparators remain deferred; no P07 GO or P06
+At the historical P06 checkpoint, P07 graph/P08 adjudicated research/X01 comparators remained deferred; no P07 GO or P06
 main push is inferred. No unanswered P06 owner ADR. Owned processes stopped, storage
 preserved and ports16333/16334/18080 verified free; foreign benchmark/editor work untouched.
 
@@ -105,7 +117,7 @@ Human gold-label adjudication, retrieval, citation API and model behavior are no
 | P04 | DONE | E-P04-001: all14 children, phase-local proof, exact wheel and single audit/resolution |
 | P05 | DONE | E-P05-001; all7 cards, third-turn correction, source/installed consumers and sole review/resolution |
 | P06 | DONE | E-P06-001/002; all6 cards,307disjoint checks, installed/live proofs and sole review resolution; neutral pilot retained |
-| P07 | PLANNED | Optional graph implementation and measurements |
+| P07 | DONE | All11cards, source/installed/CLI/provider proof and sole audit resolution; graph defaultoff after neutral pilot; E-P07-001/002 |
 | P08 | PLANNED | Scientific runs, scorer, fault injection and reports |
 | X01 | DEFERRED | External comparators; baseline/ remains empty |
 
@@ -115,18 +127,18 @@ Human gold-label adjudication, retrieval, citation API and model behavior are no
 |---|---|---|
 | G-DOC | PASS | P00–P06 documentation PASS; final source/consumer/audit records checked |
 | G-CONTRACT | PASS | P01–P06 contracts and approved provenance/memory extensions pass; exact-wheel consumers and review resolved |
-| G-SOURCE | PARTIAL | Fresh/populated/rollback/foreign DB checks, immutable bytes, persisted source reader pass; P02 index/API/revocation verified; P07 graph obligations remain |
-| G-SECURITY | PARTIAL | Stored identity/grants/membership/source ACL and revocation/self-approval controls pass; P04 prompt/API/tool/trace controls pass; P07 graph boundaries remain |
+| G-SOURCE | PARTIAL | Fresh/populated/rollback/foreign DB checks, immutable bytes, persisted source reader pass; P02 index/API/revocation verified; P07 graph source obligations verified; later fault matrix remains P08 |
+| G-SECURITY | PARTIAL | Stored identity/grants/membership/source ACL and revocation/self-approval controls pass; P04 prompt/API/tool/trace controls pass; P07 graph/memory ACL boundaries verified; broader fault matrix remains P08 |
 | G-RETRIEVAL | PARTIAL | P02 subset PASS: real Qdrant/model/ACL/canonical/exact/exception/pilot/audit; P08-T02.05 controlled fusion ablation remains |
 | G-TEMPORAL | PASS | P03 four trusted bases, half-open intervals, scoped supersession/conflicts and admin cutoff controls; E-P03-001 |
 | G-POLICY | PARTIAL | P03 bounded AST, persisted input IDs and reopened executed trace pass; P04 gate/citation/conflict replay and supersession consumers pass; phase-local review resolved; later obligations remain |
 | G-LIVE | PASS | P03 named mock operations, target ACL, freshness, bounded retry/concurrency/deadline and audit controls; synthetic phase contract only |
 | G-BUDGET | PARTIAL | Main/tool reserve, malformed/failure/parallel/cancellation controls pass; owned search-worker cancellation/deadline passes; P06 critic/search/cancellable pacing proven; sole audit resolved; P08 faults remain |
 | G-GATE | PARTIAL | Controlled claims, freshness, T09/T22 and safe rendering tested; all five live dispositions pass; P06 necessary-condition review/finalization proven; semantic adequacy remains P08 |
-| G-MEMORY | PASS | P05 phase-local scopes/validity/recall/packet/cache/reopen and third-turn controls pass; sole audit resolved; semantic improvement unproven |
+| G-MEMORY | PASS | P05 scopes/validity/packet/cache and P07 sessions/automatic promotion/original ACL/actual next-session consumer pass; sole audits resolved; semantic improvement unproven |
 | G-CRITIC | PARTIAL | P06 structured/ACL/budget/outage/current-evidence guards and actual-Qdrant correction control pass; actual provider discovery/full quote/readback proven; sole audit resolved; semantic adjudication remains P08 |
-| G-GRAPH | NOT_RUN | Identity helpers only; no graph store/traversal |
-| G-E2E | PARTIAL | P04 five-disposition/document/TCP/wheel and10 Qdrant tests pass; end review resolved; P05 memory/P06 critic verified; P07 graph/P08 semantic obligations remain |
+| G-GRAPH | PASS | Real Neo4j publication/identity/merge/ACL/caps and actual worker/API controls pass; sole phase audit resolved; neutral graph pilot/defaultoff |
+| G-E2E | PARTIAL | P04 five-disposition/document/TCP/wheel and10 Qdrant tests pass; end review resolved; P05 memory/P06 critic verified; P07 graph/memory verified; P08 semantic obligations remain |
 | G-RESEARCH | PARTIAL | P02 retrieval/P05 continuity/P06 critic pilots retained with failures; human adjudication/full arms/held-out remain P08 |
 
 ## Checkpoint history
@@ -148,7 +160,4 @@ Human gold-label adjudication, retrieval, citation API and model behavior are no
 
 ## Next-session handoff
 
-P06 is complete locally; E-P06-002 records final audit resolution/verification/cleanup.
-Read ADR0062 and the versioned neutral paired results before making research claims.
-P07 requires owner GO; another main push requires explicit approval. Preserve ongoing
-benchmark/editor changes and the concurrently committed benchmark9d356fc history.
+P07 phase-local work is verified complete at E-P07-001/002. Await owner P08 scope and any new main-push authorization. Do not redo completed phases or infer research success. Preserve foreign benchmark/editor changes and their shared main commits. PROJECT_MEMORY provides current recovery pointers; retained raw failures and unknown semantic labels remain obligations for later research, not blockers disguised as successes.

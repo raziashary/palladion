@@ -8,6 +8,7 @@ from pathlib import Path
 from evidence_agent.core.bootstrap import seed
 from evidence_agent.policy.bootstrap import seed_policy_fixture
 from evidence_agent.settings import load_settings
+from evidence_agent.storage.neo4j import Neo4jIndex
 from evidence_agent.storage.originals import OriginalStore
 from evidence_agent.storage.qdrant import QdrantIndex
 from evidence_agent.storage.registry import Registry
@@ -22,10 +23,15 @@ def main() -> None:
     parser.add_argument("--collection", default=settings.qdrant_collection)
     parser.add_argument("--bm25-profile", choices=["english", "no_stemming"], default=settings.bm25_profile)
     parser.add_argument("--policies", action="store_true", help="Explicit trusted fictional policy/case-scope seed")
+    parser.add_argument("--enable-graph",action="store_true")
+    parser.add_argument("--graph-partition",default=settings.graph_partition)
+    parser.add_argument("--graph-timeout",type=float,default=settings.graph_timeout_seconds)
     args = parser.parse_args()
     index = QdrantIndex(url=args.url, collection_name=args.collection, bm25_profile=args.bm25_profile)
+    graph=Neo4jIndex(uri=settings.neo4j_uri,partition=args.graph_partition,
+        timeout_seconds=args.graph_timeout) if args.enable_graph else None
     try:
-        revisions = seed(args.root, Path(__file__).resolve().parents[1], index)
+        revisions = seed(args.root, Path(__file__).resolve().parents[1], index, graph)
         if args.policies:
             with Database(args.root / "registry.sqlite") as database:
                 seed_policy_fixture(Registry(database, OriginalStore(args.root / "originals")),
@@ -34,6 +40,8 @@ def main() -> None:
                           "representation": index.representation_manifest}, indent=2))
     finally:
         index.close()
+        if graph is not None:
+            graph.close()
 
 
 if __name__ == "__main__":

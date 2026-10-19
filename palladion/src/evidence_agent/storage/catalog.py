@@ -32,6 +32,7 @@ class Catalog:
         fingerprint: str,
         parser_version: str,
         graph_enabled: bool = False,
+        graph_manifest: Mapping[str, str] | None = None,
     ) -> str:
         """Persist expected chunks and return a deterministic retry-safe generation."""
         source = self.registry.source_metadata(principal, revision_id)
@@ -40,11 +41,10 @@ class Catalog:
             not chunks
             or not fingerprint
             or not parser_version
-            or graph_enabled
+            or graph_enabled and not graph_manifest
+            or not graph_enabled and graph_manifest is not None
             or hashlib.sha256(source_bytes).hexdigest() != source["content_sha256"]
         ):
-            # Graph is explicitly unavailable in this P02 substrate. A future
-            # caller must add and reconcile its adapter before enabling it.
             raise ValidationFailure
         expected: dict[str, str] = {}
         previous_end = -1
@@ -77,6 +77,12 @@ class Catalog:
             [revision_id, source["content_sha256"], fingerprint, parser_version, manifest_hash],
             separators=(",", ":"),
         )
+        if graph_enabled:
+            assert graph_manifest is not None
+            if (len(graph_manifest) > 8192 or any(not isinstance(k,str) or not k or
+                    len(k)>120 or not isinstance(v,str) or len(v)!=64 for k,v in graph_manifest.items())):
+                raise ValidationFailure
+            generation_payload += "|graph-v1|" + _manifest_hash(graph_manifest)
         generation = "gen_" + hashlib.sha256(generation_payload.encode("utf-8")).hexdigest()
         now = utc_now()
         with self.database.transaction() as connection:
@@ -99,10 +105,11 @@ class Catalog:
                     "INSERT INTO index_generations "
                     "(tenant_id, revision_id, generation, fingerprint, parser_version, graph_enabled, "
                     "required_backends_json, state, expected_count, expected_manifest_sha256, created_at) "
-                    "VALUES (?, ?, ?, ?, ?, 0, ?, 'INDEXING', ?, ?, ?)",
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, 'INDEXING', ?, ?, ?)",
                     (
                         source["tenant_id"], revision_id, generation, fingerprint, parser_version,
-                        json.dumps(["qdrant"], separators=(",", ":")), len(chunks), manifest_hash, now,
+                        int(graph_enabled), json.dumps(["qdrant", "neo4j"] if graph_enabled else ["qdrant"],
+                            separators=(",", ":")), len(chunks), manifest_hash, now,
                     ),
                 )
             else:
@@ -116,6 +123,11 @@ class Catalog:
                     "WHERE tenant_id = ? AND revision_id = ? AND generation = ?",
                     (source["tenant_id"], revision_id, generation),
                 )
+            if graph_enabled:
+                assert graph_manifest is not None
+                for identifier, digest in graph_manifest.items():
+                    connection.execute("INSERT OR IGNORE INTO index_graph_expectations VALUES(?,?,?,?,?)",
+                        (source["tenant_id"],revision_id,generation,identifier,digest))
             for chunk in chunks:
                 existing_chunk = connection.execute(
                     "SELECT tenant_id, revision_id, case_id, section_id, start_byte, end_byte, "
@@ -181,7 +193,7 @@ class Catalog:
         backend: str = "qdrant",
     ) -> bool:
         """Compare exact backend ID/hash readback, then publish atomically."""
-        if backend != "qdrant":
+        if backend not in {"qdrant", "neo4j"}:
             raise ValidationFailure
         source = self.registry.source_metadata(principal, revision_id)
         tenant_id = str(source["tenant_id"])
@@ -203,10 +215,18 @@ class Catalog:
                 (tenant_id, revision_id, generation),
             ).fetchall()
             expected = {item["chunk_id"]: item["content_sha256"] for item in expected_rows}
+            canonical_chunks_valid = (len(expected) == row["expected_count"] and
+                                      _manifest_hash(expected) == row["expected_manifest_sha256"])
+            if backend not in json.loads(row["required_backends_json"]):
+                raise ValidationFailure
+            if backend == "neo4j":
+                expected = {r[0]:r[1] for r in connection.execute(
+                    "SELECT item_id,sha256 FROM index_graph_expectations WHERE tenant_id=? AND revision_id=? AND generation=?",
+                    (tenant_id,revision_id,generation))}
             exact = dict(readback)
             valid = (
-                len(expected) == row["expected_count"]
-                and _manifest_hash(expected) == row["expected_manifest_sha256"]
+                canonical_chunks_valid
+                and bool(expected)
                 and exact == expected
             )
             if not valid:
@@ -231,8 +251,8 @@ class Catalog:
                     revision_id,
                     generation,
                     backend,
-                    row["expected_count"],
-                    row["expected_manifest_sha256"],
+                    len(expected),
+                    _manifest_hash(expected),
                     len(exact),
                     _manifest_hash(exact),
                     utc_now(),
@@ -240,16 +260,17 @@ class Catalog:
             )
             required = tuple(json.loads(row["required_backends_json"]))
             acknowledgments = {
-                item["backend"]: (item["confirmed_count"], item["confirmed_manifest_sha256"])
+                item["backend"]: (item["expected_count"], item["expected_manifest_sha256"],
+                                  item["confirmed_count"], item["confirmed_manifest_sha256"])
                 for item in connection.execute(
-                    "SELECT backend, confirmed_count, confirmed_manifest_sha256 "
+                    "SELECT backend, expected_count, expected_manifest_sha256, confirmed_count, confirmed_manifest_sha256 "
                     "FROM index_backend_manifests WHERE tenant_id = ? AND revision_id = ? AND generation = ?",
                     (tenant_id, revision_id, generation),
                 )
             }
             if not all(
                 backend_name in acknowledgments
-                and acknowledgments[backend_name] == (row["expected_count"], row["expected_manifest_sha256"])
+                and acknowledgments[backend_name][:2] == acknowledgments[backend_name][2:]
                 for backend_name in required
             ):
                 return False
@@ -330,6 +351,13 @@ class Catalog:
         if row is None:
             return None
         return _generation_record(row)
+
+    def graph_manifest_for_generation(self, principal: Principal, revision_id: str,
+                                     generation: str) -> dict[str,str]:
+        self.registry.source_metadata(principal,revision_id)
+        return {r[0]:r[1] for r in self.database.connection.execute(
+            "SELECT item_id,sha256 FROM index_graph_expectations WHERE tenant_id=? AND revision_id=? AND generation=?",
+            (principal.tenant_id,revision_id,generation))}
 
     def add_alias(
         self, principal: Principal, alias: str, revision_id: str, chunk_id: str

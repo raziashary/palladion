@@ -67,7 +67,7 @@ async def _run(command: tuple[str, ...], payload: bytes) -> bytes:
 
 
 async def search(owner: HybridSearch, principal_id: str, case_id: str,
-                 query: str, mode: str, limit: int) -> SearchResult:
+                 query: str, mode: str, limit: int, *, require_graph: bool = False) -> SearchResult:
     from evidence_agent.retrieval.rerank import FastEmbedReranker
     from evidence_agent.storage.qdrant import QdrantIndex
     if not isinstance(owner.index, QdrantIndex) or owner.index.worker_configuration is None:
@@ -79,7 +79,10 @@ async def search(owner: HybridSearch, principal_id: str, case_id: str,
         "originals": str(owner.registry.originals.root), "principal_id": principal_id,
         "case_id": case_id, "query": query, "mode": mode, "limit": limit,
         "index": owner.index.worker_configuration,
-        "reranker": ranker.worker_configuration if ranker else {"enabled": False}}
+        "reranker": ranker.worker_configuration if ranker else {"enabled": False},
+        "graph": {"backend":owner.graph.backend.worker_configuration,
+            "limits":owner.graph.limits.model_dump(mode="json")} if owner.graph else None,
+        "require_graph":require_graph}
     try:
         result = await _run((sys.executable, "-X", "utf8", "-m",
             "evidence_agent.agent.search_worker"), json.dumps(payload).encode())
@@ -100,6 +103,7 @@ def main() -> None:
         raise ValueError("Search IPC input exceeds bound")
     payload: dict[str, Any] = json.loads(raw)
     index = QdrantIndex(**payload["index"])
+    graph = None
     try:
         with Database(payload["database"]) as database:
             registry = Registry(database, OriginalStore(Path(payload["originals"])))
@@ -108,11 +112,20 @@ def main() -> None:
             if "cache_dir" in reranker_configuration:
                 reranker_configuration["cache_dir"] = Path(reranker_configuration["cache_dir"])
             ranker = FastEmbedReranker(**reranker_configuration)
-            result = HybridSearch(Catalog(registry), index, ranker).search(principal,
-                payload["case_id"], payload["query"], mode=payload["mode"], limit=payload["limit"])
+            if payload.get("graph") is not None:
+                from evidence_agent.graph.relations import TraversalLimits
+                from evidence_agent.retrieval.graph_expand import GraphExpansion
+                from evidence_agent.storage.neo4j import Neo4jIndex
+                graph = GraphExpansion(Neo4jIndex(**payload["graph"]["backend"]),
+                                      TraversalLimits.model_validate(payload["graph"]["limits"]))
+            result = HybridSearch(Catalog(registry), index, ranker, graph).search(principal,
+                payload["case_id"], payload["query"], mode=payload["mode"], limit=payload["limit"],
+                require_graph=payload.get("require_graph",False))
             sys.stdout.buffer.write(result.model_dump_json().encode())
     finally:
         index.close()
+        if graph is not None:
+            graph.backend.close()
 
 
 if __name__ == "__main__":

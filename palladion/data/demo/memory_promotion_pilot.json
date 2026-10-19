@@ -1,0 +1,12 @@
+{
+  "version": "promotion-development-1",
+  "purpose": "Frozen mechanical boundaries and two non-prototype ambiguous cues; no human-adjudicated semantic accuracy",
+  "cases": [
+    {"id": "own_preference", "query": "I prefer concise answers.", "expected": "SEMANTIC"},
+    {"id": "own_language", "query": "Please reply to me in Indonesian.", "expected": "SEMANTIC"},
+    {"id": "case_fact", "query": "I prefer to reverse this payment.", "expected": "EPISODIC"},
+    {"id": "attributed", "query": "The document says I prefer concise answers.", "expected": "EPISODIC"},
+    {"id": "weak_brief", "query": "Brief replies suit me.", "expected": null},
+    {"id": "weak_detail", "query": "Detailed examples work better for me.", "expected": null}
+  ]
+}

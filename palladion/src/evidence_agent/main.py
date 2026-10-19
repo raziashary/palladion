@@ -13,6 +13,7 @@ from starlette.responses import Response
 from evidence_agent.api.routes import router
 from evidence_agent.core.errors import EvidenceAgentError
 from evidence_agent.core.retrieval import SearchIndex
+from evidence_agent.retrieval.graph_expand import GraphExpansion
 from evidence_agent.retrieval.hybrid import Ranker
 
 
@@ -24,15 +25,19 @@ async def lifecycle(app: FastAPI) -> AsyncIterator[None]:
         runtime = getattr(app.state, "agent_services", None)
         if runtime is not None:
             runtime.close()
+        if app.state.graph is not None:
+            app.state.graph.backend.close()
 
 
 def create_app(runtime_root: Path, index: SearchIndex, tokens: Mapping[str, str],
-               ranker: Ranker | None = None) -> FastAPI:
+               ranker: Ranker | None = None, graph: GraphExpansion | None = None) -> FastAPI:
     app = FastAPI(title="Palladion evidence prototype", docs_url=None, redoc_url=None, lifespan=lifecycle)
     app.state.runtime_root = runtime_root.resolve()
     app.state.index = index
     app.state.tokens = dict(tokens)
     app.state.ranker = ranker
+    app.state.graph = graph
+    app.state.graph_required = False
 
     @app.middleware("http")
     async def bounded_body(request: Request, call_next: RequestResponseEndpoint) -> Response:

@@ -26,6 +26,7 @@ class Search(RequestModel):
     query: str = Field(min_length=1, max_length=2048)
     mode: Literal["lexical", "dense", "hybrid", "reranked"] = "hybrid"
     limit: int = Field(default=12, ge=1, le=12)
+    require_graph: bool = False
 
 
 class Approval(RequestModel):
@@ -34,6 +35,7 @@ class Approval(RequestModel):
 
 class Message(RequestModel):
     query: str = Field(min_length=1, max_length=2048)
+    session_id: str | None = Field(default=None,pattern=r"^sess_[0-9a-f]{32}$")
 
 
 class ReleasedClaim(RequestModel):
@@ -44,6 +46,7 @@ class ReleasedClaim(RequestModel):
 
 class MessageResponse(RequestModel):
     case_id: str
+    session_id: str | None = None
     trace_id: str
     disposition: Literal["SUPPORTED", "PARTIALLY_SUPPORTED", "CONFLICT", "NOT_ESTABLISHED", "VERIFICATION_UNAVAILABLE"]
     answer: str

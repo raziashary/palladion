@@ -1,5 +1,7 @@
 # Project map
 
+Current checkpoint2026-10-19: P06 published6444345; P07 graph and owner-added automatic memory implementation, consumer proof and sole LunaMedium end-review resolution verified (E-P07-001/002). ADR0063–0066 owner approvals preserved. Graph stays off after zero incremental recoveries. P08/UI/benchmark edits and another main push remain excluded. Older phase snapshots below are historical.
+
 Updated 2026-10-19; current P06 proof is E-P06-001/E-P06-002. **Actual documentation is distinct from planned runtime components.**
 Source: blueprint “Concrete prototype repository,” “Directory responsibilities,” and “System
 architecture.” No diagram node below implies shipped code.
@@ -12,17 +14,17 @@ C:/palladion/                         Git root, main; initial revision 9b167a2
   README.md                          Project introduction and navigation
   .env                               Ignored credentials; read only by explicitly enabled commands, never copied/exported
   .gitignore                         Owner-provided .env/.venv exclusions, published unchanged
-  baseline/                          Existing empty directory; reserved, not tracked as a directory
+  baseline/                          Reserved for later comparator implementations
   palladion/
-    .venv/                           Reused ignored environment; locked P01 dependencies verified
+    .venv/                           Reused ignored uv environment; locked app/development dependencies
     pyproject.toml, uv.lock          Package metadata and locked dependencies
     README.md, .gitignore            Runnable foundation instructions and local exclusions
     .env.example                     Non-secret future command enablement template
     config/                          Typed settings and fictional policy fixture
     data/demo/                       Four originals, synthetic case/observation/gold catalog
-    src/evidence_agent/              core/, security/access, storage/, settings, version
-    scripts/validate_foundation.py    Offline actual-domain consumer smoke
-    tests/                           Contract, fixture, settings, access and persistence checks
+    src/evidence_agent/              core/, security/, storage/, ingest/, retrieval/, policy/, live/, agent/, memory/, graph/, api/
+    scripts/validate_foundation.py    Offline actual-domain consumer smoke; additional serve/seed/reconcile/pilot CLIs
+    tests/                           Source/domain/runtime/memory/graph/security and actual-server consumer checks
     docs/
       README.md                      Documentation index
       vision/
@@ -52,7 +54,7 @@ ACL/approval/time/generation and supports bounded learned rerank/context expansi
 `api/` and main factory expose authenticated source/search/citations; telemetry has an
 internal correlated reader. Seed/reconcile/serve/evaluate scripts use those actual owners.
 WSL standalone launcher verifies Qdrant release hashes and preserves Linux-owned storage.
-Compose is optional. P03 now implements the policy/live domain path below; P04 runtime and P05 continuity are verified; P06 critic is verified at E-P06-002; graph remains future.
+Compose is optional. P03 implements the policy/live domain path below; P04 runtime and P05 continuity are verified; P06 critic is verified at E-P06-002. P07 graph and automatic memory consumers are implemented and tested; sole end-review documentation corrections are verified. Graph stays off by default after zero incremental recoveries in the frozen paired pilot.
 
 ## Foundation now implemented (P01)
 
@@ -65,7 +67,7 @@ CLI state is temporary and cleaned; no API/search/provider process is started.
 
 ## Runtime ownership and later planned components
 
-Paths are relative to `palladion/`; P01/P02 and the P03 domain path are implemented; P04 runtime and P05 scoped memory are verified; P06 critic is verified at E-P06-002; graph remains planned. ADR-0001 maps the
+Paths are relative to `palladion/`; P01/P02 and the P03 domain path are implemented; P04 runtime and P05 scoped memory are verified; P06 critic is verified at E-P06-002; P07 graph and automatic memory are implemented with final gates/audit verified. ADR-0001 maps the
 blueprint's illustrative `evidence-agent/` root here; do not create a duplicate project.
 
 | Area and phase ownership | Owns | Producers / consumers | Build phase |
@@ -94,9 +96,9 @@ commands select Qwen3.8-27B, GPT-OSS120B or GPT-OSS20B (ADR-0036); no hidden fal
 Transport→loop→Tools.execute handles native calls with server identity and persisted
 results. Root .env is read only by enabled commands. P01/P02/P03 and current P04
 engineering proofs exist; P06 independent critic is verified; P08 scientific evaluation remains.
-The root also contains separately owned palladion-benchmark work; it is outside P04.
+The root also contains separately owned palladion-benchmark work; it is outside P07.
 
-## Planned request and evidence flow
+## Implemented request and evidence flow (P01–P07)
 
 ```mermaid
 flowchart TD
@@ -127,7 +129,7 @@ tool arguments or packet text. Both retrieval and graph resolve to original auth
 spans; neither graph connectivity nor score creates policy authority. The gate owns release,
 but it is not a complete natural-language theorem prover.
 
-## Planned ingestion and future evaluation flow
+## Implemented ingestion and future evaluation flow
 
 Immutable bytes + authenticated metadata → registry → structural chunks with exact spans →
 hidden dense/BM25/exact and optional graph generation → manifests/reconciliation → atomic
@@ -135,8 +137,7 @@ SQLite publication marker → canonical resolver → citation GET. Revocation ac
 immediately; asynchronous index/cache cleanup cannot be the access-control boundary.
 
 Future `baseline/` systems → shared evaluation contract ← Palladion arms → frozen corpus,
-gold labels and scorer → report with raw safety/usefulness/latency/cost dimensions. All
-comparison adapters and results are currently absent; see RESEARCH_PROTOCOL and X01.
+gold labels and scorer → report with raw safety/usefulness/latency/cost dimensions. These are deferred baseline/ and P08 obligations; separately owned palladion-benchmark/ work is outside this phase. See RESEARCH_PROTOCOL and X01.
 
 Dependency manifest ownership is checked by scripts/check_dependencies.py over src/scripts/tests (including literal dynamic imports); pyproject runtime/dev declarations and uv.lock own dependency setup. E-P02-002 records the follow-up completion checks.
 
@@ -232,7 +233,7 @@ Frozen prompt-version20B matrix cb9e66:16conditions,16/16known-fact retention,
 qualification fix: no model prompt changed; raw outputs are not relabeled post-fix.
 No efficacy/H05, semantic accuracy, causal false-veto or completeness claim. Mandatory
 review remains enabled; draft-blind first pass sees canonical required slots (§10.1).
-P07 graph/P08 adjudicated research/X01 comparators remain deferred; no P07 GO or P06
+At the historical P06 checkpoint, P07 graph/P08 adjudicated research/X01 comparators remained deferred; no P07 GO or P06
 main push is inferred. No unanswered P06 owner ADR. Owned processes stopped, storage
 preserved and ports16333/16334/18080 verified free; foreign benchmark/editor work untouched.
 
@@ -240,3 +241,7 @@ preserved and ports16333/16334/18080 verified free; foreign benchmark/editor wor
 P06 arm clarification: blind_requirements is draft-blind first-pass review under
 blueprint §10.1; canonical policy-required slots remain supplied. It does not measure
 independent discovery of unsupplied requirements. End-review R2 is withdrawn.
+
+## P07 automatic promotion path (implemented; phase gates/audit verified)
+
+Authenticated message + backend-owned session → immutable CaseStore event → bounded event/span chunks → deterministic PathA → optional existing-local-encoder cosine/loss PathB → canonical promotion decision/idempotent link → scoped MemoryStore → session-aware recall/continuity packet → next actual runtime request. Explicit preference → USER semantic; observed tool/workflow experience → unapproved procedural; other/uncertain → episodic session. Category is separate from access scope. Original case/source ACL and authorityNONE persist; canonical document/live/policy evidence and audit readers remain separate from session-filtered conversational memory. Migration6 and routes/store/packet/runtime/CLI/testing ownership: P07-T04.01–05.

@@ -26,7 +26,7 @@ class AuditLog:
         for key, value in payload.items():
             if key == "mode" and value not in {"lexical", "dense", "hybrid", "reranked"}:
                 raise ValueError("Unknown audit mode")
-            if key == "failure" and value not in {"NONE", "INDEX_UNAVAILABLE", "RERANK_UNAVAILABLE"}:
+            if key == "failure" and value not in {"NONE", "INDEX_UNAVAILABLE", "RERANK_UNAVAILABLE", "GRAPH_UNAVAILABLE"}:
                 raise ValueError("Unknown failure label")
             if key == "generation" and (not isinstance(value, str) or len(value) > 100):
                 raise ValueError("Invalid generation")
@@ -37,7 +37,7 @@ class AuditLog:
             if key == "fingerprint" and (not isinstance(value, str) or not re.fullmatch(r"[0-9a-f]{64}", value)):
                 raise ValueError("Invalid representation fingerprint")
             if key == "stage_counts" and (not isinstance(value, dict) or
-                    any(k not in {"discovered", "resolved", "reranked", "expanded"} or
+                    any(k not in {"discovered", "resolved", "reranked", "expanded", "graph_paths"} or
                         type(v) is not int or v < 0 for k, v in value.items())):
                 raise ValueError("Invalid stage counts")
             if key not in {"mode", "failure", "generation", "generations", "fingerprint", "stage_counts"} and (
@@ -83,7 +83,7 @@ class AuditLog:
                 value = payload.get(key)
                 if isinstance(value, str) and value in allowed:
                     metadata[key] = value
-            for key in ("attempt", "main_used", "tool_used"):
+            for key in ("attempt", "main_used", "tool_used", "graph_path_count"):
                 value = payload.get(key)
                 if type(value) is int and 0 <= value <= 100:
                     metadata[key] = value
@@ -106,7 +106,7 @@ class AuditLog:
                     and type(value) in (int, float) and 0 <= value < 1e12}
                 if payload.get("mode") in {"lexical", "dense", "hybrid", "reranked"}:
                     metadata["mode"] = payload["mode"]
-                if payload.get("failure") in {"NONE", "INDEX_UNAVAILABLE", "RERANK_UNAVAILABLE"}:
+                if payload.get("failure") in {"NONE", "INDEX_UNAVAILABLE", "RERANK_UNAVAILABLE", "GRAPH_UNAVAILABLE"}:
                     metadata["failure"] = payload["failure"]
                 retrieval.append({"trace_id": identifier, "metadata": metadata})
         return {"trace_id": trace_id, "events": events, "retrieval": retrieval, "truncated": len(rows) > 100}
