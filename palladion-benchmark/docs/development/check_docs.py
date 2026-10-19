@@ -34,6 +34,16 @@ EXTRA_FILES = {
     ROOT + "benchmark/generator.py", ROOT + "tests/test_generator_pool.py", ROOT + "docs/dataset_card.md",
     ROOT + "benchmark/secret_scan.py", ROOT + "tests/test_secret_scan.py", ROOT + "benchmark/config.py",
     ROOT + "scripts/qdrant_server.py", ROOT + "tests/test_qdrant_launcher.py",
+    ROOT + "tests/test_world.py", ROOT + "tests/test_documents.py", ROOT + "tests/test_live_api.py",
+    ROOT + "tests/test_generate_data.py",
+    ROOT + "benchmark/fixtures/phrasebook.py", ROOT + "benchmark/fixtures/artifacts.py",
+    ROOT + "benchmark/fixtures/question_gen.py",
+    ROOT + "benchmark/eval/score_run.py", ROOT + "tests/test_score_run.py", ROOT + "tests/test_evidence_metrics.py",
+    ROOT + "tests/test_retrieval_metrics.py",
+    ROOT + "tests/conftest.py",
+    ROOT + "benchmark/fixtures/entities.py", ROOT + "benchmark/fixtures/knowledge.py",
+    ROOT + "benchmark/fixtures/operations.py",
+    ROOT + "benchmark/fixtures/audit.py", ROOT + "tests/test_partitions.py", ROOT + "tests/test_label_audit.py",
     ROOT + "tests/test_config_loader.py", ROOT + "tests/test_run_manifest.py",
     ROOT + "tests/test_runner.py", ROOT + "tests/test_cli.py",
 }
@@ -373,7 +383,14 @@ def self_test(documents: dict[str, str]) -> int:
     gates, plan = DEV + "TESTING_GATES.md", DEV + "MASTER_DEV_PLAN.md"
     adr, trace = DEV + "ADR_LOG.md", DEV + "REQUIREMENTS_TRACEABILITY.md"
     risks, progress = DEV + "RISKS_AND_OPEN_QUESTIONS.md", DEV + "PROGRESS.md"
-    open_card = next(ident for ident, done in checked_tasks(documents[plan]).items() if not done)
+    open_cards = {ident for ident, done in checked_tasks(documents[plan]).items() if not done}
+    # Checking a card whose files already exist would not be rejected, so plant the mutation on one that lacks a file.
+    open_card = next(
+        ident
+        for ident, fields in atomic_tasks(documents[plan]).items()
+        if ident in open_cards
+        and any(not (REPO / path).exists() for path in re.findall(r"`([^`]+)`", fields.get("Files", "")))
+    )
     planned = next(p for p in PHASES if re.search(rf"^\| {p} \| PLANNED \|", documents[progress], re.M))
     vision_tree = documents[VISION].replace("│   ├── tracing.py", "│   ├── tracing_renamed.py", 1)
     mutations = {

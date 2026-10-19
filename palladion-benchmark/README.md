@@ -9,9 +9,9 @@ reaches it only through an adapter. The design is the
 [research protocol v1.0](docs/vision/palladion_retrieval_benchmark_research_protocol.md); its hypotheses H1–H8 are
 **unmeasured**.
 
-**Current state:** the development suite (B00) and the harness foundation (B01) exist. The harness has typed contracts, strict
+**Current state:** the development suite (B00), the harness foundation (B01) and the synthetic S-tier fixture (B02) exist. The harness has typed contracts, strict
 configuration, an arm registry, run manifests, a paired runner, a CLI, a secret scanner and a generator pool over three Groq
-models. There is no dataset, no retriever adapter and no measurement yet; hypotheses H1–H8 remain untested. See
+models. The S-tier fixture (1,200 fictional documents, 100 pilot questions, `scripts/generate_data.py`, `docs/dataset_card.md`) is built; its label audit is waiting for the owner's labels. There is no retriever adapter and no measurement yet; hypotheses H1–H8 remain untested. See
 [progress](docs/development/PROGRESS.md).
 
 ## What it will compare

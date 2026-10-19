@@ -1,6 +1,6 @@
 # Benchmark working memory
 
-Updated 2026-10-18. Navigation aid only; the user, the protocol, source and ADRs retain authority.
+Updated 2026-10-19. Navigation aid only; the user, the protocol, source and ADRs retain authority.
 
 ## Stable facts
 
@@ -20,7 +20,7 @@ Updated 2026-10-18. Navigation aid only; the user, the protocol, source and ADRs
 
 ## Locked decisions and open items
 
-Accepted: BADR-0001 to BADR-0017 (all). All BADRs are accepted as of 2026-10-18 (BADR-0006 phase breakdown, BADR-0008 one model per question, BADR-0013 benchmark-local .env). Still open and tracked: OQ03 (read Palladion's interface at B04), OQ09 (license, before B08-T07.01), OQ10 (pairings, before B08-T03.01). Open questions OQ01–OQ11 in [risks and open questions](RISKS_AND_OPEN_QUESTIONS.md).
+Accepted: BADR-0001 to BADR-0023 (all; BADR-0018 to BADR-0023 are the B02 decisions). All BADRs are accepted as of 2026-10-18 (BADR-0006 phase breakdown, BADR-0008 one model per question, BADR-0013 benchmark-local .env). Still open and tracked: OQ03 (read Palladion's interface at B04), OQ09 (license, before B08-T07.01), OQ10 (pairings, before B08-T03.01). Open questions OQ01–OQ11 in [risks and open questions](RISKS_AND_OPEN_QUESTIONS.md).
 
 ## What exists in code (B01)
 
@@ -31,6 +31,12 @@ Accepted: BADR-0001 to BADR-0017 (all). All BADRs are accepted as of 2026-10-18 
   `uv run python -m benchmark.secret_scan --staged`. `make` is not installed and Docker cannot run on the author's machine; Qdrant runs Docker-free under WSL (BADR-0017, launcher built in B04).
 - The live generator proof (3 calls, 3 of 3 approved models answered) is the only provider use so far; the key lives in the gitignored `palladion-benchmark/.env` and has never been printed.
 - Free-tier limits seen: 8,000 tokens per minute on each approved model. Pre-assignment budgets stay null until daily limits are stated (BADR-0015).
+
+## What exists in code (B02)
+
+- `benchmark/fixtures/`: `entities.py` (vocabulary), `knowledge.py` (versions, policies, as-of selection, evaluator, graph), `operations.py` (timelines, case histories), `world.py` (aggregate and tier seed), `phrasebook.py` (EN/ID banks and question templates), `documents.py` (rendering, equivalence check, measurement), `artifacts.py` (support documents, noise, corpus pipeline), `manifest.py` (manifests, four namespaces, barrier scan), `questions.py` (gold schema, screening, partitions), `question_gen.py` (ten stratum generators), `live_api.py` (read-only mock), `validation.py` (integrity and realism checks), `audit.py` (label audit). `scripts/generate_data.py` builds the S tier; `docs/dataset_card.md` carries its figures.
+- Evidence: E-B02-001 to E-B02-005 (654 tests). Generated data is under the gitignored `artifacts/fixtures/S/`; the label-audit packet and the owner's label file are in its `generator/audit/` folder and must not be regenerated over (labels are kept, but check the gold digest).
+- Providers: the B02 label audit used 36 + 37 calls on an earlier build and 36 on the final fixture; no live call is authorised now (BADR-0019).
 
 ## Reading order for a fresh session
 

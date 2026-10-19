@@ -35,7 +35,7 @@ flowchart LR
 |---|---|
 | Harness | `benchmark/{contracts,registry,run_manifest,tracing,runner,cli,generator}.py` (B01) |
 | Configs | `configs/{benchmark,comparators,evaluation,fixtures}.yaml` (B01, tuned in B08) |
-| Fixtures | `benchmark/fixtures/{world,documents,manifest,questions,live_api,validation}.py` (B02, extended B07, B08) |
+| Fixtures | `benchmark/fixtures/{entities,knowledge,operations,world,phrasebook,documents,artifacts,manifest,questions,question_gen,live_api,validation,audit}.py` (B02, extended B07, B08) |
 | Evaluation | `benchmark/eval/` normalize, evidence_sets, retrieval, statistics, cost_latency (B03); citations, policy, abstention, judge_audit (B05); memory, critic, tool_use (B07) |
 | Adapters | bm25, dense, hybrid, palladion (B04); hipporag2, graphrag, lightrag (B06); langchain, langgraph, google_adk (B07) |
 | Analysis | `benchmark/analysis/tables.py` (B03); `plots.py`, `reports.py` (B08) |

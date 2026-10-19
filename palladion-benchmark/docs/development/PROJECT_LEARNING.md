@@ -1,6 +1,6 @@
 # Project learning register
 
-Updated 2026-10-18. Mistakes, refuted claims and methods that worked, each with the evidence that shows it.
+Updated 2026-10-19. Mistakes, refuted claims and methods that worked, each with the evidence that shows it.
 Wrong claims are struck through and corrected in place, not erased.
 
 ## Methods that worked
@@ -16,6 +16,10 @@ Wrong claims are struck through and corrected in place, not erased.
   model approval was checked only through a second path, and usage validation was invisible. Each got a test, and the survivor that remained (lock removal) is stated as a limit.
 - **Read the live interface before writing an adapter-facing card.** The pre-phase adversary (E-B01-001) and the earlier correction both traced to plans written from the protocol alone.
 - **Keep error text out of records by construction.** Raising a fixed-code error outside the `except` block leaves no chained exception, and a test that forces a planted key through every error path shows it.
+
+- **Read the output of a generator against the rules it claims, not only against its tests.** The post-phase audit (E-B02-004) found 4 to 6 unplanned policy conflicts that every test had passed, because the tests only checked planted ones. Running the world's own resolver over every scope found them in minutes; the validation gate now does that on every build.
+- **A mutation sweep also finds redundant code.** One survivor (E-B02-003) was a check that never decided a result; deleting it was the right fix, not another test.
+- **Spend limits are also a design input.** The first model pass used 36 of 40 calls on a prompt that hid the rule clauses; the numbers it produced were worthless and could not be redone within the authorisation. A dry run with a fake transport over the real prompt, and a look at the prompt text itself, would have cost nothing.
 
 ## Risks surfaced while planning (not yet mistakes)
 
@@ -37,3 +41,5 @@ Wrong claims are struck through and corrected in place, not erased.
 - ~~Review finding labels made of the letter A and a number are safe identifiers.~~ In E-B01-001 the labels numbered 17 to 24 collided with the ablation ID namespace (A01 to A16) and the documentation checker flagged them as undefined IDs. Mechanism: the review labels reused a prefix
   the checker treats as a stable ID. Correction: findings are labelled `adv-N`. Rule going forward: pick review labels outside every defined ID pattern.
 - ~~Configuration loaders belong in `contracts.py`.~~ The first plan put them there; the file grew past one responsibility, so the loaders moved to `benchmark/config.py` (BADR-0014) and the checker's recorded additions were updated in the same step.
+- ~~The second model pass used the line-selecting excerpt.~~ The excerpt function was written and tested but never wired into the packet; the pass ran on a 900-character prefix. Mechanism: the replacement of the old call matched no text (the formatter had reflowed it) and nothing failed. Correction: a test now requires every packet excerpt to equal `excerpt(doc, query)`, and the card states which prompt each pass used. Rule going forward: a refactor that replaces a call needs a test that fails if the old call remains.
+- ~~Question identifiers derived from a hash are pseudonymous.~~ They were recomputable from the public seed (aud-1, adv-4). Correction: a keyed secret (BADR-0023).

@@ -31,7 +31,7 @@ select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
 [tool.mypy]
 python_version = "3.11"
 strict = true
-files = ["benchmark", "tests"]
+files = ["benchmark", "tests", "scripts"]
 
 [tool.ruff.lint.per-file-ignores]
 "docs/development/check_docs.py" = ["E501"]  # long message and regex literals in the checker

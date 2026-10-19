@@ -142,7 +142,7 @@ Exit: audited S-tier dataset card and gold validation report. No retriever is ru
 
 ## B03 — Evaluation core (Slice 2 part)
 
-Goal O03. Read protocol §6.1, §8 and §14.2. Depends on B02 gold schema. Owner modules: eval, analysis tables.
+Goal O03. Read protocol §6.1, §8, §10.2, §10.3, §12, §13.4, §14.2 and §14.3. Depends on B02 gold schema and manifest. Owner modules: eval, analysis tables.
 
 | Task | Work and producer → consumer | Acceptance / proof |
 |---|---|---|
@@ -152,6 +152,7 @@ Goal O03. Read protocol §6.1, §8 and §14.2. Depends on B02 gold schema. Owner
 | B03-T04 | Statistics | Known effect recovered; interval coverage simulated |
 | B03-T05 | Latency and cost | Quantiles exact; missing stays missing |
 | B03-T06 | Scorecard tables | Run states shown as states |
+| B03-T07 | Score-run driver | The real runner writes a run that the scorer reads; perfect, empty and shuffled arms differ |
 
 Exit: the scorer reads output artifacts and distinguishes perfect, empty and shuffled retrievers on S-tier gold.
 
@@ -430,110 +431,110 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
 
 <a id="b02-t01-01"></a>
 
-- [ ] **B02-T01.01 — Seeded hidden-world entities**
-  - **Files:** `palladion-benchmark/benchmark/fixtures/__init__.py`, `palladion-benchmark/benchmark/fixtures/world.py`.
-  - **Depends:** B01-T02.03.
+- [x] **B02-T01.01 — Seeded hidden-world entities**
+  - **Files:** `palladion-benchmark/benchmark/fixtures/__init__.py`, `palladion-benchmark/benchmark/fixtures/entities.py`, `palladion-benchmark/tests/test_world.py`.
+  - **Depends:** B01-T02.03, BADR-0018.
   - **Change:** Fictional Meridian Switchworks organizations, tenants, roles, principals, products, merchant classes, transaction types, error codes and case types from one seed.
   - **Proof:** UNIT; BG-FIXTURE; same seed gives byte-identical output, a different seed differs, every artifact carries the fictional marker.
-  - **Evidence:** Not yet executed.
+  - **Evidence:** E-B02-002, E-B02-003 (mutation sweeps), E-B02-004 (post-phase audit); tests and planted-defect controls in the owning files.
 
 <a id="b02-t01-02"></a>
 
-- [ ] **B02-T01.02 — Document versions, policies, as-of bases and typed graph gold**
-  - **Files:** `palladion-benchmark/benchmark/fixtures/world.py`, `palladion-benchmark/tests/test_temporal_gold.py`.
+- [x] **B02-T01.02 — Document versions, policies, as-of bases and typed graph gold**
+  - **Files:** `palladion-benchmark/benchmark/fixtures/knowledge.py`, `palladion-benchmark/tests/test_temporal_gold.py`.
   - **Depends:** B02-T01.01.
-  - **Change:** Document families and versions with SHA-256, approval state, ACL, valid and record time, acyclic SUPERSEDES, typed edges with supporting source, and policies with the four as-of bases.
-  - **Proof:** UNIT; BG-FIXTURE, BG-GOLD; half-open interval boundaries exact; an injected supersession cycle is rejected; the four bases select different versions on a planted case.
-  - **Evidence:** Not yet executed.
+  - **Change:** Document families and versions with SHA-256 over the structured source, approval state, ACL, valid and record time, SUPERSEDES checked by a separate validator (construction stays permissive so mutations can plant invalid chains), typed edges with supporting source, policies with the four as-of bases, precedence, required inputs and a deterministic outcome evaluator.
+  - **Proof:** UNIT; BG-FIXTURE, BG-GOLD; half-open interval boundaries exact; an injected supersession cycle is rejected by the validator; the four bases select different versions on a planted case; a retroactive clause binds only evaluations made after it was recorded; evaluator boundary cases are hand-computed.
+  - **Evidence:** E-B02-002, E-B02-003 (mutation sweeps), E-B02-004 (post-phase audit); tests and planted-defect controls in the owning files.
 
 <a id="b02-t01-03"></a>
 
-- [ ] **B02-T01.03 — Live-event timelines and case histories**
-  - **Files:** `palladion-benchmark/benchmark/fixtures/world.py`.
+- [x] **B02-T01.03 — Live-event timelines and case histories**
+  - **Files:** `palladion-benchmark/benchmark/fixtures/operations.py`, `palladion-benchmark/benchmark/fixtures/world.py`, `palladion-benchmark/tests/test_world.py`.
   - **Depends:** B02-T01.02.
   - **Change:** Transaction, reconciliation and merchant-status events, outages, authorization grants, and case histories separating user-reported from verified facts.
   - **Proof:** UNIT; BG-FIXTURE; reported and verified facts remain distinguishable; timelines replay identically.
-  - **Evidence:** Not yet executed.
+  - **Evidence:** E-B02-002, E-B02-003 (mutation sweeps), E-B02-004 (post-phase audit); tests and planted-defect controls in the owning files.
 
 <a id="b02-t02-01"></a>
 
-- [ ] **B02-T02.01 — Authoritative document rendering**
-  - **Files:** `palladion-benchmark/benchmark/fixtures/documents.py`.
+- [x] **B02-T02.01 — Authoritative document rendering**
+  - **Files:** `palladion-benchmark/benchmark/fixtures/documents.py`, `palladion-benchmark/benchmark/fixtures/phrasebook.py`, `palladion-benchmark/tests/test_documents.py`.
   - **Depends:** B02-T01.02.
-  - **Change:** Template renderers for SOP versions, policy clauses, runbooks and manuals; critical IDs, dates, thresholds and negations preserved; render hash stored; no LLM in this phase.
+  - **Change:** Template renderers for SOP versions, policy clauses, runbooks, API notes, manuals and FAQs; critical IDs, dates, thresholds and negations preserved; clause ids and character offsets emitted for citation gold; render hash stored; titles and file names carry no family, stratum or split token; no LLM in this phase.
   - **Proof:** UNIT; BG-FIXTURE; a flipped negation or altered threshold is detected by the equivalence check.
-  - **Evidence:** Not yet executed.
+  - **Evidence:** E-B02-002, E-B02-003 (mutation sweeps), E-B02-004 (post-phase audit); tests and planted-defect controls in the owning files.
 
 <a id="b02-t02-02"></a>
 
-- [ ] **B02-T02.02 — Support artifacts, noise and planted ambiguity**
-  - **Files:** `palladion-benchmark/benchmark/fixtures/documents.py`.
-  - **Depends:** B02-T02.01, B02-T01.03.
-  - **Change:** Incidents, tickets, emails and drafts; near-duplicates, stale text, unapproved proposals, injection documents and structural noise; EN/ID/mixed language; report actual proportions.
-  - **Proof:** UNIT; BG-FIXTURE; a draft claiming board approval never has an approved registry state; reported proportions are computed from output, not configured values.
-  - **Evidence:** Not yet executed.
+- [x] **B02-T02.02 — Support artifacts, noise and planted ambiguity**
+  - **Files:** `palladion-benchmark/benchmark/fixtures/documents.py`, `palladion-benchmark/benchmark/fixtures/artifacts.py`, `palladion-benchmark/tests/test_documents.py`.
+  - **Depends:** B02-T02.01, B02-T01.03, BADR-0021.
+  - **Change:** Incidents and postmortems, tickets, emails, memos and drafts; near-duplicates, stale text, unapproved proposals, injection documents and structural noise; planted ambiguity (aliases, same-name merchants in different tenants, exceptions in separate documents, circular-looking references, long tables, transitive prerequisites, late approvals, retroactive clauses, withdrawals); a fixed text-only header schema for condition C1; EN/ID/mixed language; proportions measured from output by methods independent of the generator tags.
+  - **Proof:** UNIT; BG-FIXTURE; a draft claiming board approval never has an approved registry state; near-duplicates are measured by shingle similarity, stale and unapproved by comparing text to registry state, and a mismatch with the generator tags is reported; a planted tag/text mismatch is caught.
+  - **Evidence:** E-B02-002, E-B02-003 (mutation sweeps), E-B02-004 (post-phase audit); tests and planted-defect controls in the owning files.
 
 <a id="b02-t03-01"></a>
 
-- [ ] **B02-T03.01 — Corpus, ACL and identity manifests with namespace separation**
+- [x] **B02-T03.01 — Corpus, ACL and identity manifests with namespace separation**
   - **Files:** `palladion-benchmark/benchmark/fixtures/manifest.py`, `palladion-benchmark/tests/test_acl_isolation.py`.
   - **Depends:** B02-T02.02.
-  - **Change:** corpus_manifest records with SHA-256, immutable IDs and ACL; four physically separate namespaces (generator, published corpus, dev annotations, locked test annotations).
-  - **Proof:** INTEGRATION; BG-FIXTURE, BG-SECURITY; the published namespace contains no gold field; a tenant-B document is not visible to a tenant-A principal.
-  - **Evidence:** Not yet executed.
+  - **Change:** corpus_manifest records with SHA-256, immutable IDs and ACL, listed in an order shuffled by an independent seed; four physically separate namespaces (generator, published corpus, dev annotations, locked test annotations); opaque snapshot ids.
+  - **Proof:** INTEGRATION; BG-FIXTURE, BG-SECURITY; a recursive listing and content scan of the published namespace finds no gold field, split, family or stratum token; the metadata visibility rule hides a tenant-B document from a tenant-A principal (enforcement by a retriever is proven in B04).
+  - **Evidence:** E-B02-002, E-B02-003 (mutation sweeps), E-B02-004 (post-phase audit); tests and planted-defect controls in the owning files.
 
 <a id="b02-t04-01"></a>
 
-- [ ] **B02-T04.01 — Gold evidence schema**
+- [x] **B02-T04.01 — Gold evidence schema**
   - **Files:** `palladion-benchmark/benchmark/fixtures/questions.py`, `palladion-benchmark/tests/test_evidence_slots.py`.
-  - **Depends:** B02-T01.02.
-  - **Change:** Question records with answerability, five negative mechanisms plus conflict, required and forbidden claims, slots with alternative sets, minimal sets, citation spans and harm severity.
-  - **Proof:** UNIT; BG-GOLD; an empty alternatives list means unavailable, not an error; an invalid label is rejected; a draft cannot satisfy an approved-only slot.
-  - **Evidence:** Not yet executed.
+  - **Depends:** B02-T01.02, B02-T02.01, BADR-0020.
+  - **Change:** Question records carrying every protocol 6.1 field, answerability with a validated mapping to the negative mechanisms, required and forbidden claims (including existence-disclosure claims for unauthorized sources), slots with explicit states and alternative sets, minimal sets, citation spans resolved from clause ids, harm severity and per-stratum track eligibility.
+  - **Proof:** UNIT; BG-GOLD; a record missing a 6.1 field is rejected; an empty alternatives list is accepted only with a stated mechanism and an ANSWERABLE record with an unsatisfiable slot is rejected; an invalid label or answerability/reason pairing is rejected; a draft cannot satisfy an approved-only slot.
+  - **Evidence:** E-B02-002, E-B02-003 (mutation sweeps), E-B02-004 (post-phase audit); tests and planted-defect controls in the owning files.
 
 <a id="b02-t04-02"></a>
 
-- [ ] **B02-T04.02 — Stratified question generation and family-grouped partitions**
-  - **Files:** `palladion-benchmark/benchmark/fixtures/questions.py`.
-  - **Depends:** B02-T04.01, B02-T03.01.
-  - **Change:** Ten strata, 100 S-tier pilot questions, EN/ID/mixed language profile, answerable/unanswerable twins, and smoke/dev/test partitions assigned per scenario family before paraphrase.
-  - **Proof:** UNIT; BG-GOLD; no scenario family spans two splits; a planted cross-split paraphrase is rejected.
-  - **Evidence:** Not yet executed.
+- [x] **B02-T04.02 — Stratified question generation and family-grouped partitions**
+  - **Files:** `palladion-benchmark/benchmark/fixtures/question_gen.py`, `palladion-benchmark/tests/test_partitions.py`.
+  - **Depends:** B02-T04.01, B02-T03.01, BADR-0020, BADR-0023.
+  - **Change:** Ten strata; 100 S-tier pilot questions (10 per stratum, all in the smoke partition, none test); a partition function for any tier (M tier 10/30/60 per stratum) that assigns whole scenario families to one split over the union of all strata before paraphrase, with exact per-stratum split counts and a stated rounding rule; scenario family defined as a world object (root policy family and entity cluster); question text written by LLM-free templates screened for gold, stratum and answerability vocabulary and for document ids outside the exact-id stratum; filter values derived only from principal, case and arm condition; pseudonymous question ids from a keyed hash; tier-specific sub-seeds; EN/ID/mixed language profile; answerable/unanswerable twins.
+  - **Proof:** UNIT; BG-GOLD; no scenario family spans two splits or two strata' splits; a planted cross-split paraphrase and a planted cross-stratum family are rejected; per-stratum counts and language shares hit their targets; a query containing a version id outside the exact-id stratum is refused.
+  - **Evidence:** E-B02-002, E-B02-003 (mutation sweeps), E-B02-004 (post-phase audit); tests and planted-defect controls in the owning files.
 
 <a id="b02-t05-01"></a>
 
-- [ ] **B02-T05.01 — Deterministic read-only live operational mock**
-  - **Files:** `palladion-benchmark/benchmark/fixtures/live_api.py`.
+- [x] **B02-T05.01 — Deterministic read-only live operational mock**
+  - **Files:** `palladion-benchmark/benchmark/fixtures/live_api.py`, `palladion-benchmark/tests/test_live_api.py`.
   - **Depends:** B02-T01.03.
-  - **Change:** Named read operations over per-case snapshots with 503, stale and unauthorized modes and read timestamps.
-  - **Proof:** UNIT; BG-FIXTURE; no write operation exists; the same case id returns the same state; each failure mode is distinguishable.
-  - **Evidence:** Not yet executed.
+  - **Change:** Named read operations over per-case snapshots with 503, stale and unauthorized modes; per-operation freshness bounds; read timestamps derived from the case evaluation time, never the wall clock.
+  - **Proof:** UNIT; BG-FIXTURE; the operation allowlist holds only reads and an unknown operation fails; the same case id returns the same state; each failure mode is distinguishable and stale differs from fresh only by the declared bound.
+  - **Evidence:** E-B02-002, E-B02-003 (mutation sweeps), E-B02-004 (post-phase audit); tests and planted-defect controls in the owning files.
 
 <a id="b02-t06-01"></a>
 
-- [ ] **B02-T06.01 — Fixture and label integrity validation**
+- [x] **B02-T06.01 — Fixture and label integrity validation**
   - **Files:** `palladion-benchmark/benchmark/fixtures/validation.py`, `palladion-benchmark/tests/test_fixture_integrity.py`.
   - **Depends:** B02-T04.02, B02-T05.01.
-  - **Change:** Referential, contradiction, merge-identity, temporal, gold-support, forbidden-gold, leakage, plausible-complexity (no trivially searchable fake keywords) and over-regularity checks from the realism list and the threats to validity.
+  - **Change:** Referential, contradiction, merge-identity, temporal, gold-support, forbidden-gold, leakage, plausible-complexity (a lexical solvability baseline with identifiers removed, template share, sentence-length spread, thresholds fixed in an ADR before measurement), over-regularity, naive-newest and naive-highest-id baselines on the version questions, gold-support checked on rendered text by an extractor the renderer does not use, and cross-tier family disjointness.
   - **Proof:** INTEGRATION; BG-FIXTURE, BG-GOLD; every check has a planted-defect negative control that it catches and a clean fixture that passes.
-  - **Evidence:** Not yet executed.
+  - **Evidence:** E-B02-002, E-B02-003 (mutation sweeps), E-B02-004 (post-phase audit); tests and planted-defect controls in the owning files.
 
 <a id="b02-t07-01"></a>
 
-- [ ] **B02-T07.01 — S-tier data generation entry point and dataset card**
-  - **Files:** `palladion-benchmark/scripts/generate_data.py`, `palladion-benchmark/docs/dataset_card.md`.
+- [x] **B02-T07.01 — S-tier data generation entry point and dataset card**
+  - **Files:** `palladion-benchmark/scripts/generate_data.py`, `palladion-benchmark/docs/dataset_card.md`, `palladion-benchmark/tests/test_generate_data.py`.
   - **Depends:** B02-T06.01.
   - **Change:** Generate 1,200 documents and 100 pilot questions from a seed; report actual token counts, lengths, language shares, revisions, duplicates and graph degree.
-  - **Proof:** SMOKE; BG-FIXTURE, BG-REPRO; two runs with one seed give identical manifest digests; the card states the fixtures are not real procedures.
-  - **Evidence:** Not yet executed.
+  - **Proof:** SMOKE; BG-FIXTURE, BG-REPRO; two subprocess runs under different PYTHONHASHSEED, time zone and working directory give identical manifest digests; the S-tier counts are checked against the configured composition; the card states the fixtures are not real procedures.
+  - **Evidence:** E-B02-002, E-B02-003 (mutation sweeps), E-B02-004 (post-phase audit); tests and planted-defect controls in the owning files.
 
 <a id="b02-t07-02"></a>
 
 - [ ] **B02-T07.02 — Stratified pilot label audit**
-  - **Files:** `palladion-benchmark/docs/dataset_card.md`, `palladion-benchmark/docs/development/EVIDENCE_LOG.md`.
-  - **Depends:** B02-T07.01, OQ08.
-  - **Change:** Two annotators label a stratified subset against the hidden world; record disagreement and fix or withdraw defective cases before any measurement.
-  - **Proof:** MEASUREMENT; BG-GOLD; agreement statistic with denominators; defects found and their disposition recorded.
+  - **Files:** `palladion-benchmark/benchmark/fixtures/audit.py`, `palladion-benchmark/tests/test_label_audit.py`, `palladion-benchmark/docs/dataset_card.md`, `palladion-benchmark/docs/development/EVIDENCE_LOG.md`.
+  - **Depends:** B02-T07.01, OQ08, BADR-0019, BADR-0020.
+  - **Change:** Build a blinded, seeded, stratified audit packet (about 30 items); the owner labels it and also checks that the cited clauses exist in the rendered text and suffice; a blinded LLM second pass runs under the BADR-0019 call budget; record agreement with denominators (owner against LLM, not human against human), disagreements, and fix or withdraw defective cases before any measurement.
+  - **Proof:** MEASUREMENT; BG-GOLD; agreement statistic with denominators and the non-independence limit stated; defects found and their disposition recorded; every post-audit gold edit logged with hashes; the packet holds no gold field.
   - **Evidence:** Not yet executed.
 
 ### Atomic tasks — B03
@@ -541,37 +542,37 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
 <a id="b03-t01-01"></a>
 
 - [ ] **B03-T01.01 — Chunk-to-span normalization**
-  - **Files:** `palladion-benchmark/benchmark/eval/__init__.py`, `palladion-benchmark/benchmark/eval/normalize.py`, `palladion-benchmark/tests/test_span_alignment.py`.
-  - **Depends:** B02-T04.01, B01-T02.01.
-  - **Change:** Map returned chunks to version, clause and offsets; report exact identity and overlap separately; label alignment-only mappings.
-  - **Proof:** UNIT; BG-METRIC, BG-ADAPTER; differently chunked identical text aligns; a candidate without provenance never receives a native citation.
+  - **Files:** `palladion-benchmark/benchmark/eval/__init__.py`, `palladion-benchmark/benchmark/eval/normalize.py`, `palladion-benchmark/benchmark/contracts.py`, `palladion-benchmark/tests/test_span_alignment.py`.
+  - **Depends:** B02-T04.01, B02-T03.01, B01-T02.01, BADR-0024.
+  - **Change:** Add optional source_document_id and source_sha256 to EvidenceCandidate (default none, so existing arms keep working) and a GoldRecord reader that checks the gold digest; map returned chunks to document, clause and offsets by the locator grammar and the folding and containment rules fixed in BADR-0024; report exact identity and overlap separately, with overlap credit never counted in headline metrics; label alignment-only mappings.
+  - **Proof:** UNIT; BG-METRIC, BG-ADAPTER; differently chunked identical text aligns; a clause split across two chunks, a chunk spanning two clauses and a re-flowed table map correctly; a stale copy earns overlap credit and no identity credit; a candidate without provenance never receives a native citation; gold read back from disk equals the gold written.
   - **Evidence:** Not yet executed.
 
 <a id="b03-t02-01"></a>
 
 - [ ] **B03-T02.01 — Slot coverage and complete evidence sets**
-  - **Files:** `palladion-benchmark/benchmark/eval/evidence_sets.py`, `palladion-benchmark/tests/test_evidence_slots.py`.
-  - **Depends:** B03-T01.01.
-  - **Change:** SlotCoverage@K and CompleteSet@K over alternative minimal sets; relevance levels 0-3.
-  - **Proof:** UNIT; BG-METRIC; an oracle retriever scores 1, an empty one 0, and seven relevant chunks missing the exception score CompleteSet 0.
+  - **Files:** `palladion-benchmark/benchmark/eval/evidence_sets.py`, `palladion-benchmark/tests/test_evidence_metrics.py`.
+  - **Depends:** B03-T01.01, BADR-0024.
+  - **Change:** SlotCoverage@K and CompleteSet@K over the alternative minimal sets of records that have satisfiable slots; records with no satisfiable evidence (unanswerable, blocked, live-unavailable) return not-applicable, never zero or one; relevance is binary slot match (BADR-0024); the unit of evaluation, deduplication and every denominator are defined in evaluation.yaml.
+  - **Proof:** UNIT; BG-METRIC; an oracle retriever scores 1, an empty one 0, and seven relevant chunks missing the exception score CompleteSet 0; a partial record and an unanswerable record each behave as defined; a duplicated candidate adds nothing.
   - **Evidence:** Not yet executed.
 
 <a id="b03-t03-01"></a>
 
 - [ ] **B03-T03.01 — Conventional ranking metrics**
-  - **Files:** `palladion-benchmark/benchmark/eval/retrieval.py`.
-  - **Depends:** B03-T01.01.
-  - **Change:** Precision, recall, MRR, nDCG, MAP and Success at K with graded gain.
-  - **Proof:** UNIT; BG-METRIC; hand-computed values match; a shuffled ranking scores below the ideal one.
+  - **Files:** `palladion-benchmark/benchmark/eval/retrieval.py`, `palladion-benchmark/tests/test_retrieval_metrics.py`.
+  - **Depends:** B03-T01.01, BADR-0024.
+  - **Change:** Precision, recall, MRR, nDCG, MAP and Success at K with binary gain over slot-matched units; short lists, zero relevant units and ideal-DCG zero are defined, not guessed.
+  - **Proof:** UNIT; BG-METRIC; hand-computed values match; a shuffled ranking scores below the ideal one; a list shorter than K and a record with no relevant unit follow the written rule.
   - **Evidence:** Not yet executed.
 
 <a id="b03-t03-02"></a>
 
 - [ ] **B03-T03.02 — Provenance-aware retrieval metrics**
-  - **Files:** `palladion-benchmark/benchmark/eval/retrieval.py`.
-  - **Depends:** B03-T03.01, B03-T02.01.
-  - **Change:** Valid-source recall, wrong-vintage intrusion, forbidden-source exposure, authority confusion, exception recall, conflicting-pair recall, locator resolution, evidence density and token efficiency, noise slope, paraphrase stability, entity-disambiguation error and rank sensitivity.
-  - **Proof:** UNIT; BG-METRIC, BG-SECURITY; the planted newer-but-inapplicable version is counted as intrusion even though it ranks first.
+  - **Files:** `palladion-benchmark/benchmark/eval/retrieval.py`, `palladion-benchmark/tests/test_retrieval_metrics.py`.
+  - **Depends:** B03-T03.01, B03-T02.01, B02-T01.02, B02-T03.01, BADR-0024.
+  - **Change:** Valid-source recall, wrong-vintage intrusion (in the family, not applicable, history not allowed), forbidden-source exposure, authority confusion, exception recall, conflicting-pair recall, locator resolution, evidence density and token efficiency (whitespace-word tokens), and entity-disambiguation error where the fixture has the gold; slot kinds come from a name-to-kind table in evaluation.yaml. Noise slope, paraphrase stability and rank sensitivity need inputs no earlier phase produces and move to B07-T07.01, B08-T01.02 and B09-T01.01. The manifest gains the recorded interval and the gold a history-allowed flag so intrusion can be decided.
+  - **Proof:** UNIT; BG-METRIC, BG-SECURITY; the planted newer-but-inapplicable version is counted as intrusion even though it ranks first; a live citation is excluded from Track A denominators; every card metric sits in exactly one metric group.
   - **Evidence:** Not yet executed.
 
 <a id="b03-t04-01"></a>
@@ -579,26 +580,35 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
 - [ ] **B03-T04.01 — Paired statistics**
   - **Files:** `palladion-benchmark/benchmark/eval/statistics.py`, `palladion-benchmark/tests/test_statistics.py`.
   - **Depends:** B01-T02.02.
-  - **Change:** Paired cluster bootstrap, exact McNemar, Holm, zero-failure upper bound, Brier, log loss, ECE with disclosed bins, and Monte Carlo power simulation.
-  - **Proof:** UNIT; BG-STATS; a synthetic known effect is recovered; simulated CI coverage is near nominal; clustering widens the interval against the naive one.
+  - **Change:** Paired cluster bootstrap with a fixed method, seed and minimum cluster count (below it the interval is labelled descriptive), exact McNemar, Holm over an explicit family argument, TOST equivalence with the margin as an input and a harm-direction flag, the exact zero-failure upper bound computed from n, Brier, log loss, ECE with disclosed bins, and Monte Carlo power simulation. Non-completed pairs enter binary endpoints as failures in the intention-to-treat table and are excluded and counted in the conditional table.
+  - **Proof:** UNIT; BG-STATS; a synthetic known effect is recovered; simulated CI coverage is near nominal at the pilot and test cluster counts; clustering widens the interval against the naive one; an arm that times out on hard cases changes the intention-to-treat result and not the conditional one.
   - **Evidence:** Not yet executed.
 
 <a id="b03-t05-01"></a>
 
 - [ ] **B03-T05.01 — Latency and cost accounting**
   - **Files:** `palladion-benchmark/benchmark/eval/cost_latency.py`.
-  - **Depends:** B01-T03.03.
-  - **Change:** p50/p90/p95/p99, offline and online cost split, amortization formula and marginal-update costs; missing values stay missing.
-  - **Proof:** UNIT; BG-METRIC; hand-computed quantiles match; null cost is never summed as zero.
+  - **Depends:** B01-T03.03, B01-T04.01.
+  - **Change:** p50/p90/p95/p99 by a quantile method fixed in evaluation.yaml, computed over completed calls with timed-out calls counted and reported beside as at least the deadline; online cost from ledger durations and system-reported usage, offline cost from the index record B04 writes, and the amortization formula; marginal-update costs belong to B07-T05.01. Missing values stay missing.
+  - **Proof:** UNIT; BG-METRIC; hand-computed quantiles match; null cost is never summed as zero; a TIMEOUT record is not read as an observed latency.
   - **Evidence:** Not yet executed.
 
 <a id="b03-t06-01"></a>
 
 - [ ] **B03-T06.01 — Scorecards and pairwise effect tables**
   - **Files:** `palladion-benchmark/benchmark/analysis/__init__.py`, `palladion-benchmark/benchmark/analysis/tables.py`.
-  - **Depends:** B03-T04.01, B03-T02.01.
+  - **Depends:** B03-T04.01, B03-T02.01, B03-T07.01.
   - **Change:** Stratum-by-arm tables with n, mean, paired difference, interval and severe-failure counts; NOT_RUN, UNSUPPORTED, INVALID_RUN and TIMEOUT listed beside, not inside, accuracy; conditional-on-completion and end-to-end success reported separately over predeclared eligible subsets.
   - **Proof:** UNIT; BG-REPORT; a planted NOT_RUN arm appears as a status, not as a zero score.
+  - **Evidence:** Not yet executed.
+
+<a id="b03-t07-01"></a>
+
+- [ ] **B03-T07.01 — Score-run driver and control arms**
+  - **Files:** `palladion-benchmark/benchmark/eval/score_run.py`, `palladion-benchmark/tests/test_score_run.py`.
+  - **Depends:** B03-T01.01, B03-T02.01, B03-T03.02, B03-T04.01, B03-T05.01, B01-T04.01, B02-T04.01.
+  - **Change:** Read a run directory (ledger, immutable manifest, gold) and score it: every ledger record becomes a score or a run state, never a dropped row; a perfect, an empty and a shuffled control arm run through the real Runner with an injected registry that never enters the production registry; per-stratum controls are stated because perfect and empty coincide where no evidence exists.
+  - **Proof:** INTEGRATION; BG-METRIC, BG-REPORT; the three controls separate on the strata where evidence exists and are reported as not distinguishable where it does not; a planted ledger hole or a gold digest mismatch stops the scorer.
   - **Evidence:** Not yet executed.
 
 ### Atomic tasks — B04
@@ -737,7 +747,7 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
   - **Files:** `palladion-benchmark/docs/scoring_rubric.md`, `palladion-benchmark/docs/annotation_guide.md`.
   - **Depends:** B05-T01.01, B05-T02.01, B05-T03.01.
   - **Change:** Exact labeler rubrics with examples, double-labeling, blinding, adjudication and agreement procedures.
-  - **Proof:** DOC; BG-GOLD; each metric has a rubric entry; two annotators can apply it to the pilot.
+  - **Proof:** DOC; BG-GOLD; each metric has a rubric entry; the owner and a second reviewer can apply it to the pilot.
   - **Evidence:** Not yet executed.
 
 <a id="b05-t04-02"></a>

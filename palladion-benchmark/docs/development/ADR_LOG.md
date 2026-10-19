@@ -355,3 +355,143 @@ show the decision working, and is kept separate from acceptance.
 **My answer (editable):** Do not use Docker; run Qdrant without it, as Palladion does (2026-10-18).
 
 **Verification:** B04-T04.01 starts the pinned release under WSL on port 17333, reads back a collection through the benchmark's own client, confirms Palladion's port 16333 and store are untouched, and stops only the process it started.
+
+## BADR-0018 — B02 test files beyond the protocol tree
+
+**Status:** ACCEPTED; 2026-10-18.
+
+**Authority:** Coordinator decision inside task scope; the owner may amend.
+
+**Question:** Which test files does phase B02 add beyond the eight the protocol lists?
+
+**Why:** The protocol's test files cover temporal gold, ACL isolation, evidence slots and fixture integrity. The world generator, document renderer, live-API mock and generation script would otherwise have no owned test file.
+
+**Options:** (a) Add `tests/test_world.py`, `tests/test_documents.py`, `tests/test_live_api.py` and `tests/test_generate_data.py`; (b) fold those tests into the protocol's files; (c) leave the modules untested.
+
+**Recommendation:** Option (a): one test file per module keeps ownership and failures easy to attribute. All 70 tree files remain owned.
+
+**What affects what:** B02-T01.01, B02-T02.01, B02-T02.02, B02-T05.01, B02-T07.01; the checker's recorded additions.
+
+**My answer (editable):** Accepted in scope under the owner's blanket permission to add files and libraries; owner may remove or merge any of them.
+
+**Verification:** BG-DOC confirms every tree file still has an owner and every addition is listed; each new test file is run by `uv run pytest`.
+
+## BADR-0019 — Pilot label audit design and live-call authorization
+
+**Status:** ACCEPTED; 2026-10-18.
+
+**Authority:** Owner answers in chat, 2026-10-18: authorize the LLM second pass and label the packet personally; also perform a retrieval check on the same sample.
+
+**Question:** How is the B02 pilot label audit run, given that OQ08 leaves the owner as the only human annotator, and what live spending does it need?
+
+**Why:** Protocol 6.3 and 14.5 ask for dual human annotation. The owner is also the author of the hidden world, so is not blind to intended labels, and an LLM pass reads the same template text. The pre-phase adversary (adv-1, adv-4, adv-21) showed that agreement here cannot detect template-induced errors and that the card and four records still said two independent annotators.
+
+**Options:** (a) Owner labels a blinded stratified packet, a blinded LLM pass labels the same packet, and the owner also checks that cited clauses exist and suffice; (b) owner only; (c) defer the audit.
+
+**Recommendation:** Option (a). The packet is about 30 items, drawn with a recorded seed, stratified over the ten strata, shown without gold fields, split names or generator tags. Disagreements are resolved against the hidden-world rules, not by either annotator, and every post-audit gold edit is logged with before and after hashes. The dataset card states that the statistic is owner against LLM, not human against human, and that this is a recorded deviation from protocol 6.3 and 14.5.
+
+**What affects what:** B02-T07.02, BG-GOLD, BR10, B05-T04.01 wording, B04-T05.01 (depends on the audit).
+
+**My answer (editable):** Authorized (2026-10-18). Live authorization for B02-T07.02 only: at most 40 calls in total including classified retries, one call per item, completion cap 256 tokens, the three approved Groq models only, one model per item assigned by the BADR-0015 rule, the benchmark-local `.env`, an explicit enable flag, no key in logs. Any further live use needs a new owner instruction. The owner labels the packet personally and records the retrieval check. Amendment (2026-10-19): the first model pass used 36 of the 40 calls with a prompt that cut documents off before their rule clauses, and agreed with gold on 7 of 30 items. The owner authorised 40 more calls for a second pass, same models and limits (used 37). The owner chose to push B02 with the owner labels outstanding and to label later; B02-T07.02 and BG-GOLD stay PARTIAL until then. Second amendment (2026-10-19): after the post-phase audit changed the fixture, the owner authorised up to 40 more calls for one pass on the final fixture (used 36, prompt excerpt-v1). No further live use is authorised.
+
+**Verification:** Unit tests show the packet carries no gold field and the agreement statistic matches hand-computed cases; B02-T07.02 records the real calls, models, counts and the owner's labels with denominators.
+
+## BADR-0020 — Barrier, determinism and file decisions for B02
+
+**Status:** ACCEPTED; 2026-10-18.
+
+**Authority:** Coordinator decision inside task scope, after the pre-phase adversary (E-B02-001); the owner may amend.
+
+**Question:** Which design rules does B02 adopt to keep gold out of arm-visible data and to make generation reproducible, and which files does it add?
+
+**Why:** The adversary found six barrier holes (query text, filter values, identifiers, titles, file and manifest order, snapshot ids), determinism hazards (hash randomisation, time zone, shared random streams), and proofs without an owner file.
+
+**Options:** (a) Adopt the rules below and add the files; (b) leave them to individual tasks; (c) defer to B08.
+
+**Recommendation:** Option (a). (1) Queries are written by LLM-free templates and screened for gold, stratum and answerability vocabulary and for document ids outside the exact-id stratum. (2) Filter values come only from the principal, the case and the arm condition. (3) Question ids are keyed-hash pseudonyms, snapshot ids are content digests, titles and file names carry no family, stratum or split token, and manifest order is shuffled by an independent seed. (4) Each generator component draws from its own named random stream and tier seeds are derived from the base seed and the tier name, so S and M family sets are disjoint. (5) Digests use one canonical encoding (key-sorted compact JSON, UTF-8, explicit UTC timestamps, no wall clock or absolute paths) and are proven across subprocesses with different hash seed, time zone and working directory. (6) Scenario family is a world object (root policy family plus entity cluster); partitions run over the union of all strata. (7) Answerability, negative mechanism and evidence status follow a validated mapping. (8) Live-mock freshness bounds are per-operation constants in the mock, and read times derive from the evaluation time. (9) Additional files: `benchmark/fixtures/entities.py`, `benchmark/fixtures/knowledge.py` and `benchmark/fixtures/phrasebook.py` and `benchmark/fixtures/artifacts.py` (phrase banks and support-artifact generation, kept apart from the renderer), `benchmark/fixtures/operations.py` (the world module would otherwise hold three responsibilities in one file; `world.py` keeps the aggregate and its builder), `benchmark/fixtures/audit.py`, `tests/test_partitions.py`, `tests/test_label_audit.py`.
+
+**What affects what:** B02-T01 to B02-T07, the checker's recorded additions, BG-FIXTURE, BG-GOLD, BG-SECURITY, BG-REPRO.
+
+**My answer (editable):** Accepted in scope under the owner's blanket permission to add files and libraries; owner may amend any rule.
+
+**Verification:** Each rule has a planted-defect test in the owning task; BG-DOC confirms the new files have owners.
+
+## BADR-0021 — Corpus noise and measurement constants
+
+**Status:** ACCEPTED; 2026-10-18.
+
+**Authority:** Coordinator decision inside task scope, recorded before the first measurement that uses the numbers (TESTING_GATES numeric-tolerance rule); the owner may amend before the first confirmatory use.
+
+**Question:** Which constants fix how noise is planted and how its proportions are measured in the S-tier corpus?
+
+**Why:** Protocol 4.5 gives noise ranges but no way to measure them, and the pre-phase adversary (adv-15, adv-16) found that reporting the generator's own tags would restate the configured rate.
+
+**Options:** (a) Plant each kind of noise at the midpoint of its configured range and measure it from the documents with independent methods; (b) report generator tags; (c) plant at the range edges.
+
+**Recommendation:** Option (a). Planted counts are the range midpoint times the tier size (S tier: near-duplicates 120, stale 78, unapproved 36 including drafts, injection 18) plus truncated passages at 3 percent (the protocol names truncation as structural noise without a rate). Measurement: near-duplicates are non-authoritative documents whose word 3-shingle sets have Jaccard similarity of at least 0.75 (shingles shared by more than 60 documents are ignored as boilerplate), counted as redundant members of each group; stale text is a non-authoritative, non-proposal document quoting a policy window that differs from the one in force at the snapshot; unapproved is a registry state of draft or unapproved proposal; injection is a match of a fixed cue list; language is classified from stopword shares (below 0.2 Indonesian is English, above 0.8 is Indonesian, otherwise mixed), with the tagged language reported beside it. Because templates repeat on their own, the planted near-duplicate count is the target minus the natural count measured first. The measured proportion, not the plan, is what the dataset card reports, and a tag/measurement gap is shown.
+
+**What affects what:** B02-T02.02, B02-T06.01 (realism thresholds are a separate ADR), B02-T07.01 (dataset card), BG-FIXTURE.
+
+**My answer (editable):** Accepted in scope; these are fixture-design constants, not thresholds on any system under test.
+
+**Verification:** `tests/test_documents.py` measures the built corpus, checks each proportion against the configured range, and plants a tag/text mismatch that the measurement must expose.
+
+## BADR-0022 — Fixture realism thresholds and independent gold-support check
+
+**Status:** ACCEPTED; 2026-10-19.
+
+**Authority:** Coordinator decision inside task scope, recorded before the first realism measurement (TESTING_GATES numeric-tolerance rule; pre-phase adversary adv-4, adv-6, adv-16); the owner may amend before the first confirmatory use.
+
+**Question:** Which numbers decide that the S-tier fixture is not trivially solvable, not over-regular and not answered by version order, and how is gold-support checked without reusing the renderer?
+
+**Why:** B02-T06.01 must catch fixtures whose gold is circular or whose answers are searchable by accident. A check with no number cannot fail.
+
+**Options:** (a) Fix the floors and ceilings below now and fix the fixture, never the number, if a measurement misses them; (b) measure first and then choose; (c) skip realism checks.
+
+**Recommendation:** Option (a). (1) Identifier-free lexical solvability: a BM25 ranking (k1 1.5, b 0.75, over the documents visible to the principal) of the question text with every token that contains a digit removed must put a gold document first for at most 0.60 of the answerable questions in strata Q2 to Q5. (2) Sentence-length variation: the coefficient of variation of sentence length over non-authoritative documents must be at least 0.25. (3) Skeleton diversity: after replacing digits and identifiers, distinct sentences divided by all sentences over non-authoritative documents must be at least 0.10. (4) Version order: in Q4, choosing the newest in-force version of the cited family must be right for at most 0.30 of the questions, and choosing the oldest for at most 0.60. (5) Gold-support is read from the rendered text of the cited spans by an extractor that shares no code with the renderer (digits and unit words only): every number in a required claim, once identifiers are removed, must appear in the cited spans or equal the sum of two numbers in them. These are sanity floors for a template-first fixture, not proof of realism; the dataset card states that limit.
+
+**What affects what:** B02-T06.01, B02-T07.01 (dataset card), BG-FIXTURE, BG-GOLD, risk BR05.
+
+**My answer (editable):** Accepted in scope; the numbers are fixture-design constants, not thresholds on any system under test.
+
+**Verification:** `tests/test_fixture_integrity.py` runs every check on the clean S-tier fixture and plants a defect for each one, including an over-regular corpus and a trivially searchable query set.
+
+## BADR-0023 — Decisions taken at the B02 post-phase audit
+
+**Status:** ACCEPTED; 2026-10-19.
+
+**Authority:** Coordinator decisions inside task scope after the post-phase audit (E-B02-004); the owner may amend any of them.
+
+**Question:** Which design changes does B02 adopt in answer to the post-phase audit, and which file does it add?
+
+**Why:** The audit found unplanned policy conflicts, enumerable question identifiers, announcements that singled out planted histories, a label audit that could not be reproduced or protected from stale labels, and a 1,200-line module that mixed the gold schema with ten generators.
+
+**Options:** (a) Fix them in B02 and record what stays open; (b) defer all of it to B08.
+
+**Recommendation:** Option (a). (1) Policy precedence follows scope specificity (a tenant-specific policy outranks a class-specific one, which outranks neither) and only planted conflicts use a higher value, so overlapping policies never tie by accident; a validation check reports any unplanned conflict. (2) Question identifiers are keyed by an id secret; the pilot uses the empty default and says so, and the locked split must use a private secret before the seal. (3) Announcements are drawn from any family with a later version. Policy ids in support-document titles stay: they are public identifiers, not split or family labels (this narrows BADR-0020 rule 3 to question ids, split, stratum and scenario labels). (4) The label audit stores a gold digest with every owner label and refuses labels made against changed gold, stores a prompt version and digest with every model label, refuses to overwrite a recorded pass, and counts calls cumulatively across passes. (5) Live reads give an outsider the same answer for a missing subject as for another tenant's. (6) Regeneration with overwrite clears the previous published tree and keeps the audit folder. (7) `benchmark/fixtures/question_gen.py` holds the ten stratum generators and the builder; `questions.py` keeps the schema, screening and partition helpers. (8) Deferred with owners: unindexed-source questions (B04, which has an index to omit), user-supplied validity policy on reported facts (B07-T05.01), injection variants beyond plain instructions (B07-T07.01), partition tests at the M-tier shape and a larger scope vocabulary (B08-T01.01), `knowledge.py` split (B08), audit constants as configuration (B04).
+
+**What affects what:** B02-T01 to B02-T07, B03 (gold digest, ids), B04-T05 (needs the audit), B08-T03.01 (private id secret), BG-FIXTURE, BG-GOLD, BG-SECURITY.
+
+**My answer (editable):** Accepted in scope; the owner may amend any item.
+
+**Verification:** Each item has a regression test and a planted-defect mutant in E-B02-003.
+
+## BADR-0024 — B03 decisions after the pre-phase adversary
+
+**Status:** ACCEPTED; 2026-10-19.
+
+**Authority:** Owner answers in chat, 2026-10-19: binary slot-match relevance; add an optional document id to the candidate contract. Remaining items are coordinator decisions inside task scope after E-B03-001; the owner may amend.
+
+**Question:** How does the scorer define relevance, identity, units, denominators and the intention-to-treat rule, and which fixture and contract fields does B03 add?
+
+**Why:** The adversary (E-B03-001) showed that the gold has no graded relevance, that most documents have no identifier a candidate can carry, that overlap credit could hide authority confusion, and that nothing consumed a run end to end.
+
+**Options:** (a) Fix the rules now, before the first measurement, and add the missing fields; (b) leave them to each metric.
+
+**Recommendation:** Option (a). (1) Relevance is binary: a candidate is relevant only when it matches an alternative of a required slot of the record. (2) `EvidenceCandidate` gains optional `source_document_id` and `source_sha256` (default none); a candidate can then be matched to any published document by identity. (3) Headline coverage and completeness count identity matches only; text overlap gives separately labelled alignment credit. (4) Locator grammar and overlap rule: text is NFC-normalised with whitespace folded; a candidate maps to a clause when its text is contained in the clause span or contains it, or when at least 0.8 of the candidate's words lie inside the clause span; these numbers are fixed here before the first measurement. (5) Unit of evaluation: one gold clause or one whole document for non-clause sources; duplicate candidates for the same unit count once; a list shorter than K is scored over what was returned with K reported; a record with no relevant unit gives not-applicable for ranking metrics. (6) CompleteSet and SlotCoverage apply to records with satisfiable slots only; others return not-applicable. (7) Intention to treat: non-completed pairs count as failures on binary endpoints in the primary table; the conditional table uses the commonly completed set and counts exclusions; pairs censored by the same run deadline are excluded and counted. (8) Bootstrap: percentile cluster bootstrap by scenario family, a recorded seed, and below 8 clusters the interval is labelled descriptive; the zero-failure bound is computed exactly from n. (9) Latency quantiles use linear interpolation between order statistics; timed-out calls are reported beside and treated as at least the deadline. (10) `GoldRecord` gets a reader that checks the gold digest; the manifest gains the recorded interval and the gold a history-allowed flag (B03-T03.02). (11) Noise slope, paraphrase stability and rank sensitivity move to B07-T07.01, B08-T01.02 and B09-T01.01; marginal-update cost moves to B07-T05.01. (12) New files: `benchmark/eval/score_run.py`, `tests/test_score_run.py`, `tests/test_evidence_metrics.py`, `tests/test_retrieval_metrics.py`.
+
+**What affects what:** B03-T01.01 to B03-T07.01, B04-T01 (candidates carry document ids), B05-T01, B08-T02, BG-METRIC, BG-STATS, BG-REPORT.
+
+**My answer (editable):** Items 1 and 2 accepted by the owner (2026-10-19). Items 3 to 12 accepted in scope under the owner's blanket permission; the owner may amend before the first measurement.
+
+**Verification:** Each rule has a hand-computed test and a planted-defect control in the owning B03 task.
