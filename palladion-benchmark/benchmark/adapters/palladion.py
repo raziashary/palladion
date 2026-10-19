@@ -63,6 +63,7 @@ APPROVE_STATES = frozenset({"approved", "retired", "non_normative", "withdrawn"}
 REVOKE_STATES = frozenset({"withdrawn"})
 TIMEOUT_SECONDS = 60.0
 TABLE_FILE = "palladion_revisions.json"
+ALIASES_FILE = "palladion_aliases.json"  # written next to the table by scripts/palladion_aliases.py
 # What Palladion reads as an identifier in a query (copied from its documented behaviour, not imported).
 IDENTIFIER_SHAPE = re.compile(r"(?<![A-Za-z0-9])(?:[A-Z][A-Z0-9_.]*[-.][A-Z0-9_.-]+)(?![A-Za-z0-9])")
 
@@ -87,6 +88,7 @@ class LoadReport:
     left_as_draft: int
     revisions: Mapping[str, str]  # published document id -> Palladion revision id
     states: Mapping[str, str]  # published document id -> state it was given in Palladion
+    superseded: int = 0  # approvals that named the version they replace
 
 
 def utf8_to_character_offsets(text: str, start_byte: int, end_byte: int) -> tuple[int, int]:
@@ -129,6 +131,7 @@ class PalladionArm:
         self._owns_client = client is None
         self._revisions: dict[str, str] = {}  # Palladion revision id -> published document id
         self._table_states: dict[str, str] = {}  # published document id -> state it was given in Palladion
+        self._aliases: dict[str, Any] | None = None  # what the alias setup step recorded; None when it was not run
         self._stats: dict[str, Any] = {}
         self.last_notes: dict[str, Any] = {}
 
@@ -165,8 +168,11 @@ class PalladionArm:
             "ingestion": "native: each document uploaded whole and chunked by Palladion",
             "corpus": "approved, retired, non_normative and withdrawn-then-revoked documents are approved in Palladion",
             "unapproved": "drafts and unapproved proposals are uploaded, never approved, and so not retrievable by R7a",
-            "states": "approval in Palladion means retrievable, not authoritative; retired and withdrawn states and "
-            "supersession links cannot be expressed through its API (declared gaps)",
+            "states": "approval in Palladion means retrievable, not authoritative; a version is approved naming the "
+            "one it supersedes and validity windows are sent; drafts and unapproved proposals stay unapproved",
+            "aliases": self._aliases
+            if self._aliases is not None
+            else "none: Palladion registers none for HTTP loads (BR24)",
         }
 
     # -- loading (B04-T03.02) --------------------------------------------------------------------
@@ -174,34 +180,55 @@ class PalladionArm:
     def load_corpus(self, table_path: Path) -> LoadReport:
         """Upload every published document as the uploader and approve it as the distinct admin where its state allows.
 
-        draft and unapproved_proposal stay unapproved; withdrawn documents are approved and then revoked. The
+        draft and unapproved_proposal stay unapproved; a version is approved after the one it supersedes and names it;
+        withdrawn documents are approved and revoked once every approval is done. The
         revision table is written next to the index so a later run maps passages back to documents.
         """
         if table_path.exists():
             raise AdapterError("the corpus is already loaded; verify it or use a fresh runtime")
         revisions: dict[str, str] = {}
-        states: dict[str, str] = {}
-        approved = revoked = 0
+        records: dict[str, ManifestRecord] = {}
         for document in self.view.documents():
             record = document.record
             if len(document.text) > MAX_UPLOAD_CHARACTERS:
                 raise AdapterError(f"{record.doc_id} exceeds Palladion's upload limit; split it and record how")
-            revision = self._upload(record, document.text)
-            revisions[record.doc_id] = revision
-            if record.registry_state not in APPROVE_STATES:
-                states[record.doc_id] = "DRAFT"
-                continue
-            self._expect(self._call("POST", f"/sources/{revision}/approve", APPROVER), 200, "approve", record.doc_id)
-            approved += 1
-            states[record.doc_id] = "APPROVED"
-            if record.registry_state in REVOKE_STATES:
-                self._expect(self._call("POST", f"/sources/{revision}/revoke", APPROVER), 200, "revoke", record.doc_id)
+            revisions[record.doc_id] = self._upload(record, document.text)
+            records[record.doc_id] = record
+        states = {doc_id: "DRAFT" for doc_id in revisions}
+        superseded = 0
+
+        def approve(doc_id: str) -> None:
+            """Approve a document after the version it supersedes, naming that version when Palladion can accept it."""
+            nonlocal superseded
+            if states[doc_id] != "DRAFT" or records[doc_id].registry_state not in APPROVE_STATES:
+                return
+            predecessor = records[doc_id].supersedes
+            if predecessor in records:
+                approve(str(predecessor))
+            named = predecessor is not None and states.get(predecessor) == "APPROVED"
+            body = {"supersedes_revision_id": revisions[str(predecessor)]} if named else None
+            self._expect(
+                self._call("POST", f"/sources/{revisions[doc_id]}/approve", APPROVER, body), 200, "approve", doc_id
+            )
+            states[doc_id] = "APPROVED"
+            superseded += int(named)
+
+        for doc_id in revisions:
+            approve(doc_id)
+        approved = sum(1 for state in states.values() if state == "APPROVED")
+        revoked = 0
+        for doc_id, record in records.items():
+            # Revoked last, so a withdrawn version is still approved when a later version supersedes it.
+            if record.registry_state in REVOKE_STATES and states[doc_id] == "APPROVED":
+                self._expect(
+                    self._call("POST", f"/sources/{revisions[doc_id]}/revoke", APPROVER), 200, "revoke", doc_id
+                )
+                states[doc_id] = "REVOKED"
                 revoked += 1
-                states[record.doc_id] = "REVOKED"
         table_path.write_text(json.dumps({"revisions": revisions, "states": states}, sort_keys=True), encoding="utf-8")
         self._revisions = {revision: doc for doc, revision in revisions.items()}
         self._table_states = states
-        return LoadReport(len(revisions), approved, revoked, len(revisions) - approved, revisions, states)
+        return LoadReport(len(revisions), approved, revoked, len(revisions) - approved, revisions, states, superseded)
 
     def map_revisions(self, revision_to_document: Mapping[str, str]) -> None:
         """Tell the arm which Palladion revision holds which published document."""
@@ -211,6 +238,8 @@ class PalladionArm:
         data = json.loads(table_path.read_text(encoding="utf-8"))
         self.map_revisions({revision: doc for doc, revision in data["revisions"].items()})
         self._table_states = dict(data["states"])
+        marker = table_path.with_name(ALIASES_FILE)
+        self._aliases = json.loads(marker.read_text(encoding="utf-8")) if marker.exists() else None
 
     def _upload(self, record: ManifestRecord, text: str) -> str:
         body = {

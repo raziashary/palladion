@@ -540,3 +540,23 @@ show the decision working, and is kept separate from acceptance.
 **My answer (editable):** Accepted as (b). The three synthesis questions a-1c1517e1c363, a-29081870dc64 and a-4bcb97ff166b are withdrawn from the pilot by a recorded list, the gold is not edited, and the generator is corrected before the seal (BR29). The reader's one wrong label (a-3e78c6bf81ce) is not a gold defect.
 
 **Verification:** E-B02-006 holds the report, denominators, the item-level reasons and the limits; the exclusion list is tested in B04-T05.01.
+
+## BADR-0027 — Palladion limits: benchmark-side mitigations and the fixes handed to its contributor
+
+**Status:** ACCEPTED; 2026-10-19.
+
+**Authority:** Owner answers in chat, 2026-10-19: register the missing aliases through a benchmark-owned setup step and report it as a second variant beside today's R7a; build per-principal identities later, before B08; write one document that lists what is mitigated and what needs a Palladion fix. The loader change (item 2) is a coordinator decision inside B04 scope that the owner may amend.
+
+**Question:** Which Palladion limits do we mitigate on our side, how, and which are left as requests to its contributor?
+
+**Why:** The pilot (E-B04-005) showed R7a empty on every code-bearing question (BR24) and the risk register held two statements about Palladion that its source contradicts (BR27, BR28). The owner asked for the mitigable ones done and the rest written down properly.
+
+**Options:** (a) Do nothing and only report; (b) mitigate what can be done without touching `palladion/` and document the rest; (c) ask for fixes before any further R7a run.
+
+**Recommendation:** (b), as built.
+
+**What affects what:** (1) An alias setup step (`scripts/palladion_aliases.py` and `scripts/palladion_alias_job.py`) calls Palladion's own `Catalog.add_alias` inside the isolated worktree's environment, after the HTTP load and with the server stopped; it reads only published text, edits nothing under `palladion/` and records itself in the arm's manifest. This departs from "HTTP only" (BADR-0002) for setup, never for searches. R7a is reported as the plain variant (no aliases) and the aliased variant, in separate runs of the same arm id. (2) The HTTP loader approves each version after the one it supersedes and names it, and revokes withdrawn documents last. (3) Per-principal identities (BR27) wait for B08. (4) Palladion fixes PF01 to PF06 are in [PALLADION_FIXES](PALLADION_FIXES.md); nothing is agreed with its contributor.
+
+**My answer (editable):** Accepted as above. Corrections to the register: BR27 and BR28 are restated against the source.
+
+**Verification:** E-B04-006 holds the four re-runs, their validator results and the limits; the tests for the loader and the alias step fail on planted defects.

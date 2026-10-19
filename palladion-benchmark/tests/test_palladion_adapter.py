@@ -89,6 +89,7 @@ class Palladion:
 
     def __init__(self) -> None:
         self.calls: list[tuple[str, str, str]] = []  # (method, path, token)
+        self.bodies: list[dict[str, Any]] = []  # the JSON body of each call, in the same order
         self.search_body: dict[str, Any] = {"status": "OK", "warnings": [], "passages": []}
         self.search_status = 200
         self.upload_status = 201
@@ -97,6 +98,7 @@ class Palladion:
     def handle(self, http: httpx.Request) -> httpx.Response:
         token = http.headers.get("authorization", "").removeprefix("Bearer ")
         self.calls.append((http.method, http.url.path, token))
+        self.bodies.append(json.loads(http.content) if http.content else {})
         if http.url.path == "/search":
             return httpx.Response(self.search_status, json=self.search_body)
         if http.url.path == "/sources":
@@ -330,6 +332,42 @@ def test_loading_mirrors_the_registry_states_with_a_distinct_uploader_and_approv
     assert any(c[1] == f"/sources/{report.revisions['OLD']}/revoke" for c in server.calls)
     table = json.loads((tmp_path / TABLE_FILE).read_text(encoding="utf-8"))
     assert table["revisions"] == dict(report.revisions)
+
+
+def test_a_version_is_approved_after_the_one_it_supersedes_and_names_it(tmp_path: Path) -> None:
+    successor = replace(record("D1", "approved"), supersedes="OLD")
+    older = record("OLD", "withdrawn")
+    server = Palladion()
+    built = PalladionArm(
+        PublishedView(tmp_path, [successor, older], IDENTITY, TEXTS),
+        "http://palladion.test",
+        TOKENS,
+        client=httpx.Client(transport=httpx.MockTransport(server.handle)),
+    )
+    report = built.load_corpus(tmp_path / TABLE_FILE)
+    steps = [
+        (path.rsplit("/", 1)[1], path.split("/")[2]) for _, path, _ in server.calls if path.startswith("/sources/")
+    ]
+    old, new = report.revisions["OLD"], report.revisions["D1"]
+    assert steps == [("approve", old), ("approve", new), ("revoke", old)], "predecessor first; the revoke waits"
+    body_of = {path: body for (_, path, _), body in zip(server.calls, server.bodies, strict=True)}
+    assert body_of[f"/sources/{new}/approve"] == {"supersedes_revision_id": old}
+    assert body_of[f"/sources/{old}/approve"] == {}
+    assert report.superseded == 1 and report.states == {"D1": "APPROVED", "OLD": "REVOKED"}
+
+
+def test_a_predecessor_that_was_never_approved_is_not_named(tmp_path: Path) -> None:
+    successor = replace(record("D1", "approved"), supersedes="DRAFT")
+    server = Palladion()
+    built = PalladionArm(
+        PublishedView(tmp_path, [record("DRAFT", "draft"), successor], IDENTITY, TEXTS),
+        "http://palladion.test",
+        TOKENS,
+        client=httpx.Client(transport=httpx.MockTransport(server.handle)),
+    )
+    report = built.load_corpus(tmp_path / TABLE_FILE)
+    assert report.superseded == 0
+    assert all("supersedes_revision_id" not in body for body in server.bodies)
 
 
 def test_a_second_load_is_refused_and_a_failed_upload_stops_the_load(tmp_path: Path) -> None:

@@ -64,4 +64,4 @@ B08-T07.01 on OQ09 (dataset license, owner deferred; must be answered before the
 
 ## Next action
 
-Next: B05 needs its own pre-phase adversary and scope authorization. The owner may relabel the packet with the [labelling guide](OWNER_LABELLING_GUIDE.md) at any time. B05 needs its own pre-phase adversary and scope. Open decisions that gate later work: OQ09, OQ10 and OQ12.
+Palladion's limits are split into what we mitigate and what its contributor must fix in [PALLADION_FIXES](PALLADION_FIXES.md) (BADR-0027, E-B04-006). Next: B05 needs its own pre-phase adversary and scope authorization. The owner may relabel the packet with the [labelling guide](OWNER_LABELLING_GUIDE.md) at any time. B05 needs its own pre-phase adversary and scope. Open decisions that gate later work: OQ09, OQ10 and OQ12.
