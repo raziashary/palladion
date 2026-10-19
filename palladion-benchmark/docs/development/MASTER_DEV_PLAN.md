@@ -616,7 +616,7 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
 <a id="b04-t01-03"></a>
 
 - [ ] **B04-T01.03 — Shared Track A harness: chunker, counted tokens, neutral ACL filter, budgets**
-  - **Files:** `palladion-benchmark/benchmark/adapters/__init__.py`, `palladion-benchmark/benchmark/adapters/common.py`, `palladion-benchmark/tests/test_adapters_common.py`.
+  - **Files:** `palladion-benchmark/benchmark/adapters/__init__.py`, `palladion-benchmark/benchmark/adapters/common.py`, `palladion-benchmark/benchmark/adapters/models.py`, `palladion-benchmark/tests/test_adapters_common.py`.
   - **Depends:** B03-T01.01, B02-T03.01, B01-T03.01, BADR-0025.
   - **Change:** One parser and chunker for R0 to R3 over the published namespace only (an arm receives the published directory and an index directory, never the snapshot root); chunks carry document id, clause ids and character offsets so candidates arrive with harness-attributed provenance; counted tokens are whitespace words with characters also reported; a neutral filter applies the principal's tenant and role from the published manifest identically to every arm (condition C2) and can be switched off (condition C1); a budget enforcer truncates a bundle to the stated token budget and flags the truncation.
   - **Proof:** UNIT; BG-ADAPTER, BG-FAIR, BG-SECURITY; chunks tile every document with no loss and every clause maps to a chunk; the filter removes exactly the documents the manifest denies and an arm cannot be built from a path that holds annotation namespaces; two bundles at the same budget differ by at most one chunk in counted words; an over-budget bundle is truncated and flagged.
@@ -706,7 +706,7 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
 <a id="b04-t04-01"></a>
 
 - [ ] **B04-T04.01 — Index build entry point**
-  - **Files:** `palladion-benchmark/scripts/build_indices.py`, `palladion-benchmark/tests/test_build_indices.py`.
+  - **Files:** `palladion-benchmark/scripts/build_indices.py`, `palladion-benchmark/benchmark/track_a.py`, `palladion-benchmark/tests/test_build_indices.py`.
   - **Depends:** B04-T02.02, B04-T01.05, BADR-0025.
   - **Change:** Build per-arm indexes for a snapshot from the published namespace only, in common-chunk mode (shared parser and boundaries); native-ingestion mode is deferred (BADR-0025). Record time, size, tokens, extraction failures and lost tables; a failed build is recorded.
   - **Proof:** SMOKE; BG-REPRO; rebuild from the same manifest yields matching counts; a failed build is recorded rather than skipped; the entry point refuses a snapshot root that holds annotation namespaces as its corpus argument.
@@ -715,7 +715,7 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
 <a id="b04-t04-02"></a>
 
 - [ ] **B04-T04.02 — Track A runner and scoring entry point**
-  - **Files:** `palladion-benchmark/scripts/run_track_a.py`, `palladion-benchmark/scripts/score_track_a.py`, `palladion-benchmark/tests/test_run_track_a.py`.
+  - **Files:** `palladion-benchmark/scripts/run_track_a.py`, `palladion-benchmark/scripts/score_track_a.py`, `palladion-benchmark/benchmark/track_a.py`, `palladion-benchmark/tests/test_run_track_a.py`.
   - **Depends:** B04-T04.01, B04-T03.01, B01-T04.01, B03-T02.01, B03-T03.02, B03-T05.01, B03-T07.01.
   - **Change:** Run arms on a split with intention-to-treat accounting through the real Runner, refuse the test split without the recorded seal, record K, budget and condition in each manifest, write run artifacts with manifests, and score a run directory into scorecards and a states table.
   - **Proof:** SMOKE; BG-TRACKA; the artifacts contain no gold field; arms not run appear with a reason; the test split is refused; a run scored at a different K is rejected.
@@ -724,7 +724,7 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
 <a id="b04-t04-03"></a>
 
 - [ ] **B04-T04.03 — Result validation entry point**
-  - **Files:** `palladion-benchmark/scripts/validate_results.py`, `palladion-benchmark/tests/test_validate_results.py`.
+  - **Files:** `palladion-benchmark/scripts/validate_results.py`, `palladion-benchmark/benchmark/results_check.py`, `palladion-benchmark/tests/test_validate_results.py`.
   - **Depends:** B04-T04.02.
   - **Change:** Check schema, call and token budgets, gold and secret leakage by scanning artifacts for every gold string, question-id family and token, manifest and ledger hashes, and that the run read only the published namespace and the split's own annotation file (recorded by the runner).
   - **Proof:** INTEGRATION; BG-REPRO, BG-FAIR; a run directory containing planted gold text, a planted token or a record of a locked-test read is rejected; a clean directory passes.

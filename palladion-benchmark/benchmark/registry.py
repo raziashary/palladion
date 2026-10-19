@@ -204,7 +204,27 @@ def default_registry() -> ArmRegistry:
         _arm("R5", "GraphRAG Local", (a,), "B06", graph=graph_by_definition),
         _arm("R6", "LightRAG", (a,), "B06", graph=graph_by_definition),
         _arm("R7", "Palladion retriever", (a, b), "B04", graph=palladion_graph),
-        _arm("R7a", "Palladion retriever without graph", (a, b), "B04"),
+        _arm(
+            "R7a",
+            "Palladion retriever without graph",
+            (a, b),
+            "B04",
+            overrides={
+                "native_citation": (
+                    Support.SUPPORTED,
+                    "Palladion returns citation ids and exact byte offsets; checked in tests/test_palladion_adapter.py",
+                ),
+                "acl_filter": (
+                    Support.UNSUPPORTED,
+                    "Palladion's principals cannot express the benchmark's; the harness filters its output (BADR-0025)",
+                ),
+                "temporal_filter": (Support.UNSUPPORTED, "Palladion's search has no as-of parameter (BR22)"),
+                "offline_cost": (
+                    Support.UNSUPPORTED,
+                    "indexing happens inside Palladion at approval and is not reported",
+                ),
+            },
+        ),
         _arm("R7b", "Palladion retriever with bounded graph", (a,), "B06", graph=palladion_graph),
         _arm("E0", "Plain LangChain two-step", (c,), "B07"),
         _arm("E1", "LangGraph agentic", (c,), "B07"),

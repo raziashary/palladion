@@ -126,6 +126,17 @@ class HybridArm:
             "build_ms": (time.perf_counter() - started) * 1000,
         }
 
+    def adopt_built_indexes(self) -> None:
+        """Use the lexical and dense indexes that were already built, so arms sharing them do not build them twice."""
+        self._stats = {
+            "arm": self.arm_id,
+            "lexical": self.lexical.index_stats(),
+            "dense": self.dense.index_stats(),
+            "rrf_k": self.rrf_k,
+            "depth": self.depth,
+            "build_ms": 0.0,
+        }
+
     def index_stats(self) -> dict[str, Any]:
         return dict(self._stats)
 

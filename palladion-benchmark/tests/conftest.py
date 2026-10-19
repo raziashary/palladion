@@ -14,7 +14,7 @@ from benchmark.eval.normalize import PublishedCorpus
 from benchmark.fixtures.artifacts import build_corpus, plan_from_config
 from benchmark.fixtures.documents import Document
 from benchmark.fixtures.knowledge import DocumentState
-from benchmark.fixtures.manifest import Split, build_records, snapshot_id, write_namespaces
+from benchmark.fixtures.manifest import Split, build_records, snapshot_id, write_annotations, write_namespaces
 from benchmark.fixtures.question_gen import build_questions
 from benchmark.fixtures.questions import GoldRecord
 from benchmark.fixtures.world import World, build_world
@@ -55,6 +55,14 @@ def s_published(tmp_path_factory: pytest.TempPathFactory, s_world: World, s_corp
     root = tmp_path_factory.mktemp("published") / "S"
     write_namespaces(root, s_world, s_corpus, SEED)
     return root / "published"
+
+
+@pytest.fixture(scope="session")
+def s_root(s_published: Path, s_questions: tuple[GoldRecord, ...]) -> Path:
+    """The snapshot root of the S-tier fixture with the smoke annotation file written, as a runner finds it."""
+    root = s_published.parent
+    write_annotations(root, Split.SMOKE, [q.to_dict() for q in s_questions])
+    return root
 
 
 @pytest.fixture(scope="session")

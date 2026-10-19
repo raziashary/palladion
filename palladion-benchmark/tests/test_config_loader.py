@@ -129,7 +129,11 @@ def test_language_profile_must_sum_to_one_hundred(config_dir: Path) -> None:
 
 
 def test_unpinned_entries_load_in_exploratory_mode_and_fail_in_confirmatory_mode() -> None:
-    assert load_comparators_config(CONFIGS / "comparators.yaml").system_under_test.is_pinned is False
+    config = load_comparators_config(CONFIGS / "comparators.yaml")
+    assert config.system_under_test.is_pinned is True, (
+        "Palladion is pinned to the commit the isolated runtime checks out"
+    )
+    assert next(a for a in config.arms if a.arm_id == "R4").pin.is_pinned is False
     with pytest.raises(ConfigError, match="confirmatory mode refuses unpinned"):
         load_comparators_config(CONFIGS / "comparators.yaml", confirmatory=True)
 
@@ -180,7 +184,7 @@ def test_unquoted_version_like_pin_is_rejected_because_yaml_turns_it_into_a_floa
     path = config_dir / "comparators.yaml"
     edit(
         path,
-        'system_under_test: {kind: unpinned, value: "UNPINNED"}',
+        'system_under_test: {kind: commit, value: "6444345209cabd9dc0b637c53ee063dd2fe87303"}',
         "system_under_test: {kind: version, value: 3.10}",
     )
     with pytest.raises(ConfigError, match="quoted string"):

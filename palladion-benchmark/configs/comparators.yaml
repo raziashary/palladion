@@ -14,7 +14,7 @@ arms:
   - {id: R5, name: "GraphRAG Local", family: graph_research, tracks: [retrieval_only], pin: {kind: unpinned, value: "UNPINNED"}, eligibility: "document questions; Global mode is a separate exploratory condition"}
   - {id: R6, name: "LightRAG", family: graph_research, tracks: [retrieval_only], pin: {kind: unpinned, value: "UNPINNED"}, eligibility: "document questions, S tier until OQ06 is revisited"}
   - {id: R7, name: "Palladion retriever", family: system_under_test, tracks: [retrieval_only, controlled_qa], pin: {kind: unpinned, value: "UNPINNED"}, eligibility: all}
-  - {id: R7a, name: "Palladion retriever without graph", family: system_under_test, tracks: [retrieval_only, controlled_qa], pin: {kind: unpinned, value: "UNPINNED"}, eligibility: all}
+  - {id: R7a, name: "Palladion retriever without graph", family: system_under_test, tracks: [retrieval_only, controlled_qa], pin: {kind: commit, value: "6444345209cabd9dc0b637c53ee063dd2fe87303"}, eligibility: all}
   - {id: R7b, name: "Palladion retriever with bounded graph", family: system_under_test, tracks: [retrieval_only], pin: {kind: unpinned, value: "UNPINNED"}, eligibility: "NOT_RUN unless Palladion exposes graph expansion"}
   - {id: E0, name: "Plain LangChain two-step", family: framework, tracks: [native_end_to_end], pin: {kind: unpinned, value: "UNPINNED"}, eligibility: all}
   - {id: E1, name: "LangGraph agentic", family: framework, tracks: [native_end_to_end], pin: {kind: unpinned, value: "UNPINNED"}, eligibility: all}
@@ -51,4 +51,5 @@ shared_models:
     digests:
       qdrant-x86_64-unknown-linux-musl.tar.gz: "50b253243309ed0ae50a19f678f0d0adcc4f0b567b3bd2c5c0c7e02fa8404bb6"
 
-system_under_test: {kind: unpinned, value: "UNPINNED"}
+# Palladion at P06 (6444345), the commit the isolated runtime of scripts/palladion_runtime.py checks out.
+system_under_test: {kind: commit, value: "6444345209cabd9dc0b637c53ee063dd2fe87303"}

@@ -250,8 +250,12 @@ def enforce_budget(candidates: Sequence[EvidenceCandidate], max_words: int) -> B
             kept.append(_replace(candidate, content=shortened, additional_metadata=meta))
             used, cut = max_words, words - max_words
         break
+    dropped = len(candidates) - len(kept)
+    if dropped and kept:
+        meta = {**kept[-1].additional_metadata, "budget_dropped": dropped}
+        kept[-1] = _replace(kept[-1], additional_metadata=meta)
     renumbered = tuple(_replace(c, rank=i) for i, c in enumerate(kept, start=1))
-    return BudgetResult(renumbered, used, len(candidates) - len(kept), cut)
+    return BudgetResult(renumbered, used, dropped, cut)
 
 
 def _replace(candidate: EvidenceCandidate, **changes: object) -> EvidenceCandidate:

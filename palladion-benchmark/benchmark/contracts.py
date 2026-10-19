@@ -265,12 +265,17 @@ def field_names(cls: type) -> list[str]:
     return [f.name for f in fields(cls)]
 
 
+def gold_like_key(key: str) -> bool:
+    """True when a mapping key names gold, an expected answer or an outcome label."""
+    normalised = _normalise_key(key)
+    return any(fragment in normalised for fragment in _GOLD_KEY_FRAGMENTS)
+
+
 def screen_arm_visible(name: str, value: Any) -> None:
     """Refuse gold-like keys and gold-like marker words anywhere inside an arm-visible structure."""
     if isinstance(value, Mapping):
         for key, item in value.items():
-            normalised = _normalise_key(str(key))
-            if any(fragment in normalised for fragment in _GOLD_KEY_FRAGMENTS):
+            if gold_like_key(str(key)):
                 raise ContractError(f"{name} contains a gold-like key")
             screen_arm_visible(f"{name}.{key}", item)
     elif isinstance(value, tuple | list):

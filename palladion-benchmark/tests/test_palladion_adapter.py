@@ -395,3 +395,16 @@ def test_build_index_checks_the_corpus_and_records_the_mapping(tmp_path: Path) -
 def test_construction_refuses_an_unknown_mode(tmp_path: Path) -> None:
     with pytest.raises(AdapterError):
         PalladionArm(view(tmp_path), "http://x.test", TOKENS, mode=cast(Any, "nearest"))
+
+
+def test_each_half_of_the_passage_integrity_check_can_refuse_on_its_own(tmp_path: Path) -> None:
+    server = Palladion()
+    altered_text = passage(TEXTS["D1"], "rev_D1", 0, 12)
+    altered_text["text"] = "Rule one: XX"  # same length, different bytes, with a hash that matches the new text
+    altered_text["sha256"] = hashlib.sha256(b"Rule one: XX").hexdigest()
+    wrong_hash = passage(TEXTS["D1"], "rev_D1", 0, 12)
+    wrong_hash["sha256"] = "0" * 64  # the text is exactly the published slice; only the hash lies
+    for body in (altered_text, wrong_hash):
+        server.search_body = {"status": "OK", "warnings": [], "passages": [body]}
+        with pytest.raises(ContractError, match="differs from the published bytes"):
+            arm(server, tmp_path).retrieve(request())
