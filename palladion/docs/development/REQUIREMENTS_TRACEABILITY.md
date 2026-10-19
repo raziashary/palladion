@@ -1,9 +1,9 @@
 # Requirements traceability
 
-Current checkpoint2026-10-19: P06 published6444345; P07 graph and owner-added automatic memory implementation, consumer proof and sole LunaMedium end-review resolution verified (E-P07-001/002). ADR0063–0066 owner approvals preserved. Graph stays off after zero incremental recoveries. P08/UI/benchmark edits and another main push remain excluded. Older phase snapshots below are historical.
+Current checkpoint2026-10-20: P00–P08engineering work complete within the approved synthetic pilot boundary;98/98atomic cards and sole end-review resolution verified. P07 publishedf97471e; graph stays defaultoff. P08 outcomes are negative/inconclusive, semantic accuracy and unobserved candidate-stage metrics unknown. UI/enterprise writes/X01/benchmark-editor edits and a further main push remain excluded. Older dated snapshots are historical.
 
 Scope: blueprint v0.2 and user's 2026-10-17 suite request. All system coverage below
-mixes verified P01–P06 and planned later consumers; PROGRESS and the
+records verified P01–P08engineering consumers, with unmeasured research obligations explicit; PROGRESS and the
 phase-local EVIDENCE_LOG receipts distinguish verified paths and still-unrun obligations. References use stable heading/section names rather
 than fragile line numbers. A row is a coverage obligation, not proof of behavior.
 
@@ -142,3 +142,18 @@ ADR0066 supplements blueprint §9.1/§9.2 and I09/I10 scope/authority controls w
 ## P07 final phase-local disposition (2026-10-19)
 
 E-P07-002 records all11cards, actual source/installed/CLI/provider and original-reader proof, the sole GPT6LunaMedium end audit and same-reviewer resolution. The reviewer read the full blueprint (§1–§18), I01–I15, graph and memory amendment; three current-facing document contradictions were fixed and rechecked. No confirmed source defect remained. Graph has0incremental recoveries in4paired queries and stays off by default; controlled path recovery proves integration only. PathA automatic promotion and opt-in bounded local PathB retain original ACL/authorityNONE;4mechanical pilot labels pass,2semantic labels remain unknown. Historical failures and intermediate pending statuses above remain dated snapshots, not current scope. No unanswered P07 owner ADR; P08 adjudication, generalization and external comparisons remain excluded.
+
+
+## P08 current implementation and proof overlay
+
+P08-T01/02 now bind explicit approved protocol, development/evaluation family splits,
+all11arms/44observations, original failures and per-attempt costs. E-P08-002 and
+[evaluation report](evidence/P08_RESULTS.md) link raw replay/public hashes and the actual
+consumer checks. I01–I15 retain their original authority boundaries: optional treatments
+cannot create facts, scope or operational permission. T01–T24 map to executable nodes in
+`data/demo/p08_integrity_controls.json`; reconcile.py reports missing/skipped/failed
+checks explicitly. Historical reconciliation retains20PASS/4FAIL; current source+actual-injection+serialized
+integration reconciliation is24PASS, with exact JUnit hashes in the supplemental receipt.
+This is mechanical control coverage, not semantic certification.
+Human-adjudicated efficacy, external baselines and production generalization remain
+unestablished. Sole phase end audit and same-reviewer resolution are verified at E-P08-003.

@@ -1,6 +1,6 @@
 # Risks, accepted answers and verification obligations
 
-Current checkpoint2026-10-19: P06 published6444345; P07 graph and owner-added automatic memory implementation, consumer proof and sole LunaMedium end-review resolution verified (E-P07-001/002). ADR0063–0066 owner approvals preserved. Graph stays off after zero incremental recoveries. P08/UI/benchmark edits and another main push remain excluded. Older phase snapshots below are historical.
+Current checkpoint2026-10-20: P00–P08engineering work complete within the approved synthetic pilot boundary;98/98atomic cards and sole end-review resolution verified. P07 publishedf97471e; graph stays defaultoff. P08 outcomes are negative/inconclusive, semantic accuracy and unobserved candidate-stage metrics unknown. UI/enterprise writes/X01/benchmark-editor edits and a further main push remain excluded. Older dated snapshots are historical.
 
 Current authority amendment: P05 published f0507e4; user explicitly authorized P06 end-to-end; ADR-0030 separately approves the additive PolicyDecision extension. Earlier implementation hold below is historical; P04 explicit enabled provider commands are authorized.
 
@@ -132,3 +132,23 @@ Known downstream concern from the concurrent benchmark owner's publishedb1209f8 
 ## P07 final phase-local disposition (2026-10-19)
 
 E-P07-002 records all11cards, actual source/installed/CLI/provider and original-reader proof, the sole GPT6LunaMedium end audit and same-reviewer resolution. The reviewer read the full blueprint (§1–§18), I01–I15, graph and memory amendment; three current-facing document contradictions were fixed and rechecked. No confirmed source defect remained. Graph has0incremental recoveries in4paired queries and stays off by default; controlled path recovery proves integration only. PathA automatic promotion and opt-in bounded local PathB retain original ACL/authorityNONE;4mechanical pilot labels pass,2semantic labels remain unknown. Historical failures and intermediate pending statuses above remain dated snapshots, not current scope. No unanswered P07 owner ADR; P08 adjudication, generalization and external comparisons remain excluded.
+
+
+## P08 measured risks and accepted limits (2026-10-20)
+
+ADR0079 owner-approved freeze precedes44observations;16rowerrors and45HTTP429 among
+91model invocations demonstrate free-quota constraints, not model quality. Shared
+provider/host contention,2families and a critic run overlapping part of the grid prevent
+causal capacity or general quality claims. All targets/failures and unknown semantics
+remain in P08_RESULTS. Known received usage54750tokens excludes unknown failed billing.
+No independent human panel is available; support/usefulness/false-veto labels stay unknown.
+
+Earlier real Neo4j failures remain in the historical20PASS/4FAIL record. Current
+serialized7integration checksPASS217.35s and current24control reconciliationPASS.
+VM pauses suggest a resource question, not established query blame or measured capacity.
+Owner chose Keep other work running; serialize own checks without deadline expansion.
+Preserve foreign benchmark/editor processes. Repeatedly failed gates cannot be silently
+waived. No new architectural ADR is pending; if completion requires a new contract,
+record and obtain the owner's direction under Rule4. No further main push is authorized.
+
+End-review R4 identified invalid@5/10/20 labels on a final top4 packet. ADR0086 withdraws those labels, preserves raw artifacts and exposes only observed packet metrics. Candidate/fused/reranked-stage metrics remain unavailable for this pilot; a new separately frozen full-stage run is required for new claims, alongside independent semantic labels. This limitation is explicit rather than inferred zero or a claimed retrieval result.

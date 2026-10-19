@@ -1,5 +1,93 @@
 # Verification evidence log
 
+## E-P08-002 — Development continuation and backups (in progress)
+
+Latest2026-10-20: approved grid exec16710 exits0 after44observations/16rowerrors.
+Rawroot runtime/evaluation/p08_0d19c2375c5c46d3ac792fd3c1e5da20;91attempts,
+41receivedmodelturns,45HTTP429,2HTTP400,3cancelled,54750knownreceivedtokens.
+Attempt-input and responsecanaryscan0matches. Actual rawreplay validates everybound
+artifact; updatedper-attempt usage restores knownpartialtokens(ADR0082) and armssum
+exactly54750. Publicmechanicalreceipt65708bytes at export2, hash-boundoriginalpointers
+and44scoreableobservations; report evidence/P08_RESULTS.md remainsIN_PROGRESS.
+Independentsemanticaccuracy/usefulness/falseveto unknown, no hypothesis success.
+
+Current default source before final6guards:354PASS28SKIP144.76s,
+runtime/p08-default-final.xml/log. NativeQdrant408/429typednormalization guard group
+17PASS16.38s(p08-native-timeout.xml/log), no retries/validation-error hiding(ADR0081).
+Partialusage scorer18PASS26.48s(p08-cost-accounting.xml/log). Actual513derivedcandidate
+window→canonicaldenial→toolcoverage guard1PASS39.29s(p08-vector-window.xml/log,ADR0083).
+Finalsource360expectedchecks isrunning; expectation is notPASS. Ruff/strictmypy75PASS.
+
+Installed r3 controls74PASS/1FAIL/1SKIP179.58s; reopen test encountered SQLite readonly
+error. Same unchangedtest isolatedPASS31.83s at p08-installed-reopen-isolated.xml/log;
+cause unknown, originalfailure retained. Installed readback of all44observationstores
+passes:11originaldocumentcitations,1canonicalpolicydecision,21exact persisted releases
+(normal schema envelope included),0provider/indexcalls,p08-reopen-readback-r1.log/json.
+The initial readback assertion omitted the writer'sschema_version envelope; corrected
+assertion matches the actual documented producer, preserving the failedscriptlog.
+
+ActualHTTP18108 firstsmoke failedstartup-poll cap; next starts but searchReadTimeout30s.
+The frozencritic r1 aborts onQdrantHTTP408 afterpartialconditions; allpartialreport/history
+retained,p08-frozen-critic-r1.log and p06-61e9affc32ff4743ba5cd24fc4fc88ed.json.
+No full critic/continuation pilot or normal HTTPsmokePASS claimed. Graphr2 two checks
+FAIL283.27s, includingMERGE/cleanup timeouts; earlierneighbor suspicion is notproven
+rootcause. Tinyqueryprobe old7.655/0.059s versuscandidate5.217/0.014s allmatch, noquery
+rewrite. Neo4jdebugshowsVMpausesgcTime0 up to4.235s; boundedlogsample retained at
+runtime/p08-neo4j-pause-sample.log. Quiet-window ownerquestion pending; foreignbenchmark
+processes untouched. OwnedNeo4j stoppedpreservingstorage toreduce idleload; HTTPstop/
+wheelr4rebuild and sourcefinaltest running. Qdrant remainsowned/live. No end audit/commit.
+
+Continuation: explicit owner APPROVES final protocol and2000000estimated-token ceiling
+inADR0079. evidence/p08-approved-protocol.json created before evaluation, binds study
+987e3773fd6b0a1938d54c1e1903647d2e187e41142a9e7b05d05db2f29ce390 and R3artifact
+hashes. Launch command `.venv/Scripts/python scripts/evaluate.py --study evaluation
+--protocol docs/development/evidence/p08-approved-protocol.json --run --enable-live-llm`,
+runtime/p08-evaluation-launch.log,exec16710 remains inprogress.
+
+Actual uploaded-injection/API/Groq20B/canarycheck1PASS98.70s exit0,
+runtime/p08-live-security-r2.xml/log; rawreceipt runtime/evaluation/
+p08-security-b66bebd15af746e19f27413a188b4b06.json. Fouractualmodelcalls, attackseen
+asdata after firstsearch; restrictedsource denied and canaryabsent allassertedboundaries.
+Earlier2setupfailures(403missingCaseScope,missingregister_scopeat) preserved,0modelcalls.
+Clone/actualpinnedvectorreadback2PASS28.63s,runtime/p08-vector-real-clone.xml/log;
+foreignstore/loadfailure/canonicalhash guards19PASS1explicitlocalmodelSKIP52.01s,
+runtime/p08-vector-guards.xml/log. Fixedfusionconsumer1PASS14.10s,
+runtime/p08-fusion-consumer-r1.xml/log; initial guardfixturefingerprintfailure retained.
+
+Actualserversweep runtime/p08-real-servers.xml/log exit1:47PASS6FAIL7SKIP755.89s.
+FourNeo4jtransactiontimeouts,2localmodel30secondjobtimeouts remain unresolved.
+Independent critic experiment setup failedQdrantcreate10secondsbeforeprovider;
+runtime/p08-frozen-critic.log retained. Laterreadiness QdrantinfoOK,
+Neo4jRETURN1in3.309seconds. No deadline widened and no affectedgate closed.
+Developmentreconcile CLI all_matchtrue,runtime/p08-development-reconcile.log.
+Foundation/policyCLI exit0 actualreopen/no-providerproof logs runtime/p08-foundation-smoke.log
+and p08-policy-smoke.log. Ruff/strictmypy75PASS; docs18MD98cards20negativecontrolsPASS.
+WheelbuildPASS runtime/p08-build.log; final installed proof still pending.
+
+2026-10-19: R2 p08_b13ffe65a8d7435a94a07d4f4a7049d4 completes8rows/8providerresponses.
+Rich-source R3 p08_caba76ebfdc344c9b7dbf31abc729d45 completes8rows/8providerresponses
+with2Draftvalidation failures. Bothbaselines2/4exactquotes,0/4wrappedSUPPORTED; no
+semantic accuracy claim. Raw originals/source snapshots/calls/rows/hashes retained
+under runtime/evaluation. Command `.venv/Scripts/python scripts/evaluate.py --study
+development --run --enable-live-llm`; runtime/p08-development-r2.log and -r3.log.
+Launch0/R1 failures retained. R3 readback12points/12indexedvectors, no HNSW speed claim.
+Concrete protocol evidence/P08_PROTOCOL_FREEZE.md pending owner answer, no evaluation.
+
+Default pytest exit0:350PASS27explicitSKIP134.33s,runtime/p08-default.xml/log. Focused
+evaluation/goldens/budget/memory exit0:91PASS54.69s,runtime/p08-focused-current.xml/log;
+overlapping checks. Strictmypy75PASS; import-order lint issue fixed; fresh RuffPASS.
+Dependency checker99filesPASS; attempted nonexistent check_docs.py was a command error,
+not a documentation PASS. Correct existing document CLI still required.
+
+Backup before isolated destructive integration cleanup: Qdrant full snapshot downloaded
+runtime/backups/c7577b2af317400f9b873b140d8e6e88-full-snapshot-2026-10-19-16-24-13.snapshot,
+SHA256537f1156f5a1d16d9ffc67505044ff6bfb877c8ef71baa17786cc0019f887ed4 matches
+server checksum(runtime/p08-qdrant-backup.log). Neo4j no listener/Java process; stale
+marker preserved. Cold data/conf tar runtime/backups/p08-neo4j-before-tests-20261019.tar.gz,
+SHA256494739798ff5aaeb69985c6249a92a83eac55b6e5353fda65c946d36f7ddebb5, archive
+listing verified. Then owned Neo4j launcher37843 starts17687; ownedQdrant95497 still
+16333/16334. Actual-server/injection test runs remain in progress, not PASS yet.
+
 An entry records observations, not plans. Preserve failed checks and corrections. Large
 generated artifacts stay outside commits, referenced by location/hash and retention scope.
 Do not include credentials, private source text or hidden reasoning in evidence.
@@ -1992,3 +2080,87 @@ Cleanup: verified HTTP18080 listener command matched scripts/serve.py and exact 
 Bounded public report hashes: p07-graph-memory-pilot-00c4866d.json SHA2569864a63bec1b68465b3f2e715e0a046876aefa2efd36aa83136fd745d4c03ee5; p07-cli-live-proof.json SHA25681995451f89b19656ed2e02d795cde24550210d660598bae90bfcbb336a791ef. These synthetic summaries omit credential/prompt payloads; raw models/runtime/db/build files remain ignored. Scoped staged/secret review and a verified local Conventional Commit follow; no P07 main push authorized.
 
 Final document checker after ADR-label correction and no-stale sweep:17Markdown/98atomic tasks/18blueprint sections/15invariants/24hard cases/20negative controls PASS. Scoped whitespace check PASS after stripping one trailing documentation space. Main diff review caught an overbroad task-file replacement affecting historical P05/P06 cards; restored those original file owners before final check. This was a documentation edit error, not a runtime contract change. Latest runtime source remains exact wheel-r3 bytes.
+
+
+## E-P08-001 — Authorization, published baseline and start adversary
+
+Final adversary receipt: complete blueprint §1–§18 / I01–I15 and all 12 P08 cards reviewed. Confirmed missing distinct B0/B1 calibration sequencing; unknown semantic/usefulness labels; vector extension direction boundary; absent B7/B8/B9 controls; stale current scope. Existing T01–T24 coverage is partial: no actual uploaded-source → model injection proof yet. Main checked evaluation's retrieval/mechanical helpers, mandatory runtime critic, zero-call nonexclusive preflight, hardcoded native RRF k60 and structured/FTS memory. ADR-0071 fixes sequencing; ADR-0072 presents the concrete optional interaction/dependency decision. No consumer requirement waived; all 12 cards remain open.
+
+2026-10-19 owner explicitly authorizes push P07 and full P08. Read f97471e full subject/body, verified main→origin/main existing upstream, git push exits0 (4a061b7..f97471e). Shared dirty benchmark/editor files and detached artifact worktree remain untouched. New P08 GO supersedes older phase exclusions, not UI/realdata/X01 or a future main push. Starting runtime sourcef97471e, no P08 implementation claimed.
+
+One start adversary /root/p08_start_adversary GPT6LunaMedium freshcontext, exact complete blueprint/directread contract, read-only local docs/source/tests/git inspection, no files/tests/services/network/.env/environmentvalues/gitmutations/benchmark access. Main credential-name scan0 before dispatch. Early findings: current-scope drift corrected; no independent annotators evidenced, so accepted ADR0019 pilot-only boundary applies. Final task/dependency/contract findings pending. Coordinator uses project-context-recovery/build-phase-discipline/subagent-orchestration plus evidence-driven-engineering/architecture-wiring-review for cross-owner evaluation consumers.
+
+
+P08 implementation checkpoint: owner explicitly approves ADR0072 isolated controls/sqlite-vec sidecar and ADR0074 optional temperature0.2/default0. uv add --project palladion sqlite-vec==0.1.9 succeeds, locked and installed. Actual extension SQLite3.50.4/vecv0.1.9 orthogonal cosine1. Sidecar fresh/write/reopen/owner/revocation/loading-disabled control1PASS4.17s. Earlier focused evaluator/memory/runtime/critic77PASS52.14s; new treatment tests subsequently11PASS/1test-fixtureFAIL16.71s because initial supposed distinguishing fusion lists actually tied methods. Replaced the test with a mathematically distinct frozen input (not post-result corpus tuning); rerun12PASS16.68s. No generative result follows from scripted guard tests. Strictmypy75source/scripts passes before latest tests; latest full static/focused check pending.
+
+New actual study lifecycle snapshots source bytes including untracked code, uses original canonical gold chunks rather than self-grading retrieved hits, persists append-only raw calls/rows and digest-bound completion/replay, and retains setup failures/unique resources. All12P08cards remain open: development calibration, approved final freeze, actual full arms/metrics/fault/readback/report/sole end review still required. Owned Qdrant starts via scripts/qdrant_server.py --wsl in exec95497, ports16333/16334, logruntime/p08-qdrant-server.log; preserve existing storage, stop only this recorded process at closeout. No ambient provider credentials.
+
+
+Development launch0 p08_b8b9dd031d654952a5ecac38621b1db6 completed8observations/7actualmodelattempts/4received rows/4failures (three provider400, one retrieval UnexpectedResponse before model). Each arm received2/4; no quality/semantic conclusion. Raw rows/calls/source snapshot/summary and launch log remain ignored/preserved. B0 latency samples include provider/retrieval failures; no failures removed. Launch0 completion binds manifest/rows but predates strengthened inputs/calls/source-snapshot replay guards. It is retained as launch0 evidence, never rewritten to claim the stronger contract. Current reader rejects that incomplete binding. New r1 uses unchanged corpus/model/temperature/query/prompt/order and stronger artifact/failure diagnostics; no best-of-N success selection. Final calibration analysis must disclose both runs separately.
+
+Current scoped foundation checks: RuffPASS, strictmypy75PASS, dependency99Pythonfiles+4negativecontrolsPASS, docs17MD/98cards/20negativecontrolsPASS. CurrentP08guard/replay/split/sampling/vector controls21PASS32.50s,68deselected (runtime/p08-foundation-controls.log); no provider claim from these deterministic fixtures. Source review corrected initial non-existent encoder method, typed draft enum assumptions and evaluator table name before actual launch. Test-first type/consumer checks exposed them; no placeholder completion claimed. No P08 card is closed yet.
+
+P08 continuation2026-10-20: owner explicitly keeps other work running. Final source360PASS28SKIP518.39s (p08-source-r4.xml/log); installed37PASS39.21s (p08-installed-r4.xml/log), installed44row replay p08-installed-replay-r4.json. Wheel65/65source bytes match, SHA256072918a2fa9d48400e34f2fff3cafa9507308a5656e8b4eb005f6f955a873845. G-DOC19MD98cards18sections15invariants24cases20controlsPASS; dependency99files4negativecontrolsPASS. Installed HTTP18108 current normal search/citation/wrongtenant/disabled-model smoke PASS,0provider (p08-installed-http-smoke-r4.log/receipt.json), own HTTP stopped before serialized critic r2. Prior failed HTTP runs remain retained. No gate/phase closeout inferred.
+
+P08 serialized continuation: installed frozen-critic r2 exec82437 uses original20B/10secondcallspacing/60secondintercondition pacing; report runtime/evaluation/p06-57815987982f4322997fc434305ebe83.json. Daily quota diagnostic199674/200000tokens, HTTP429 TOKENS_DAILY, retry_after294seconds preserved; no retry. Supplemental120B continuity selection explicitly recorded ADR0084, not a frozen-grid replacement. Main source review found legacy run_memory metadata critic=false while current configure_agent invokes mandatory review; ADR0085 corrects only report metadata and records initial/per-condition redacted attempts. Ruff/script strictmypy PASS; new actual continuity execution still pending. Historical integrity reconciliation runtime/p08-integrity-historical.json exits1,20PASS/4FAIL(T06/T07/T14/T23); current missing positive nodes recorded runtime/p08-pending-control-nodes.json (7nodes), to execute serially after livecontrols with graph restarted. Docs current19MD98cards structuralPASS p08-doc-r5.log.
+
+Frozen-critic r2 exec82437 EXIT0, all16conditions recorded in p06-57815987982f4322997fc434305ebe83.json:16/16known-fact retention,0/4fullquote corrections,0inventoryattestations,30STARTEDinvocations; status events3RECEIVED/3SCHEMA_INVALID/25FAILED (validation events may annotate same invocation),8077knownreceivedtokens excluding separate runtime. RuntimeHTTP200/citationsresolve/fullquoteabsent/provider429. Original failed/partial runs retained. Next serialized installed continuity command exec87341 uses explicitly approved120B/10secondspacing with report-only metadata/accounting correction ADR0085; no runtime treatment change or grid replacement.
+
+Continuity exec87341 EXIT0, report p05-b55c4c1197d646f299746de55263886f.json, explicit120B/defaulttemperature0/10secondspacing:3conditions complete, mandatorycritic heldconstant, all3currentobservation/citationreadback/no staleclaim. Packet-gap recalls0/1,1/1,1/1; answer1/1,0/1,1/1; all3mechanicalcompletionfalse with provider/schema failures,1cancellation.22startedcalls(15main/7critic),32859known tokens. Actual per-attempt accounting verifies ADR0085; exact scriptcopy runtime/p08-continuity-script.py hash1c90793594c1c0778d1c22be06894d54130ea44ca63b9c6f84c2ef37ed4043c3 matches report. Export55384byte evidence/p08-controls-receipt.json binds both fresh raw reports/condition scores/attempts; no pooled crossmodel efficacy. Neo4j restarted exec94475, actual ready=true within10secondconfiguration (p08-graph-readiness-r3.log), then installed current7missing control nodes exec89761 launched serially with0providerflags; own foreign workloads untouched.
+
+Current installed7missing integration checks exec89761 EXIT0,7PASS217.35s, runtime/p08-current-controls-r1.xml/log. Graph query/deadline/concurrency contracts unchanged; user other work kept running. Current reconcile.py reads source-r4+live-security-r2+current-controls-r1 JUnit:24/24PASS, semantic_certification=false (p08-integrity-current.json, EXIT0). Historical mixed-run reconciliation remains20PASS4FAIL, preserved separately. Supplemental receipt expanded85553bytes with both results and exact JUnit hashes. Final installed report/scorer18PASS3.34s (p08-report-final-check.xml/log), doc selftest19MD98cards20negativecontrolsPASS(p08-doc-r6.log). Ambient live credential key count0 before final reviewer dispatch. All12cards remain unchecked pending mandatory independent end review and closeout.
+
+E-P08-003 end-review/closeout started: sole /root/p08_end_review dispatched GPT6Luna Medium/forknone/read-only with complete blueprint direct-read contract, all12developmentdocs/P08cards/source/evidence, no tests/provider/resource/auth/git mutations and no benchmark/editor implementation scope. Ambient live key count0. Reviewer pending. Owned Neo exec94475 and Qdrant exec95497 stopped via their PID/executable-verified launchers (p08-neo4j-final-stop.log/p08-qdrant-final-stop.log); HTTP stopped earlier. Windows exclusive bindsPASS16333/16334/17687/18108, no Windows listeners and WSL ss has no matching listener; p08-final-port-proof.json. Persistent storage and backups preserved. No foreign process terminated. No commit/main push yet.
+
+End-review findings from sole reviewer: R1 current GOAL scope block still excludedP08 despite header/GO; R2 ADR next-free pointer stale0077; R3 PROGRESS phase/gate rows still named preregistration-next/unresolvedgraph/fullarms-deferred, and README implied planned human adjudication. Main verified each live source location, corrected current statements toP08/current24PASS/allarms complete/unknown semantic labels and nextfree0086, retained dated failure history. Consequence was misleading future execution/claim scope, not a runtime defect. Same reviewer notified for resolution; no phase closure inferred. A first relative-path edit command failed before writing because it ran from repositoryroot rather than approot; rerun from verified app directory succeeded, no foreign edits.
+
+R4 confirmed/sourcefixed ADR0086: original finalpacket4 scored mislabeled@5/10/20, largerstage metrics withdrawn/UNAVAILABLE without altering raw frozenartifact hashes. New observedpacket helper reports@4/packetMRR only; replaynotice explicit. Rank5/rank10 and actual canonical _observe four-item consumer guards added. First guard run19PASS1FAIL5.69s due stale test Principal after membership; second19PASS1FAIL3.69s due missing case:read grant; corrected only fixture identity/grants. Source20PASS3.12s r3; final installed20PASS4.81s p08-installed-cutoff-r5.xml/log. No runtime ACL weakening or provider calls. Initial python-build --no-isolation failed missing build-only hatchling; standard uv build used pinned backend successfully (p08-build-r5-isolated.log), no new project dependency. New wheel65/65sourcebytesmatch SHA256d9795234c8820cc97de5df6200616fffed97cbfd4726fc4537774bd3167a0a3d (p08-wheel-r5-proof.json). Installed CLI replay44rows with withdrawalnotice PASS; publicreceipt binds unchanged raw hashes. Earlier wheelr4 runtime/7integration/HTTP proof remains for unchanged serving modules. Same reviewer recheck pending.
+
+
+### E-P08-003 final end-review receipt and resolution
+
+Sole reviewer /root/p08_end_review used GPT6Luna/Medium in fresh context, read-only,
+no live credentials/resources/provider/test/git mutations, excluded benchmark/editor.
+Direct complete blueprint read§1–§18/I01–I15, P08parent/12child cards, all12development
+docs, scoped source/tests and evidence. Covered locked authority/fourtools/preflight0LLM,
+5main/3critic/8tool/request deadline, independent advisory contexts, deterministic gate,
+source/ACL/time/policy/live/memory/graph contracts, research/security/observability and
+walkthrough. Task→consumer→proof: T01calibration/freeze→manifest/hashreplay G-RESEARCH;
+T02controls/vector→actualruntime/retrieval/canonicalrecall G-BUDGET/MEMORY/RETRIEVAL;
+T03injection/revocation/outages→actualAPI/tools/canonicalreader/controlreconciliation
+G-SOURCE/SECURITY/E2E; T04boundedreceipts→replay/negativeconclusions G-RESEARCH/DOC.
+Reviewer read coordinator-run logs, did not independently execute tests.
+
+Confirmed R1scope contradiction inGOAL, R2next-ADRpointer, R3PROGRESSderivedrows and
+READMEannotationwording corrected and same reviewer verified. Confirmed P2R4 top4
+metriccutoff defect corrected underADR0086 with explicit withdrawal/unknown metrics,
+raw run unchanged, source/installed rank5/rank10/overflow/actualfour-item packet controls.
+Same reviewer states R4resolved and no remaining material defect in that recheck; no
+other confirmed source defect in full initial scope. Uncertain semantic accuracy,
+human usefulness/causalfalseveto, capacity/generalization and unobserved candidate-stage
+metrics remain unproven, not refuted or invented. X01/UI/enterprise writes remain excluded.
+
+Final post-helper-import correction: installed20PASS4.00s p08-installed-cutoff-r7.xml/log;
+dependency99files+4negativecontrolsPASS(p08-dependency-r7.log), RuffPASS(p08-ruff-r5.log),
+strictmypy75PASS(p08-types-all-r5.log), docs19MD98cards20negativecontrolsPASS(p08-doc-r7.log).
+An interim absolute tests import failed dependency mapping, an attempted bare import
+failed one installed guard (19PASS1FAIL5.86s); existing relative-import pattern fixes
+both. These failures are retained. No dependencies added for the test helper. Final
+package bytes remain exact r5; source/installed raw44row replay passes with withdrawal.
+
+P08's approved engineering pilot exits complete:12of12P08cards,98of98atomic cards;
+all declared integrity controls pass, with negative/inconclusive research results and
+broader unmeasured G-RETRIEVAL/G-RESEARCH obligations explicit. No semantic or production
+signoff. Final docs/public navigation and bounded receipt status updated; scoped verified
+commit containing this record preserves the work. Main push not authorized. Task-owned
+services stopped, backups/storage and foreign work preserved; final staged/port/doc
+checks below complete the checkpoint.
+
+Final same-reviewer consistency check confirms P08 DONE is correctly bounded as approved
+engineering pilot,12/12cards/98total, G-RETRIEVAL/G-RESEARCH broader obligations PARTIAL,
+no unsupported closure. Two minor final wording fixes applied: P08_RESULTS installed
+cutoff duration now latest r7 4.00s (earlier4.81s run retained), app README P05 roadmap
+now says confirmatory evaluation remains deferred beyond P08pilot. No source change.
+Final staged scope44explicitfiles only; no benchmark/editor/env/runtime/build artifacts;
+secret-prefix/private-key scan0hits. Final checkpoint proof docs19MD98cards20controls,
+whitespace/receipt/hash/port and index-scope checks pass before the scoped commit.

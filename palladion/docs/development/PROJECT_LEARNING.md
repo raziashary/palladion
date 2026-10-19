@@ -1,6 +1,6 @@
 # Project learning and corrections
 
-Current checkpoint2026-10-19: P06 published6444345; P07 graph and owner-added automatic memory implementation, consumer proof and sole LunaMedium end-review resolution verified (E-P07-001/002). ADR0063–0066 owner approvals preserved. Graph stays off after zero incremental recoveries. P08/UI/benchmark edits and another main push remain excluded. Older phase snapshots below are historical.
+Current checkpoint2026-10-20: P00–P08engineering work complete within the approved synthetic pilot boundary;98/98atomic cards and sole end-review resolution verified. P07 publishedf97471e; graph stays defaultoff. P08 outcomes are negative/inconclusive, semantic accuracy and unobserved candidate-stage metrics unknown. UI/enterprise writes/X01/benchmark-editor edits and a further main push remain excluded. Older dated snapshots are historical.
 
 This records engineering/research learning, not runtime agent memory or company policy.
 An observation needs evidence; a conjecture is labeled. Never convert an untested idea
@@ -427,3 +427,50 @@ Current CaseStore appends events automatically, while MemorySpec category was pr
 ## P07 final phase-local disposition (2026-10-19)
 
 E-P07-002 records all11cards, actual source/installed/CLI/provider and original-reader proof, the sole GPT6LunaMedium end audit and same-reviewer resolution. The reviewer read the full blueprint (§1–§18), I01–I15, graph and memory amendment; three current-facing document contradictions were fixed and rechecked. No confirmed source defect remained. Graph has0incremental recoveries in4paired queries and stays off by default; controlled path recovery proves integration only. PathA automatic promotion and opt-in bounded local PathB retain original ACL/authorityNONE;4mechanical pilot labels pass,2semantic labels remain unknown. Historical failures and intermediate pending statuses above remain dated snapshots, not current scope. No unanswered P07 owner ADR; P08 adjudication, generalization and external comparisons remain excluded.
+
+## L036 — Failed attempts and partial usage stay visible (P08)
+
+A44observation grid can finish while16rows fail. Distinguish provider response,
+harness response and supported release; include all attempts in quality/cost denominators.
+When a later invocation has unknown usage, preserve earlier known tokens rather than
+zeroing the run (ADR0082). Exact citation resolution is a mechanical check, not semantic
+support. Repetitions within two families do not create44independent cases.
+
+## L037 — Verify the installed consumer and bounded recall signal (P08)
+
+Installed evaluation needs its explicit application asset root; source-relative defaults
+alone do not prove wheel behavior (ADR0080). Current wheel bytes, installed replay and
+HTTP search/citation readback now pass. The actual513candidate vector-window test
+found a missing truncation signal at the tool consumer; propagate that flag only after
+that recall executes (ADR0083). Derived vector hits remain subject to canonical ACLs.
+
+## L038 — Contention is evidence to investigate, not an explanation to assert (P08)
+
+Repeated Neo4j transaction timeouts include writes and cleanup as well as reads. VM
+pause logs and tiny old/new query probes do not establish a defective traversal query.
+Keep original failures, preserve deadlines, serialize our work and respect the owner's
+choice to keep other workloads running. Do not stop foreign processes or manufacture
+passing gates from skipped or incomplete integration checks.
+
+## L039 — Scope headers do not refresh derived rows (P08 end review)
+
+Updating a current authorization header left an older GOAL scope block and PROGRESS
+phase/gate rows contradicting the executed state. The sole reviewer caught them.
+Sweep current-facing derived rows as well as headings; keep original failed measurements
+in dated evidence, but replace stale current summaries. Semantic adjudication must stay
+explicitly unavailable/unknown rather than becoming an implied next implementation step.
+
+## L040 — Serial verification can establish a current positive without erasing failures
+
+With other workloads kept running, own Neo restart plus serialized7installed integration
+checks passed217.35s at unchanged deadlines/query code. Current reconciliation24PASS
+and historical20PASS4FAIL are different records. This does not establish why earlier
+transactions timed out, prove capacity, or retroactively make failed sweeps green.
+
+## L041 — A metric cutoff cannot exceed the evidence window it claims to measure
+
+The sole P08 reviewer found finaltop4 scored under default@5/10/20 labels. The raw run
+is preserved; those candidate-stage labels are withdrawn, not silently recomputed from
+missing ranks. Observed@4/packetMRR and unknown candidate metrics are explicit. Rank5,
+rank10, overflow and actual canonical four-item consumer guards verify the corrected
+boundary. No provider rerun or new quality claim repairs an invalid historical label.

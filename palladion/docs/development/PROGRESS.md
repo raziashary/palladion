@@ -1,9 +1,40 @@
 # Current progress
 
-Current checkpoint2026-10-19: P06 published6444345; P07 graph and owner-added automatic memory implementation, consumer proof and sole LunaMedium end-review resolution verified (E-P07-001/002). ADR0063–0066 owner approvals preserved. Graph stays off after zero incremental recoveries. P08/UI/benchmark edits and another main push remain excluded. Older phase snapshots below are historical.
+Current checkpoint2026-10-20: P00–P08engineering work complete within the approved synthetic pilot boundary;98/98atomic cards and sole end-review resolution verified. P07 publishedf97471e; graph stays defaultoff. P08 outcomes are negative/inconclusive, semantic accuracy and unobserved candidate-stage metrics unknown. UI/enterprise writes/X01/benchmark-editor edits and a further main push remain excluded. Older dated snapshots are historical.
 
-Updated 2026-10-19 (Asia/Bangkok). Atomic task state lives in MASTER_DEV_PLAN;
+Updated2026-10-20 (Asia/Bangkok). Atomic task state lives in MASTER_DEV_PLAN;
 command observations and review receipts live in EVIDENCE_LOG.
+
+## Verified P08 engineering pilot
+
+P08 COMPLETE within owner-approved pilot boundary (ADR0071/0079):12/12atomic cards,
+start adversary/full blueprint review, bounded implementation, measured grid and live
+controls, current integrity gates and sole end-review/same-reviewer resolution. No
+hypothesis-success, semantic accuracy, stage-retrieval improvement or production claim.
+
+Grid44observations/16rowerrors;91invocations/41rawproviderresponses/54750known tokens.
+All12released citations resolve; canaries absent in checked inputs/responses. Fresh
+critic16conditions retain known facts including fallbacks but0/4fullquote corrections;
+separate120Bcontinuity3conditions retain current state, with standardB5 gap omission.
+All failures and unknown failed billing remain visible in evidence/P08_RESULTS.md.
+
+Before report-only R4 fix: source360PASS28explicitSKIP518.39s, installed37PASS39.21s.
+Current serialized7integration checksPASS217.35s; current24hard controlsPASS, historical
+20PASS4FAIL kept separately. Groq uploaded-injection1PASS98.70s;44reopenedstores,
+12citations and21persisted runtime releases verified; HTTP and canonical ACL smoke pass.
+Final wheel65/65sourcebytesmatch SHA256
+d9795234c8820cc97de5df6200616fffed97cbfd4726fc4537774bd3167a0a3d;
+20installed report/cutoff guardsPASS4.00s and installed44row replayPASS. Ruff/mypy75,
+dependency99files+4controls and docs19MD98cards20controlsPASS; checks overlap.
+
+Sole LunaMedium end review directly read§1–§18/I01–I15/all12docs and owning consumers.
+Three document drift groups corrected; R4 invalid@5/10/20 labels on a finaltop4packet
+withdrawn (ADR0086), observed@4/packetMRR only, candidate-stage metrics unknown.
+Same reviewer confirms all material findings resolved; raw frozen artifacts unchanged.
+
+Owned Qdrant/Neo/HTTP stopped, storage preserved;16333/16334/17687/18108exclusivebindPASS.
+Final staged review/verified commit records follow E-P08-003. No main push authorized.
+Foreign benchmark/editor work preserved. X01 and confirmatory research remain separate.
 
 ## Verified P07 checkpoint
 
@@ -118,28 +149,32 @@ Human gold-label adjudication, retrieval, citation API and model behavior are no
 | P05 | DONE | E-P05-001; all7 cards, third-turn correction, source/installed consumers and sole review/resolution |
 | P06 | DONE | E-P06-001/002; all6 cards,307disjoint checks, installed/live proofs and sole review resolution; neutral pilot retained |
 | P07 | DONE | All11cards, source/installed/CLI/provider proof and sole audit resolution; graph defaultoff after neutral pilot; E-P07-001/002 |
-| P08 | PLANNED | Scientific runs, scorer, fault injection and reports |
+| P08 | DONE (PILOT) | All12cards; E-P08-001–003; current24controls and sole end-review resolution; negative outcomes and unknown stage/semantic metrics retained |
 | X01 | DEFERRED | External comparators; baseline/ remains empty |
 
 ## Gate state
 
+PASS below means the declared synthetic engineering controls, not semantic truth or
+production readiness. G-RETRIEVAL/G-RESEARCH retain unmeasured full-stage/confirmatory
+obligations despite completed approved P08 pilot; negative quality targets stay negative.
+
 | Gate | State | Evidence and limits |
 |---|---|---|
 | G-DOC | PASS | P00–P06 documentation PASS; final source/consumer/audit records checked |
-| G-CONTRACT | PASS | P01–P06 contracts and approved provenance/memory extensions pass; exact-wheel consumers and review resolved |
-| G-SOURCE | PARTIAL | Fresh/populated/rollback/foreign DB checks, immutable bytes, persisted source reader pass; P02 index/API/revocation verified; P07 graph source obligations verified; later fault matrix remains P08 |
-| G-SECURITY | PARTIAL | Stored identity/grants/membership/source ACL and revocation/self-approval controls pass; P04 prompt/API/tool/trace controls pass; P07 graph/memory ACL boundaries verified; broader fault matrix remains P08 |
-| G-RETRIEVAL | PARTIAL | P02 subset PASS: real Qdrant/model/ACL/canonical/exact/exception/pilot/audit; P08-T02.05 controlled fusion ablation remains |
+| G-CONTRACT | PASS | Earlier approved contracts verified; P08 optional temperature/experimental controls have source and installed guards, sole phase audit/resolution verified |
+| G-SOURCE | PASS | Fresh/populated/rollback/foreign DB checks, immutable bytes, persisted source reader pass; P02 index/API/revocation verified; P07 graph source obligations verified; current P08 canonical reopen/control reconciliation passes; sole audit/resolution verified |
+| G-SECURITY | PASS | Stored identity/grants/membership/source ACL and revocation/self-approval controls pass; P04 prompt/API/tool/trace controls pass; P07 graph/memory ACL boundaries verified; current P08 actual injection/revocation/control matrix passes; sole audit/resolution verified |
+| G-RETRIEVAL | PARTIAL | P02 subset PASS: real Qdrant/model/ACL/canonical/exact/exception/pilot/audit; P08 controlled fixed-candidate fusion consumer/ablation implemented and tested; sole audit/resolution verified |
 | G-TEMPORAL | PASS | P03 four trusted bases, half-open intervals, scoped supersession/conflicts and admin cutoff controls; E-P03-001 |
-| G-POLICY | PARTIAL | P03 bounded AST, persisted input IDs and reopened executed trace pass; P04 gate/citation/conflict replay and supersession consumers pass; phase-local review resolved; later obligations remain |
+| G-POLICY | PASS | P03 bounded AST, persisted input IDs and reopened executed trace pass; P04 gate/citation/conflict replay and supersession consumers pass; phase-local review resolved; current24control reconciliation and canonical readback pass |
 | G-LIVE | PASS | P03 named mock operations, target ACL, freshness, bounded retry/concurrency/deadline and audit controls; synthetic phase contract only |
-| G-BUDGET | PARTIAL | Main/tool reserve, malformed/failure/parallel/cancellation controls pass; owned search-worker cancellation/deadline passes; P06 critic/search/cancellable pacing proven; sole audit resolved; P08 faults remain |
-| G-GATE | PARTIAL | Controlled claims, freshness, T09/T22 and safe rendering tested; all five live dispositions pass; P06 necessary-condition review/finalization proven; semantic adequacy remains P08 |
+| G-BUDGET | PASS | Main/tool reserve, malformed/failure/parallel/cancellation controls pass; owned search-worker cancellation/deadline passes; P06 critic/search/cancellable pacing proven; sole audit resolved; current P08 fault/attempt/cancellation controls pass; sole audit/resolution verified |
+| G-GATE | PASS | Controlled claims, freshness, T09/T22 and safe rendering tested; all five live dispositions pass; P06 necessary-condition review/finalization proven; semantic adequacy stays unknown without independent labels; current mechanical controls pass |
 | G-MEMORY | PASS | P05 scopes/validity/packet/cache and P07 sessions/automatic promotion/original ACL/actual next-session consumer pass; sole audits resolved; semantic improvement unproven |
-| G-CRITIC | PARTIAL | P06 structured/ACL/budget/outage/current-evidence guards and actual-Qdrant correction control pass; actual provider discovery/full quote/readback proven; sole audit resolved; semantic adjudication remains P08 |
-| G-GRAPH | PASS | Real Neo4j publication/identity/merge/ACL/caps and actual worker/API controls pass; sole phase audit resolved; neutral graph pilot/defaultoff |
-| G-E2E | PARTIAL | P04 five-disposition/document/TCP/wheel and10 Qdrant tests pass; end review resolved; P05 memory/P06 critic verified; P07 graph/memory verified; P08 semantic obligations remain |
-| G-RESEARCH | PARTIAL | P02 retrieval/P05 continuity/P06 critic pilots retained with failures; human adjudication/full arms/held-out remain P08 |
+| G-CRITIC | PASS | P06 structured/ACL/budget/outage/current-evidence guards and actual-Qdrant correction control pass; actual provider discovery/full quote/readback proven; sole audit resolved; fresh16condition pilot retained with failures; semantic adjudication unavailable |
+| G-GRAPH | PASS | P07 publication/identity/ACL/caps and worker/API proof remains historical; current serialized7integration checks pass after earlier retained timeouts; sole end-review resolution verified; defaultoff |
+| G-E2E | PASS | P04 five-disposition/document/TCP/wheel and10 Qdrant tests pass; end review resolved; P05 memory/P06 critic verified; P07 graph/memory verified; current P08 integrity/consumer controls pass; semantic accuracy remains unadjudicated |
+| G-RESEARCH | PARTIAL | P02 retrieval/P05 continuity/P06 critic pilots retained with failures; all11arms/44observations and approved pilot complete with adverse targets; independent semantic labels and unobserved candidate-stage metrics remain unavailable |
 
 ## Checkpoint history
 
@@ -160,4 +195,4 @@ Human gold-label adjudication, retrieval, citation API and model behavior are no
 
 ## Next-session handoff
 
-P07 phase-local work is verified complete at E-P07-001/002. Await owner P08 scope and any new main-push authorization. Do not redo completed phases or infer research success. Preserve foreign benchmark/editor changes and their shared main commits. PROJECT_MEMORY provides current recovery pointers; retained raw failures and unknown semantic labels remain obligations for later research, not blockers disguised as successes.
+P07 is publishedf97471e. P08 engineering pilot, current integrity controls and sole end-review resolution are verified complete; preserve the scoped commit and await explicitly scoped future work. A further main push still needs approval. Do not redo completed phases or infer research success. Preserve foreign benchmark/editor changes and their shared main commits. PROJECT_MEMORY provides current recovery pointers; retained raw failures and unknown semantic labels remain obligations for later research, not blockers disguised as successes.

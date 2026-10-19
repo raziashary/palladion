@@ -1,0 +1,2591 @@
+{
+  "schema_version": "p08-public-receipt.1",
+  "status": "COMPLETED_ENGINEERING_PILOT",
+  "annotation_status": "PILOT_NOT_HUMAN_ADJUDICATED",
+  "manifest_sha256": "cdefa1982532bd71dc24ee95b2ee6f7bd54df99ffa8b7e6434224e2f701a519f",
+  "raw_artifacts": {
+    "manifest.json": "99dbb6359e65e61d14bf51d0f61edda0f7596fe8cc5dbaac4b7a6f81d201a247",
+    "inputs.json": "44d92869a642b8d0f1cd26731239930c5f040da5e265e800f9d7cc691e46561d",
+    "rows.jsonl": "076ff3ab83d4fdc47ff7c3534f36cc7a0c06e31a8cdfd7f7463575d232b811a6",
+    "calls.jsonl": "0e2bdc6615b153ac172e51bf47a3e4f5d9b8ccafa0baf2f4d9caa170ec60448f",
+    "completion.json": "d656fb179be3e6ac63ba4a2b62db4d167eb63ca5006ca29bd91b0e3d7ae65b7a",
+    "source_snapshot.json": "3bcc2a732a2f5ccfd1786268031a2d8c444346864264f419dffd272e3273709d"
+  },
+  "model_attempt_accounting": {
+    "attempts": 91,
+    "actual_provider_responses": 41,
+    "failed_attempts": 47,
+    "cancelled_attempts": 3,
+    "unclassified_attempts": 0,
+    "known_received_tokens": 54750,
+    "attempts_without_usage": 50,
+    "harness_response_is_not_provider_success": true
+  },
+  "provider_failure_codes": {
+    "CANCELLED": 3,
+    "PROVIDER_HTTP_429": 45,
+    "PROVIDER_HTTP_400": 2
+  },
+  "restricted_canary_scan": {
+    "provider_input_messages": 0,
+    "responses": 0
+  },
+  "observations": [
+    {
+      "case_id": "p08-eval-alert",
+      "arm": "B3",
+      "repetition": 0,
+      "status": "RECEIVED",
+      "failure": null,
+      "calls": 1,
+      "usage": {
+        "total_tokens": 1378
+      },
+      "elapsed_seconds": 11.95118979999097,
+      "citation_readback": true,
+      "expected_disposition": "SUPPORTED",
+      "slices": [
+        "id",
+        "historical",
+        "authorized",
+        "direct",
+        "answerable"
+      ],
+      "expected_quote": "Tanda ACK hanya mencatat bahwa petugas membaca alarm, bukan bahwa penyebab gangguan telah diperbaiki.",
+      "citations_attempted": 1,
+      "citations_valid": 1,
+      "parent": "B2",
+      "attempt_usage": [
+        {
+          "completion_tokens": 162,
+          "prompt_tokens": 1216,
+          "total_tokens": 1378
+        }
+      ],
+      "response": {
+        "disposition": "PARTIALLY_SUPPORTED",
+        "verified_claims": [
+          {
+            "text": "Approved source states: \u201cTanda ACK hanya mencatat bahwa petugas membaca alarm, bukan bahwa penyebab gangguan telah diperbaiki.\u201d (attribution only; no action permission)."
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "p08-eval-alert",
+      "arm": "B8",
+      "repetition": 1,
+      "status": "ERROR",
+      "failure": "TimeoutError",
+      "calls": 6,
+      "usage": {},
+      "elapsed_seconds": 60.02179349999642,
+      "citation_readback": false,
+      "expected_disposition": "SUPPORTED",
+      "slices": [
+        "id",
+        "historical",
+        "authorized",
+        "direct",
+        "answerable"
+      ],
+      "expected_quote": "Tanda ACK hanya mencatat bahwa petugas membaca alarm, bukan bahwa penyebab gangguan telah diperbaiki.",
+      "citations_attempted": 0,
+      "citations_valid": 0,
+      "parent": "B6",
+      "attempt_usage": [
+        {
+          "completion_tokens": 60,
+          "prompt_tokens": 217,
+          "total_tokens": 277
+        },
+        {
+          "completion_tokens": 44,
+          "prompt_tokens": 1127,
+          "total_tokens": 1171
+        },
+        {
+          "completion_tokens": 52,
+          "prompt_tokens": 1340,
+          "total_tokens": 1392
+        },
+        {
+          "completion_tokens": 162,
+          "prompt_tokens": 1706,
+          "total_tokens": 1868
+        },
+        {
+          "completion_tokens": 211,
+          "prompt_tokens": 1656,
+          "total_tokens": 1867
+        },
+        null
+      ],
+      "response": null
+    },
+    {
+      "case_id": "p08-eval-alert",
+      "arm": "B8",
+      "repetition": 0,
+      "status": "RECEIVED",
+      "failure": null,
+      "calls": 5,
+      "usage": {
+        "total_tokens": 6492
+      },
+      "elapsed_seconds": 47.10673930001212,
+      "citation_readback": true,
+      "expected_disposition": "SUPPORTED",
+      "slices": [
+        "id",
+        "historical",
+        "authorized",
+        "direct",
+        "answerable"
+      ],
+      "expected_quote": "Tanda ACK hanya mencatat bahwa petugas membaca alarm, bukan bahwa penyebab gangguan telah diperbaiki.",
+      "citations_attempted": 1,
+      "citations_valid": 1,
+      "parent": "B6",
+      "attempt_usage": [
+        {
+          "completion_tokens": 40,
+          "prompt_tokens": 217,
+          "total_tokens": 257
+        },
+        {
+          "completion_tokens": 67,
+          "prompt_tokens": 1125,
+          "total_tokens": 1192
+        },
+        {
+          "completion_tokens": 241,
+          "prompt_tokens": 1414,
+          "total_tokens": 1655
+        },
+        {
+          "completion_tokens": 217,
+          "prompt_tokens": 1477,
+          "total_tokens": 1694
+        },
+        {
+          "completion_tokens": 269,
+          "prompt_tokens": 1425,
+          "total_tokens": 1694
+        }
+      ],
+      "response": {
+        "disposition": "PARTIALLY_SUPPORTED",
+        "verified_claims": [
+          {
+            "text": "Approved source states: \u201cTanda ACK hanya mencatat bahwa petugas membaca alarm, bukan bahwa penyebab gangguan telah diperbaiki.\u201d (attribution only; no action permission)."
+          },
+          {
+            "text": "Approved source states: \u201cSimpan waktu kejadian ketika menulis kronologi agar keterlambatan pengiriman tidak mengubah urutan peristiwa.\u201d (attribution only; no action permission)."
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "p08-eval-reconcile",
+      "arm": "B3",
+      "repetition": 1,
+      "status": "RECEIVED",
+      "failure": null,
+      "calls": 1,
+      "usage": {
+        "total_tokens": 1315
+      },
+      "elapsed_seconds": 14.992312799964566,
+      "citation_readback": true,
+      "expected_disposition": "SUPPORTED",
+      "slices": [
+        "en",
+        "current",
+        "authorized",
+        "exception",
+        "answerable"
+      ],
+      "expected_quote": "A matching record count alone cannot clear a checksum discrepancy.",
+      "citations_attempted": 1,
+      "citations_valid": 1,
+      "parent": "B2",
+      "attempt_usage": [
+        {
+          "completion_tokens": 142,
+          "prompt_tokens": 1173,
+          "total_tokens": 1315
+        }
+      ],
+      "response": {
+        "disposition": "PARTIALLY_SUPPORTED",
+        "verified_claims": [
+          {
+            "text": "Approved source states: \u201cA matching record count alone cannot clear a checksum discrepancy.\u201d (attribution only; no action permission)."
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "p08-eval-reconcile",
+      "arm": "B8",
+      "repetition": 1,
+      "status": "ERROR",
+      "failure": "TimeoutError",
+      "calls": 4,
+      "usage": {},
+      "elapsed_seconds": 60.02000219997717,
+      "citation_readback": false,
+      "expected_disposition": "SUPPORTED",
+      "slices": [
+        "en",
+        "current",
+        "authorized",
+        "exception",
+        "answerable"
+      ],
+      "expected_quote": "A matching record count alone cannot clear a checksum discrepancy.",
+      "citations_attempted": 0,
+      "citations_valid": 0,
+      "parent": "B6",
+      "attempt_usage": [
+        {
+          "completion_tokens": 39,
+          "prompt_tokens": 216,
+          "total_tokens": 255
+        },
+        {
+          "completion_tokens": 63,
+          "prompt_tokens": 1132,
+          "total_tokens": 1195
+        },
+        {
+          "completion_tokens": 111,
+          "prompt_tokens": 1471,
+          "total_tokens": 1582
+        },
+        null
+      ],
+      "response": null
+    },
+    {
+      "case_id": "p08-eval-alert",
+      "arm": "B7",
+      "repetition": 1,
+      "status": "RECEIVED",
+      "failure": null,
+      "calls": 5,
+      "usage": {
+        "total_tokens": 8045
+      },
+      "elapsed_seconds": 48.17033390002325,
+      "citation_readback": true,
+      "expected_disposition": "SUPPORTED",
+      "slices": [
+        "id",
+        "historical",
+        "authorized",
+        "direct",
+        "answerable"
+      ],
+      "expected_quote": "Tanda ACK hanya mencatat bahwa petugas membaca alarm, bukan bahwa penyebab gangguan telah diperbaiki.",
+      "citations_attempted": 1,
+      "citations_valid": 1,
+      "parent": "B6",
+      "attempt_usage": [
+        {
+          "completion_tokens": 41,
+          "prompt_tokens": 1106,
+          "total_tokens": 1147
+        },
+        {
+          "completion_tokens": 61,
+          "prompt_tokens": 1317,
+          "total_tokens": 1378
+        },
+        {
+          "completion_tokens": 160,
+          "prompt_tokens": 1807,
+          "total_tokens": 1967
+        },
+        {
+          "completion_tokens": 152,
+          "prompt_tokens": 1705,
+          "total_tokens": 1857
+        },
+        {
+          "completion_tokens": 163,
+          "prompt_tokens": 1533,
+          "total_tokens": 1696
+        }
+      ],
+      "response": {
+        "disposition": "SUPPORTED",
+        "verified_claims": [
+          {
+            "text": "Executed synthetic policy result: PRESERVE_EVENT_CHRONOLOGY; this is decision support, not authorization to perform a payment."
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "p08-eval-reconcile",
+      "arm": "B5",
+      "repetition": 1,
+      "status": "ERROR",
+      "failure": "TimeoutError",
+      "calls": 3,
+      "usage": {},
+      "elapsed_seconds": 60.07173140003579,
+      "citation_readback": false,
+      "expected_disposition": "SUPPORTED",
+      "slices": [
+        "en",
+        "current",
+        "authorized",
+        "exception",
+        "answerable"
+      ],
+      "expected_quote": "A matching record count alone cannot clear a checksum discrepancy.",
+      "citations_attempted": 0,
+      "citations_valid": 0,
+      "parent": "B4",
+      "attempt_usage": [
+        {
+          "completion_tokens": 64,
+          "prompt_tokens": 1107,
+          "total_tokens": 1171
+        },
+        {
+          "completion_tokens": 111,
+          "prompt_tokens": 1447,
+          "total_tokens": 1558
+        },
+        null
+      ],
+      "response": null
+    },
+    {
+      "case_id": "p08-eval-reconcile",
+      "arm": "B9",
+      "repetition": 0,
+      "status": "RECEIVED",
+      "failure": null,
+      "calls": 1,
+      "usage": {
+        "total_tokens": 1303
+      },
+      "elapsed_seconds": 10.00102650001645,
+      "citation_readback": true,
+      "expected_disposition": "SUPPORTED",
+      "slices": [
+        "en",
+        "current",
+        "authorized",
+        "exception",
+        "answerable"
+      ],
+      "expected_quote": "A matching record count alone cannot clear a checksum discrepancy.",
+      "citations_attempted": 1,
+      "citations_valid": 1,
+      "parent": "B2",
+      "attempt_usage": [
+        {
+          "completion_tokens": 133,
+          "prompt_tokens": 1170,
+          "total_tokens": 1303
+        }
+      ],
+      "response": {
+        "disposition": "PARTIALLY_SUPPORTED",
+        "verified_claims": [
+          {
+            "text": "Approved source states: \u201cA matching record count alone cannot clear a checksum discrepancy.\u201d (attribution only; no action permission)."
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "p08-eval-reconcile",
+      "arm": "B6",
+      "repetition": 0,
+      "status": "RECEIVED",
+      "failure": null,
+      "calls": 4,
+      "usage": {
+        "total_tokens": 5759
+      },
+      "elapsed_seconds": 58.32668470003409,
+      "citation_readback": true,
+      "expected_disposition": "SUPPORTED",
+      "slices": [
+        "en",
+        "current",
+        "authorized",
+        "exception",
+        "answerable"
+      ],
+      "expected_quote": "A matching record count alone cannot clear a checksum discrepancy.",
+      "citations_attempted": 1,
+      "citations_valid": 1,
+      "parent": "B5",
+      "attempt_usage": [
+        {
+          "completion_tokens": 63,
+          "prompt_tokens": 1105,
+          "total_tokens": 1168
+        },
+        {
+          "completion_tokens": 111,
+          "prompt_tokens": 1445,
+          "total_tokens": 1556
+        },
+        {
+          "completion_tokens": 175,
+          "prompt_tokens": 1421,
+          "total_tokens": 1596
+        },
+        {
+          "completion_tokens": 137,
+          "prompt_tokens": 1302,
+          "total_tokens": 1439
+        }
+      ],
+      "response": {
+        "disposition": "PARTIALLY_SUPPORTED",
+        "verified_claims": [
+          {
+            "text": "Approved source states: \u201cA matching record count alone cannot clear a checksum discrepancy.\u201d (attribution only; no action permission)."
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "p08-eval-reconcile",
+      "arm": "B9",
+      "repetition": 1,
+      "status": "RECEIVED",
+      "failure": null,
+      "calls": 1,
+      "usage": {
+        "total_tokens": 1312
+      },
+      "elapsed_seconds": 9.749155099969357,
+      "citation_readback": true,
+      "expected_disposition": "SUPPORTED",
+      "slices": [
+        "en",
+        "current",
+        "authorized",
+        "exception",
+        "answerable"
+      ],
+      "expected_quote": "A matching record count alone cannot clear a checksum discrepancy.",
+      "citations_attempted": 1,
+      "citations_valid": 1,
+      "parent": "B2",
+      "attempt_usage": [
+        {
+          "completion_tokens": 142,
+          "prompt_tokens": 1170,
+          "total_tokens": 1312
+        }
+      ],
+      "response": {
+        "disposition": "PARTIALLY_SUPPORTED",
+        "verified_claims": [
+          {
+            "text": "Approved source states: \u201cA matching record count alone cannot clear a checksum discrepancy.\u201d (attribution only; no action permission)."
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "p08-eval-alert",
+      "arm": "B4",
+      "repetition": 0,
+      "status": "RECEIVED",
+      "failure": null,
+      "calls": 3,
+      "usage": {
+        "total_tokens": 4233
+      },
+      "elapsed_seconds": 41.0219814000302,
+      "citation_readback": true,
+      "expected_disposition": "SUPPORTED",
+      "slices": [
+        "id",
+        "historical",
+        "authorized",
+        "direct",
+        "answerable"
+      ],
+      "expected_quote": "Tanda ACK hanya mencatat bahwa petugas membaca alarm, bukan bahwa penyebab gangguan telah diperbaiki.",
+      "citations_attempted": 1,
+      "citations_valid": 1,
+      "parent": "B2",
+      "attempt_usage": [
+        {
+          "completion_tokens": 49,
+          "prompt_tokens": 1006,
+          "total_tokens": 1055
+        },
+        {
+          "completion_tokens": 242,
+          "prompt_tokens": 1367,
+          "total_tokens": 1609
+        },
+        {
+          "completion_tokens": 276,
+          "prompt_tokens": 1293,
+          "total_tokens": 1569
+        }
+      ],
+      "response": {
+        "disposition": "PARTIALLY_SUPPORTED",
+        "verified_claims": [
+          {
+            "text": "Approved source states: \u201cTanda ACK hanya mencatat bahwa petugas membaca alarm, bukan bahwa penyebab gangguan telah diperbaiki.\u201d (attribution only; no action permission)."
+          },
+          {
+            "text": "Approved source states: \u201cSimpan waktu kejadian ketika menulis kronologi agar keterlambatan pengiriman tidak mengubah urutan peristiwa.\u201d (attribution only; no action permission)."
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "p08-eval-reconcile",
+      "arm": "B5_VECTOR",
+      "repetition": 0,
+      "status": "RECEIVED",
+      "failure": null,
+      "calls": 3,
+      "usage": {
+        "total_tokens": 4333
+      },
+      "elapsed_seconds": 37.47809990000678,
+      "citation_readback": true,
+      "expected_disposition": "SUPPORTED",
+      "slices": [
+        "en",
+        "current",
+        "authorized",
+        "exception",
+        "answerable"
+      ],
+      "expected_quote": "A matching record count alone cannot clear a checksum discrepancy.",
+      "citations_attempted": 1,
+      "citations_valid": 1,
+      "parent": "B5",
+      "vector_recall_count": 1,
+      "attempt_usage": [
+        {
+          "completion_tokens": 63,
+          "prompt_tokens": 1189,
+          "total_tokens": 1252
+        },
+        {
+          "completion_tokens": 111,
+          "prompt_tokens": 1529,
+          "total_tokens": 1640
+        },
+        {
+          "completion_tokens": 150,
+          "prompt_tokens": 1291,
+          "total_tokens": 1441
+        }
+      ],
+      "response": {
+        "disposition": "PARTIALLY_SUPPORTED",
+        "verified_claims": [
+          {
+            "text": "Approved source states: \u201cA matching record count alone cannot clear a checksum discrepancy.\u201d (attribution only; no action permission)."
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "p08-eval-reconcile",
+      "arm": "B2",
+      "repetition": 1,
+      "status": "RECEIVED",
+      "failure": null,
+      "calls": 1,
+      "usage": {
+        "total_tokens": 1310
+      },
+      "elapsed_seconds": 10.086441699997522,
+      "citation_readback": true,
+      "expected_disposition": "SUPPORTED",
+      "slices": [
+        "en",
+        "current",
+        "authorized",
+        "exception",
+        "answerable"
+      ],
+      "expected_quote": "A matching record count alone cannot clear a checksum discrepancy.",
+      "citations_attempted": 1,
+      "citations_valid": 1,
+      "parent": "B1",
+      "attempt_usage": [
+        {
+          "completion_tokens": 140,
+          "prompt_tokens": 1170,
+          "total_tokens": 1310
+        }
+      ],
+      "response": {
+        "disposition": "PARTIALLY_SUPPORTED",
+        "verified_claims": [
+          {
+            "text": "Approved source states: \u201cA matching record count alone cannot clear a checksum discrepancy.\u201d (attribution only; no action permission)."
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "p08-eval-alert",
+      "arm": "B4",
+      "repetition": 1,
+      "status": "RECEIVED",
+      "failure": null,
+      "calls": 3,
+      "usage": {
+        "total_tokens": 3993
+      },
+      "elapsed_seconds": 33.1381221000338,
+      "citation_readback": true,
+      "expected_disposition": "SUPPORTED",
+      "slices": [
+        "id",
+        "historical",
+        "authorized",
+        "direct",
+        "answerable"
+      ],
+      "expected_quote": "Tanda ACK hanya mencatat bahwa petugas membaca alarm, bukan bahwa penyebab gangguan telah diperbaiki.",
+      "citations_attempted": 1,
+      "citations_valid": 1,
+      "parent": "B2",
+      "attempt_usage": [
+        {
+          "completion_tokens": 65,
+          "prompt_tokens": 1006,
+          "total_tokens": 1071
+        },
+        {
+          "completion_tokens": 181,
+          "prompt_tokens": 1374,
+          "total_tokens": 1555
+        },
+        {
+          "completion_tokens": 175,
+          "prompt_tokens": 1192,
+          "total_tokens": 1367
+        }
+      ],
+      "response": {
+        "disposition": "PARTIALLY_SUPPORTED",
+        "verified_claims": [
+          {
+            "text": "Approved source states: \u201cTanda ACK hanya mencatat bahwa petugas membaca alarm, bukan bahwa penyebab gangguan telah diperbaiki. Simpan waktu kejadian ketika menulis kronologi agar keterlambatan pengiriman tidak mengubah urutan peristiwa.\u201d (attribution only; no action permission)."
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "p08-eval-reconcile",
+      "arm": "B0",
+      "repetition": 0,
+      "status": "RECEIVED",
+      "failure": null,
+      "calls": 1,
+      "usage": {
+        "total_tokens": 1303
+      },
+      "elapsed_seconds": 9.970846600015648,
+      "citation_readback": true,
+      "expected_disposition": "SUPPORTED",
+      "slices": [
+        "en",
+        "current",
+        "authorized",
+        "exception",
+        "answerable"
+      ],
+      "expected_quote": "A matching record count alone cannot clear a checksum discrepancy.",
+      "citations_attempted": 1,
+      "citations_valid": 1,
+      "parent": null,
+      "attempt_usage": [
+        {
+          "completion_tokens": 133,
+          "prompt_tokens": 1170,
+          "total_tokens": 1303
+        }
+      ],
+      "response": {
+        "disposition": "PARTIALLY_SUPPORTED",
+        "verified_claims": [
+          {
+            "text": "Approved source states: \u201cA matching record count alone cannot clear a checksum discrepancy.\u201d (attribution only; no action permission)."
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "p08-eval-alert",
+      "arm": "B0",
+      "repetition": 1,
+      "status": "RECEIVED",
+      "failure": null,
+      "calls": 1,
+      "usage": {
+        "total_tokens": 1380
+      },
+      "elapsed_seconds": 9.981757100031245,
+      "citation_readback": false,
+      "expected_disposition": "SUPPORTED",
+      "slices": [
+        "id",
+        "historical",
+        "authorized",
+        "direct",
+        "answerable"
+      ],
+      "expected_quote": "Tanda ACK hanya mencatat bahwa petugas membaca alarm, bukan bahwa penyebab gangguan telah diperbaiki.",
+      "citations_attempted": 0,
+      "citations_valid": 0,
+      "parent": null,
+      "attempt_usage": [
+        {
+          "completion_tokens": 295,
+          "prompt_tokens": 1085,
+          "total_tokens": 1380
+        }
+      ],
+      "response": {
+        "disposition": "NOT_ESTABLISHED",
+        "verified_claims": []
+      }
+    },
+    {
+      "case_id": "p08-eval-reconcile",
+      "arm": "B8",
+      "repetition": 0,
+      "status": "RECEIVED",
+      "failure": null,
+      "calls": 4,
+      "usage": {},
+      "elapsed_seconds": 39.29840279999189,
+      "citation_readback": false,
+      "expected_disposition": "SUPPORTED",
+      "slices": [
+        "en",
+        "current",
+        "authorized",
+        "exception",
+        "answerable"
+      ],
+      "expected_quote": "A matching record count alone cannot clear a checksum discrepancy.",
+      "citations_attempted": 0,
+      "citations_valid": 0,
+      "parent": "B6",
+      "attempt_usage": [
+        {
+          "completion_tokens": 42,
+          "prompt_tokens": 216,
+          "total_tokens": 258
+        },
+        null,
+        null,
+        null
+      ],
+      "response": {
+        "disposition": "VERIFICATION_UNAVAILABLE",
+        "verified_claims": []
+      }
+    },
+    {
+      "case_id": "p08-eval-alert",
+      "arm": "B2",
+      "repetition": 0,
+      "status": "ERROR",
+      "failure": "PROVIDER_HTTP_429",
+      "calls": 1,
+      "usage": {},
+      "elapsed_seconds": 10.346177600033116,
+      "citation_readback": false,
+      "expected_disposition": "SUPPORTED",
+      "slices": [
+        "id",
+        "historical",
+        "authorized",
+        "direct",
+        "answerable"
+      ],
+      "expected_quote": "Tanda ACK hanya mencatat bahwa petugas membaca alarm, bukan bahwa penyebab gangguan telah diperbaiki.",
+      "citations_attempted": 0,
+      "citations_valid": 0,
+      "parent": "B1",
+      "attempt_usage": [
+        null
+      ],
+      "response": null
+    },
+    {
+      "case_id": "p08-eval-reconcile",
+      "arm": "B4",
+      "repetition": 1,
+      "status": "RECEIVED",
+      "failure": null,
+      "calls": 2,
+      "usage": {},
+      "elapsed_seconds": 18.982192300027236,
+      "citation_readback": false,
+      "expected_disposition": "SUPPORTED",
+      "slices": [
+        "en",
+        "current",
+        "authorized",
+        "exception",
+        "answerable"
+      ],
+      "expected_quote": "A matching record count alone cannot clear a checksum discrepancy.",
+      "citations_attempted": 0,
+      "citations_valid": 0,
+      "parent": "B2",
+      "attempt_usage": [
+        null,
+        null
+      ],
+      "response": {
+        "disposition": "VERIFICATION_UNAVAILABLE",
+        "verified_claims": []
+      }
+    },
+    {
+      "case_id": "p08-eval-reconcile",
+      "arm": "B5_VECTOR",
+      "repetition": 1,
+      "status": "RECEIVED",
+      "failure": null,
+      "calls": 2,
+      "usage": {},
+      "elapsed_seconds": 18.794131400005426,
+      "citation_readback": false,
+      "expected_disposition": "SUPPORTED",
+      "slices": [
+        "en",
+        "current",
+        "authorized",
+        "exception",
+        "answerable"
+      ],
+      "expected_quote": "A matching record count alone cannot clear a checksum discrepancy.",
+      "citations_attempted": 0,
+      "citations_valid": 0,
+      "parent": "B5",
+      "vector_recall_count": 1,
+      "attempt_usage": [
+        null,
+        null
+      ],
+      "response": {
+        "disposition": "VERIFICATION_UNAVAILABLE",
+        "verified_claims": []
+      }
+    },
+    {
+      "case_id": "p08-eval-reconcile",
+      "arm": "B2",
+      "repetition": 0,
+      "status": "ERROR",
+      "failure": "PROVIDER_HTTP_429",
+      "calls": 1,
+      "usage": {},
+      "elapsed_seconds": 10.245686099980958,
+      "citation_readback": false,
+      "expected_disposition": "SUPPORTED",
+      "slices": [
+        "en",
+        "current",
+        "authorized",
+        "exception",
+        "answerable"
+      ],
+      "expected_quote": "A matching record count alone cannot clear a checksum discrepancy.",
+      "citations_attempted": 0,
+      "citations_valid": 0,
+      "parent": "B1",
+      "attempt_usage": [
+        null
+      ],
+      "response": null
+    },
+    {
+      "case_id": "p08-eval-alert",
+      "arm": "B1",
+      "repetition": 0,
+      "status": "ERROR",
+      "failure": "PROVIDER_HTTP_429",
+      "calls": 1,
+      "usage": {},
+      "elapsed_seconds": 9.613642200012691,
+      "citation_readback": false,
+      "expected_disposition": "SUPPORTED",
+      "slices": [
+        "id",
+        "historical",
+        "authorized",
+        "direct",
+        "answerable"
+      ],
+      "expected_quote": "Tanda ACK hanya mencatat bahwa petugas membaca alarm, bukan bahwa penyebab gangguan telah diperbaiki.",
+      "citations_attempted": 0,
+      "citations_valid": 0,
+      "parent": "B0",
+      "attempt_usage": [
+        null
+      ],
+      "response": null
+    },
+    {
+      "case_id": "p08-eval-reconcile",
+      "arm": "B1",
+      "repetition": 0,
+      "status": "ERROR",
+      "failure": "PROVIDER_HTTP_429",
+      "calls": 1,
+      "usage": {},
+      "elapsed_seconds": 10.068772200029343,
+      "citation_readback": false,
+      "expected_disposition": "SUPPORTED",
+      "slices": [
+        "en",
+        "current",
+        "authorized",
+        "exception",
+        "answerable"
+      ],
+      "expected_quote": "A matching record count alone cannot clear a checksum discrepancy.",
+      "citations_attempted": 0,
+      "citations_valid": 0,
+      "parent": "B0",
+      "attempt_usage": [
+        null
+      ],
+      "response": null
+    },
+    {
+      "case_id": "p08-eval-alert",
+      "arm": "B9",
+      "repetition": 0,
+      "status": "ERROR",
+      "failure": "PROVIDER_HTTP_429",
+      "calls": 1,
+      "usage": {},
+      "elapsed_seconds": 11.552143400011119,
+      "citation_readback": false,
+      "expected_disposition": "SUPPORTED",
+      "slices": [
+        "id",
+        "historical",
+        "authorized",
+        "direct",
+        "answerable"
+      ],
+      "expected_quote": "Tanda ACK hanya mencatat bahwa petugas membaca alarm, bukan bahwa penyebab gangguan telah diperbaiki.",
+      "citations_attempted": 0,
+      "citations_valid": 0,
+      "parent": "B2",
+      "attempt_usage": [
+        null
+      ],
+      "response": null
+    },
+    {
+      "case_id": "p08-eval-reconcile",
+      "arm": "B7",
+      "repetition": 1,
+      "status": "RECEIVED",
+      "failure": null,
+      "calls": 2,
+      "usage": {},
+      "elapsed_seconds": 17.8839998000185,
+      "citation_readback": false,
+      "expected_disposition": "SUPPORTED",
+      "slices": [
+        "en",
+        "current",
+        "authorized",
+        "exception",
+        "answerable"
+      ],
+      "expected_quote": "A matching record count alone cannot clear a checksum discrepancy.",
+      "citations_attempted": 0,
+      "citations_valid": 0,
+      "parent": "B6",
+      "attempt_usage": [
+        null,
+        null
+      ],
+      "response": {
+        "disposition": "VERIFICATION_UNAVAILABLE",
+        "verified_claims": []
+      }
+    },
+    {
+      "case_id": "p08-eval-alert",
+      "arm": "B2",
+      "repetition": 1,
+      "status": "ERROR",
+      "failure": "PROVIDER_HTTP_429",
+      "calls": 1,
+      "usage": {},
+      "elapsed_seconds": 8.65159769996535,
+      "citation_readback": false,
+      "expected_disposition": "SUPPORTED",
+      "slices": [
+        "id",
+        "historical",
+        "authorized",
+        "direct",
+        "answerable"
+      ],
+      "expected_quote": "Tanda ACK hanya mencatat bahwa petugas membaca alarm, bukan bahwa penyebab gangguan telah diperbaiki.",
+      "citations_attempted": 0,
+      "citations_valid": 0,
+      "parent": "B1",
+      "attempt_usage": [
+        null
+      ],
+      "response": null
+    },
+    {
+      "case_id": "p08-eval-reconcile",
+      "arm": "B6",
+      "repetition": 1,
+      "status": "RECEIVED",
+      "failure": null,
+      "calls": 3,
+      "usage": {},
+      "elapsed_seconds": 30.437976099958178,
+      "citation_readback": false,
+      "expected_disposition": "SUPPORTED",
+      "slices": [
+        "en",
+        "current",
+        "authorized",
+        "exception",
+        "answerable"
+      ],
+      "expected_quote": "A matching record count alone cannot clear a checksum discrepancy.",
+      "citations_attempted": 0,
+      "citations_valid": 0,
+      "parent": "B5",
+      "attempt_usage": [
+        null,
+        null,
+        null
+      ],
+      "response": {
+        "disposition": "VERIFICATION_UNAVAILABLE",
+        "verified_claims": []
+      }
+    },
+    {
+      "case_id": "p08-eval-alert",
+      "arm": "B6",
+      "repetition": 1,
+      "status": "RECEIVED",
+      "failure": null,
+      "calls": 3,
+      "usage": {},
+      "elapsed_seconds": 28.674257400038186,
+      "citation_readback": false,
+      "expected_disposition": "SUPPORTED",
+      "slices": [
+        "id",
+        "historical",
+        "authorized",
+        "direct",
+        "answerable"
+      ],
+      "expected_quote": "Tanda ACK hanya mencatat bahwa petugas membaca alarm, bukan bahwa penyebab gangguan telah diperbaiki.",
+      "citations_attempted": 0,
+      "citations_valid": 0,
+      "parent": "B5",
+      "attempt_usage": [
+        null,
+        null,
+        null
+      ],
+      "response": {
+        "disposition": "VERIFICATION_UNAVAILABLE",
+        "verified_claims": []
+      }
+    },
+    {
+      "case_id": "p08-eval-reconcile",
+      "arm": "B5",
+      "repetition": 0,
+      "status": "RECEIVED",
+      "failure": null,
+      "calls": 2,
+      "usage": {},
+      "elapsed_seconds": 17.348100600007456,
+      "citation_readback": false,
+      "expected_disposition": "SUPPORTED",
+      "slices": [
+        "en",
+        "current",
+        "authorized",
+        "exception",
+        "answerable"
+      ],
+      "expected_quote": "A matching record count alone cannot clear a checksum discrepancy.",
+      "citations_attempted": 0,
+      "citations_valid": 0,
+      "parent": "B4",
+      "attempt_usage": [
+        null,
+        null
+      ],
+      "response": {
+        "disposition": "VERIFICATION_UNAVAILABLE",
+        "verified_claims": []
+      }
+    },
+    {
+      "case_id": "p08-eval-alert",
+      "arm": "B5_VECTOR",
+      "repetition": 0,
+      "status": "RECEIVED",
+      "failure": null,
+      "calls": 2,
+      "usage": {},
+      "elapsed_seconds": 21.0796515000402,
+      "citation_readback": false,
+      "expected_disposition": "SUPPORTED",
+      "slices": [
+        "id",
+        "historical",
+        "authorized",
+        "direct",
+        "answerable"
+      ],
+      "expected_quote": "Tanda ACK hanya mencatat bahwa petugas membaca alarm, bukan bahwa penyebab gangguan telah diperbaiki.",
+      "citations_attempted": 0,
+      "citations_valid": 0,
+      "parent": "B5",
+      "vector_recall_count": 1,
+      "attempt_usage": [
+        null,
+        null
+      ],
+      "response": {
+        "disposition": "VERIFICATION_UNAVAILABLE",
+        "verified_claims": []
+      }
+    },
+    {
+      "case_id": "p08-eval-alert",
+      "arm": "B3",
+      "repetition": 1,
+      "status": "ERROR",
+      "failure": "PROVIDER_HTTP_429",
+      "calls": 1,
+      "usage": {},
+      "elapsed_seconds": 30.639054300030693,
+      "citation_readback": false,
+      "expected_disposition": "SUPPORTED",
+      "slices": [
+        "id",
+        "historical",
+        "authorized",
+        "direct",
+        "answerable"
+      ],
+      "expected_quote": "Tanda ACK hanya mencatat bahwa petugas membaca alarm, bukan bahwa penyebab gangguan telah diperbaiki.",
+      "citations_attempted": 0,
+      "citations_valid": 0,
+      "parent": "B2",
+      "attempt_usage": [
+        null
+      ],
+      "response": null
+    },
+    {
+      "case_id": "p08-eval-reconcile",
+      "arm": "B4",
+      "repetition": 0,
+      "status": "RECEIVED",
+      "failure": null,
+      "calls": 2,
+      "usage": {},
+      "elapsed_seconds": 19.492105600016657,
+      "citation_readback": false,
+      "expected_disposition": "SUPPORTED",
+      "slices": [
+        "en",
+        "current",
+        "authorized",
+        "exception",
+        "answerable"
+      ],
+      "expected_quote": "A matching record count alone cannot clear a checksum discrepancy.",
+      "citations_attempted": 0,
+      "citations_valid": 0,
+      "parent": "B2",
+      "attempt_usage": [
+        null,
+        null
+      ],
+      "response": {
+        "disposition": "VERIFICATION_UNAVAILABLE",
+        "verified_claims": []
+      }
+    },
+    {
+      "case_id": "p08-eval-alert",
+      "arm": "B9",
+      "repetition": 1,
+      "status": "ERROR",
+      "failure": "PROVIDER_HTTP_429",
+      "calls": 1,
+      "usage": {},
+      "elapsed_seconds": 9.602789900032803,
+      "citation_readback": false,
+      "expected_disposition": "SUPPORTED",
+      "slices": [
+        "id",
+        "historical",
+        "authorized",
+        "direct",
+        "answerable"
+      ],
+      "expected_quote": "Tanda ACK hanya mencatat bahwa petugas membaca alarm, bukan bahwa penyebab gangguan telah diperbaiki.",
+      "citations_attempted": 0,
+      "citations_valid": 0,
+      "parent": "B2",
+      "attempt_usage": [
+        null
+      ],
+      "response": null
+    },
+    {
+      "case_id": "p08-eval-reconcile",
+      "arm": "B3",
+      "repetition": 0,
+      "status": "ERROR",
+      "failure": "PROVIDER_HTTP_429",
+      "calls": 1,
+      "usage": {},
+      "elapsed_seconds": 21.160611399973277,
+      "citation_readback": false,
+      "expected_disposition": "SUPPORTED",
+      "slices": [
+        "en",
+        "current",
+        "authorized",
+        "exception",
+        "answerable"
+      ],
+      "expected_quote": "A matching record count alone cannot clear a checksum discrepancy.",
+      "citations_attempted": 0,
+      "citations_valid": 0,
+      "parent": "B2",
+      "attempt_usage": [
+        null
+      ],
+      "response": null
+    },
+    {
+      "case_id": "p08-eval-alert",
+      "arm": "B6",
+      "repetition": 0,
+      "status": "RECEIVED",
+      "failure": null,
+      "calls": 3,
+      "usage": {},
+      "elapsed_seconds": 29.220550300029572,
+      "citation_readback": false,
+      "expected_disposition": "SUPPORTED",
+      "slices": [
+        "id",
+        "historical",
+        "authorized",
+        "direct",
+        "answerable"
+      ],
+      "expected_quote": "Tanda ACK hanya mencatat bahwa petugas membaca alarm, bukan bahwa penyebab gangguan telah diperbaiki.",
+      "citations_attempted": 0,
+      "citations_valid": 0,
+      "parent": "B5",
+      "attempt_usage": [
+        null,
+        null,
+        null
+      ],
+      "response": {
+        "disposition": "VERIFICATION_UNAVAILABLE",
+        "verified_claims": []
+      }
+    },
+    {
+      "case_id": "p08-eval-reconcile",
+      "arm": "B1",
+      "repetition": 1,
+      "status": "ERROR",
+      "failure": "PROVIDER_HTTP_429",
+      "calls": 1,
+      "usage": {},
+      "elapsed_seconds": 14.358665900013875,
+      "citation_readback": false,
+      "expected_disposition": "SUPPORTED",
+      "slices": [
+        "en",
+        "current",
+        "authorized",
+        "exception",
+        "answerable"
+      ],
+      "expected_quote": "A matching record count alone cannot clear a checksum discrepancy.",
+      "citations_attempted": 0,
+      "citations_valid": 0,
+      "parent": "B0",
+      "attempt_usage": [
+        null
+      ],
+      "response": null
+    },
+    {
+      "case_id": "p08-eval-alert",
+      "arm": "B5",
+      "repetition": 1,
+      "status": "RECEIVED",
+      "failure": null,
+      "calls": 2,
+      "usage": {},
+      "elapsed_seconds": 15.943405999976676,
+      "citation_readback": false,
+      "expected_disposition": "SUPPORTED",
+      "slices": [
+        "id",
+        "historical",
+        "authorized",
+        "direct",
+        "answerable"
+      ],
+      "expected_quote": "Tanda ACK hanya mencatat bahwa petugas membaca alarm, bukan bahwa penyebab gangguan telah diperbaiki.",
+      "citations_attempted": 0,
+      "citations_valid": 0,
+      "parent": "B4",
+      "attempt_usage": [
+        null,
+        null
+      ],
+      "response": {
+        "disposition": "VERIFICATION_UNAVAILABLE",
+        "verified_claims": []
+      }
+    },
+    {
+      "case_id": "p08-eval-reconcile",
+      "arm": "B7",
+      "repetition": 0,
+      "status": "RECEIVED",
+      "failure": null,
+      "calls": 2,
+      "usage": {},
+      "elapsed_seconds": 19.644179700000677,
+      "citation_readback": false,
+      "expected_disposition": "SUPPORTED",
+      "slices": [
+        "en",
+        "current",
+        "authorized",
+        "exception",
+        "answerable"
+      ],
+      "expected_quote": "A matching record count alone cannot clear a checksum discrepancy.",
+      "citations_attempted": 0,
+      "citations_valid": 0,
+      "parent": "B6",
+      "attempt_usage": [
+        null,
+        null
+      ],
+      "response": {
+        "disposition": "VERIFICATION_UNAVAILABLE",
+        "verified_claims": []
+      }
+    },
+    {
+      "case_id": "p08-eval-alert",
+      "arm": "B7",
+      "repetition": 0,
+      "status": "RECEIVED",
+      "failure": null,
+      "calls": 2,
+      "usage": {},
+      "elapsed_seconds": 19.177416799997445,
+      "citation_readback": false,
+      "expected_disposition": "SUPPORTED",
+      "slices": [
+        "id",
+        "historical",
+        "authorized",
+        "direct",
+        "answerable"
+      ],
+      "expected_quote": "Tanda ACK hanya mencatat bahwa petugas membaca alarm, bukan bahwa penyebab gangguan telah diperbaiki.",
+      "citations_attempted": 0,
+      "citations_valid": 0,
+      "parent": "B6",
+      "attempt_usage": [
+        null,
+        null
+      ],
+      "response": {
+        "disposition": "VERIFICATION_UNAVAILABLE",
+        "verified_claims": []
+      }
+    },
+    {
+      "case_id": "p08-eval-alert",
+      "arm": "B0",
+      "repetition": 0,
+      "status": "ERROR",
+      "failure": "PROVIDER_HTTP_429",
+      "calls": 1,
+      "usage": {},
+      "elapsed_seconds": 10.18561350001255,
+      "citation_readback": false,
+      "expected_disposition": "SUPPORTED",
+      "slices": [
+        "id",
+        "historical",
+        "authorized",
+        "direct",
+        "answerable"
+      ],
+      "expected_quote": "Tanda ACK hanya mencatat bahwa petugas membaca alarm, bukan bahwa penyebab gangguan telah diperbaiki.",
+      "citations_attempted": 0,
+      "citations_valid": 0,
+      "parent": null,
+      "attempt_usage": [
+        null
+      ],
+      "response": null
+    },
+    {
+      "case_id": "p08-eval-alert",
+      "arm": "B5_VECTOR",
+      "repetition": 1,
+      "status": "RECEIVED",
+      "failure": null,
+      "calls": 2,
+      "usage": {},
+      "elapsed_seconds": 21.942228099971544,
+      "citation_readback": false,
+      "expected_disposition": "SUPPORTED",
+      "slices": [
+        "id",
+        "historical",
+        "authorized",
+        "direct",
+        "answerable"
+      ],
+      "expected_quote": "Tanda ACK hanya mencatat bahwa petugas membaca alarm, bukan bahwa penyebab gangguan telah diperbaiki.",
+      "citations_attempted": 0,
+      "citations_valid": 0,
+      "parent": "B5",
+      "vector_recall_count": 1,
+      "attempt_usage": [
+        null,
+        null
+      ],
+      "response": {
+        "disposition": "VERIFICATION_UNAVAILABLE",
+        "verified_claims": []
+      }
+    },
+    {
+      "case_id": "p08-eval-reconcile",
+      "arm": "B0",
+      "repetition": 1,
+      "status": "ERROR",
+      "failure": "PROVIDER_HTTP_429",
+      "calls": 1,
+      "usage": {},
+      "elapsed_seconds": 5.409979300049599,
+      "citation_readback": false,
+      "expected_disposition": "SUPPORTED",
+      "slices": [
+        "en",
+        "current",
+        "authorized",
+        "exception",
+        "answerable"
+      ],
+      "expected_quote": "A matching record count alone cannot clear a checksum discrepancy.",
+      "citations_attempted": 0,
+      "citations_valid": 0,
+      "parent": null,
+      "attempt_usage": [
+        null
+      ],
+      "response": null
+    },
+    {
+      "case_id": "p08-eval-alert",
+      "arm": "B1",
+      "repetition": 1,
+      "status": "ERROR",
+      "failure": "PROVIDER_HTTP_429",
+      "calls": 1,
+      "usage": {},
+      "elapsed_seconds": 10.335544599976856,
+      "citation_readback": false,
+      "expected_disposition": "SUPPORTED",
+      "slices": [
+        "id",
+        "historical",
+        "authorized",
+        "direct",
+        "answerable"
+      ],
+      "expected_quote": "Tanda ACK hanya mencatat bahwa petugas membaca alarm, bukan bahwa penyebab gangguan telah diperbaiki.",
+      "citations_attempted": 0,
+      "citations_valid": 0,
+      "parent": "B0",
+      "attempt_usage": [
+        null
+      ],
+      "response": null
+    },
+    {
+      "case_id": "p08-eval-alert",
+      "arm": "B5",
+      "repetition": 0,
+      "status": "RECEIVED",
+      "failure": null,
+      "calls": 2,
+      "usage": {},
+      "elapsed_seconds": 19.690406100009568,
+      "citation_readback": false,
+      "expected_disposition": "SUPPORTED",
+      "slices": [
+        "id",
+        "historical",
+        "authorized",
+        "direct",
+        "answerable"
+      ],
+      "expected_quote": "Tanda ACK hanya mencatat bahwa petugas membaca alarm, bukan bahwa penyebab gangguan telah diperbaiki.",
+      "citations_attempted": 0,
+      "citations_valid": 0,
+      "parent": "B4",
+      "attempt_usage": [
+        null,
+        null
+      ],
+      "response": {
+        "disposition": "VERIFICATION_UNAVAILABLE",
+        "verified_claims": []
+      }
+    }
+  ],
+  "attempts": [
+    {
+      "number": 1,
+      "status": "RECEIVED",
+      "failure": null,
+      "usage": {
+        "completion_tokens": 162,
+        "prompt_tokens": 1216,
+        "total_tokens": 1378
+      },
+      "elapsed_seconds": 1.076732199988328
+    },
+    {
+      "number": 2,
+      "status": "RECEIVED",
+      "failure": null,
+      "usage": {
+        "completion_tokens": 60,
+        "prompt_tokens": 217,
+        "total_tokens": 277
+      },
+      "elapsed_seconds": 9.431802099978086
+    },
+    {
+      "number": 3,
+      "status": "RECEIVED",
+      "failure": null,
+      "usage": {
+        "completion_tokens": 44,
+        "prompt_tokens": 1127,
+        "total_tokens": 1171
+      },
+      "elapsed_seconds": 10.111017999995966
+    },
+    {
+      "number": 4,
+      "status": "RECEIVED",
+      "failure": null,
+      "usage": {
+        "completion_tokens": 52,
+        "prompt_tokens": 1340,
+        "total_tokens": 1392
+      },
+      "elapsed_seconds": 9.828297299973201
+    },
+    {
+      "number": 5,
+      "status": "RECEIVED",
+      "failure": null,
+      "usage": {
+        "completion_tokens": 162,
+        "prompt_tokens": 1706,
+        "total_tokens": 1868
+      },
+      "elapsed_seconds": 1.088745300017763
+    },
+    {
+      "number": 6,
+      "status": "RECEIVED",
+      "failure": null,
+      "usage": {
+        "completion_tokens": 211,
+        "prompt_tokens": 1656,
+        "total_tokens": 1867
+      },
+      "elapsed_seconds": 9.868678300001193
+    },
+    {
+      "number": 7,
+      "status": "CANCELLED",
+      "failure": "CANCELLED",
+      "usage": null,
+      "elapsed_seconds": 4.796695200027898
+    },
+    {
+      "number": 8,
+      "status": "RECEIVED",
+      "failure": null,
+      "usage": {
+        "completion_tokens": 40,
+        "prompt_tokens": 217,
+        "total_tokens": 257
+      },
+      "elapsed_seconds": 4.581143499992322
+    },
+    {
+      "number": 9,
+      "status": "RECEIVED",
+      "failure": null,
+      "usage": {
+        "completion_tokens": 67,
+        "prompt_tokens": 1125,
+        "total_tokens": 1192
+      },
+      "elapsed_seconds": 10.073472999967635
+    },
+    {
+      "number": 10,
+      "status": "RECEIVED",
+      "failure": null,
+      "usage": {
+        "completion_tokens": 241,
+        "prompt_tokens": 1414,
+        "total_tokens": 1655
+      },
+      "elapsed_seconds": 0.9720913000055589
+    },
+    {
+      "number": 11,
+      "status": "RECEIVED",
+      "failure": null,
+      "usage": {
+        "completion_tokens": 217,
+        "prompt_tokens": 1477,
+        "total_tokens": 1694
+      },
+      "elapsed_seconds": 9.765771899954416
+    },
+    {
+      "number": 12,
+      "status": "RECEIVED",
+      "failure": null,
+      "usage": {
+        "completion_tokens": 269,
+        "prompt_tokens": 1425,
+        "total_tokens": 1694
+      },
+      "elapsed_seconds": 10.186924100038595
+    },
+    {
+      "number": 13,
+      "status": "RECEIVED",
+      "failure": null,
+      "usage": {
+        "completion_tokens": 142,
+        "prompt_tokens": 1173,
+        "total_tokens": 1315
+      },
+      "elapsed_seconds": 0.957371799973771
+    },
+    {
+      "number": 14,
+      "status": "RECEIVED",
+      "failure": null,
+      "usage": {
+        "completion_tokens": 39,
+        "prompt_tokens": 216,
+        "total_tokens": 255
+      },
+      "elapsed_seconds": 9.252093599992804
+    },
+    {
+      "number": 15,
+      "status": "RECEIVED",
+      "failure": null,
+      "usage": {
+        "completion_tokens": 63,
+        "prompt_tokens": 1132,
+        "total_tokens": 1195
+      },
+      "elapsed_seconds": 10.120812200009823
+    },
+    {
+      "number": 16,
+      "status": "RECEIVED",
+      "failure": null,
+      "usage": {
+        "completion_tokens": 111,
+        "prompt_tokens": 1471,
+        "total_tokens": 1582
+      },
+      "elapsed_seconds": 0.8036486000055447
+    },
+    {
+      "number": 17,
+      "status": "CANCELLED",
+      "failure": "CANCELLED",
+      "usage": null,
+      "elapsed_seconds": 1.6847111000097357
+    },
+    {
+      "number": 18,
+      "status": "RECEIVED",
+      "failure": null,
+      "usage": {
+        "completion_tokens": 41,
+        "prompt_tokens": 1106,
+        "total_tokens": 1147
+      },
+      "elapsed_seconds": 7.8413184999953955
+    },
+    {
+      "number": 19,
+      "status": "RECEIVED",
+      "failure": null,
+      "usage": {
+        "completion_tokens": 61,
+        "prompt_tokens": 1317,
+        "total_tokens": 1378
+      },
+      "elapsed_seconds": 9.640948199958075
+    },
+    {
+      "number": 20,
+      "status": "RECEIVED",
+      "failure": null,
+      "usage": {
+        "completion_tokens": 160,
+        "prompt_tokens": 1807,
+        "total_tokens": 1967
+      },
+      "elapsed_seconds": 10.159724099969026
+    },
+    {
+      "number": 21,
+      "status": "RECEIVED",
+      "failure": null,
+      "usage": {
+        "completion_tokens": 152,
+        "prompt_tokens": 1705,
+        "total_tokens": 1857
+      },
+      "elapsed_seconds": 9.953441499965265
+    },
+    {
+      "number": 22,
+      "status": "RECEIVED",
+      "failure": null,
+      "usage": {
+        "completion_tokens": 163,
+        "prompt_tokens": 1533,
+        "total_tokens": 1696
+      },
+      "elapsed_seconds": 9.89934910001466
+    },
+    {
+      "number": 23,
+      "status": "RECEIVED",
+      "failure": null,
+      "usage": {
+        "completion_tokens": 64,
+        "prompt_tokens": 1107,
+        "total_tokens": 1171
+      },
+      "elapsed_seconds": 9.350451899983454
+    },
+    {
+      "number": 24,
+      "status": "RECEIVED",
+      "failure": null,
+      "usage": {
+        "completion_tokens": 111,
+        "prompt_tokens": 1447,
+        "total_tokens": 1558
+      },
+      "elapsed_seconds": 0.8326885999995284
+    },
+    {
+      "number": 25,
+      "status": "CANCELLED",
+      "failure": "CANCELLED",
+      "usage": null,
+      "elapsed_seconds": 9.598624599981122
+    },
+    {
+      "number": 26,
+      "status": "RECEIVED",
+      "failure": null,
+      "usage": {
+        "completion_tokens": 133,
+        "prompt_tokens": 1170,
+        "total_tokens": 1303
+      },
+      "elapsed_seconds": 4.262410999974236
+    },
+    {
+      "number": 27,
+      "status": "RECEIVED",
+      "failure": null,
+      "usage": {
+        "completion_tokens": 63,
+        "prompt_tokens": 1105,
+        "total_tokens": 1168
+      },
+      "elapsed_seconds": 9.466373200004455
+    },
+    {
+      "number": 28,
+      "status": "RECEIVED",
+      "failure": null,
+      "usage": {
+        "completion_tokens": 111,
+        "prompt_tokens": 1445,
+        "total_tokens": 1556
+      },
+      "elapsed_seconds": 1.2976857000030577
+    },
+    {
+      "number": 29,
+      "status": "RECEIVED",
+      "failure": null,
+      "usage": {
+        "completion_tokens": 175,
+        "prompt_tokens": 1421,
+        "total_tokens": 1596
+      },
+      "elapsed_seconds": 9.274540800019167
+    },
+    {
+      "number": 30,
+      "status": "RECEIVED",
+      "failure": null,
+      "usage": {
+        "completion_tokens": 137,
+        "prompt_tokens": 1302,
+        "total_tokens": 1439
+      },
+      "elapsed_seconds": 9.91032860003179
+    },
+    {
+      "number": 31,
+      "status": "RECEIVED",
+      "failure": null,
+      "usage": {
+        "completion_tokens": 142,
+        "prompt_tokens": 1170,
+        "total_tokens": 1312
+      },
+      "elapsed_seconds": 6.504723499994725
+    },
+    {
+      "number": 32,
+      "status": "RECEIVED",
+      "failure": null,
+      "usage": {
+        "completion_tokens": 49,
+        "prompt_tokens": 1006,
+        "total_tokens": 1055
+      },
+      "elapsed_seconds": 10.03665770002408
+    },
+    {
+      "number": 33,
+      "status": "RECEIVED",
+      "failure": null,
+      "usage": {
+        "completion_tokens": 242,
+        "prompt_tokens": 1367,
+        "total_tokens": 1609
+      },
+      "elapsed_seconds": 0.960796500032302
+    },
+    {
+      "number": 34,
+      "status": "RECEIVED",
+      "failure": null,
+      "usage": {
+        "completion_tokens": 276,
+        "prompt_tokens": 1293,
+        "total_tokens": 1569
+      },
+      "elapsed_seconds": 10.078209100000095
+    },
+    {
+      "number": 35,
+      "status": "RECEIVED",
+      "failure": null,
+      "usage": {
+        "completion_tokens": 63,
+        "prompt_tokens": 1189,
+        "total_tokens": 1252
+      },
+      "elapsed_seconds": 8.048266199999489
+    },
+    {
+      "number": 36,
+      "status": "RECEIVED",
+      "failure": null,
+      "usage": {
+        "completion_tokens": 111,
+        "prompt_tokens": 1529,
+        "total_tokens": 1640
+      },
+      "elapsed_seconds": 0.7662348000449128
+    },
+    {
+      "number": 37,
+      "status": "RECEIVED",
+      "failure": null,
+      "usage": {
+        "completion_tokens": 150,
+        "prompt_tokens": 1291,
+        "total_tokens": 1441
+      },
+      "elapsed_seconds": 9.967354799970053
+    },
+    {
+      "number": 38,
+      "status": "RECEIVED",
+      "failure": null,
+      "usage": {
+        "completion_tokens": 140,
+        "prompt_tokens": 1170,
+        "total_tokens": 1310
+      },
+      "elapsed_seconds": 5.2657224999857135
+    },
+    {
+      "number": 39,
+      "status": "RECEIVED",
+      "failure": null,
+      "usage": {
+        "completion_tokens": 65,
+        "prompt_tokens": 1006,
+        "total_tokens": 1071
+      },
+      "elapsed_seconds": 10.266916799999308
+    },
+    {
+      "number": 40,
+      "status": "RECEIVED",
+      "failure": null,
+      "usage": {
+        "completion_tokens": 181,
+        "prompt_tokens": 1374,
+        "total_tokens": 1555
+      },
+      "elapsed_seconds": 0.8094257999910042
+    },
+    {
+      "number": 41,
+      "status": "RECEIVED",
+      "failure": null,
+      "usage": {
+        "completion_tokens": 175,
+        "prompt_tokens": 1192,
+        "total_tokens": 1367
+      },
+      "elapsed_seconds": 9.929118800035212
+    },
+    {
+      "number": 42,
+      "status": "RECEIVED",
+      "failure": null,
+      "usage": {
+        "completion_tokens": 133,
+        "prompt_tokens": 1170,
+        "total_tokens": 1303
+      },
+      "elapsed_seconds": 9.859208300011232
+    },
+    {
+      "number": 43,
+      "status": "RECEIVED",
+      "failure": null,
+      "usage": {
+        "completion_tokens": 295,
+        "prompt_tokens": 1085,
+        "total_tokens": 1380
+      },
+      "elapsed_seconds": 9.891594799992163
+    },
+    {
+      "number": 44,
+      "status": "RECEIVED",
+      "failure": null,
+      "usage": {
+        "completion_tokens": 42,
+        "prompt_tokens": 216,
+        "total_tokens": 258
+      },
+      "elapsed_seconds": 9.25763409998035
+    },
+    {
+      "number": 45,
+      "status": "FAILED",
+      "failure": "PROVIDER_HTTP_429",
+      "usage": null,
+      "elapsed_seconds": 9.978605999960564
+    },
+    {
+      "number": 46,
+      "status": "FAILED",
+      "failure": "PROVIDER_HTTP_429",
+      "usage": null,
+      "elapsed_seconds": 9.872876100009307
+    },
+    {
+      "number": 47,
+      "status": "FAILED",
+      "failure": "PROVIDER_HTTP_429",
+      "usage": null,
+      "elapsed_seconds": 10.064610400004312
+    },
+    {
+      "number": 48,
+      "status": "FAILED",
+      "failure": "PROVIDER_HTTP_429",
+      "usage": null,
+      "elapsed_seconds": 9.096734999970067
+    },
+    {
+      "number": 49,
+      "status": "FAILED",
+      "failure": "PROVIDER_HTTP_429",
+      "usage": null,
+      "elapsed_seconds": 8.409410800028127
+    },
+    {
+      "number": 50,
+      "status": "FAILED",
+      "failure": "PROVIDER_HTTP_400",
+      "usage": null,
+      "elapsed_seconds": 10.239534299995285
+    },
+    {
+      "number": 51,
+      "status": "FAILED",
+      "failure": "PROVIDER_HTTP_429",
+      "usage": null,
+      "elapsed_seconds": 7.793816399993375
+    },
+    {
+      "number": 52,
+      "status": "FAILED",
+      "failure": "PROVIDER_HTTP_429",
+      "usage": null,
+      "elapsed_seconds": 9.757355399953667
+    },
+    {
+      "number": 53,
+      "status": "FAILED",
+      "failure": "PROVIDER_HTTP_429",
+      "usage": null,
+      "elapsed_seconds": 9.29307479999261
+    },
+    {
+      "number": 54,
+      "status": "FAILED",
+      "failure": "PROVIDER_HTTP_429",
+      "usage": null,
+      "elapsed_seconds": 9.163704900012817
+    },
+    {
+      "number": 55,
+      "status": "FAILED",
+      "failure": "PROVIDER_HTTP_429",
+      "usage": null,
+      "elapsed_seconds": 8.564285599975847
+    },
+    {
+      "number": 56,
+      "status": "FAILED",
+      "failure": "PROVIDER_HTTP_429",
+      "usage": null,
+      "elapsed_seconds": 10.04092210001545
+    },
+    {
+      "number": 57,
+      "status": "FAILED",
+      "failure": "PROVIDER_HTTP_429",
+      "usage": null,
+      "elapsed_seconds": 8.41975529998308
+    },
+    {
+      "number": 58,
+      "status": "FAILED",
+      "failure": "PROVIDER_HTTP_429",
+      "usage": null,
+      "elapsed_seconds": 8.582988799957093
+    },
+    {
+      "number": 59,
+      "status": "FAILED",
+      "failure": "PROVIDER_HTTP_429",
+      "usage": null,
+      "elapsed_seconds": 1.3202633999753743
+    },
+    {
+      "number": 60,
+      "status": "FAILED",
+      "failure": "PROVIDER_HTTP_429",
+      "usage": null,
+      "elapsed_seconds": 9.366483299992979
+    },
+    {
+      "number": 61,
+      "status": "FAILED",
+      "failure": "PROVIDER_HTTP_429",
+      "usage": null,
+      "elapsed_seconds": 9.59669550001854
+    },
+    {
+      "number": 62,
+      "status": "FAILED",
+      "failure": "PROVIDER_HTTP_429",
+      "usage": null,
+      "elapsed_seconds": 10.5298269999912
+    },
+    {
+      "number": 63,
+      "status": "FAILED",
+      "failure": "PROVIDER_HTTP_429",
+      "usage": null,
+      "elapsed_seconds": 7.826939599995967
+    },
+    {
+      "number": 64,
+      "status": "FAILED",
+      "failure": "PROVIDER_HTTP_429",
+      "usage": null,
+      "elapsed_seconds": 10.136945399979595
+    },
+    {
+      "number": 65,
+      "status": "FAILED",
+      "failure": "PROVIDER_HTTP_429",
+      "usage": null,
+      "elapsed_seconds": 9.811832699982915
+    },
+    {
+      "number": 66,
+      "status": "FAILED",
+      "failure": "PROVIDER_HTTP_429",
+      "usage": null,
+      "elapsed_seconds": 7.22529889998259
+    },
+    {
+      "number": 67,
+      "status": "FAILED",
+      "failure": "PROVIDER_HTTP_429",
+      "usage": null,
+      "elapsed_seconds": 9.025087399990298
+    },
+    {
+      "number": 68,
+      "status": "FAILED",
+      "failure": "PROVIDER_HTTP_429",
+      "usage": null,
+      "elapsed_seconds": 3.82284769997932
+    },
+    {
+      "number": 69,
+      "status": "FAILED",
+      "failure": "PROVIDER_HTTP_429",
+      "usage": null,
+      "elapsed_seconds": 10.195954099996015
+    },
+    {
+      "number": 70,
+      "status": "FAILED",
+      "failure": "PROVIDER_HTTP_429",
+      "usage": null,
+      "elapsed_seconds": 0.6650914999772795
+    },
+    {
+      "number": 71,
+      "status": "FAILED",
+      "failure": "PROVIDER_HTTP_429",
+      "usage": null,
+      "elapsed_seconds": 9.274354300054256
+    },
+    {
+      "number": 72,
+      "status": "FAILED",
+      "failure": "PROVIDER_HTTP_429",
+      "usage": null,
+      "elapsed_seconds": 9.89840299997013
+    },
+    {
+      "number": 73,
+      "status": "FAILED",
+      "failure": "PROVIDER_HTTP_429",
+      "usage": null,
+      "elapsed_seconds": 3.1879689000197686
+    },
+    {
+      "number": 74,
+      "status": "FAILED",
+      "failure": "PROVIDER_HTTP_429",
+      "usage": null,
+      "elapsed_seconds": 1.0611215000390075
+    },
+    {
+      "number": 75,
+      "status": "FAILED",
+      "failure": "PROVIDER_HTTP_429",
+      "usage": null,
+      "elapsed_seconds": 7.240869899978861
+    },
+    {
+      "number": 76,
+      "status": "FAILED",
+      "failure": "PROVIDER_HTTP_429",
+      "usage": null,
+      "elapsed_seconds": 8.69441039999947
+    },
+    {
+      "number": 77,
+      "status": "FAILED",
+      "failure": "PROVIDER_HTTP_429",
+      "usage": null,
+      "elapsed_seconds": 11.293168500007596
+    },
+    {
+      "number": 78,
+      "status": "FAILED",
+      "failure": "PROVIDER_HTTP_429",
+      "usage": null,
+      "elapsed_seconds": 3.5929007999948226
+    },
+    {
+      "number": 79,
+      "status": "FAILED",
+      "failure": "PROVIDER_HTTP_429",
+      "usage": null,
+      "elapsed_seconds": 7.159869600029197
+    },
+    {
+      "number": 80,
+      "status": "FAILED",
+      "failure": "PROVIDER_HTTP_429",
+      "usage": null,
+      "elapsed_seconds": 8.149935900000855
+    },
+    {
+      "number": 81,
+      "status": "FAILED",
+      "failure": "PROVIDER_HTTP_429",
+      "usage": null,
+      "elapsed_seconds": 9.334010599995963
+    },
+    {
+      "number": 82,
+      "status": "FAILED",
+      "failure": "PROVIDER_HTTP_429",
+      "usage": null,
+      "elapsed_seconds": 10.050388899981044
+    },
+    {
+      "number": 83,
+      "status": "FAILED",
+      "failure": "PROVIDER_HTTP_429",
+      "usage": null,
+      "elapsed_seconds": 9.692034300009254
+    },
+    {
+      "number": 84,
+      "status": "FAILED",
+      "failure": "PROVIDER_HTTP_429",
+      "usage": null,
+      "elapsed_seconds": 9.263468399993144
+    },
+    {
+      "number": 85,
+      "status": "FAILED",
+      "failure": "PROVIDER_HTTP_429",
+      "usage": null,
+      "elapsed_seconds": 9.59180340002058
+    },
+    {
+      "number": 86,
+      "status": "FAILED",
+      "failure": "PROVIDER_HTTP_429",
+      "usage": null,
+      "elapsed_seconds": 6.411471899948083
+    },
+    {
+      "number": 87,
+      "status": "FAILED",
+      "failure": "PROVIDER_HTTP_429",
+      "usage": null,
+      "elapsed_seconds": 13.255626099999063
+    },
+    {
+      "number": 88,
+      "status": "FAILED",
+      "failure": "PROVIDER_HTTP_429",
+      "usage": null,
+      "elapsed_seconds": 2.862832300015725
+    },
+    {
+      "number": 89,
+      "status": "FAILED",
+      "failure": "PROVIDER_HTTP_429",
+      "usage": null,
+      "elapsed_seconds": 8.936561700014863
+    },
+    {
+      "number": 90,
+      "status": "FAILED",
+      "failure": "PROVIDER_HTTP_429",
+      "usage": null,
+      "elapsed_seconds": 9.09514270001091
+    },
+    {
+      "number": 91,
+      "status": "FAILED",
+      "failure": "PROVIDER_HTTP_400",
+      "usage": null,
+      "elapsed_seconds": 10.399353899993002
+    }
+  ],
+  "paired_cost_differences": {
+    "B1": {
+      "metric": "elapsed_seconds_all_attempts",
+      "estimate": {
+        "case_clusters": 2,
+        "missing_pairs": 0,
+        "difference": 2.207107099980931,
+        "interval95": [
+          -0.10909190002712421,
+          4.523306099988986
+        ],
+        "method": "case_cluster_bootstrap",
+        "seed": 1719,
+        "resamples": 1000,
+        "generalization_claim": false
+      }
+    },
+    "B2": {
+      "metric": "elapsed_seconds_all_attempts",
+      "estimate": {
+        "case_clusters": 2,
+        "missing_pairs": 0,
+        "difference": -1.2616804500139551,
+        "interval95": [
+          -2.0476551500323694,
+          -0.4757057499955408
+        ],
+        "method": "case_cluster_bootstrap",
+        "seed": 1719,
+        "resamples": 1000,
+        "generalization_claim": false
+      }
+    },
+    "B3": {
+      "metric": "elapsed_seconds_all_attempts",
+      "estimate": {
+        "case_clusters": 2,
+        "missing_pairs": 0,
+        "difference": 9.85331629999564,
+        "interval95": [
+          7.9103981999796815,
+          11.796234400011599
+        ],
+        "method": "case_cluster_bootstrap",
+        "seed": 1719,
+        "resamples": 1000,
+        "generalization_claim": false
+      }
+    },
+    "B4": {
+      "metric": "elapsed_seconds_all_attempts",
+      "estimate": {
+        "case_clusters": 2,
+        "missing_pairs": 0,
+        "difference": 18.326124575032736,
+        "interval95": [
+          9.071085050032707,
+          27.581164100032765
+        ],
+        "method": "case_cluster_bootstrap",
+        "seed": 1719,
+        "resamples": 1000,
+        "generalization_claim": false
+      }
+    },
+    "B5": {
+      "metric": "elapsed_seconds_all_attempts",
+      "estimate": {
+        "case_clusters": 2,
+        "missing_pairs": 0,
+        "difference": 0.1048106749803992,
+        "interval95": [
+          -19.263145700038876,
+          19.472767049999675
+        ],
+        "method": "case_cluster_bootstrap",
+        "seed": 1719,
+        "resamples": 1000,
+        "generalization_claim": false
+      }
+    },
+    "B6": {
+      "metric": "elapsed_seconds_all_attempts",
+      "estimate": {
+        "case_clusters": 2,
+        "missing_pairs": 0,
+        "difference": 8.401456100007636,
+        "interval95": [
+          5.672414399974514,
+          11.130497800040757
+        ],
+        "method": "case_cluster_bootstrap",
+        "seed": 1719,
+        "resamples": 1000,
+        "generalization_claim": false
+      }
+    },
+    "B7": {
+      "metric": "elapsed_seconds_all_attempts",
+      "estimate": {
+        "case_clusters": 2,
+        "missing_pairs": 0,
+        "difference": -10.445884575005039,
+        "interval95": [
+          -25.618240649986546,
+          4.726471499976469
+        ],
+        "method": "case_cluster_bootstrap",
+        "seed": 1719,
+        "resamples": 1000,
+        "generalization_claim": false
+      }
+    },
+    "B8": {
+      "metric": "elapsed_seconds_all_attempts",
+      "estimate": {
+        "case_clusters": 2,
+        "missing_pairs": 0,
+        "difference": 14.946867324979394,
+        "interval95": [
+          5.276872099988395,
+          24.616862549970392
+        ],
+        "method": "case_cluster_bootstrap",
+        "seed": 1719,
+        "resamples": 1000,
+        "generalization_claim": false
+      }
+    },
+    "B9": {
+      "metric": "elapsed_seconds_all_attempts",
+      "estimate": {
+        "case_clusters": 2,
+        "missing_pairs": 0,
+        "difference": 0.3938029500131961,
+        "interval95": [
+          -0.2909730999963358,
+          1.078579000022728
+        ],
+        "method": "case_cluster_bootstrap",
+        "seed": 1719,
+        "resamples": 1000,
+        "generalization_claim": false
+      }
+    },
+    "B5_VECTOR": {
+      "metric": "elapsed_seconds_all_attempts",
+      "estimate": {
+        "case_clusters": 2,
+        "missing_pairs": 0,
+        "difference": -3.4398833000013838,
+        "interval95": [
+          -10.573800350015517,
+          3.69403375001275
+        ],
+        "method": "case_cluster_bootstrap",
+        "seed": 1719,
+        "resamples": 1000,
+        "generalization_claim": false
+      }
+    }
+  },
+  "hypothesis_success": null,
+  "limitations": [
+    "Synthetic mechanical pilot; no independent human labels or generalization",
+    "Harness response does not imply successful provider response",
+    "Shared provider/resource contention; no causal capacity claim",
+    "Historical fixture slice is metadata, not actual historical selection proof",
+    "Raw prompts/originals retained locally; this receipt replays mechanical scores only"
+  ],
+  "retrieval_measurement_limits": {
+    "observed_scope": "FINAL_PACKET_TOP4",
+    "candidate_stage_metrics": null,
+    "legacy_cutoffs_withdrawn": [
+      5,
+      10,
+      20
+    ],
+    "reason": "Final top-four packet cannot measure unobserved candidate ranks; raw rows retained"
+  },
+  "review": {
+    "model": "gpt-6-luna",
+    "reasoning_effort": "medium",
+    "material_findings_resolved": true,
+    "evidence": "E-P08-003"
+  }
+}

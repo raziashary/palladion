@@ -73,7 +73,7 @@ class AuditLog:
         if not rows:
             raise PermissionDenied
         labels = {"status": {"STARTED", "RECEIVED", "FAILED", "CANCELLED", "SCHEMA_INVALID", "SUCCEEDED"},
-            "role": {"main", "critic"}, "tool": {"search_knowledge", "evaluate_policy", "lookup_live_data", "recall_memory", "unknown"},
+            "role": {"main", "critic", "planner"}, "tool": {"search_knowledge", "evaluate_policy", "lookup_live_data", "recall_memory", "unknown"},
             "disposition": {"SUPPORTED", "PARTIALLY_SUPPORTED", "CONFLICT", "NOT_ESTABLISHED", "VERIFICATION_UNAVAILABLE"}}
         events = []
         for row in rows[:100]:

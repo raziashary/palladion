@@ -17,14 +17,17 @@ repository from the blueprint's illustrative tree.
 
 ## Scope and integrity
 
-- Current mandate: owner GO for P07 optional source-linked graph end-to-end, including
-  graph-on/off measurement and a retain/disable decision. P06 is published at6444345;
-  P05 atf0507e4. P08+, UI, enterprise writes and benchmark/editor edits remain excluded.
-  Explicit enabled commands may use the approved Groq models.
-  Owner amendment ADR0066 also authorizes P07 automatic memory promotion and additivev6:
-  backend sessions, private USER semantic preferences, session-only episodic context,
-  unapproved procedural experience, deterministic-primary PathA and opt-in local cosine/loss PathB.
-  This adds no Groq classifier, model write tool or automatic shared-policy promotion.
+- Current mandate completed: P08 scientific evaluation, observability and fault-injection
+  engineering pilot, including all declared B0–B9/vector controls and honest reporting.
+  All98P00–P08atomic cards and sole end-review resolution are verified. Confirmatory
+  semantic/quality claims and unobserved higher-stage retrieval metrics remain unknown.
+  P07 is published atf97471e; explicit P07 main-push approval is fulfilled. Another main
+  push needs approval. P07 graph stays defaultoff after a neutral paired pilot.
+  UI, real enterprise writes, benchmark/editor edits and X01 comparators stay excluded.
+  Approved explicitly enabled commands may use the three selected Groq models.
+  ADR0066 memory boundaries persist: private USER semantic preferences, session-only
+  episodic context, unapproved procedural experience, primary PathA/opt-in local PathB.
+  No invented human labels, support adjudication, escalation assignee or success target.
   `baseline/` is reserved for
   later comparator implementations; do not populate it as part of this setup.
 - Preserve the [vision](palladion/docs/vision/palladion-blueprint-v2.md). Do not silently
@@ -137,9 +140,8 @@ For P04, exercise real Groq messages, four domain tools, final gate and citation
 multi-phase source/security gates remain PARTIAL until later runtime/graph obligations pass. A checkpoint never expands the user's current mandate.
 The mandatory pre-phase adversary precedes this sequence. The P00 full-suite review is
 historical. Every future pre-adversary and post-auditor still reads the complete blueprint
-and applies the canonical review contract. P06 is published; P07 has explicit owner GO.
-P08 requires its own scope authorization. P06 push approval was fulfilled at6444345;
-P07 GO does not authorize another main push.
+and applies the canonical review contract. P07 is published atf97471e; P08 now has
+explicit owner GO. P07 push approval is fulfilled; P08 GO does not authorize another main push.
 
 ## Close every task
 

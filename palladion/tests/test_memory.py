@@ -2,6 +2,8 @@
 
 import asyncio
 import json
+import os
+import sqlite3
 
 import pytest
 
@@ -13,6 +15,120 @@ from evidence_agent.storage.registry import Registry
 from evidence_agent.storage.sqlite import Database
 
 from .test_agent_budget import make_runtime
+
+
+class _VectorControlEncoder:
+    fingerprint = "test-vector-control"
+    dimension = 2
+
+    def embed_documents(self, texts):
+        return [self.embed_query(text) for text in texts]
+
+    def embed_query(self, text):
+        return [1.0,0.1] if "brief" in text.lower() else [0.1,1.0]
+
+
+def test_p08_vector_sidecar_real_extension_reopen_scope_revocation_and_changed_content(p03,tmp_path):
+    from evidence_agent.memory.vector import VectorMemory
+    path=tmp_path/"derived-vectors.sqlite"
+    user=CaseStore(p03.registry,p03.reader,"case-42").memory()
+    admin=CaseStore(p03.registry,p03.admin,"case-42").memory()
+    first=user.write(MemorySpec(scope_id="reader-a",content="Prefer brief replies"))
+    second=user.write(MemorySpec(scope_id="reader-a",content="Prefer examples"))
+    with pytest.raises(PermissionError):
+        VectorMemory(path,_VectorControlEncoder())
+    assert not path.exists()
+    index=VectorMemory(path,_VectorControlEncoder(),enabled=True)
+    assert index.index(user,(first,second))==2
+    assert index.recall(user,"brief",limit=1)[0]["memory_id"]==first
+    assert index.recall(admin,"brief")==[]
+    assert all(r["authority"]=="NONE" for r in index.recall(user,"brief"))
+    with pytest.raises(PermissionDenied):
+        index.index(admin,(first,))
+    with pytest.raises(Exception,match="not authorized"):
+        index.connection.load_extension("not-an-extension")
+    index.close()
+    reopened=VectorMemory(path,_VectorControlEncoder(),enabled=True)
+    assert reopened.recall(user,"brief",limit=1)[0]["memory_id"]==first
+    reopened.connection.execute("UPDATE memory_vectors SET content_sha256=? WHERE memory_id=?",("0"*64,second))
+    reopened.connection.commit()
+    assert second not in [r["memory_id"] for r in reopened.recall(user,"examples")]
+    user.revoke(first)
+    assert first not in [r["memory_id"] for r in reopened.recall(user,"brief")]
+    p03.registry.revoke_membership(p03.admin,"reader-a","case-42")
+    with pytest.raises(PermissionDenied):
+        reopened.recall(user,"brief")
+    reopened.close()
+
+
+def test_p08_vector_refuses_foreign_store_and_closes_after_extension_failure(tmp_path,monkeypatch):
+    from evidence_agent.memory import vector
+    path=tmp_path/"foreign.sqlite"
+    with sqlite3.connect(path) as connection:
+        connection.execute("CREATE TABLE foreign_data(value TEXT)")
+        connection.execute("INSERT INTO foreign_data VALUES('preserve')")
+    before=path.read_bytes()
+    with pytest.raises(ValueError,match="unrecognized"):
+        vector.VectorMemory(path,_VectorControlEncoder(),enabled=True)
+    assert path.read_bytes()==before
+    with sqlite3.connect(path) as connection:
+        assert connection.execute("SELECT * FROM foreign_data").fetchall()==[("preserve",)]
+    def fail(connection):
+        raise RuntimeError("extension unavailable")
+    monkeypatch.setattr(vector.sqlite_vec,"load",fail)
+    with pytest.raises(RuntimeError,match="unavailable"):
+        vector.VectorMemory(tmp_path/"failed.sqlite",_VectorControlEncoder(),enabled=True)
+    with sqlite3.connect(tmp_path/"failed.sqlite") as connection:
+        assert connection.execute("PRAGMA application_id").fetchone()[0]==0
+        assert connection.execute("SELECT name FROM sqlite_master").fetchall()==[]
+
+
+def test_p08_vector_window_truncation_reaches_real_tool_coverage_without_authority(p03,tmp_path):
+    from evidence_agent.memory.vector import VectorMemory
+    system=make_runtime(p03)
+    encoder=_VectorControlEncoder()
+    vector=VectorMemory(tmp_path/"bounded.sqlite",encoder,enabled=True)
+    try:
+        vector.connection.executemany("INSERT INTO memory_vectors VALUES(?,?,?,?,?,?)",[
+            ("missing-memory-"+str(i),"tenant-a","reader-a",encoder.fingerprint,"a"*64,b"unused")
+            for i in range(513)])
+        vector.connection.commit()
+        system.tools.memory_vector=vector
+        result=asyncio.run(system.tools.execute("recall_memory",'{"query":"brief"}'))
+        assert result["status"]=="SUCCEEDED" and result["data"]==[]
+        assert vector.last_candidate_count==512 and vector.last_truncated
+        assert result["recall_coverage"]["candidate_window_incomplete"] is True
+        assert result["recall_coverage"]["exhaustive"] is False
+        # No vector query on the default path; its prior flag cannot contaminate coverage.
+        ordinary=asyncio.run(system.tools.execute("recall_memory",'{}'))
+        assert ordinary["recall_coverage"]["candidate_window_incomplete"] is False
+    finally:
+        vector.close()
+
+
+@pytest.mark.skipif(os.environ.get("PALLADION_TEST_MEMORY_MODELS")!="1",
+                    reason="Explicit pinned local memory vector model")
+def test_p08_actual_pinned_encoder_vector_write_reopen_and_canonical_reader(p03,tmp_path):
+    from evidence_agent.memory.vector import VectorMemory
+    from evidence_agent.retrieval.embeddings import FastEmbedDenseEncoder
+    encoder=FastEmbedDenseEncoder(p03.app/"runtime/model_cache")
+    memory=CaseStore(p03.registry,p03.reader,"case-42").memory()
+    identifier=memory.write(MemorySpec(scope_id="reader-a",content="I prefer brief replies."))
+    path=tmp_path/"actual.sqlite"
+    index=VectorMemory(path,encoder,enabled=True)
+    try:
+        assert index.index(memory,(identifier,))==1
+    finally:
+        index.close()
+    reopened=VectorMemory(path,encoder,enabled=True)
+    try:
+        result=reopened.recall(memory,"short response preference")
+        assert result[0]["memory_id"]==identifier and result[0]["authority"]=="NONE"
+        assert len(encoder.fingerprint)==64 and encoder.dimension==384
+        memory.revoke(identifier)
+        assert reopened.recall(memory,"short response preference")==[]
+    finally:
+        reopened.close()
 
 
 def test_scoped_categories_fts_exact_and_explicit_promotion(p03):

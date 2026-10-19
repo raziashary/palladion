@@ -1,13 +1,13 @@
 # Palladion master development plan
 
-Current checkpoint2026-10-19: P06 published6444345; P07 graph and owner-added automatic memory implementation, consumer proof and sole LunaMedium end-review resolution verified (E-P07-001/002). ADR0063–0066 owner approvals preserved. Graph stays off after zero incremental recoveries. P08/UI/benchmark edits and another main push remain excluded. Older phase snapshots below are historical.
+Current checkpoint2026-10-20: P00–P08engineering work complete within the approved synthetic pilot boundary;98/98atomic cards and sole end-review resolution verified. P07 publishedf97471e; graph stays defaultoff. P08 outcomes are negative/inconclusive, semantic accuracy and unobserved candidate-stage metrics unknown. UI/enterprise writes/X01/benchmark-editor edits and a further main push remain excluded. Older dated snapshots are historical.
 
-Version 11, 2026-10-19. Scope anchor: [blueprint v0.2](../vision/palladion-blueprint-v2.md),
+Version 13, 2026-10-20. Scope anchor: [blueprint v0.2](../vision/palladion-blueprint-v2.md),
 especially “Locked decisions,” “Build plan,” “System invariants,” and the full walkthrough.
 Historical P06 checkpoint: P05 published f0507e4; **P06 DONE** locally, all six atomic cards verified at E-P06-001/E-P06-002 with sole Luna Medium end audit/resolution,307disjoint checks, installed/live proof and cleanup. Paired results remain neutral for full exception correction; no research success is claimed. P06 is now published; P07 GO and ADR0063–65 accepted. P08 and another main push require approval.
 P04 includes actual Groq, four tools, packet/ledger, bounded investigation/finalization,
 deterministic gate and authenticated message/citation/timeline/trace consumers.
-P05 push completed; no further main push inferred. P08/X01/UI remain outside scope.
+P05 push completed; no further main push inferred. P08 now has owner GO; X01/UI remain outside scope.
 ADR-0011 governs; ADR-0013 selects uv and real Groq generation. E-P04-001 records work.
 
 ## Document authority and ownership
@@ -322,6 +322,11 @@ Exit: evidence and cost justify feature state. If no improvement, keep graph dis
 record negative result; do not fabricate a passing aggregate claim from one showcase.
 
 ## P08 — Scientific evaluation, observability and fault injection (Slice 7)
+
+P08 engineering pilot COMPLETE at E-P08-001–003; all12cards verified under approved
+pilot boundary.44observations/16errors retained, current T01–T24 controls24PASS, sole
+end review and same-reviewer R4 resolution complete. Semantic efficacy and unobserved
+candidate-stage metrics remain unknown; see [results](evidence/P08_RESULTS.md).
 
 Goal O07. Read all blueprint “Research evaluation,” “Security, privacy, observability,”
 and “Final design rules.” Depends on P01–P07 exits or documented graph-disabled decision.
@@ -1170,16 +1175,16 @@ order. Shared-file tasks are sequential. Each proof names the observation that c
 
 <a id="p08-t01-01"></a>
 
-- [ ] **P08-T01.01 — Apply approved labels and freeze empirical research choices**
-  - **Files:** `palladion/data/demo/goldens.jsonl`, `palladion/docs/development/RESEARCH_PROTOCOL.md`, `palladion/docs/development/ADR_LOG.md`, `palladion/docs/development/RISKS_AND_OPEN_QUESTIONS.md`.
+- [x] **P08-T01.01 — Apply approved labels and freeze empirical research choices**
+  - **Files:** `palladion/data/demo/goldens.jsonl`, `palladion/data/demo/p08_study.json`, `palladion/src/evidence_agent/core/evaluation.py`, `palladion/scripts/evaluate.py`, `palladion/src/evidence_agent/evaluation/study.py`, `palladion/tests/test_evaluation.py`, `palladion/tests/test_goldens.py`, `palladion/docs/development/RESEARCH_PROTOCOL.md`, `palladion/docs/development/ADR_LOG.md`, `palladion/docs/development/RISKS_AND_OPEN_QUESTIONS.md`.
   - **Depends:** P07-T03.01, P07-T04.05.
-  - **Change:** Apply accepted ADR-0019/Q08: evidence two annotators/adjudication or label pilot-only, record disjoint splits, repetitions/uncertainty and B0/B1-calibrated targets before held-out. No new owner vote on the already accepted method or invented numerical outcome.
+  - **Change:** Apply accepted ADR-0019/Q08 and ADR-0071: persist distinct actual B0/B1 development calibration artifacts before freezing the owner-approved protocol/targets and executing family-disjoint evaluation pilots; inspected legacy T01–T24 remain regression/development. evidence two annotators/adjudication or label pilot-only, record disjoint splits, repetitions/uncertainty and B0/B1-calibrated targets before held-out. No new owner vote on the already accepted method or invented numerical outcome.
   - **Proof:** DOC; [G-RESEARCH](TESTING_GATES.md#g-research-task-coverage); owner-approved manifest predates final run, absent independent labels stay pilot-only, near-duplicate split leakage detected.
 
 <a id="p08-t01-02"></a>
 
-- [ ] **P08-T01.02 — Persist reproducible manifests and scorer inputs**
-  - **Files:** `palladion/scripts/evaluate.py`, `palladion/src/evidence_agent/core/evaluation.py`, `palladion/data/demo/retrieval_pilot.json`, `palladion/tests/test_evaluation.py`, `palladion/tests/test_goldens.py`.
+- [x] **P08-T01.02 — Persist reproducible manifests and scorer inputs**
+  - **Files:** `palladion/scripts/evaluate.py`, `palladion/src/evidence_agent/evaluation/study.py`, `palladion/src/evidence_agent/core/evaluation.py`, `palladion/data/demo/retrieval_pilot.json`, `palladion/tests/test_evaluation.py`, `palladion/tests/test_goldens.py`.
   - **Depends:** P08-T01.01.
   - **Change:** Capture revision/dirty hash, corpus/gold/split hashes, models/prompts/pins/config/generations, scope/randomness/cache/hardware beside actual outputs.
   - **Proof:** UNIT; [G-RESEARCH](TESTING_GATES.md#g-research-task-coverage); replay scorer consumes recorded output, rejects missing hashes/denominators, unavailable measurement never becomes zero.
@@ -1188,57 +1193,57 @@ order. Shared-file tasks are sequential. Each proof names the observation that c
 
 <a id="p08-t02-01"></a>
 
-- [ ] **P08-T02.01 — Execute declared B0–B9 and memory-vector controls**
-  - **Files:** `palladion/scripts/evaluate.py`, `palladion/src/evidence_agent/core/evaluation.py`, `palladion/data/demo/retrieval_pilot.json`, `palladion/tests/test_evaluation.py`, `palladion/tests/test_goldens.py`.
+- [x] **P08-T02.01 — Execute declared B0–B9 and memory-vector controls**
+  - **Files:** `palladion/scripts/evaluate.py`, `palladion/src/evidence_agent/evaluation/study.py`, `palladion/src/evidence_agent/core/evaluation.py`, `palladion/data/demo/retrieval_pilot.json`, `palladion/tests/test_evaluation.py`, `palladion/tests/test_goldens.py`.
   - **Depends:** P08-T01.02, P08-T02.03, P08-T02.04, P08-T02.05, P08-T02.06.
   - **Change:** Implement declared treatment/parent switches and repeated model/frozen retrieval controls; isolate raw ablations from operational release and account every call.
   - **Proof:** MEASUREMENT; [G-RESEARCH](TESTING_GATES.md#g-research-task-coverage); manifests disclose parent/capability differences and one fusion stage; no hidden critic searches, planner cost or default adaptive bypass.
 
 <a id="p08-t02-02"></a>
 
-- [ ] **P08-T02.02 — Compute support, utility and sliced cost metrics**
-  - **Files:** `palladion/scripts/evaluate.py`, `palladion/src/evidence_agent/core/evaluation.py`, `palladion/data/demo/retrieval_pilot.json`, `palladion/tests/test_evaluation.py`, `palladion/tests/test_goldens.py`.
+- [x] **P08-T02.02 — Compute support, utility and sliced cost metrics**
+  - **Files:** `palladion/scripts/evaluate.py`, `palladion/src/evidence_agent/evaluation/study.py`, `palladion/src/evidence_agent/core/evaluation.py`, `palladion/data/demo/retrieval_pilot.json`, `palladion/tests/test_evaluation.py`, `palladion/tests/test_goldens.py`.
   - **Depends:** P08-T02.01.
   - **Change:** Calculate raw numerator/denominator, case-clustered uncertainty and retrieval/support/disposition/abstention/false-veto/latency/cost slices for report reader.
   - **Proof:** UNIT; [G-RESEARCH](TESTING_GATES.md#g-research-task-coverage); known scorer cases cover wrong citation, safe refusal and zero denominator; refusal-only cannot appear perfect through omitted utility.
 
 <a id="p08-t02-03"></a>
 
-- [ ] **P08-T02.03 — Implement the isolated adaptive-critic treatment**
-  - **Files:** `palladion/src/evidence_agent/agent/critic.py`, `palladion/src/evidence_agent/agent/loop.py`, `palladion/config/settings.yaml`, `palladion/tests/test_critic.py`, `palladion/docs/development/ADR_LOG.md`.
+- [x] **P08-T02.03 — Implement the isolated adaptive-critic treatment**
+  - **Files:** `palladion/src/evidence_agent/agent/critic.py`, `palladion/src/evidence_agent/agent/experiments.py`, `palladion/src/evidence_agent/agent/loop.py`, `palladion/config/settings.yaml`, `palladion/tests/test_critic.py`, `palladion/docs/development/ADR_LOG.md`.
   - **Depends:** P08-T01.02.
   - **Change:** Use always-on labels to propose Q10 risk criteria and explicitly enable B7 in synthetic evaluation; default normative review remains mandatory.
   - **Proof:** UNIT; [G-CRITIC](TESTING_GATES.md#g-critic-task-coverage), [G-RESEARCH](TESTING_GATES.md#g-research-task-coverage); risk false-skip fixture detected, B7 flag cannot change default release behavior; missing owner acceptance leaves treatment NOT_RUN, not a claimed result.
 
 <a id="p08-t02-04"></a>
 
-- [ ] **P08-T02.04 — Implement the optional nonexclusive planner treatment**
-  - **Files:** `palladion/src/evidence_agent/agent/preflight.py`, `palladion/src/evidence_agent/agent/llm.py`, `palladion/config/settings.yaml`, `palladion/tests/test_agent_budget.py`, `palladion/docs/development/ADR_LOG.md`.
+- [x] **P08-T02.04 — Implement the optional nonexclusive planner treatment**
+  - **Files:** `palladion/src/evidence_agent/agent/preflight.py`, `palladion/src/evidence_agent/agent/experiments.py`, `palladion/src/evidence_agent/agent/loop.py`, `palladion/src/evidence_agent/agent/llm.py`, `palladion/config/settings.yaml`, `palladion/tests/test_agent_budget.py`, `palladion/docs/development/ADR_LOG.md`.
   - **Depends:** P08-T01.02.
   - **Change:** Add explicitly enabled B8 nonexclusive planner treatment using selected Groq model initially. Any different/smaller model needs a recorded treatment decision; preserve existing scope grants and account the extra model attempt.
   - **Proof:** UNIT; [G-BUDGET](TESTING_GATES.md#g-budget-task-coverage), [G-RESEARCH](TESTING_GATES.md#g-research-task-coverage); disabled path has zero planner calls, failure cannot hard-route or grant scope; planner cost/attempt appears in run manifest.
 
 <a id="p08-t02-05"></a>
 
-- [ ] **P08-T02.05 — Implement a controlled alternative fusion treatment**
-  - **Files:** `palladion/src/evidence_agent/retrieval/hybrid.py`, `palladion/src/evidence_agent/storage/qdrant.py`, `palladion/config/settings.yaml`, `palladion/tests/test_retrieval.py`, `palladion/docs/development/ADR_LOG.md`.
+- [x] **P08-T02.05 — Implement a controlled alternative fusion treatment**
+  - **Files:** `palladion/src/evidence_agent/retrieval/hybrid.py`, `palladion/src/evidence_agent/storage/qdrant.py`, `palladion/src/evidence_agent/core/evaluation.py`, `palladion/src/evidence_agent/evaluation/study.py`, `palladion/config/settings.yaml`, `palladion/tests/test_retrieval.py`, `palladion/tests/test_pipeline.py`, `palladion/docs/development/ADR_LOG.md`.
   - **Depends:** P08-T01.02.
   - **Change:** Select and record Q10 alternative for B9; reuse fixed candidate rankings and ensure treatment consumer performs only the declared single fusion stage.
   - **Proof:** INTEGRATION; [G-RETRIEVAL](TESTING_GATES.md#g-retrieval-task-coverage), [G-RESEARCH](TESTING_GATES.md#g-research-task-coverage); known ranked fixtures distinguish methods, native fusion is disabled when alternative owns it; no double RRF or hidden candidate change.
 
 <a id="p08-t02-06"></a>
 
-- [ ] **P08-T02.06 — Implement optional vector-memory augmentation**
-  - **Files:** `palladion/src/evidence_agent/memory/store.py`, `palladion/src/evidence_agent/storage/schema.sql`, `palladion/pyproject.toml`, `palladion/config/settings.yaml`, `palladion/tests/test_memory.py`, `palladion/docs/development/ADR_LOG.md`.
+- [x] **P08-T02.06 — Implement optional vector-memory augmentation**
+  - **Files:** `palladion/src/evidence_agent/memory/store.py`, `palladion/src/evidence_agent/memory/vector.py`, `palladion/src/evidence_agent/agent/tools.py`, `palladion/pyproject.toml`, `palladion/config/settings.yaml`, `palladion/tests/test_memory.py`, `palladion/docs/development/ADR_LOG.md`.
   - **Depends:** P08-T01.02.
-  - **Change:** Obtain dependency direction for Q10 sqlite-vec experiment; add only needed derived memory index with scoped canonical revalidation; evaluator compares the same structured/FTS baseline.
+  - **Change:** Owner approved ADR-0072/0073: implement pinned sqlite-vec in a separate derived sidecar, with no registry schema migration; add only needed derived memory index with scoped canonical revalidation; evaluator compares the same structured/FTS baseline.
   - **Proof:** INTEGRATION; [G-MEMORY](TESTING_GATES.md#g-memory-task-coverage), [G-RESEARCH](TESTING_GATES.md#g-research-task-coverage); disabled path unchanged, cross-case/stale vector hit rejected, index update/readback verified; no extension install or existing-data migration without authorization.
 
 #### P08-T03 execution tasks
 
 <a id="p08-t03-01"></a>
 
-- [ ] **P08-T03.01 — Run cross-boundary injection and revocation cases**
+- [x] **P08-T03.01 — Run cross-boundary injection and revocation cases**
   - **Files:** `palladion/tests/test_security.py`, `palladion/tests/test_end_to_end.py`.
   - **Depends:** P08-T02.02.
   - **Change:** Run T01–T24 with source/tool/memory/graph poisoning, role/source revocation between search and release, packet tampering and privileged traces.
@@ -1246,16 +1251,16 @@ order. Shared-file tasks are sequential. Each proof names the observation that c
 
 <a id="p08-t03-02"></a>
 
-- [ ] **P08-T03.02 — Inject dependency, retry, deadline and recovery failures**
-  - **Files:** `palladion/tests/test_agent_budget.py`, `palladion/tests/test_end_to_end.py`, `palladion/tests/test_live.py`, `palladion/tests/test_ingest.py`.
+- [x] **P08-T03.02 — Inject dependency, retry, deadline and recovery failures**
+  - **Files:** `palladion/src/evidence_agent/storage/qdrant.py`, `palladion/tests/test_retrieval.py`, `palladion/tests/test_agent_budget.py`, `palladion/tests/test_end_to_end.py`, `palladion/tests/test_live.py`, `palladion/tests/test_ingest.py`.
   - **Depends:** P08-T03.01.
   - **Change:** Exercise sparse/graph/live/model/critic outages, interrupted ingest, malformed results, parallel retries and cancellation on isolated resources.
   - **Proof:** SMOKE; [G-E2E](TESTING_GATES.md#g-e2e-task-coverage), [G-BUDGET](TESTING_GATES.md#g-budget-task-coverage); typed partial/unavailable preserves events and counts, no detached work/unbounded retry; task listeners verified stopped.
 
 <a id="p08-t03-03"></a>
 
-- [ ] **P08-T03.03 — Reconcile trace and source artifacts through real readers**
-  - **Files:** `palladion/scripts/reconcile.py`, `palladion/src/evidence_agent/telemetry/audit.py`, `palladion/tests/test_end_to_end.py`.
+- [x] **P08-T03.03 — Reconcile trace and source artifacts through real readers**
+  - **Files:** `palladion/scripts/reconcile.py`, `palladion/src/evidence_agent/core/evaluation.py`, `palladion/data/demo/p08_integrity_controls.json`, `palladion/src/evidence_agent/telemetry/audit.py`, `palladion/tests/test_evaluation.py`, `palladion/tests/test_end_to_end.py`.
   - **Depends:** P08-T03.02.
   - **Change:** Read source manifests, policy/live/gate IDs and sanitized audit through production readers; verify failure metrics/cost match actual consumed attempts.
   - **Proof:** INTEGRATION; [G-SOURCE](TESTING_GATES.md#g-source-task-coverage), [G-E2E](TESTING_GATES.md#g-e2e-task-coverage); deliberate index gap/missing correlation detected, valid trace reconstructs disposition without secrets or omitted failure cost.
@@ -1264,8 +1269,8 @@ order. Shared-file tasks are sequential. Each proof names the observation that c
 
 <a id="p08-t04-01"></a>
 
-- [ ] **P08-T04.01 — Export the reproducible result set and honest conclusion**
-  - **Files:** `palladion/scripts/evaluate.py`, `palladion/src/evidence_agent/core/evaluation.py`, `palladion/data/demo/retrieval_pilot.json`, `palladion/tests/test_evaluation.py`, `palladion/docs/development/EVIDENCE_LOG.md`, `palladion/docs/development/PROJECT_LEARNING.md`, `palladion/docs/development/GOAL.md`, `palladion/docs/development/PROGRESS.md`.
+- [x] **P08-T04.01 — Export the reproducible result set and honest conclusion**
+  - **Files:** `palladion/scripts/evaluate.py`, `palladion/src/evidence_agent/evaluation/study.py`, `palladion/src/evidence_agent/core/evaluation.py`, `palladion/data/demo/retrieval_pilot.json`, `palladion/tests/test_evaluation.py`, `palladion/docs/development/EVIDENCE_LOG.md`, `palladion/docs/development/PROJECT_LEARNING.md`, `palladion/docs/development/GOAL.md`, `palladion/docs/development/PROGRESS.md`.
   - **Depends:** P08-T03.03.
   - **Change:** Export pinned manifests, scored outputs/failures and redacted summary with artifact hashes; report null/adverse findings and prototype limits.
   - **Proof:** SMOKE; [G-RESEARCH](TESTING_GATES.md#g-research-task-coverage); independent reader reconstructs metrics/cost from retained artifacts; missing/failed runs visible, no unsupported production/superiority claim.

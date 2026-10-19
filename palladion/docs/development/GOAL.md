@@ -1,8 +1,8 @@
 # Project goal
 
-Current checkpoint2026-10-19: P06 published6444345; P07 graph and owner-added automatic memory implementation, consumer proof and sole LunaMedium end-review resolution verified (E-P07-001/002). ADR0063–0066 owner approvals preserved. Graph stays off after zero incremental recoveries. P08/UI/benchmark edits and another main push remain excluded. Older phase snapshots below are historical.
+Current checkpoint2026-10-20: P00–P08engineering work complete within the approved synthetic pilot boundary;98/98atomic cards and sole end-review resolution verified. P07 publishedf97471e; graph stays defaultoff. P08 outcomes are negative/inconclusive, semantic accuracy and unobserved candidate-stage metrics unknown. UI/enterprise writes/X01/benchmark-editor edits and a further main push remain excluded. Older dated snapshots are historical.
 
-As of 2026-10-19 (Asia/Bangkok). Owner: user; coordinator maintains evidence.
+As of2026-10-20 (Asia/Bangkok). Owner: user; coordinator maintains evidence.
 
 ## Development-suite outcomes
 
@@ -36,7 +36,7 @@ A null or adverse result is a valid research outcome.
 | O04: Safe continuity | P05 scoped memory/packet/cache/follow-up consumers and third-turn correction verified with sole audit/resolution; actual pilot failures retained; developer memory is separate | P05; G-MEMORY; second authorized request consumes persisted state |
 | O05: Measured self-challenge | Critic/runtime/guards implemented;16actual frozen conditions recorded with failures; default-budget real review/final/readback verified; exact-clause recovery verified; final-source16-condition matrix neutral for full correction; sole end audit resolved;307disjoint checks and final live/installed proofs; no semantic accuracy claim | P06; G-CRITIC; frozen-draft paired evaluation, correction and false-veto rates |
 | O06: Tested graph value | Optional canonical source-linked graph implemented; actual paired pilot finds0incremental exception recoveries, graph remains defaultoff. Live worker/API/Groq proof and final phase gates/audit resolution recorded; negative-result disable exit verified | P07; G-GRAPH; graph-on/off paired evidence and cost; disable if unjustified |
-| O07: Reproducible conclusion | Retrieval-only pilot recorded; adjudicated/full-answer benchmark and general performance claims remain absent | P08; G-RESEARCH and G-E2E; pinned run manifest, held-out results and failure taxonomy |
+| O07: Reproducible conclusion | Owner-approved all11arm pilot completed44observations/16errors; canonical replay/readback, current24controls and sole end-review resolution verified; semantic efficacy and unobserved candidate-stage metrics remain unknown | P08; G-RESEARCH and G-E2E; pinned run manifest, held-out results and failure taxonomy |
 | O08: Honest external comparison later | `baseline/` empty; no comparator performance known | X01 deferred; shared evaluation adapter, capability and resource disclosures |
 
 ## Acceptance boundaries
@@ -48,9 +48,9 @@ zero unapproved operational side effects; all authored temporal fixtures correct
 correct no-evidence, no-tool, and conflict handling. These targets apply to the test set.
 Citation existence alone does not prove semantic support.
 
-Empirical quality/improvement thresholds remain unset until B0/B1 measurements. Freeze
-them on development data before the final held-out evaluation, record them in an ADR,
-and retain the original failure results if a target is missed.
+Owner-approved pilot thresholds were frozen after B0/B1 development measurements
+(ADR0079). Most arms missed the50%exact-quote target; failures remain reported.
+Semantic improvement thresholds and claims require independent human adjudication.
 
 ## Scope, dependencies, and exclusions
 
@@ -62,11 +62,14 @@ compatibility is verified; P03 policy/live domain proof is at E-P03-001. Provide
 The existing app .venv is reused and ignored. Runtime model access needs explicit command enablement,
 not merely credentials. User's root `.env` and `.gitignore` are preserved.
 
-Current user instruction explicitly authorizes P07 graph and owner-added automatic memory work. P06 is published at6444345. Both review roles read the full blueprint and report traceable coverage; P07 sole end-review documentation corrections are verified.
+Current user instruction authorizes full P08 scientific evaluation, observability and
+fault injection. P07 graph/automatic memory is published atf97471e. Both review roles
+read the full blueprint and report traceable coverage; P08 sole end review and same-reviewer resolution are complete.
 
-Excluded now: P08+ implementation, UI, actual payments or mutations, private data,
+Excluded now: UI, actual payments or mutations, private data,
 real enterprise connectors, production signoff, and comparator implementations. Later
 system work follows the plan; later external comparisons require their own concrete scope.
+A further push to main requires explicit approval.
 
 ## Phase checklist
 
@@ -78,7 +81,7 @@ system work follows the plan; later external comparisons require their own concr
 - [x] P05 — memory and continuity (Slice 4); E-P05-001, phase-local proof and single audit/resolution; no H04 success claim
 - [x] P06 — critic experiment (Slice 5); E-P06-001/002, all6cards, final consumer proof/audit, neutral pilot retained
 - [x] P07 — optional graph experiment and owner-added automatic memory (Slice 6); E-P07-001/002, negative graph exit and sole review resolution
-- [ ] P08 — scientific evaluation and fault injection (Slice 7)
+- [x] P08 — scientific evaluation and fault injection engineering pilot (Slice 7); E-P08-001–003, owner-approved pilot boundary and sole end-review resolution; hypothesis/semantic accuracy unproven
 - [ ] X01 — external baseline systems, deferred
 
 Task details/child checkboxes: [master plan](MASTER_DEV_PLAN.md). Phase/gate summaries:

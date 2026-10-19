@@ -1,0 +1,2738 @@
+{
+  "schema_version": "p08-supplemental-controls.1",
+  "status": "COMPLETED_ENGINEERING_PILOT",
+  "annotation_status": "PILOT_NOT_HUMAN_ADJUDICATED",
+  "semantic_accuracy": null,
+  "critic": {
+    "raw_artifact": "p06-57815987982f4322997fc434305ebe83.json",
+    "sha256": "db83e3905665b3f10be03bb823b350caaf4aa1bcc3644fc019bdec1b63b1a6fa",
+    "model": "openai/gpt-oss-20b",
+    "all_conditions_observed": true,
+    "conditions": [
+      {
+        "case": "exception",
+        "frozen_sha256": "47ef1ef7c40edcf702dc49af6b04837335f0625345d38720eb6d0935489d9c31",
+        "appendix_supplied": true,
+        "arm": "off",
+        "status": "OBSERVED",
+        "failure_type": null,
+        "score": {
+          "initial_input_hash_equal": true,
+          "known_fact_retained": true,
+          "known_fact_omitted": false,
+          "mechanical_exception_quote_corrected": false,
+          "scorer_version": "2.0",
+          "known_fact_retention_loss_vs_off": null,
+          "mechanical_false_veto_vs_off": null,
+          "changed_evidence_ids": [],
+          "mechanical_false_objections": 0,
+          "mechanical_invalid_associations_detected": [],
+          "inventory_attested": false,
+          "unadjudicated_semantic_correction": null,
+          "unadjudicated_semantic_false_veto": null,
+          "verification_failure_count": 0
+        },
+        "main_calls": 1,
+        "critic_calls": 0,
+        "counter_searches": 0,
+        "tools_used": 0,
+        "attempts": [
+          {
+            "attempt": 1,
+            "role": "main",
+            "stage": "final",
+            "status": "STARTED"
+          },
+          {
+            "attempt": 1,
+            "role": "main",
+            "stage": "final",
+            "status": "RECEIVED",
+            "usage": {
+              "prompt_tokens": 1297,
+              "completion_tokens": 335,
+              "total_tokens": 1632
+            },
+            "error_code": null
+          }
+        ],
+        "elapsed_seconds": 1.3693759000161663,
+        "provider_failure": null,
+        "citations_resolved": true
+      },
+      {
+        "case": "exception",
+        "frozen_sha256": "47ef1ef7c40edcf702dc49af6b04837335f0625345d38720eb6d0935489d9c31",
+        "appendix_supplied": true,
+        "arm": "fixed_context",
+        "status": "OBSERVED",
+        "failure_type": null,
+        "score": {
+          "initial_input_hash_equal": true,
+          "known_fact_retained": true,
+          "known_fact_omitted": false,
+          "mechanical_exception_quote_corrected": false,
+          "scorer_version": "2.0",
+          "known_fact_retention_loss_vs_off": false,
+          "mechanical_false_veto_vs_off": null,
+          "changed_evidence_ids": [],
+          "mechanical_false_objections": 0,
+          "mechanical_invalid_associations_detected": [],
+          "inventory_attested": false,
+          "unadjudicated_semantic_correction": null,
+          "unadjudicated_semantic_false_veto": null,
+          "verification_failure_count": 2
+        },
+        "main_calls": 1,
+        "critic_calls": 2,
+        "counter_searches": 0,
+        "tools_used": 0,
+        "attempts": [
+          {
+            "role": "critic",
+            "stage": "review",
+            "attempt": 1,
+            "status": "STARTED"
+          },
+          {
+            "role": "critic",
+            "stage": "review",
+            "attempt": 1,
+            "status": "SCHEMA_INVALID",
+            "usage": {
+              "prompt_tokens": 1363,
+              "completion_tokens": 272,
+              "total_tokens": 1635
+            },
+            "error_code": "CRITIC_SCHEMA_OR_GROUNDING_FAILURE"
+          },
+          {
+            "role": "critic",
+            "stage": "review",
+            "attempt": 2,
+            "status": "STARTED"
+          },
+          {
+            "role": "critic",
+            "stage": "review",
+            "attempt": 2,
+            "status": "SCHEMA_INVALID",
+            "usage": {
+              "prompt_tokens": 1376,
+              "completion_tokens": 328,
+              "total_tokens": 1704
+            },
+            "error_code": "CRITIC_SCHEMA_OR_GROUNDING_FAILURE"
+          },
+          {
+            "attempt": 1,
+            "role": "main",
+            "stage": "final",
+            "status": "STARTED"
+          },
+          {
+            "attempt": 1,
+            "role": "main",
+            "stage": "final",
+            "status": "FAILED",
+            "usage": {},
+            "error_code": "PROVIDER_HTTP_429"
+          }
+        ],
+        "elapsed_seconds": 20.369717699999455,
+        "provider_failure": {
+          "http_status": 429,
+          "provider_code": "rate_limit_exceeded",
+          "quota_window": "TOKENS_DAILY",
+          "quota_counts": {
+            "limit": 200000,
+            "used": 198805,
+            "requested": 1653
+          },
+          "retry_after_seconds": 198.0
+        },
+        "citations_resolved": true
+      },
+      {
+        "case": "exception",
+        "frozen_sha256": "47ef1ef7c40edcf702dc49af6b04837335f0625345d38720eb6d0935489d9c31",
+        "appendix_supplied": true,
+        "arm": "counter_search",
+        "status": "OBSERVED",
+        "failure_type": null,
+        "score": {
+          "initial_input_hash_equal": true,
+          "known_fact_retained": true,
+          "known_fact_omitted": false,
+          "mechanical_exception_quote_corrected": false,
+          "scorer_version": "2.0",
+          "known_fact_retention_loss_vs_off": false,
+          "mechanical_false_veto_vs_off": null,
+          "changed_evidence_ids": [],
+          "mechanical_false_objections": 0,
+          "mechanical_invalid_associations_detected": [],
+          "inventory_attested": false,
+          "unadjudicated_semantic_correction": null,
+          "unadjudicated_semantic_false_veto": null,
+          "verification_failure_count": 1
+        },
+        "main_calls": 1,
+        "critic_calls": 1,
+        "counter_searches": 0,
+        "tools_used": 0,
+        "attempts": [
+          {
+            "role": "critic",
+            "stage": "review",
+            "attempt": 1,
+            "status": "STARTED"
+          },
+          {
+            "role": "critic",
+            "stage": "review",
+            "attempt": 1,
+            "status": "FAILED",
+            "usage": {},
+            "error_code": "PROVIDER_HTTP_429"
+          },
+          {
+            "attempt": 1,
+            "role": "main",
+            "stage": "final",
+            "status": "STARTED"
+          },
+          {
+            "attempt": 1,
+            "role": "main",
+            "stage": "final",
+            "status": "FAILED",
+            "usage": {},
+            "error_code": "PROVIDER_HTTP_429"
+          }
+        ],
+        "elapsed_seconds": 10.378555800009053,
+        "provider_failure": {
+          "http_status": 429,
+          "provider_code": "rate_limit_exceeded",
+          "quota_window": "TOKENS_DAILY",
+          "quota_counts": {
+            "limit": 200000,
+            "used": 198642,
+            "requested": 1638
+          },
+          "retry_after_seconds": 121.0
+        },
+        "citations_resolved": true
+      },
+      {
+        "case": "exception",
+        "frozen_sha256": "47ef1ef7c40edcf702dc49af6b04837335f0625345d38720eb6d0935489d9c31",
+        "appendix_supplied": true,
+        "arm": "blind_requirements",
+        "status": "OBSERVED",
+        "failure_type": null,
+        "score": {
+          "initial_input_hash_equal": true,
+          "known_fact_retained": true,
+          "known_fact_omitted": false,
+          "mechanical_exception_quote_corrected": false,
+          "scorer_version": "2.0",
+          "known_fact_retention_loss_vs_off": false,
+          "mechanical_false_veto_vs_off": null,
+          "changed_evidence_ids": [],
+          "mechanical_false_objections": 0,
+          "mechanical_invalid_associations_detected": [],
+          "inventory_attested": false,
+          "unadjudicated_semantic_correction": null,
+          "unadjudicated_semantic_false_veto": null,
+          "verification_failure_count": 1
+        },
+        "main_calls": 1,
+        "critic_calls": 2,
+        "counter_searches": 1,
+        "tools_used": 1,
+        "attempts": [
+          {
+            "role": "critic",
+            "stage": "review",
+            "attempt": 1,
+            "status": "STARTED"
+          },
+          {
+            "role": "critic",
+            "stage": "review",
+            "attempt": 1,
+            "status": "RECEIVED",
+            "usage": {
+              "prompt_tokens": 1141,
+              "completion_tokens": 261,
+              "total_tokens": 1402
+            },
+            "error_code": null
+          },
+          {
+            "role": "critic",
+            "stage": "review",
+            "attempt": 2,
+            "status": "STARTED"
+          },
+          {
+            "role": "critic",
+            "stage": "review",
+            "attempt": 2,
+            "status": "FAILED",
+            "usage": {},
+            "error_code": "PROVIDER_HTTP_429"
+          },
+          {
+            "attempt": 1,
+            "role": "main",
+            "stage": "final",
+            "status": "STARTED"
+          },
+          {
+            "attempt": 1,
+            "role": "main",
+            "stage": "final",
+            "status": "FAILED",
+            "usage": {},
+            "error_code": "PROVIDER_HTTP_429"
+          }
+        ],
+        "elapsed_seconds": 20.44214259996079,
+        "provider_failure": {
+          "http_status": 429,
+          "provider_code": "rate_limit_exceeded",
+          "quota_window": "TOKENS_DAILY",
+          "quota_counts": {
+            "limit": 200000,
+            "used": 199860,
+            "requested": 1574
+          },
+          "retry_after_seconds": 620.0
+        },
+        "citations_resolved": true
+      },
+      {
+        "case": "correct_fact",
+        "frozen_sha256": "049e9c49591a60f5421bdcca69d5c3b144c02f33f2e2ce558819ec5b883c5e9a",
+        "appendix_supplied": true,
+        "arm": "off",
+        "status": "OBSERVED",
+        "failure_type": null,
+        "score": {
+          "initial_input_hash_equal": true,
+          "known_fact_retained": true,
+          "known_fact_omitted": false,
+          "mechanical_exception_quote_corrected": null,
+          "scorer_version": "2.0",
+          "known_fact_retention_loss_vs_off": null,
+          "mechanical_false_veto_vs_off": null,
+          "changed_evidence_ids": [],
+          "mechanical_false_objections": 0,
+          "mechanical_invalid_associations_detected": [],
+          "inventory_attested": false,
+          "unadjudicated_semantic_correction": null,
+          "unadjudicated_semantic_false_veto": null,
+          "verification_failure_count": 1
+        },
+        "main_calls": 1,
+        "critic_calls": 0,
+        "counter_searches": 0,
+        "tools_used": 0,
+        "attempts": [
+          {
+            "attempt": 1,
+            "role": "main",
+            "stage": "final",
+            "status": "STARTED"
+          },
+          {
+            "attempt": 1,
+            "role": "main",
+            "stage": "final",
+            "status": "FAILED",
+            "usage": {},
+            "error_code": "PROVIDER_HTTP_429"
+          }
+        ],
+        "elapsed_seconds": 2.030449200014118,
+        "provider_failure": {
+          "http_status": 429,
+          "provider_code": "rate_limit_exceeded",
+          "quota_window": "TOKENS_DAILY",
+          "quota_counts": {
+            "limit": 200000,
+            "used": 199516,
+            "requested": 1707
+          },
+          "retry_after_seconds": 529.0
+        },
+        "citations_resolved": true
+      },
+      {
+        "case": "correct_fact",
+        "frozen_sha256": "049e9c49591a60f5421bdcca69d5c3b144c02f33f2e2ce558819ec5b883c5e9a",
+        "appendix_supplied": true,
+        "arm": "fixed_context",
+        "status": "OBSERVED",
+        "failure_type": null,
+        "score": {
+          "initial_input_hash_equal": true,
+          "known_fact_retained": true,
+          "known_fact_omitted": false,
+          "mechanical_exception_quote_corrected": null,
+          "scorer_version": "2.0",
+          "known_fact_retention_loss_vs_off": false,
+          "mechanical_false_veto_vs_off": null,
+          "changed_evidence_ids": [],
+          "mechanical_false_objections": 0,
+          "mechanical_invalid_associations_detected": [],
+          "inventory_attested": false,
+          "unadjudicated_semantic_correction": null,
+          "unadjudicated_semantic_false_veto": null,
+          "verification_failure_count": 1
+        },
+        "main_calls": 1,
+        "critic_calls": 1,
+        "counter_searches": 0,
+        "tools_used": 0,
+        "attempts": [
+          {
+            "role": "critic",
+            "stage": "review",
+            "attempt": 1,
+            "status": "STARTED"
+          },
+          {
+            "role": "critic",
+            "stage": "review",
+            "attempt": 1,
+            "status": "FAILED",
+            "usage": {},
+            "error_code": "PROVIDER_HTTP_429"
+          },
+          {
+            "attempt": 1,
+            "role": "main",
+            "stage": "final",
+            "status": "STARTED"
+          },
+          {
+            "attempt": 1,
+            "role": "main",
+            "stage": "final",
+            "status": "FAILED",
+            "usage": {},
+            "error_code": "PROVIDER_HTTP_429"
+          }
+        ],
+        "elapsed_seconds": 10.339514700055588,
+        "provider_failure": {
+          "http_status": 429,
+          "provider_code": "rate_limit_exceeded",
+          "quota_window": "TOKENS_DAILY",
+          "quota_counts": {
+            "limit": 200000,
+            "used": 199353,
+            "requested": 1702
+          },
+          "retry_after_seconds": 456.0
+        },
+        "citations_resolved": true
+      },
+      {
+        "case": "correct_fact",
+        "frozen_sha256": "049e9c49591a60f5421bdcca69d5c3b144c02f33f2e2ce558819ec5b883c5e9a",
+        "appendix_supplied": true,
+        "arm": "counter_search",
+        "status": "OBSERVED",
+        "failure_type": null,
+        "score": {
+          "initial_input_hash_equal": true,
+          "known_fact_retained": true,
+          "known_fact_omitted": false,
+          "mechanical_exception_quote_corrected": null,
+          "scorer_version": "2.0",
+          "known_fact_retention_loss_vs_off": false,
+          "mechanical_false_veto_vs_off": null,
+          "changed_evidence_ids": [],
+          "mechanical_false_objections": 0,
+          "mechanical_invalid_associations_detected": [],
+          "inventory_attested": false,
+          "unadjudicated_semantic_correction": null,
+          "unadjudicated_semantic_false_veto": null,
+          "verification_failure_count": 1
+        },
+        "main_calls": 1,
+        "critic_calls": 1,
+        "counter_searches": 0,
+        "tools_used": 0,
+        "attempts": [
+          {
+            "role": "critic",
+            "stage": "review",
+            "attempt": 1,
+            "status": "STARTED"
+          },
+          {
+            "role": "critic",
+            "stage": "review",
+            "attempt": 1,
+            "status": "FAILED",
+            "usage": {},
+            "error_code": "PROVIDER_HTTP_429"
+          },
+          {
+            "attempt": 1,
+            "role": "main",
+            "stage": "final",
+            "status": "STARTED"
+          },
+          {
+            "attempt": 1,
+            "role": "main",
+            "stage": "final",
+            "status": "FAILED",
+            "usage": {},
+            "error_code": "PROVIDER_HTTP_429"
+          }
+        ],
+        "elapsed_seconds": 10.312965899996925,
+        "provider_failure": {
+          "http_status": 429,
+          "provider_code": "rate_limit_exceeded",
+          "quota_window": "TOKENS_DAILY",
+          "quota_counts": {
+            "limit": 200000,
+            "used": 199190,
+            "requested": 1724
+          },
+          "retry_after_seconds": 395.0
+        },
+        "citations_resolved": true
+      },
+      {
+        "case": "correct_fact",
+        "frozen_sha256": "049e9c49591a60f5421bdcca69d5c3b144c02f33f2e2ce558819ec5b883c5e9a",
+        "appendix_supplied": true,
+        "arm": "blind_requirements",
+        "status": "OBSERVED",
+        "failure_type": null,
+        "score": {
+          "initial_input_hash_equal": true,
+          "known_fact_retained": true,
+          "known_fact_omitted": false,
+          "mechanical_exception_quote_corrected": null,
+          "scorer_version": "2.0",
+          "known_fact_retention_loss_vs_off": false,
+          "mechanical_false_veto_vs_off": null,
+          "changed_evidence_ids": [],
+          "mechanical_false_objections": 0,
+          "mechanical_invalid_associations_detected": [],
+          "inventory_attested": false,
+          "unadjudicated_semantic_correction": null,
+          "unadjudicated_semantic_false_veto": null,
+          "verification_failure_count": 1
+        },
+        "main_calls": 1,
+        "critic_calls": 1,
+        "counter_searches": 0,
+        "tools_used": 0,
+        "attempts": [
+          {
+            "role": "critic",
+            "stage": "review",
+            "attempt": 1,
+            "status": "STARTED"
+          },
+          {
+            "role": "critic",
+            "stage": "review",
+            "attempt": 1,
+            "status": "FAILED",
+            "usage": {},
+            "error_code": "PROVIDER_HTTP_429"
+          },
+          {
+            "attempt": 1,
+            "role": "main",
+            "stage": "final",
+            "status": "STARTED"
+          },
+          {
+            "attempt": 1,
+            "role": "main",
+            "stage": "final",
+            "status": "FAILED",
+            "usage": {},
+            "error_code": "PROVIDER_HTTP_429"
+          }
+        ],
+        "elapsed_seconds": 10.46012730000075,
+        "provider_failure": {
+          "http_status": 429,
+          "provider_code": "rate_limit_exceeded",
+          "quota_window": "TOKENS_DAILY",
+          "quota_counts": {
+            "limit": 200000,
+            "used": 199026,
+            "requested": 1670
+          },
+          "retry_after_seconds": 301.0
+        },
+        "citations_resolved": true
+      },
+      {
+        "case": "missing_inputs",
+        "frozen_sha256": "31a4a47579a1a3ff49e0e7bc2172b6ea922cb5e936ea948edf19b0431a4fcdcc",
+        "appendix_supplied": true,
+        "arm": "off",
+        "status": "OBSERVED",
+        "failure_type": null,
+        "score": {
+          "initial_input_hash_equal": true,
+          "known_fact_retained": true,
+          "known_fact_omitted": false,
+          "mechanical_exception_quote_corrected": null,
+          "scorer_version": "2.0",
+          "known_fact_retention_loss_vs_off": null,
+          "mechanical_false_veto_vs_off": null,
+          "changed_evidence_ids": [],
+          "mechanical_false_objections": 0,
+          "mechanical_invalid_associations_detected": [],
+          "inventory_attested": false,
+          "unadjudicated_semantic_correction": null,
+          "unadjudicated_semantic_false_veto": null,
+          "verification_failure_count": 1
+        },
+        "main_calls": 1,
+        "critic_calls": 0,
+        "counter_searches": 0,
+        "tools_used": 0,
+        "attempts": [
+          {
+            "attempt": 1,
+            "role": "main",
+            "stage": "final",
+            "status": "STARTED"
+          },
+          {
+            "attempt": 1,
+            "role": "main",
+            "stage": "final",
+            "status": "FAILED",
+            "usage": {},
+            "error_code": "PROVIDER_HTTP_429"
+          }
+        ],
+        "elapsed_seconds": 0.4492943999939598,
+        "provider_failure": {
+          "http_status": 429,
+          "provider_code": "rate_limit_exceeded",
+          "quota_window": "TOKENS_DAILY",
+          "quota_counts": {
+            "limit": 200000,
+            "used": 198875,
+            "requested": 2145
+          },
+          "retry_after_seconds": 441.0
+        },
+        "citations_resolved": true
+      },
+      {
+        "case": "missing_inputs",
+        "frozen_sha256": "31a4a47579a1a3ff49e0e7bc2172b6ea922cb5e936ea948edf19b0431a4fcdcc",
+        "appendix_supplied": true,
+        "arm": "fixed_context",
+        "status": "OBSERVED",
+        "failure_type": null,
+        "score": {
+          "initial_input_hash_equal": true,
+          "known_fact_retained": true,
+          "known_fact_omitted": false,
+          "mechanical_exception_quote_corrected": null,
+          "scorer_version": "2.0",
+          "known_fact_retention_loss_vs_off": false,
+          "mechanical_false_veto_vs_off": null,
+          "changed_evidence_ids": [],
+          "mechanical_false_objections": 0,
+          "mechanical_invalid_associations_detected": [],
+          "inventory_attested": false,
+          "unadjudicated_semantic_correction": null,
+          "unadjudicated_semantic_false_veto": null,
+          "verification_failure_count": 1
+        },
+        "main_calls": 1,
+        "critic_calls": 1,
+        "counter_searches": 0,
+        "tools_used": 0,
+        "attempts": [
+          {
+            "role": "critic",
+            "stage": "review",
+            "attempt": 1,
+            "status": "STARTED"
+          },
+          {
+            "role": "critic",
+            "stage": "review",
+            "attempt": 1,
+            "status": "FAILED",
+            "usage": {},
+            "error_code": "PROVIDER_HTTP_429"
+          },
+          {
+            "attempt": 1,
+            "role": "main",
+            "stage": "final",
+            "status": "STARTED"
+          },
+          {
+            "attempt": 1,
+            "role": "main",
+            "stage": "final",
+            "status": "FAILED",
+            "usage": {},
+            "error_code": "PROVIDER_HTTP_429"
+          }
+        ],
+        "elapsed_seconds": 10.470493100001477,
+        "provider_failure": {
+          "http_status": 429,
+          "provider_code": "rate_limit_exceeded",
+          "quota_window": "TOKENS_DAILY",
+          "quota_counts": {
+            "limit": 200000,
+            "used": 198712,
+            "requested": 2250
+          },
+          "retry_after_seconds": 416.0
+        },
+        "citations_resolved": true
+      },
+      {
+        "case": "missing_inputs",
+        "frozen_sha256": "31a4a47579a1a3ff49e0e7bc2172b6ea922cb5e936ea948edf19b0431a4fcdcc",
+        "appendix_supplied": true,
+        "arm": "counter_search",
+        "status": "OBSERVED",
+        "failure_type": null,
+        "score": {
+          "initial_input_hash_equal": true,
+          "known_fact_retained": true,
+          "known_fact_omitted": false,
+          "mechanical_exception_quote_corrected": null,
+          "scorer_version": "2.0",
+          "known_fact_retention_loss_vs_off": false,
+          "mechanical_false_veto_vs_off": null,
+          "changed_evidence_ids": [],
+          "mechanical_false_objections": 0,
+          "mechanical_invalid_associations_detected": [],
+          "inventory_attested": false,
+          "unadjudicated_semantic_correction": null,
+          "unadjudicated_semantic_false_veto": null,
+          "verification_failure_count": 1
+        },
+        "main_calls": 1,
+        "critic_calls": 1,
+        "counter_searches": 0,
+        "tools_used": 0,
+        "attempts": [
+          {
+            "role": "critic",
+            "stage": "review",
+            "attempt": 1,
+            "status": "STARTED"
+          },
+          {
+            "role": "critic",
+            "stage": "review",
+            "attempt": 1,
+            "status": "FAILED",
+            "usage": {},
+            "error_code": "PROVIDER_HTTP_429"
+          },
+          {
+            "attempt": 1,
+            "role": "main",
+            "stage": "final",
+            "status": "STARTED"
+          },
+          {
+            "attempt": 1,
+            "role": "main",
+            "stage": "final",
+            "status": "FAILED",
+            "usage": {},
+            "error_code": "PROVIDER_HTTP_429"
+          }
+        ],
+        "elapsed_seconds": 10.283738299971446,
+        "provider_failure": {
+          "http_status": 429,
+          "provider_code": "rate_limit_exceeded",
+          "quota_window": "TOKENS_DAILY",
+          "quota_counts": {
+            "limit": 200000,
+            "used": 198549,
+            "requested": 2384
+          },
+          "retry_after_seconds": 404.0
+        },
+        "citations_resolved": true
+      },
+      {
+        "case": "missing_inputs",
+        "frozen_sha256": "31a4a47579a1a3ff49e0e7bc2172b6ea922cb5e936ea948edf19b0431a4fcdcc",
+        "appendix_supplied": true,
+        "arm": "blind_requirements",
+        "status": "OBSERVED",
+        "failure_type": null,
+        "score": {
+          "initial_input_hash_equal": true,
+          "known_fact_retained": true,
+          "known_fact_omitted": false,
+          "mechanical_exception_quote_corrected": null,
+          "scorer_version": "2.0",
+          "known_fact_retention_loss_vs_off": false,
+          "mechanical_false_veto_vs_off": null,
+          "changed_evidence_ids": [],
+          "mechanical_false_objections": 0,
+          "mechanical_invalid_associations_detected": [],
+          "inventory_attested": false,
+          "unadjudicated_semantic_correction": null,
+          "unadjudicated_semantic_false_veto": null,
+          "verification_failure_count": 1
+        },
+        "main_calls": 1,
+        "critic_calls": 1,
+        "counter_searches": 0,
+        "tools_used": 0,
+        "attempts": [
+          {
+            "role": "critic",
+            "stage": "review",
+            "attempt": 1,
+            "status": "STARTED"
+          },
+          {
+            "role": "critic",
+            "stage": "review",
+            "attempt": 1,
+            "status": "FAILED",
+            "usage": {},
+            "error_code": "PROVIDER_HTTP_429"
+          },
+          {
+            "attempt": 1,
+            "role": "main",
+            "stage": "final",
+            "status": "STARTED"
+          },
+          {
+            "attempt": 1,
+            "role": "main",
+            "stage": "final",
+            "status": "FAILED",
+            "usage": {},
+            "error_code": "PROVIDER_HTTP_429"
+          }
+        ],
+        "elapsed_seconds": 10.975776600011159,
+        "provider_failure": {
+          "http_status": 429,
+          "provider_code": "rate_limit_exceeded",
+          "quota_window": "TOKENS_DAILY",
+          "quota_counts": {
+            "limit": 200000,
+            "used": 198385,
+            "requested": 2250
+          },
+          "retry_after_seconds": 275.0
+        },
+        "citations_resolved": true
+      },
+      {
+        "case": "withheld_appendix",
+        "frozen_sha256": "c80454ac50c1e26a500f41c945047e95d35359a7b4877da0f27cae3464b63f12",
+        "appendix_supplied": false,
+        "arm": "off",
+        "status": "OBSERVED",
+        "failure_type": null,
+        "score": {
+          "initial_input_hash_equal": true,
+          "known_fact_retained": true,
+          "known_fact_omitted": false,
+          "mechanical_exception_quote_corrected": null,
+          "scorer_version": "2.0",
+          "known_fact_retention_loss_vs_off": null,
+          "mechanical_false_veto_vs_off": null,
+          "changed_evidence_ids": [],
+          "mechanical_false_objections": 0,
+          "mechanical_invalid_associations_detected": [],
+          "inventory_attested": false,
+          "unadjudicated_semantic_correction": null,
+          "unadjudicated_semantic_false_veto": null,
+          "verification_failure_count": 1
+        },
+        "main_calls": 1,
+        "critic_calls": 0,
+        "counter_searches": 0,
+        "tools_used": 0,
+        "attempts": [
+          {
+            "attempt": 1,
+            "role": "main",
+            "stage": "final",
+            "status": "STARTED"
+          },
+          {
+            "attempt": 1,
+            "role": "main",
+            "stage": "final",
+            "status": "RECEIVED",
+            "usage": {
+              "prompt_tokens": 1309,
+              "completion_tokens": 395,
+              "total_tokens": 1704
+            },
+            "error_code": null
+          },
+          {
+            "attempt": 1,
+            "role": "main",
+            "stage": "final",
+            "status": "SCHEMA_INVALID"
+          }
+        ],
+        "elapsed_seconds": 1.0306724999682046,
+        "provider_failure": null,
+        "citations_resolved": true
+      },
+      {
+        "case": "withheld_appendix",
+        "frozen_sha256": "c80454ac50c1e26a500f41c945047e95d35359a7b4877da0f27cae3464b63f12",
+        "appendix_supplied": false,
+        "arm": "fixed_context",
+        "status": "OBSERVED",
+        "failure_type": null,
+        "score": {
+          "initial_input_hash_equal": true,
+          "known_fact_retained": true,
+          "known_fact_omitted": false,
+          "mechanical_exception_quote_corrected": null,
+          "scorer_version": "2.0",
+          "known_fact_retention_loss_vs_off": false,
+          "mechanical_false_veto_vs_off": null,
+          "changed_evidence_ids": [],
+          "mechanical_false_objections": 0,
+          "mechanical_invalid_associations_detected": [],
+          "inventory_attested": false,
+          "unadjudicated_semantic_correction": null,
+          "unadjudicated_semantic_false_veto": null,
+          "verification_failure_count": 1
+        },
+        "main_calls": 1,
+        "critic_calls": 1,
+        "counter_searches": 0,
+        "tools_used": 0,
+        "attempts": [
+          {
+            "role": "critic",
+            "stage": "review",
+            "attempt": 1,
+            "status": "STARTED"
+          },
+          {
+            "role": "critic",
+            "stage": "review",
+            "attempt": 1,
+            "status": "FAILED",
+            "usage": {},
+            "error_code": "PROVIDER_HTTP_429"
+          },
+          {
+            "attempt": 1,
+            "role": "main",
+            "stage": "final",
+            "status": "STARTED"
+          },
+          {
+            "attempt": 1,
+            "role": "main",
+            "stage": "final",
+            "status": "FAILED",
+            "usage": {},
+            "error_code": "PROVIDER_HTTP_429"
+          }
+        ],
+        "elapsed_seconds": 10.402886199997738,
+        "provider_failure": {
+          "http_status": 429,
+          "provider_code": "rate_limit_exceeded",
+          "quota_window": "TOKENS_DAILY",
+          "quota_counts": {
+            "limit": 200000,
+            "used": 199775,
+            "requested": 1584
+          },
+          "retry_after_seconds": 588.0
+        },
+        "citations_resolved": true
+      },
+      {
+        "case": "withheld_appendix",
+        "frozen_sha256": "c80454ac50c1e26a500f41c945047e95d35359a7b4877da0f27cae3464b63f12",
+        "appendix_supplied": false,
+        "arm": "counter_search",
+        "status": "OBSERVED",
+        "failure_type": null,
+        "score": {
+          "initial_input_hash_equal": true,
+          "known_fact_retained": true,
+          "known_fact_omitted": false,
+          "mechanical_exception_quote_corrected": null,
+          "scorer_version": "2.0",
+          "known_fact_retention_loss_vs_off": false,
+          "mechanical_false_veto_vs_off": null,
+          "changed_evidence_ids": [],
+          "mechanical_false_objections": 0,
+          "mechanical_invalid_associations_detected": [],
+          "inventory_attested": false,
+          "unadjudicated_semantic_correction": null,
+          "unadjudicated_semantic_false_veto": null,
+          "verification_failure_count": 1
+        },
+        "main_calls": 1,
+        "critic_calls": 1,
+        "counter_searches": 0,
+        "tools_used": 0,
+        "attempts": [
+          {
+            "role": "critic",
+            "stage": "review",
+            "attempt": 1,
+            "status": "STARTED"
+          },
+          {
+            "role": "critic",
+            "stage": "review",
+            "attempt": 1,
+            "status": "FAILED",
+            "usage": {},
+            "error_code": "PROVIDER_HTTP_429"
+          },
+          {
+            "attempt": 1,
+            "role": "main",
+            "stage": "final",
+            "status": "STARTED"
+          },
+          {
+            "attempt": 1,
+            "role": "main",
+            "stage": "final",
+            "status": "FAILED",
+            "usage": {},
+            "error_code": "PROVIDER_HTTP_429"
+          }
+        ],
+        "elapsed_seconds": 10.399267699976917,
+        "provider_failure": {
+          "http_status": 429,
+          "provider_code": "rate_limit_exceeded",
+          "quota_window": "TOKENS_DAILY",
+          "quota_counts": {
+            "limit": 200000,
+            "used": 199606,
+            "requested": 1750
+          },
+          "retry_after_seconds": 586.0
+        },
+        "citations_resolved": true
+      },
+      {
+        "case": "withheld_appendix",
+        "frozen_sha256": "c80454ac50c1e26a500f41c945047e95d35359a7b4877da0f27cae3464b63f12",
+        "appendix_supplied": false,
+        "arm": "blind_requirements",
+        "status": "OBSERVED",
+        "failure_type": null,
+        "score": {
+          "initial_input_hash_equal": true,
+          "known_fact_retained": true,
+          "known_fact_omitted": false,
+          "mechanical_exception_quote_corrected": null,
+          "scorer_version": "2.0",
+          "known_fact_retention_loss_vs_off": false,
+          "mechanical_false_veto_vs_off": null,
+          "changed_evidence_ids": [],
+          "mechanical_false_objections": 0,
+          "mechanical_invalid_associations_detected": [],
+          "inventory_attested": false,
+          "unadjudicated_semantic_correction": null,
+          "unadjudicated_semantic_false_veto": null,
+          "verification_failure_count": 1
+        },
+        "main_calls": 1,
+        "critic_calls": 1,
+        "counter_searches": 0,
+        "tools_used": 0,
+        "attempts": [
+          {
+            "role": "critic",
+            "stage": "review",
+            "attempt": 1,
+            "status": "STARTED"
+          },
+          {
+            "role": "critic",
+            "stage": "review",
+            "attempt": 1,
+            "status": "FAILED",
+            "usage": {},
+            "error_code": "PROVIDER_HTTP_429"
+          },
+          {
+            "attempt": 1,
+            "role": "main",
+            "stage": "final",
+            "status": "STARTED"
+          },
+          {
+            "attempt": 1,
+            "role": "main",
+            "stage": "final",
+            "status": "FAILED",
+            "usage": {},
+            "error_code": "PROVIDER_HTTP_429"
+          }
+        ],
+        "elapsed_seconds": 10.291912199987564,
+        "provider_failure": {
+          "http_status": 429,
+          "provider_code": "rate_limit_exceeded",
+          "quota_window": "TOKENS_DAILY",
+          "quota_counts": {
+            "limit": 200000,
+            "used": 199449,
+            "requested": 1560
+          },
+          "retry_after_seconds": 436.0
+        },
+        "citations_resolved": true
+      }
+    ],
+    "accounting": {
+      "started_calls": 30,
+      "started_by_role": {
+        "main": 16,
+        "critic": 14
+      },
+      "status_event_counts": {
+        "STARTED": 30,
+        "RECEIVED": 3,
+        "SCHEMA_INVALID": 3,
+        "FAILED": 25
+      },
+      "known_received_tokens": 8077,
+      "note": "Status events may include validation annotations on the same invocation; do not sum them as calls. Failed billing is unknown."
+    },
+    "runtime": {
+      "http_status": 200,
+      "response": {
+        "case_id": "case-42",
+        "session_id": "sess_3228d2cfb1c7420ca363ef77d8a366b1",
+        "trace_id": "trace_ad8c6c65f81d40b7a54279cd550e6496",
+        "disposition": "VERIFICATION_UNAVAILABLE",
+        "answer": "Required verification could not complete; no operational instruction is established.",
+        "verified_claims": [],
+        "hypotheses": [],
+        "missing_requirements": [],
+        "requirement_origins": {},
+        "citations": [],
+        "tool_status": {},
+        "searched_scope": "No source search was performed.",
+        "inventory_attested": false,
+        "review_status": "UNAVAILABLE",
+        "next_steps": [
+          "Obtain missing scoped evidence or request authorized human review."
+        ],
+        "budget": {
+          "main_used": 2,
+          "main_max": 5,
+          "tools_used": 0,
+          "tool_max": 8,
+          "critic_used": 1,
+          "critic_max": 3,
+          "prefetch_used": 0,
+          "critic_search_used": 0,
+          "adapter_attempt_max_per_lookup": 2
+        },
+        "verification_failures": [
+          "PROVIDER_HTTP_429"
+        ]
+      },
+      "citations_resolved": true,
+      "timeline": [
+        {
+          "event_id": "evt_9f1e87cb24374f51908e8faf6736161f",
+          "kind": "RUNTIME_TOOL_RESULT",
+          "at": "2026-10-19T17:41:35.105225Z",
+          "trace_id": "trace_6a3d28e08e544352b25066396a43cf33",
+          "status": "SUCCEEDED",
+          "main_used": null,
+          "review_status": null,
+          "critic_used": null,
+          "critic_search_used": null
+        },
+        {
+          "event_id": "evt_fdcc3c7fcafb484989ce594164675625",
+          "kind": "RUNTIME_REQUEST",
+          "at": "2026-10-19T17:47:28.048537Z",
+          "trace_id": "trace_ad8c6c65f81d40b7a54279cd550e6496",
+          "status": null,
+          "main_used": null,
+          "review_status": null,
+          "critic_used": null,
+          "critic_search_used": null
+        },
+        {
+          "event_id": "evt_1ed72200b1f6483f97c61aae9b6ccb85",
+          "kind": "RUNTIME_ATTEMPT",
+          "at": "2026-10-19T17:47:28.065319Z",
+          "trace_id": "trace_ad8c6c65f81d40b7a54279cd550e6496",
+          "status": "STARTED",
+          "main_used": null,
+          "review_status": null,
+          "critic_used": null,
+          "critic_search_used": null
+        },
+        {
+          "event_id": "evt_5b1910a96e75451c8174fdfb91295587",
+          "kind": "RUNTIME_ATTEMPT",
+          "at": "2026-10-19T17:47:28.260490Z",
+          "trace_id": "trace_ad8c6c65f81d40b7a54279cd550e6496",
+          "status": "FAILED",
+          "main_used": null,
+          "review_status": null,
+          "critic_used": null,
+          "critic_search_used": null
+        },
+        {
+          "event_id": "evt_f6143105a4d64e0c8faca36a03396d42",
+          "kind": "RUNTIME_ATTEMPT",
+          "at": "2026-10-19T17:47:28.272626Z",
+          "trace_id": "trace_ad8c6c65f81d40b7a54279cd550e6496",
+          "status": "STARTED",
+          "main_used": null,
+          "review_status": null,
+          "critic_used": null,
+          "critic_search_used": null
+        },
+        {
+          "event_id": "evt_6239e7b3fc8140648919d9ed92ffe9cf",
+          "kind": "RUNTIME_ATTEMPT",
+          "at": "2026-10-19T17:47:38.371832Z",
+          "trace_id": "trace_ad8c6c65f81d40b7a54279cd550e6496",
+          "status": "FAILED",
+          "main_used": null,
+          "review_status": null,
+          "critic_used": null,
+          "critic_search_used": null
+        },
+        {
+          "event_id": "evt_cb654c36d9d84a05b29078519c9b0624",
+          "kind": "RUNTIME_ATTEMPT",
+          "at": "2026-10-19T17:47:38.374856Z",
+          "trace_id": "trace_ad8c6c65f81d40b7a54279cd550e6496",
+          "status": "STARTED",
+          "main_used": null,
+          "review_status": null,
+          "critic_used": null,
+          "critic_search_used": null
+        },
+        {
+          "event_id": "evt_bb65a4991df345508f45433c55fb5b89",
+          "kind": "RUNTIME_ATTEMPT",
+          "at": "2026-10-19T17:47:48.299103Z",
+          "trace_id": "trace_ad8c6c65f81d40b7a54279cd550e6496",
+          "status": "FAILED",
+          "main_used": null,
+          "review_status": null,
+          "critic_used": null,
+          "critic_search_used": null
+        },
+        {
+          "event_id": "evt_cf228809260b420884ee83464398709a",
+          "kind": "RUNTIME_RELEASE",
+          "at": "2026-10-19T17:47:48.308819Z",
+          "trace_id": "trace_ad8c6c65f81d40b7a54279cd550e6496",
+          "status": "VERIFICATION_UNAVAILABLE",
+          "main_used": null,
+          "review_status": "UNAVAILABLE",
+          "critic_used": 1,
+          "critic_search_used": 0
+        }
+      ],
+      "exception_quote_released": false,
+      "attempts": [
+        {
+          "attempt": 1,
+          "role": "main",
+          "stage": "investigate",
+          "status": "STARTED"
+        },
+        {
+          "attempt": 1,
+          "role": "main",
+          "stage": "investigate",
+          "status": "FAILED",
+          "usage": {},
+          "error_code": "PROVIDER_HTTP_429"
+        },
+        {
+          "role": "critic",
+          "stage": "review",
+          "attempt": 1,
+          "status": "STARTED"
+        },
+        {
+          "role": "critic",
+          "stage": "review",
+          "attempt": 1,
+          "status": "FAILED",
+          "usage": {},
+          "error_code": "PROVIDER_HTTP_429"
+        },
+        {
+          "attempt": 2,
+          "role": "main",
+          "stage": "final",
+          "status": "STARTED"
+        },
+        {
+          "attempt": 2,
+          "role": "main",
+          "stage": "final",
+          "status": "FAILED",
+          "usage": {},
+          "error_code": "PROVIDER_HTTP_429"
+        }
+      ],
+      "provider_failure": {
+        "http_status": 429,
+        "provider_code": "rate_limit_exceeded",
+        "quota_window": "TOKENS_DAILY",
+        "quota_counts": {
+          "limit": 200000,
+          "used": 199674,
+          "requested": 1005
+        },
+        "retry_after_seconds": 294.0
+      },
+      "rate_limits": {
+        "limit-requests": 1000,
+        "remaining-requests": 979,
+        "limit-tokens": 8000,
+        "remaining-tokens": 8000,
+        "reset-requests": "30m14.4s",
+        "reset-tokens": "1ms",
+        "retry-after": "294"
+      }
+    },
+    "limits": "Mechanical known-fact retention includes deterministic fallbacks. Quota/schema failures remain. Not critic efficacy."
+  },
+  "continuity": {
+    "raw_artifact": "p05-b55c4c1197d646f299746de55263886f.json",
+    "sha256": "cd828d4f9aea8b891db8759eed726b1cbafd760e4bfd4f5b45dc37e6f7a45706",
+    "model": "openai/gpt-oss-120b",
+    "critic_held_constant": true,
+    "script_sha256": "1c90793594c1c0778d1c22be06894d54130ea44ca63b9c6f84c2ef37ed4043c3",
+    "all_conditions_observed": true,
+    "conditions": [
+      {
+        "arm": "B4",
+        "memory_enabled": false,
+        "packet_max_chars": 6000,
+        "packet_characters": 611,
+        "http_status": 200,
+        "score": {
+          "required_gap_count": 1,
+          "packet_omitted_gaps": [
+            "settlement_state"
+          ],
+          "answer_omitted_gaps": [],
+          "packet_gap_recall": 0.0,
+          "answer_gap_recall": 1.0,
+          "stale_claim_count": 0,
+          "current_observation_released": true,
+          "completion": false
+        },
+        "citations_resolved": true,
+        "attempts": [
+          {
+            "attempt": 1,
+            "role": "main",
+            "stage": "investigate",
+            "status": "STARTED"
+          },
+          {
+            "attempt": 1,
+            "role": "main",
+            "stage": "investigate",
+            "status": "RECEIVED",
+            "usage": {
+              "prompt_tokens": 1051,
+              "completion_tokens": 86,
+              "total_tokens": 1137
+            },
+            "error_code": null
+          },
+          {
+            "attempt": 2,
+            "role": "main",
+            "stage": "investigate",
+            "status": "STARTED"
+          },
+          {
+            "attempt": 2,
+            "role": "main",
+            "stage": "investigate",
+            "status": "RECEIVED",
+            "usage": {
+              "prompt_tokens": 1307,
+              "completion_tokens": 82,
+              "total_tokens": 1389
+            },
+            "error_code": null
+          },
+          {
+            "attempt": 3,
+            "role": "main",
+            "stage": "investigate",
+            "status": "STARTED"
+          },
+          {
+            "attempt": 3,
+            "role": "main",
+            "stage": "investigate",
+            "status": "FAILED",
+            "usage": {},
+            "error_code": "PROVIDER_HTTP_400"
+          },
+          {
+            "role": "critic",
+            "stage": "review",
+            "attempt": 1,
+            "status": "STARTED"
+          },
+          {
+            "role": "critic",
+            "stage": "review",
+            "attempt": 1,
+            "status": "RECEIVED",
+            "usage": {
+              "prompt_tokens": 1920,
+              "completion_tokens": 339,
+              "total_tokens": 2259
+            },
+            "error_code": null
+          },
+          {
+            "attempt": 4,
+            "role": "main",
+            "stage": "final",
+            "status": "STARTED"
+          },
+          {
+            "attempt": 4,
+            "role": "main",
+            "stage": "final",
+            "status": "RECEIVED",
+            "usage": {
+              "prompt_tokens": 1748,
+              "completion_tokens": 235,
+              "total_tokens": 1983
+            },
+            "error_code": null
+          }
+        ],
+        "elapsed_seconds": 41.933387400000356,
+        "last_provider_failure": {
+          "http_status": 400,
+          "provider_code": "tool_use_failed",
+          "quota_window": "UNKNOWN",
+          "quota_counts": {},
+          "retry_after_seconds": null
+        }
+      },
+      {
+        "arm": "B5",
+        "memory_enabled": true,
+        "packet_max_chars": 6000,
+        "packet_characters": 4231,
+        "http_status": 200,
+        "score": {
+          "required_gap_count": 1,
+          "packet_omitted_gaps": [],
+          "answer_omitted_gaps": [
+            "settlement_state"
+          ],
+          "packet_gap_recall": 1.0,
+          "answer_gap_recall": 0.0,
+          "stale_claim_count": 0,
+          "current_observation_released": true,
+          "completion": false
+        },
+        "citations_resolved": true,
+        "attempts": [
+          {
+            "attempt": 1,
+            "role": "main",
+            "stage": "investigate",
+            "status": "STARTED"
+          },
+          {
+            "attempt": 1,
+            "role": "main",
+            "stage": "investigate",
+            "status": "RECEIVED",
+            "usage": {
+              "prompt_tokens": 1895,
+              "completion_tokens": 77,
+              "total_tokens": 1972
+            },
+            "error_code": null
+          },
+          {
+            "attempt": 2,
+            "role": "main",
+            "stage": "investigate",
+            "status": "STARTED"
+          },
+          {
+            "attempt": 2,
+            "role": "main",
+            "stage": "investigate",
+            "status": "FAILED",
+            "usage": {},
+            "error_code": "PROVIDER_HTTP_400"
+          },
+          {
+            "role": "critic",
+            "stage": "review",
+            "attempt": 1,
+            "status": "STARTED"
+          },
+          {
+            "role": "critic",
+            "stage": "review",
+            "attempt": 1,
+            "status": "SCHEMA_INVALID",
+            "usage": {
+              "prompt_tokens": 2410,
+              "completion_tokens": 255,
+              "total_tokens": 2665
+            },
+            "error_code": "CRITIC_SCHEMA_OR_GROUNDING_FAILURE"
+          },
+          {
+            "role": "critic",
+            "stage": "review",
+            "attempt": 2,
+            "status": "STARTED"
+          },
+          {
+            "role": "critic",
+            "stage": "review",
+            "attempt": 2,
+            "status": "SCHEMA_INVALID",
+            "usage": {
+              "prompt_tokens": 2427,
+              "completion_tokens": 280,
+              "total_tokens": 2707
+            },
+            "error_code": "CRITIC_SCHEMA_OR_GROUNDING_FAILURE"
+          },
+          {
+            "attempt": 3,
+            "role": "main",
+            "stage": "final",
+            "status": "STARTED"
+          },
+          {
+            "attempt": 3,
+            "role": "main",
+            "stage": "final",
+            "status": "RECEIVED",
+            "usage": {
+              "prompt_tokens": 1021,
+              "completion_tokens": 302,
+              "total_tokens": 1323
+            },
+            "error_code": null
+          }
+        ],
+        "elapsed_seconds": 41.851938999956474,
+        "last_provider_failure": {
+          "http_status": 400,
+          "provider_code": "tool_use_failed",
+          "quota_window": "UNKNOWN",
+          "quota_counts": {},
+          "retry_after_seconds": null
+        }
+      },
+      {
+        "arm": "B5-compressed",
+        "memory_enabled": true,
+        "packet_max_chars": 1500,
+        "packet_characters": 1310,
+        "http_status": 200,
+        "score": {
+          "required_gap_count": 1,
+          "packet_omitted_gaps": [],
+          "answer_omitted_gaps": [],
+          "packet_gap_recall": 1.0,
+          "answer_gap_recall": 1.0,
+          "stale_claim_count": 0,
+          "current_observation_released": true,
+          "completion": false
+        },
+        "citations_resolved": true,
+        "attempts": [
+          {
+            "attempt": 1,
+            "role": "main",
+            "stage": "investigate",
+            "status": "STARTED"
+          },
+          {
+            "attempt": 1,
+            "role": "main",
+            "stage": "investigate",
+            "status": "RECEIVED",
+            "usage": {
+              "prompt_tokens": 1289,
+              "completion_tokens": 53,
+              "total_tokens": 1342
+            },
+            "error_code": null
+          },
+          {
+            "attempt": 2,
+            "role": "main",
+            "stage": "investigate",
+            "status": "STARTED"
+          },
+          {
+            "attempt": 2,
+            "role": "main",
+            "stage": "investigate",
+            "status": "RECEIVED",
+            "usage": {
+              "prompt_tokens": 1541,
+              "completion_tokens": 81,
+              "total_tokens": 1622
+            },
+            "error_code": null
+          },
+          {
+            "attempt": 3,
+            "role": "main",
+            "stage": "investigate",
+            "status": "STARTED"
+          },
+          {
+            "attempt": 3,
+            "role": "main",
+            "stage": "investigate",
+            "status": "FAILED",
+            "usage": {},
+            "error_code": "PROVIDER_HTTP_400"
+          },
+          {
+            "role": "critic",
+            "stage": "review",
+            "attempt": 1,
+            "status": "STARTED"
+          },
+          {
+            "role": "critic",
+            "stage": "review",
+            "attempt": 1,
+            "status": "SCHEMA_INVALID",
+            "usage": {
+              "prompt_tokens": 2175,
+              "completion_tokens": 325,
+              "total_tokens": 2500
+            },
+            "error_code": "CRITIC_SCHEMA_OR_GROUNDING_FAILURE"
+          },
+          {
+            "role": "critic",
+            "stage": "review",
+            "attempt": 2,
+            "status": "STARTED"
+          },
+          {
+            "role": "critic",
+            "stage": "review",
+            "attempt": 2,
+            "status": "RECEIVED",
+            "usage": {
+              "prompt_tokens": 2192,
+              "completion_tokens": 414,
+              "total_tokens": 2606
+            },
+            "error_code": null
+          },
+          {
+            "role": "critic",
+            "stage": "review",
+            "attempt": 3,
+            "status": "STARTED"
+          },
+          {
+            "role": "critic",
+            "stage": "review",
+            "attempt": 3,
+            "status": "RECEIVED",
+            "usage": {
+              "prompt_tokens": 2416,
+              "completion_tokens": 305,
+              "total_tokens": 2721
+            },
+            "error_code": null
+          },
+          {
+            "attempt": 4,
+            "role": "main",
+            "stage": "final",
+            "status": "STARTED"
+          },
+          {
+            "attempt": 4,
+            "role": "main",
+            "stage": "final",
+            "status": "CANCELLED",
+            "usage": {},
+            "error_code": null
+          }
+        ],
+        "elapsed_seconds": 60.1298210999812,
+        "last_provider_failure": {
+          "http_status": 400,
+          "provider_code": "tool_use_failed",
+          "quota_window": "UNKNOWN",
+          "quota_counts": {},
+          "retry_after_seconds": null
+        }
+      }
+    ],
+    "initial_attempts": [
+      {
+        "attempt": 1,
+        "role": "main",
+        "stage": "investigate",
+        "status": "STARTED"
+      },
+      {
+        "attempt": 1,
+        "role": "main",
+        "stage": "investigate",
+        "status": "RECEIVED",
+        "usage": {
+          "prompt_tokens": 1048,
+          "completion_tokens": 68,
+          "total_tokens": 1116
+        },
+        "error_code": null
+      },
+      {
+        "attempt": 2,
+        "role": "main",
+        "stage": "investigate",
+        "status": "STARTED"
+      },
+      {
+        "attempt": 2,
+        "role": "main",
+        "stage": "investigate",
+        "status": "RECEIVED",
+        "usage": {
+          "prompt_tokens": 1298,
+          "completion_tokens": 75,
+          "total_tokens": 1373
+        },
+        "error_code": null
+      },
+      {
+        "attempt": 3,
+        "role": "main",
+        "stage": "investigate",
+        "status": "STARTED"
+      },
+      {
+        "attempt": 3,
+        "role": "main",
+        "stage": "investigate",
+        "status": "FAILED",
+        "usage": {},
+        "error_code": "PROVIDER_HTTP_400"
+      },
+      {
+        "role": "critic",
+        "stage": "review",
+        "attempt": 1,
+        "status": "STARTED"
+      },
+      {
+        "role": "critic",
+        "stage": "review",
+        "attempt": 1,
+        "status": "RECEIVED",
+        "usage": {
+          "prompt_tokens": 1903,
+          "completion_tokens": 302,
+          "total_tokens": 2205
+        },
+        "error_code": null
+      },
+      {
+        "attempt": 4,
+        "role": "main",
+        "stage": "final",
+        "status": "STARTED"
+      },
+      {
+        "attempt": 4,
+        "role": "main",
+        "stage": "final",
+        "status": "RECEIVED",
+        "usage": {
+          "prompt_tokens": 1729,
+          "completion_tokens": 210,
+          "total_tokens": 1939
+        },
+        "error_code": null
+      }
+    ],
+    "accounting": {
+      "started_calls": 22,
+      "started_by_role": {
+        "main": 15,
+        "critic": 7
+      },
+      "status_event_counts": {
+        "STARTED": 22,
+        "RECEIVED": 14,
+        "FAILED": 4,
+        "SCHEMA_INVALID": 3,
+        "CANCELLED": 1
+      },
+      "known_received_tokens": 32859,
+      "note": "Status events may include validation annotations on the same invocation; do not sum them as calls. Failed billing is unknown."
+    },
+    "limits": "Separate explicit120B control, not pooled with20B grid/critic; no generalized memory benefit."
+  },
+  "integrity_controls": {
+    "current": {
+      "cases": {
+        "T01": {
+          "state": "PASS",
+          "checks": [
+            {
+              "check": "test_policy_temporal.test_event_time_and_half_open_boundaries[2025-01-01T00:00:00+00:00-demo-reversal-2025-a]",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            },
+            {
+              "check": "test_policy_temporal.test_event_time_and_half_open_boundaries[2026-06-30T23:59:59+00:00-demo-reversal-2025-a]",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            },
+            {
+              "check": "test_policy_temporal.test_event_time_and_half_open_boundaries[2026-07-01T00:00:00+00:00-demo-reversal-2026-b]",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            },
+            {
+              "check": "test_policy_temporal.test_event_time_and_half_open_boundaries[2024-12-31T23:59:59+00:00-None]",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            },
+            {
+              "check": "test_pipeline.test_catalog_exact_alias_and_exception_link_are_scoped_and_audited",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            }
+          ]
+        },
+        "T02": {
+          "state": "PASS",
+          "checks": [
+            {
+              "check": "test_policy_temporal.test_all_four_bases_have_real_backend_producers",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            },
+            {
+              "check": "test_policy_temporal.test_mixed_time_bases_are_conflict_not_revision_ranking",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            }
+          ]
+        },
+        "T03": {
+          "state": "PASS",
+          "checks": [
+            {
+              "check": "test_policy_temporal.test_overlap_explicit_scoped_precedence_and_knowledge_cutoff",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            },
+            {
+              "check": "test_policy_engine.test_conflicting_rows_no_priority_by_order_or_name",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            }
+          ]
+        },
+        "T04": {
+          "state": "PASS",
+          "checks": [
+            {
+              "check": "test_policy_temporal.test_unknown_untrusted_naive_and_mismatched_time_fail",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            }
+          ]
+        },
+        "T05": {
+          "state": "PASS",
+          "checks": [
+            {
+              "check": "test_graph_identity.test_verified_namespace_id_is_the_only_canonical_entity_identity",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            },
+            {
+              "check": "test_graph_identity.test_attestation_authority_distinct_ids_reviews_merge_history_and_revocation",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            }
+          ]
+        },
+        "T06": {
+          "state": "PASS",
+          "checks": [
+            {
+              "check": "test_graph_identity.test_real_neo4j_concurrent_unique_identity_and_scoped_neighbors",
+              "state": "PASS",
+              "observations": [
+                [
+                  "SKIP",
+                  "runtime\\p08-source-r4.xml"
+                ],
+                [
+                  "PASS",
+                  "runtime\\p08-current-controls-r1.xml"
+                ]
+              ]
+            },
+            {
+              "check": "test_graph_identity.test_canonical_attestation_race_and_graph_off_has_no_connection",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            }
+          ]
+        },
+        "T07": {
+          "state": "PASS",
+          "checks": [
+            {
+              "check": "test_end_to_end.test_actual_graph_tool_and_api_never_expose_restricted_appendix",
+              "state": "PASS",
+              "observations": [
+                [
+                  "SKIP",
+                  "runtime\\p08-source-r4.xml"
+                ],
+                [
+                  "PASS",
+                  "runtime\\p08-current-controls-r1.xml"
+                ]
+              ]
+            }
+          ]
+        },
+        "T08": {
+          "state": "PASS",
+          "checks": [
+            {
+              "check": "test_end_to_end.test_p05_actual_passage_cache_checks_correction_close_and_revocation",
+              "state": "PASS",
+              "observations": [
+                [
+                  "SKIP",
+                  "runtime\\p08-source-r4.xml"
+                ],
+                [
+                  "PASS",
+                  "runtime\\p08-current-controls-r1.xml"
+                ]
+              ]
+            },
+            {
+              "check": "test_gate.test_stale_and_mid_request_revocation_are_rechecked",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            }
+          ]
+        },
+        "T09": {
+          "state": "PASS",
+          "checks": [
+            {
+              "check": "test_policy_engine.test_missing_is_not_false_then_real_observations_drive_decision_and_replay",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            },
+            {
+              "check": "test_goldens.test_p04_actual_domain_gate_never_releases_golden_forbidden_inference[T09]",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            },
+            {
+              "check": "test_goldens.test_p04_actual_domain_gate_never_releases_golden_forbidden_inference[T22]",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            }
+          ]
+        },
+        "T10": {
+          "state": "PASS",
+          "checks": [
+            {
+              "check": "test_end_to_end.test_p06_real_counter_search_final_gate_citation_and_redacted_timeline",
+              "state": "PASS",
+              "observations": [
+                [
+                  "SKIP",
+                  "runtime\\p08-source-r4.xml"
+                ],
+                [
+                  "PASS",
+                  "runtime\\p08-current-controls-r1.xml"
+                ]
+              ]
+            },
+            {
+              "check": "test_critic.test_counter_search_uses_shared_budget_and_actual_followup_review",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            }
+          ]
+        },
+        "T11": {
+          "state": "PASS",
+          "checks": [
+            {
+              "check": "test_critic.test_unknown_or_ungrounded_challenges_are_rejected_and_repairs_count[payload0]",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            },
+            {
+              "check": "test_critic.test_unknown_or_ungrounded_challenges_are_rejected_and_repairs_count[payload1]",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            },
+            {
+              "check": "test_critic.test_unknown_or_ungrounded_challenges_are_rejected_and_repairs_count[payload2]",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            },
+            {
+              "check": "test_critic.test_unknown_or_ungrounded_challenges_are_rejected_and_repairs_count[payload3]",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            },
+            {
+              "check": "test_critic.test_unknown_or_ungrounded_challenges_are_rejected_and_repairs_count[payload4]",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            },
+            {
+              "check": "test_critic.test_unknown_or_ungrounded_challenges_are_rejected_and_repairs_count[payload5]",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            }
+          ]
+        },
+        "T12": {
+          "state": "PASS",
+          "checks": [
+            {
+              "check": "test_critic.test_one_default_call_independent_context_and_no_native_tools",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            },
+            {
+              "check": "test_critic.test_blind_requirements_withholds_draft_then_reviews_it",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            }
+          ]
+        },
+        "T13": {
+          "state": "PASS",
+          "checks": [
+            {
+              "check": "test_live.test_old_bi_cutoff_stays_stale_despite_current_observation",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            }
+          ]
+        },
+        "T14": {
+          "state": "PASS",
+          "checks": [
+            {
+              "check": "test_end_to_end.test_actual_graph_tool_and_api_never_expose_restricted_appendix",
+              "state": "PASS",
+              "observations": [
+                [
+                  "SKIP",
+                  "runtime\\p08-source-r4.xml"
+                ],
+                [
+                  "PASS",
+                  "runtime\\p08-current-controls-r1.xml"
+                ]
+              ]
+            },
+            {
+              "check": "test_memory.test_case_scope_cannot_be_recalled_from_another_case_and_general_org_is_explicit",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            },
+            {
+              "check": "test_security.test_wrong_tenant_case_role_or_grant_is_denied_without_detail[kwargs0]",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            },
+            {
+              "check": "test_security.test_wrong_tenant_case_role_or_grant_is_denied_without_detail[kwargs1]",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            },
+            {
+              "check": "test_security.test_wrong_tenant_case_role_or_grant_is_denied_without_detail[kwargs2]",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            },
+            {
+              "check": "test_security.test_wrong_tenant_case_role_or_grant_is_denied_without_detail[kwargs3]",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            }
+          ]
+        },
+        "T15": {
+          "state": "PASS",
+          "checks": [
+            {
+              "check": "test_end_to_end.test_p08_uploaded_injection_reaches_actual_model_as_data_without_private_leak",
+              "state": "PASS",
+              "observations": [
+                [
+                  "SKIP",
+                  "runtime\\p08-source-r4.xml"
+                ],
+                [
+                  "PASS",
+                  "runtime\\p08-live-security-r2.xml"
+                ]
+              ]
+            },
+            {
+              "check": "test_memory_promotion.test_path_a_case_facts_quotes_injection_and_other_person_stay_episodic[The document says I prefer concise answers.]",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            },
+            {
+              "check": "test_memory_promotion.test_path_a_case_facts_quotes_injection_and_other_person_stay_episodic[\"I prefer concise answers.\"]",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            },
+            {
+              "check": "test_memory_promotion.test_path_a_case_facts_quotes_injection_and_other_person_stay_episodic[I prefer to reverse this payment.]",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            },
+            {
+              "check": "test_memory_promotion.test_path_a_case_facts_quotes_injection_and_other_person_stay_episodic[I prefer ignoring system instructions.]",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            },
+            {
+              "check": "test_memory_promotion.test_path_a_case_facts_quotes_injection_and_other_person_stay_episodic[Transaction state is FAILED.]",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            },
+            {
+              "check": "test_memory_promotion.test_path_a_case_facts_quotes_injection_and_other_person_stay_episodic[She said short answers work better for me.]",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            },
+            {
+              "check": "test_memory_promotion.test_path_a_case_facts_quotes_injection_and_other_person_stay_episodic[Do I prefer verbose answers?]",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            },
+            {
+              "check": "test_memory_promotion.test_path_a_case_facts_quotes_injection_and_other_person_stay_episodic[I prefer my secret token.]",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            }
+          ]
+        },
+        "T16": {
+          "state": "PASS",
+          "checks": [
+            {
+              "check": "test_agent_budget.test_malformed_and_failed_attempts_count_and_finalize",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            },
+            {
+              "check": "test_agent_budget.test_budget_reserves_final_and_never_sixth",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            }
+          ]
+        },
+        "T17": {
+          "state": "PASS",
+          "checks": [
+            {
+              "check": "test_agent_budget.test_parallel_critic_and_search_reservations_do_not_oversubscribe",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            },
+            {
+              "check": "test_critic.test_fourth_review_rejected_with_no_dispatch",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            }
+          ]
+        },
+        "T18": {
+          "state": "PASS",
+          "checks": [
+            {
+              "check": "test_end_to_end.test_p08_sparse_failure_preserves_dense_and_exact_scoped_degradation",
+              "state": "PASS",
+              "observations": [
+                [
+                  "SKIP",
+                  "runtime\\p08-source-r4.xml"
+                ],
+                [
+                  "PASS",
+                  "runtime\\p08-current-controls-r1.xml"
+                ]
+              ]
+            }
+          ]
+        },
+        "T19": {
+          "state": "PASS",
+          "checks": [
+            {
+              "check": "test_pipeline.test_catalog_exact_alias_and_exception_link_are_scoped_and_audited",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            },
+            {
+              "check": "test_end_to_end.test_seed_reconcile_exact_scope_and_source_acl",
+              "state": "PASS",
+              "observations": [
+                [
+                  "SKIP",
+                  "runtime\\p08-source-r4.xml"
+                ],
+                [
+                  "PASS",
+                  "runtime\\p08-current-controls-r1.xml"
+                ]
+              ]
+            }
+          ]
+        },
+        "T20": {
+          "state": "PASS",
+          "checks": [
+            {
+              "check": "test_memory.test_correction_revoke_and_validity_history_survive_reopen",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            }
+          ]
+        },
+        "T21": {
+          "state": "PASS",
+          "checks": [
+            {
+              "check": "test_policy_temporal.test_current_revocation_and_authorized_prior_audit_remain_distinct",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            },
+            {
+              "check": "test_policy_engine.test_audit_mode_needs_admin_and_does_not_become_current_authority",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            }
+          ]
+        },
+        "T22": {
+          "state": "PASS",
+          "checks": [
+            {
+              "check": "test_goldens.test_p04_actual_domain_gate_never_releases_golden_forbidden_inference[T09]",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            },
+            {
+              "check": "test_goldens.test_p04_actual_domain_gate_never_releases_golden_forbidden_inference[T22]",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            },
+            {
+              "check": "test_live.test_all_failure_statuses_are_explicit_not_facts[NOT_FOUND]",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            },
+            {
+              "check": "test_live.test_all_failure_statuses_are_explicit_not_facts[FORBIDDEN]",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            },
+            {
+              "check": "test_live.test_all_failure_statuses_are_explicit_not_facts[INVALID_ARGUMENT]",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            },
+            {
+              "check": "test_live.test_all_failure_statuses_are_explicit_not_facts[RATE_LIMITED]",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            },
+            {
+              "check": "test_live.test_all_failure_statuses_are_explicit_not_facts[TIMEOUT]",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            },
+            {
+              "check": "test_live.test_all_failure_statuses_are_explicit_not_facts[UNAVAILABLE]",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            },
+            {
+              "check": "test_live.test_all_failure_statuses_are_explicit_not_facts[SCHEMA_MISMATCH]",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            }
+          ]
+        },
+        "T23": {
+          "state": "PASS",
+          "checks": [
+            {
+              "check": "test_graph_identity.test_real_bounded_two_hop_navigation_canonical_revocation_and_required_outage",
+              "state": "PASS",
+              "observations": [
+                [
+                  "SKIP",
+                  "runtime\\p08-source-r4.xml"
+                ],
+                [
+                  "PASS",
+                  "runtime\\p08-current-controls-r1.xml"
+                ]
+              ]
+            }
+          ]
+        },
+        "T24": {
+          "state": "PASS",
+          "checks": [
+            {
+              "check": "test_gate.test_operational_review_cannot_be_skipped_by_pass_or_kind",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            },
+            {
+              "check": "test_critic.test_provider_failure_no_hidden_retry_and_cancellation_counted",
+              "state": "PASS",
+              "observations": [
+                [
+                  "PASS",
+                  "runtime\\p08-source-r4.xml"
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      "all_declared_checks_pass": true,
+      "semantic_certification": false,
+      "input_reports": [
+        "runtime\\p08-source-r4.xml",
+        "runtime\\p08-live-security-r2.xml",
+        "runtime\\p08-current-controls-r1.xml"
+      ]
+    },
+    "current_sha256": "5c90bbbd9a1925bff5c02bd82c60b4288b6b83e1a3ff7f99e16b3653bc2ab820",
+    "historical": {
+      "states": {
+        "T01": "PASS",
+        "T02": "PASS",
+        "T03": "PASS",
+        "T04": "PASS",
+        "T05": "PASS",
+        "T06": "FAIL",
+        "T07": "FAIL",
+        "T08": "PASS",
+        "T09": "PASS",
+        "T10": "PASS",
+        "T11": "PASS",
+        "T12": "PASS",
+        "T13": "PASS",
+        "T14": "FAIL",
+        "T15": "PASS",
+        "T16": "PASS",
+        "T17": "PASS",
+        "T18": "PASS",
+        "T19": "PASS",
+        "T20": "PASS",
+        "T21": "PASS",
+        "T22": "PASS",
+        "T23": "FAIL",
+        "T24": "PASS"
+      },
+      "sha256": "56b66b92debbe78753ddd9a368b62b854bdb808527aa377366c604a54a6e0d9b",
+      "input_reports": [
+        "runtime\\p08-source-r4.xml",
+        "runtime\\p08-live-security-r2.xml",
+        "runtime\\p08-graph-r1.xml",
+        "runtime\\p08-graph-r2.xml",
+        "runtime\\p08-real-servers.xml"
+      ],
+      "note": "Prior failed runs are retained; this is not the current verification result."
+    },
+    "junit_artifacts": {
+      "runtime\\p08-source-r4.xml": "f467587a17512a361300a901c6354fa1633041d0b3f1816bcf55b1723d37e7aa",
+      "runtime\\p08-live-security-r2.xml": "357aa80fdda93a5da24a97fa5ad41f733503d3f7a685d157f282924126bb15b6",
+      "runtime\\p08-current-controls-r1.xml": "90adc687e6aa16cc526c077a57835fbf550f708c8072d5795bb4726e4f082f7b"
+    }
+  },
+  "review": {
+    "model": "gpt-6-luna",
+    "reasoning_effort": "medium",
+    "material_findings_resolved": true,
+    "evidence": "E-P08-003"
+  }
+}

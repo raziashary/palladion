@@ -516,7 +516,8 @@ def run_memory(url: str, model_name: str, call_interval_seconds: float = 0) -> d
     report: dict[str, Any] = {"run_id": run_id, "status": "PILOT_ONLY",
         "model_call_interval_seconds": call_interval_seconds, "model": model_name, "provider": "groq", "parent": "B2+policy (reranker enabled; graph off)",
         "corpus_sha256": _sha256(PILOT_PATH), "script_sha256": _sha256(Path(__file__)),
-        "annotation_status": "PILOT_NOT_HUMAN_ADJUDICATED", "critic": False, "vector_memory": False,
+        "annotation_status": "PILOT_NOT_HUMAN_ADJUDICATED", "critic": True, "vector_memory": False,
+        "review_comparison": "Current mandatory critic held constant across continuity arms",
         "conditions": [], "provider_tokenizer_revision": None,
         "limitations": ["One fixed synthetic continuation, no quality/improvement inference",
                         "No retry or selective rerun; failures remain in the denominator",
@@ -566,6 +567,10 @@ def run_memory(url: str, model_name: str, call_interval_seconds: float = 0) -> d
                 report["initial_received_usage"] = [json.loads(r[0])["usage"] for r in database.connection.execute(
                     "SELECT payload_json FROM case_events WHERE event_kind='RUNTIME_ATTEMPT'")
                     if json.loads(r[0]).get("usage")]
+                report["initial_attempts"] = [{k:v for k,v in json.loads(r[0]).items() if k in {
+                    "role", "stage", "status", "attempt", "usage", "error_code"}}
+                    for r in database.connection.execute(
+                        "SELECT payload_json FROM case_events WHERE event_kind='RUNTIME_ATTEMPT'")]
                 store.memory().write(MemorySpec(scope_id="reader-a", content="Operator reports customer debit; unverified."))
                 for number in range(pilot["chatter_turns"]):
                     store.append("REQUEST", "long-session-"+str(number), {"query": "Synthetic unrelated discussion "*20})
@@ -604,6 +609,8 @@ def run_memory(url: str, model_name: str, call_interval_seconds: float = 0) -> d
                                 "SELECT payload_json FROM case_events WHERE event_kind='RUNTIME_ATTEMPT' "
                                 "AND json_extract(payload_json,'$.trace_id')=?", (output["trace_id"],))]
                             row["received_usage"] = [r["usage"] for r in received if r.get("usage")]
+                            row["attempts"] = [{k:v for k,v in r.items() if k in {
+                                "role", "stage", "status", "attempt", "usage", "error_code"}} for r in received]
                 row["elapsed_seconds"] = time.perf_counter()-started
                 row["last_provider_failure"] = model.last_failure
                 row["last_rate_limits"] = model.last_rate_limits
@@ -887,11 +894,28 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--critic", action="store_true", help="Explicit P06 real-Groq frozen critic pilot")
     parser.add_argument("--memory", action="store_true", help="Explicit P05 actual-Groq continuity pilot")
     parser.add_argument("--enable-live-llm", action="store_true")
-    parser.add_argument("--model", choices=("qwen/qwen3.8-27b", "openai/gpt-oss-120b", "openai/gpt-oss-20b"), default="qwen/qwen3.8-27b")
+    parser.add_argument("--study",choices=("development","evaluation"),help="Explicit P08 study phase")
+    parser.add_argument("--protocol",type=Path,help="Frozen approved P08 evaluation protocol")
+    parser.add_argument("--replay-study",type=Path,help="Replay saved study outputs without provider calls")
+    parser.add_argument("--model", choices=("qwen/qwen3.8-27b", "openai/gpt-oss-120b", "openai/gpt-oss-20b"))
     parser.add_argument("--run", action="store_true",
                         help="explicitly seed/query/delete only unique p02_eval_* collections")
     parser.add_argument("--model-call-interval", type=float, default=0, help="Opt-in live Groq dispatch interval within unchanged deadlines")
     args = parser.parse_args(argv)
+    if args.replay_study:
+        if args.run or args.enable_live_llm or args.study or args.critic or args.memory:
+            parser.error("Replay is read-only and cannot combine with execution flags")
+        from evidence_agent.evaluation.study import replay_study
+        print(json.dumps(replay_study(args.replay_study),indent=2))
+        return 0
+    if args.study:
+        if not args.run or not args.enable_live_llm or args.critic or args.memory:
+            parser.error("Study requires --run --enable-live-llm and cannot combine other pilots")
+        if args.model is not None or args.model_call_interval:
+            parser.error("Study model and spacing come from the frozen study config; CLI overrides are not allowed")
+        from evidence_agent.evaluation.study import run_study
+        print(json.dumps(run_study(args.url,phase=args.study,enabled=True,protocol=args.protocol,app=APP_ROOT),indent=2))
+        return 0
     if args.model_call_interval and not (args.critic or args.memory):
         parser.error("Model call spacing requires an explicit live critic or memory pilot")
     if not args.run:
@@ -899,13 +923,13 @@ def main(argv: list[str] | None = None) -> int:
     if args.critic:
         if not args.enable_live_llm or args.memory:
             parser.error("Critic pilot requires --enable-live-llm and cannot combine with --memory")
-        result = run_critic(args.url, args.model, args.model_call_interval)
+        result = run_critic(args.url, args.model or "qwen/qwen3.8-27b", args.model_call_interval)
         print(json.dumps(result, indent=2))
         return 0 if result.get("all_conditions_observed") else 1
     if args.memory:
         if not args.enable_live_llm:
             parser.error("Memory pilot requires --enable-live-llm before credentials are read")
-        result = run_memory(args.url, args.model, args.model_call_interval)
+        result = run_memory(args.url, args.model or "qwen/qwen3.8-27b", args.model_call_interval)
         print(json.dumps(result, indent=2))
         return 0 if result.get("all_conditions_observed") else 1
     report = run(args.url)

@@ -1,6 +1,6 @@
 # Palladion working memory
 
-Current checkpoint2026-10-19: P06 published6444345; P07 graph and owner-added automatic memory implementation, consumer proof and sole LunaMedium end-review resolution verified (E-P07-001/002). ADR0063–0066 owner approvals preserved. Graph stays off after zero incremental recoveries. P08/UI/benchmark edits and another main push remain excluded. Older phase snapshots below are historical.
+Current checkpoint2026-10-20: P00–P08engineering work complete within the approved synthetic pilot boundary;98/98atomic cards and sole end-review resolution verified. P07 publishedf97471e; graph stays defaultoff. P08 outcomes are negative/inconclusive, semantic accuracy and unobserved candidate-stage metrics unknown. UI/enterprise writes/X01/benchmark-editor edits and a further main push remain excluded. Older dated snapshots are historical.
 
 Updated 2026-10-19. Navigation aid only; user/vision/source/ADRs retain authority.
 
@@ -36,6 +36,57 @@ Read root AGENTS → [master plan task protocol](MASTER_DEV_PLAN.md#task-reading
 → [goal](GOAL.md) → [progress](PROGRESS.md) → relevant [ADRs](ADR_LOG.md),
 [risks](RISKS_AND_OPEN_QUESTIONS.md), blueprint sections and [gates](TESTING_GATES.md)
 → live owning code/tests. [Project map](PROJECT_MAP.md) distinguishes actual/planned paths.
+
+## Completed P08 recovery
+
+P08 engineering pilot DONE, all12cards/98totalatomic cards checked, sole LunaMedium
+end audit and same-reviewer R1–R4 resolution complete (E-P08-001–003). Current mandate
+excludes UI/enterprise writes/X01/benchmark edits; further main push needs approval.
+The verified scoped checkpoint containing this record preserves the work. No pending
+owner architecture ADR; nextfree0087. Source/plans/evidence remain authoritative.
+
+Frozen grid p08_0d19c2375c5c46d3ac792fd3c1e5da20 binds approved protocol/config
+SHA987e3773fd6b0a1938d54c1e1903647d2e187e41142a9e7b05d05db2f29ce390.
+44observations/16errors,91attempts/41rawresponses/45HTTP429/2HTTP400/3cancelled,
+54750known tokens.12/12released citations resolve. Public P08_RESULTS.md and two bounded
+receipts preserve adverse results, raw hashes, failures and accounting. No semantic/
+causal/generalization/superiority claim. Raw source predates only later owning report,
+asset-path, timeout and coverage corrections; never imply it equals the final source.
+
+Fresh20B critic p06-57815987982f4322997fc434305ebe83 records16conditions,
+16knownfactretained including fallbacks/0of4fullquotecorrections/0inventoryattestations.
+Separate explicit120B continuity p05-b55c4c1197d646f299746de55263886f records3conditions,
+currentstate/citation/no staleclaims, standardB5 answergapomission, allcompletionfalse.
+Provider/quota/schema failures remain. Supplemental receipt contains per-attempt costs,
+current24PASS versus separately retained historical20PASS4FAIL reconciliation.
+
+R4/ADR0086 withdraws legacy candidate@5/10/20/fullMRR labels computed after finaltop4
+truncation. New observed packet@4/packetMRR, unobserved candidate metrics unknown; raw
+artifacts unchanged.20installed cutoff/report guardsPASS4.00s, current CLI replay44rows
+with noticePASS. Final wheel65/65source bytes match SHA
+d9795234c8820cc97de5df6200616fffed97cbfd4726fc4537774bd3167a0a3d.
+Before report-only correction:360sourcePASS28explicitSKIP518.39s,37installedPASS39.21s;
+current7installed integrationPASS217.35s, actualGroqinjection1PASS98.70s, canonical
+44stores/12citations/21persistedrelease reopen and HTTP search/citation/ACL proof pass.
+Checks overlap. Ruff/strictmypy75/dependency99+4controls/docs19MD98cards20controlsPASS.
+No final combined full-suite exit0 is inferred from separate runs.
+
+Earlier realserver47PASS6FAIL7SKIP and repeated graph failures, r3installedreadonly
+failure, initial report-guard fixture/import/build failures remain in E-P08-002/003.
+Cause of host delays unknown; no graph query/deadline rewrite. Owner kept other work
+running; own Neo restart+serialized7currentchecksPASS, historical failures not erased.
+Reviewer directly read blueprint§1–§18/I01–I15/all12docs and confirmed no material
+finding remains after doc fixes and R4 correction; reviewer did not independently run tests.
+
+Owned Qdrant/Neo/HTTP stopped through verified project launchers/process ownership.
+Windows exclusive binds16333/16334/17687/18108PASS, no WSL listeners; storage and full
+Qdrant/coldNeo backups preserved (E-P08-002). Never stop foreign benchmark services or
+read/print root.env/demo_auth. Raw evidence under ignored runtime/evaluation; public
+receipts contain bounded synthetic observations. Preserve concurrent .vscode/ and foreign
+benchmark commits/worktree. Future work needs its own scope; research unknowns are not
+permission to invent results or populate baseline/.
+
+The P07 state below is historical; current P08 GO supersedes its next-action exclusions.
 
 ## Current state and next action
 

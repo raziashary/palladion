@@ -8,7 +8,7 @@ loop to attach to the matching native tool_call_id; it never grants action autho
 from __future__ import annotations
 
 import asyncio
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 from pydantic import Field
 
@@ -21,6 +21,9 @@ from evidence_agent.memory.store import CaseStore
 from evidence_agent.policy.engine import PolicyEngine
 from evidence_agent.policy.registry import PolicyRegistry
 from evidence_agent.retrieval.evidence import RequestLedger, model_view
+
+if TYPE_CHECKING:
+    from evidence_agent.memory.vector import VectorMemory
 
 
 class KnowledgeArgs(VersionedModel):
@@ -73,6 +76,7 @@ class Tools:
         self.ledger, self.gateway, self.store = ledger, gateway, store
         self.memory_enabled = True
         self.graph_required = False
+        self.memory_vector: VectorMemory | None = None
 
     async def execute(self, name: str, arguments: str) -> dict[str, Any]:
         correlation = self.ledger.trace_id
@@ -111,6 +115,14 @@ class Tools:
                 data = memory.recall(query=args.query, memory_id=args.memory_id,
                     category=args.category, limit=args.limit) if self.memory_enabled else []
                 recall_incomplete = memory.last_recall_incomplete
+                if self.memory_enabled and self.memory_vector is not None and args.query and not args.memory_id:
+                    extra = self.memory_vector.recall(memory,args.query,limit=args.limit)
+                    recall_incomplete = recall_incomplete or self.memory_vector.last_truncated
+                    combined = {item["memory_id"]:item for item in data}
+                    for item in extra:
+                        if args.category is None or item["kind"] == args.category:
+                            combined.setdefault(item["memory_id"],item)
+                    data = list(combined.values())[:args.limit]
                 if self.memory_enabled and not args.query and not args.memory_id and not args.category:
                     data = (data + self.store.recent(limit=args.limit))[:args.limit]
                 for event in data:

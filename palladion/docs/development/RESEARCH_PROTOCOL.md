@@ -1,6 +1,6 @@
 # Research and later comparison protocol
 
-Current checkpoint2026-10-19: P06 published6444345; P07 graph and owner-added automatic memory implementation, consumer proof and sole LunaMedium end-review resolution verified (E-P07-001/002). ADR0063–0066 owner approvals preserved. Graph stays off after zero incremental recoveries. P08/UI/benchmark edits and another main push remain excluded. Older phase snapshots below are historical.
+Current checkpoint2026-10-20: P00–P08engineering work complete within the approved synthetic pilot boundary;98/98atomic cards and sole end-review resolution verified. P07 publishedf97471e; graph stays defaultoff. P08 outcomes are negative/inconclusive, semantic accuracy and unobserved candidate-stage metrics unknown. UI/enterprise writes/X01/benchmark-editor edits and a further main push remain excluded. Older dated snapshots are historical.
 
 Status: **P02 retrieval-only pilot recorded; P05 continuity and P06 critic pilots recorded with failures; no confirmatory answer-system experiment executed**. Governing source: blueprint “Research
 evaluation,” “Questions deliberately left to experiments,” “Prototype environment.”
@@ -8,6 +8,29 @@ Research records follow [ADR-0007](ADR_LOG.md#adr-0007--research-discipline-and-
 Protocol metrics are intended measurements; recorded pilot sections identify actual observations and limits.
 
 ## Question and falsifiable hypotheses
+
+P08 execution protocol is owner-approved at [ADR0079](ADR_LOG.md#adr-0079--owner-approved-final-pilot-freeze-and-token-ceiling)
+and [the concrete freeze](evidence/P08_PROTOCOL_FREEZE.md). The immutable
+[machine protocol](evidence/p08-approved-protocol.json) binds original development
+calibration artifacts and final fixture/config hash. Eleven arms×two evaluation
+families×two repetitions=44planned observations;20Btemperature0.2,seed1719,10second
+spacing,200attempt/2000000estimatedtoken/7200second run ceilings. Actual billed cost
+is unknown; estimated reservation and received usage are different quantities.
+Each observation clones the same source-only canonical database/originals, then seeds
+the same prior preference for B4–B8/vector; B4 continuity is disabled. Private USER
+memory cannot cross treatment observations. Baselines retain raw proposals separately
+from the common necessary-condition wrapper; wrapper qualification is not a semantic
+error label. B7 compares B6, vector compares B5, planner compares B6. Full-system
+independent generations and saved-draft critic comparisons are reported separately.
+
+The tiny generated-answer grid has no independent human support/usefulness labels,
+no causal adjudication and no power/generalization claim. Fixture slice names are
+metadata: the label `historical` does not prove historical as_of execution; actual
+half-open historical selection is covered by separate T01–T24 regression controls.
+No observation in an unanswerable slice means that slice's rate is NOT_APPLICABLE.
+Source-level approval/ACL/time regressions and actual uploaded-injection proof are
+separate from answer-quality measurement. A failing target stays a negative result;
+unresolved implementation/security defects keep phase work open.
 
 Can this bounded evidence-first harness reduce unsupported answers over simpler RAG
 without unacceptable latency, cost, excessive abstention or lost investigation usefulness?
@@ -394,3 +417,14 @@ Real20B next-session consumer test00c4866d receives auto-stored preference and e
 ## P07 final phase-local disposition (2026-10-19)
 
 E-P07-002 records all11cards, actual source/installed/CLI/provider and original-reader proof, the sole GPT6LunaMedium end audit and same-reviewer resolution. The reviewer read the full blueprint (§1–§18), I01–I15, graph and memory amendment; three current-facing document contradictions were fixed and rechecked. No confirmed source defect remained. Graph has0incremental recoveries in4paired queries and stays off by default; controlled path recovery proves integration only. PathA automatic promotion and opt-in bounded local PathB retain original ACL/authorityNONE;4mechanical pilot labels pass,2semantic labels remain unknown. Historical failures and intermediate pending statuses above remain dated snapshots, not current scope. No unanswered P07 owner ADR; P08 adjudication, generalization and external comparisons remain excluded.
+
+
+## P08 observed retrieval scope correction (ADR0086/end-review R4)
+
+Required candidate/fused/reranked Recall@5/10/20 remain unmeasured in the frozen pilot:
+the original evaluator scored only its final top-four packet. Withdraw those raw larger-
+cutoff labels as valid measurements; keep original raw artifacts and hashes unchanged.
+Future code reports observed packet @4/packet-MRR with candidate metrics unavailable.
+This is a reporting defect correction, not a smaller acceptance target or a fresh
+candidate-quality result. A new separately frozen full-stage run is needed for claims
+about ranks5–20. Quote/citation/call/cost outcomes remain independently scoreable.

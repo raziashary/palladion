@@ -12,6 +12,14 @@ backend sessions and automatic memory promotion have actual reader/provider proo
 The paired graph pilot added zero recoveries, so graph stays off by default. Semantic
 memory classification accuracy remains unadjudicated.
 
+P08's engineering pilot is complete: isolated B0–B9/vector controls, bounded optional
+planner/adaptive review, sqlite-vec derived memory and saved-output scoring are verified.
+Ordinary serving retains mandatory review, four read tools and canonical authorization.
+The owner-approved grid recorded 44 observations, including 16 row-level errors.
+All 24 declared integrity controls pass; the sole independent end review is resolved.
+Failures, omissions, unknown semantic accuracy and unavailable higher-stage retrieval
+metrics remain explicit. See the [pilot report](docs/development/evidence/P08_RESULTS.md).
+
 Phase ownership and evidence are in the [development plan](docs/development/MASTER_DEV_PLAN.md)
 and [current progress](docs/development/PROGRESS.md).
 
@@ -272,7 +280,7 @@ Explicit real-provider pilot: `python scripts/evaluate.py --run --memory
 its own UUID collection, and records all B4/B5/compressed outputs, usage and failures.
 The current pilot retained the critical gap in B5 packets, but strict completion was
 0/3 due model/tool errors. This establishes measurements, not a memory-improvement or
-reliability claim. See E-P05-001. Critic integration is verified in P06; confirmatory scientific evaluation remains P08.
+reliability claim. See E-P05-001. Critic integration is verified in P06; confirmatory scientific evaluation remains deferred beyond the completed P08 pilot.
 
 Final P05 evidence: E-P05-001,246source+12actual-Qdrant checks, updated wheel and single audit resolution. Recall applies current scope before its bounded window and reports non-exhaustive coverage. P06 is published and verified complete; pilot0/3 strict completions remain disclosed.
 
@@ -305,7 +313,7 @@ A changed final proposal or unresolved advisory challenge qualifies the answer w
 canonical facts remain visible. The16-condition frozen pilot retained all known facts,
 but full exception correction was0/4 and one critic validation failed; this is not a
 reliability or hypothesis-success claim. The draft-blind experimental first pass still
-receives canonical policy-required slots. P07 is verified within its phase-local boundary; P08 adjudication remains planned.
+receives canonical policy-required slots. P07 is verified within its phase-local boundary; P08 semantic accuracy remains unknown without independent human adjudication.
 
 ## Optional graph and automatic memory (P07)
 

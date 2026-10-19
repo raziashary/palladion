@@ -1,6 +1,6 @@
 # Testing gates
 
-Current checkpoint2026-10-19: P06 published6444345; P07 graph and owner-added automatic memory implementation, consumer proof and sole LunaMedium end-review resolution verified (E-P07-001/002). ADR0063–0066 owner approvals preserved. Graph stays off after zero incremental recoveries. P08/UI/benchmark edits and another main push remain excluded. Older phase snapshots below are historical.
+Current checkpoint2026-10-20: P00–P08engineering work complete within the approved synthetic pilot boundary;98/98atomic cards and sole end-review resolution verified. P07 publishedf97471e; graph stays defaultoff. P08 outcomes are negative/inconclusive, semantic accuracy and unobserved candidate-stage metrics unknown. UI/enterprise writes/X01/benchmark-editor edits and a further main push remain excluded. Older dated snapshots are historical.
 
 P01/P02 foundations and retrieval plus P03 policy/temporal/live domain checks are runnable. Real-server
 checks require explicit local-server enablement. P04–P06 agent/memory/critic consumers are verified; P07 graph and automatic-memory mechanisms have current evidence below, with phase audit pending. Full semantic research remains P08. Gate catalog rows
@@ -337,3 +337,26 @@ Owner amendment ADR0066 adds [P07-T04.01](MASTER_DEV_PLAN.md#p07-t04-01), [P07-T
 E-P07-002 records verified v6 sessions/provenance, deterministic chunk limits and rule negatives, actual local encoder/profile/loss, owner-corrected session readers and real next-session provider consumption. All six graph cards and five memory cards are verified: eleven of eleven P07 cards, including sole end-review resolution. The graph card uses its documented negative-result exit: both arms recover both expected appendices, zero incremental recoveries, graph stays defaultoff. Controlled navigation proves integration, not an empirical retrieval win. The local memory pilot has4mechanical controls and2unadjudicated labels, not measured semantic accuracy.
 
 Full real-server r2 yielded345PASS/1FAIL/6explicitGroqSKIP379.97s; the failure is a Neo4j seed MERGE transaction timing out at the unchanged explicitly configured10second client cap, before the restricted-appendix assertion. This remains a failed setup, not an ACL success. The same failed test plus nine graph controls subsequently passed in isolation (10PASS78.15s); 346distinct non-provider checks therefore have positive evidence, without claiming a combined sweep exit0. Default suite327PASS/25explicit integration-providerSKIP68.40s. Final published-anchor/fanout/merge controls9PASS24.85s. Installed offline55PASS/2modelSKIP34.22s, actual graph/local-model consumers2PASS61.93s, and final installed anchor guard1PASS7.93s are overlapping artifact checks. Latest wheel62/62source bytes match, SHA2560e09cb80cd10ff9908e6b3ceb86f824d4c02df05ce2b984b773c64fa388d582a. Actual persistent seed→reconcile→serve→Groq two-session→original citation proof passed (E-P07-002); failures remain recorded. Do not relabel skipped provider cases PASS.
+
+
+## P08 engineering pilot verification (2026-10-20; end review resolved)
+
+Source suite before report-only R4 correction360PASS28explicitSKIP518.39s; prior
+installed37PASS39.21s. Final wheel65/65sourcebytesmatch;20installed report/cutoffguards
+and44row replay with explicit unmeasured candidate-cutoff notice pass. HTTP search/citation/ACL
+smoke pass. Actual Groq uploaded-source injection passes with4calls and no restricted
+canary in checked model input/response/cache/memory/trace. Exact canonical reopen proof
+covers44stores/12citations/21persisted runtime releases. E-P08-002 retains all raw runs.
+
+The approved grid records44observations/16rowerrors,91invocations/41receivedturns,
+54750known received tokens; quota failures and adverse quote outcomes are retained.
+Engineering pilot completion is separate from semantic efficacy. G-RESEARCH cannot
+certify human support/usefulness or hypothesis success without independent annotation.
+Current T01–T24 executable reconciliation records24PASS after the serialized installed
+7integration checksPASS217.35s. The separate historical record stays20PASS/4FAIL. Fresh
+20B critic16conditions and120B continuity3conditions complete with adverse outcomes and
+provider failures retained; see P08_RESULTS and supplemental receipt. Owned services are
+stopped and ports16333/16334/17687/18108 exclusivebindPASS. Sole end review and same-reviewer resolution are complete. The scoped verified
+checkpoint containing these records closes the engineering pilot; unadjudicated semantic
+and unobserved full-stage metrics stay outside any PASS claim. Other workloads kept
+running; production deadlines/query code stayed unchanged.

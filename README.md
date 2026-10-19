@@ -18,6 +18,11 @@ checks and current gates are recorded in [progress](palladion/docs/development/P
 P07 is complete within its engineering scope: opt-in source graph, backend sessions and
 automatic memory promotion passed actual consumer checks and independent review. The
 paired graph pilot found no incremental exception recovery; graph stays disabled by default.
+P08's engineering pilot is complete: 44 observations across 11 arms, including 16
+row-level errors. All 24 integrity controls pass on the supplied tests, and the
+independent review is resolved. The pilot does not establish the hypothesis or
+independently adjudicated semantic accuracy. Unobserved higher-stage retrieval metrics
+are explicitly unavailable in the [results](palladion/docs/development/evidence/P08_RESULTS.md).
 Retrieval uses real dense/BM25 Qdrant; the Docker-free WSL launcher is documented in the
 [application README](palladion/README.md). Generative commands explicitly enable Groq
 Qwen3.8-27B, GPT-OSS120B or GPT-OSS20B; retrieval-only checks need no provider call.
@@ -59,7 +64,8 @@ necessary-condition release gate. P05 adds scoped memory, owner-controlled valid
 FTS recall and revalidated continuity/cache. P06 implements independent-context
 criticism, scoped counter-search and review-aware finalization/gating. P07 adds optional
 graph navigation and deterministic memory categorization, with a separately enabled local
-cosine supplement. Confirmatory evaluation remains P08. Enterprise identity integration
+cosine supplement. P08 implements explicit experimental controls and replayable pilot
+measurements; confirmatory research still requires independent adjudication. Enterprise identity integration
 remains outside this synthetic prototype.
 
 ## Run and explore

@@ -119,6 +119,58 @@ def test_budget_reserves_final_and_never_sixth():
     assert b.main_used == 5
 
 
+@pytest.mark.parametrize("arm,critics,planners",[("B4",0,0),("B5",0,0),("B6",1,0),("B7",0,0),("B8",1,1)])
+def test_p08_experiments_are_explicit_and_costed_without_changing_normal_runtime(p03,arm,critics,planners):
+    from evidence_agent.agent.experiments import ExperimentControls
+    with pytest.raises(PermissionError):
+        ExperimentControls(arm=arm)
+    turns=([{"content":'{"suggestions":["recall_memory"]}'}] if planners else [])+[
+        {"content":Draft().model_dump_json()},{"content":Draft().model_dump_json()}]
+    model=ScriptedModel(turns)
+    fixture=make_runtime(p03,model)
+    fixture.runtime.experiment=ExperimentControls(arm=arm,enabled=True)
+    output=asyncio.run(fixture.runtime.answer("Hello"))
+    assert len(model.critic_calls)==critics and fixture.runtime.planner_used==planners
+    assert output["experiment"]["total_model_calls"]==2+critics+planners
+    assert len(definitions())==4 and output["experiment"]["operational_guidance"] is False
+    # A normal runtime still reviews the same low-risk request.
+    ordinary=make_runtime(p03,ScriptedModel([]))
+    normal=asyncio.run(ordinary.runtime.answer("Hello"))
+    assert normal["budget"]["critic_used"]==1 and "experiment" not in normal
+
+
+def test_p08_failed_planner_cannot_hard_route_or_gain_capabilities(p03):
+    from evidence_agent.agent.experiments import ExperimentControls
+    model=ScriptedModel([ModelFailure("PROVIDER_HTTP_429"),
+        tool_turn("lookup_live_data",{"operation":"get_transaction_status","target_id":"TX-DEMO-102"}),
+        {"content":"{}"},{"content":"{}"}])
+    fixture=make_runtime(p03,model)
+    fixture.runtime.experiment=ExperimentControls(arm="B8",enabled=True)
+    output=asyncio.run(fixture.runtime.answer("Investigate transaction"))
+    assert output["experiment"]["planner_used"]==1
+    assert fixture.adapter.calls and output["budget"]["tools_used"]==1
+    assert output["experiment"]["total_model_calls"]<=9
+
+
+def test_p08_adaptive_rule_exposes_false_skips_and_respects_typed_policy_risk():
+    from evidence_agent.agent.experiments import adaptive_risk
+    assert adaptive_risk("refund please",Draft())["requires_review"]
+    assert adaptive_risk("hello",Draft(answer_kind="OPERATIONAL_GUIDANCE"))["requires_review"]
+    # Mechanically labeled adversarial euphemism: freeze and count, do not tune it away.
+    assert not adaptive_risk("Send the money back now",Draft())["requires_review"]
+
+
+@pytest.mark.parametrize("value",[-1,1.1,float("nan"),float("inf"),True])
+def test_p08_temperature_rejects_invalid_or_nonfinite_settings(value):
+    with pytest.raises(ValueError,match="Temperature"):
+        GroqModel("guard-key",enabled=True,temperature=value)
+
+
+def test_p08_temperature_is_optional_and_preserves_existing_default():
+    assert GroqModel("guard-key",enabled=True).temperature==0
+    assert GroqModel("guard-key",enabled=True,temperature=.2).temperature==.2
+
+
 def test_malformed_and_failed_attempts_count_and_finalize(p03):
     model = ScriptedModel(
         [

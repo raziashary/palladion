@@ -47,7 +47,10 @@ class GroqModel:
     allowed_models = ("qwen/qwen3.8-27b", "openai/gpt-oss-120b", "openai/gpt-oss-20b")
 
     def __init__(self, api_key: str, *, enabled: bool = False, timeout: float = 25,
-                 model: str = "qwen/qwen3.8-27b", call_interval_seconds: float = 0) -> None:
+                 model: str = "qwen/qwen3.8-27b", call_interval_seconds: float = 0,
+                 temperature: float = 0) -> None:
+        if type(temperature) not in {int,float} or not math.isfinite(temperature) or not 0<=temperature<=1:
+            raise ValueError("Temperature must be finite and between zero and one")
         if type(call_interval_seconds) not in {int, float} or not math.isfinite(call_interval_seconds) or not 0 <= call_interval_seconds <= 60:
             raise ValueError("Model call interval must be finite and between 0 and 60 seconds")
         if model not in self.allowed_models:
@@ -56,6 +59,7 @@ class GroqModel:
         self.model = model
         self._api_key, self.timeout = api_key, timeout
         self.call_interval_seconds = float(call_interval_seconds)
+        self.temperature = float(temperature)
         self._pacing_lock = Lock()
         self._next_dispatch = 0.0
         self.last_failure: dict[str, Any] | None = None
@@ -63,7 +67,8 @@ class GroqModel:
 
     @classmethod
     def from_env_file(cls, path: Path, *, enabled: bool = False,
-                      model: str = "qwen/qwen3.8-27b", call_interval_seconds: float = 0) -> GroqModel:
+                      model: str = "qwen/qwen3.8-27b", call_interval_seconds: float = 0,
+                      temperature: float = 0) -> GroqModel:
         if not enabled:
             raise PermissionError("Explicit model enablement required before reading credentials")
         # Deliberately parse one literal key, without executing shell syntax or exporting it.
@@ -74,7 +79,8 @@ class GroqModel:
                 key = match[1].strip().strip("\"'")
         if not key or any(c.isspace() for c in key):
             raise PermissionError("Enabled command requires a literal GROQ_API_KEY")
-        return cls(key, enabled=True, model=model, call_interval_seconds=call_interval_seconds)
+        return cls(key, enabled=True, model=model, call_interval_seconds=call_interval_seconds,
+                   temperature=temperature)
 
     async def _pace(self) -> None:
         if not self.call_interval_seconds:
@@ -95,7 +101,7 @@ class GroqModel:
                        before_send: Callable[[], None] | None = None) -> ModelTurn:
         self.last_rate_limits = {}
         payload: dict[str, Any] = {"model": self.model, "messages": messages,
-            "temperature": 0, "max_completion_tokens": 768,
+            "temperature": self.temperature, "max_completion_tokens": 768,
             "reasoning_effort": "none" if self.model == "qwen/qwen3.8-27b" else "low"}
         if final or not tools:
             payload["response_format"] = {"type": "json_object"}

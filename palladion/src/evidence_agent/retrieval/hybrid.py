@@ -8,7 +8,7 @@ from typing import Literal, Protocol, Sequence
 
 from evidence_agent.core.errors import DependencyUnavailable, PermissionDenied, ResourceConflict
 from evidence_agent.core.models import Principal, VersionedModel
-from evidence_agent.core.retrieval import Chunk, SearchIndex
+from evidence_agent.core.retrieval import Candidate, Chunk, SearchIndex
 from evidence_agent.graph.relations import GraphPath
 from evidence_agent.retrieval.coverage import Coverage, source_coverage
 from evidence_agent.retrieval.evidence import EvidenceResolver, Passage
@@ -51,7 +51,8 @@ class HybridSearch:
     def search(self, principal: Principal, case_id: str, query: str, *,
                mode: Literal["lexical", "dense", "hybrid", "reranked"] = "hybrid",
                limit: int = 12, as_of: datetime | None = None,
-               require_graph: bool = False) -> SearchResult:
+               require_graph: bool = False,
+               evaluator_candidates: tuple[Candidate, ...] | None = None) -> SearchResult:
         if not query.strip() or len(query) > 2048 or not 1 <= limit <= 12:
             raise ValueError("Search bounds exceeded")
         self.registry.access.authorize(principal, tenant_id=principal.tenant_id,
@@ -60,8 +61,11 @@ class HybridSearch:
         warnings: list[str] = []
         candidates: list[tuple[str, str | None]] = []
         try:
-            discovered = self.index.query(query, principal, case_id,
-                                          "hybrid" if mode == "reranked" else mode, limit=40)
+            if evaluator_candidates is not None and len(evaluator_candidates)>100:
+                raise ValueError("Frozen evaluator candidate bound exceeded")
+            discovered = (evaluator_candidates if evaluator_candidates is not None else
+                self.index.query(query, principal, case_id,
+                                 "hybrid" if mode == "reranked" else mode, limit=40))
             candidates.extend((hit.chunk_id, hit.generation) for hit in discovered)
         except DependencyUnavailable:
             warnings.append("INDEX_UNAVAILABLE")

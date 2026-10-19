@@ -97,6 +97,29 @@ class MemoryIndex:
         raise NotImplementedError
 
 
+def test_p08_fixed_candidate_consumer_skips_native_query_but_rechecks_revocation(tmp_path):
+    from evidence_agent.core.retrieval import Candidate
+    from evidence_agent.retrieval.hybrid import HybridSearch
+    database,registry,catalog,reader,revision,_=_setup(tmp_path)
+    try:
+        index=MemoryIndex()
+        index.fingerprint="a"*64
+        generation=IngestPipeline(catalog,index).index(reader,revision)
+        chunk=catalog.chunks_for_revision(reader,revision)[0]
+        frozen=(Candidate(chunk_id=chunk.chunk_id,generation=generation,score=1,channel="alternative"),)
+        search=HybridSearch(catalog,index)
+        positive=search.search(reader,"case-1","settlement",evaluator_candidates=frozen)
+        assert positive.passages and positive.passages[0].citation_id==chunk.chunk_id
+        assert positive.passages[0].text==chunk.text
+        with pytest.raises(ValueError,match="bound"):
+            search.search(reader,"case-1","settlement",evaluator_candidates=frozen*101)
+        registry.revoke_source(registry.access.authenticate("approver"),revision)
+        denied=search.search(reader,"case-1","settlement",evaluator_candidates=frozen)
+        assert denied.passages==()
+    finally:
+        database.close()
+
+
 def test_pipeline_publishes_only_exact_id_hash_readback_and_is_retry_safe(tmp_path: Path) -> None:
     database, registry, catalog, uploader, revision, original = _setup(tmp_path)
     index = MemoryIndex()

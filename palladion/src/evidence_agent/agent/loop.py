@@ -12,6 +12,7 @@ from pydantic import ValidationError
 
 from evidence_agent.agent.critic import EvidenceCritic, ReviewResult
 from evidence_agent.agent.draft import DRAFT_INSTRUCTIONS, FINALIZATION_INSTRUCTIONS, Claim, Draft
+from evidence_agent.agent.experiments import PLANNER_INSTRUCTIONS, ExperimentControls
 from evidence_agent.agent.gate import release
 from evidence_agent.agent.llm import LanguageModel, ModelFailure, ModelTurn
 from evidence_agent.agent.preflight import preflight
@@ -36,6 +37,7 @@ class Budget:
     critic_max: int = 3
     critic_search_max: int = 2
     critic_search_used: int = 0
+    prefetch_used: int = 0
 
     def model(self, *, final: bool = False) -> None:
         # No await between checking and reserving: parallel tasks cannot gain free slots.
@@ -76,7 +78,7 @@ def safe_draft(ledger: RequestLedger) -> Draft:
 
 class AgentRuntime:
     def __init__(self, model: LanguageModel | None, tools: Tools, store: CaseStore,
-                  settings: Settings) -> None:
+                  settings: Settings, *, experiment: ExperimentControls | None = None) -> None:
         self.model, self.tools, self.store, self.settings = model, tools, store, settings
         self.ledger = tools.ledger
         self.tools.memory_enabled = settings.continuity_enabled
@@ -84,6 +86,52 @@ class AgentRuntime:
             critic_max=settings.critic_max_calls, critic_search_max=settings.critic_search_max_calls)
         self.critic = EvidenceCritic(model, tools, self.budget)
         self.review = ReviewResult()
+        self.experiment = experiment
+        self.planner_used = 0
+
+    async def _plan(self, query: str, hints: dict[str, Any]) -> None:
+        if self.experiment is None or not self.experiment.planner:
+            return
+        if self.planner_used:
+            raise BudgetExceeded
+        self.planner_used += 1
+        self.store.authorize()
+        self.store.append("ATTEMPT",self.ledger.trace_id,
+            {"attempt":1,"role":"planner","stage":"plan","status":"STARTED"})
+        status = "FAILED"
+        usage: dict[str,int] = {}
+        error_code = None
+        def before_send() -> None:
+            self.store.authorize()
+            if self.ledger.refresh():
+                raise ModelFailure("EVIDENCE_CHANGED")
+        try:
+            if self.model is None:
+                raise ModelFailure("MODEL_DISABLED")
+            turn = await self.model.complete([
+                {"role":"system","content":PLANNER_INSTRUCTIONS},
+                {"role":"user","content":json.dumps({"question":query})}],[],
+                final=True,before_send=before_send)
+            usage = turn.usage
+            proposal = json.loads(turn.message.get("content") or "")
+            names = proposal.get("suggestions") if isinstance(proposal,dict) else None
+            if (turn.message.get("tool_calls") or set(proposal)!={"suggestions"} or
+                    not isinstance(names,list) or len(names)>4 or
+                    any(name not in {"search_knowledge","evaluate_policy","lookup_live_data",
+                                     "recall_memory"} for name in names)):
+                raise ValueError("Planner schema")
+            hints["suggestions"] = list(dict.fromkeys(hints["suggestions"]+names))
+            status = "RECEIVED"
+        except (ModelFailure,ValueError,TypeError):
+            error_code = "PLANNER_UNAVAILABLE"
+            # All four existing tools and grants remain available on planner failure.
+        except asyncio.CancelledError:
+            status = "CANCELLED"
+            raise
+        finally:
+            self.store.append("ATTEMPT",self.ledger.trace_id,
+                {"attempt":1,"role":"planner","stage":"plan","status":status,
+                 "usage":usage,"error_code":error_code})
 
     async def _call(self, messages: list[dict[str, Any]], *, final: bool) -> ModelTurn:
         def before_send() -> None:
@@ -121,6 +169,7 @@ class AgentRuntime:
                  "provider_code": provider_code})
 
     async def _investigate(self, query: str, hints: dict[str, Any]) -> Draft:
+        await self._plan(query,hints)
         packet = hints["packet"]
         context = {"verified_observations": packet["verified_observations"],
             "open_questions": packet["open_questions"], "hypotheses": packet["hypotheses"],
@@ -132,6 +181,8 @@ class AgentRuntime:
                    if e.get("kind")=="UNAPPROVED_PROCEDURAL_EXPERIENCE" else {})}
                                   for e in packet["previous_attempts"]],
             "last_disposition": packet["last_disposition"]}
+        if self.experiment is not None and self.experiment.planner:
+            context["nonexclusive_read_suggestions"] = hints["suggestions"]
         messages: list[dict[str, Any]] = [
             {"role": "system", "content": DRAFT_INSTRUCTIONS},
             {"role": "user", "content": json.dumps({"question": query, "untrusted_case_context": context})}]
@@ -200,7 +251,8 @@ class AgentRuntime:
         draft = draft or safe_draft(self.ledger)
         self.store.append("DIAGNOSTIC", self.ledger.trace_id, {
             "initial_proposed_draft": draft.model_dump(mode="json"), "initial_draft_origin": origin})
-        self.review = await self.critic.run(query, packet, draft)
+        if self.experiment is None or self.experiment.review_required(query,draft):
+            self.review = await self.critic.run(query, packet, draft)
         return await self._finalize(query, draft)
 
     async def _finalize(self, query: str, draft: Draft) -> Draft:
@@ -251,8 +303,12 @@ class AgentRuntime:
         response["budget"] = {"main_used": self.budget.main_used, "main_max": self.budget.main_max,
             "tools_used": self.budget.tools_used, "tool_max": self.budget.tool_max,
             "critic_used": self.budget.critic_used, "critic_max": self.settings.critic_max_calls,
-            "prefetch_used": 0, "critic_search_used": self.budget.critic_search_used, "adapter_attempt_max_per_lookup": 2}
+            "prefetch_used": self.budget.prefetch_used, "critic_search_used": self.budget.critic_search_used, "adapter_attempt_max_per_lookup": 2}
         response["verification_failures"] = sorted(set(self.ledger.failures))
+        if self.experiment is not None:
+            response["experiment"] = {"arm":self.experiment.arm,"planner_used":self.planner_used,
+                "total_model_calls":self.budget.main_used+self.budget.critic_used+self.planner_used,
+                "operational_guidance":False}
         response["session_id"] = self.store.session_id
         self.store.append("RELEASE", self.ledger.trace_id, response)
         return response

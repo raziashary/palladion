@@ -5,8 +5,9 @@ from types import SimpleNamespace
 from typing import Any
 
 import pytest
+from httpx import Response
 from qdrant_client import models
-from qdrant_client.http.exceptions import ResponseHandlingException
+from qdrant_client.http.exceptions import ResponseHandlingException, UnexpectedResponse
 
 from evidence_agent.core.errors import DependencyUnavailable
 from evidence_agent.core.models import Principal
@@ -291,6 +292,14 @@ def test_qdrant_transport_failure_becomes_typed_dependency_unavailable() -> None
 
     with pytest.raises(DependencyUnavailable):
         index.query("find clause", _principal(), "case-a")
+
+
+@pytest.mark.parametrize("status",[408,429,503,400,403])
+def test_p08_native_qdrant_timeout_throttle_normalization_preserves_other_errors(status):
+    index,client=_index()
+    client.query_error=UnexpectedResponse.for_response(Response(status_code=status,content=b"diagnostic"))
+    with pytest.raises(DependencyUnavailable if status in {408,429,503} else UnexpectedResponse):
+        index.query("find clause",_principal(),"case-a")
 
 
 def test_case_member_can_search_casewide_sources_but_not_another_principals_sources() -> None:

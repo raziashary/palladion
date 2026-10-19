@@ -56,6 +56,19 @@ def test_valid_corpus_has_exact_source_spans_and_all_pilot_cases() -> None:
     assert bundle.observations[2].data["settlement_state"] == "UNSETTLED"
 
 
+def test_p08_study_has_disjoint_original_families_exact_gold_quotes_and_explicit_unknown_labels():
+    from evidence_agent.core.evaluation import validate_study_split
+    study=json.loads((APP_ROOT/"data/demo/p08_study.json").read_text(encoding="utf-8"))
+    split=validate_study_split(study["cases"])
+    assert len(split["development"])==len(split["evaluation"])==2
+    assert study["annotation_status"]=="PILOT_NOT_HUMAN_ADJUDICATED"
+    assert study["repetitions"]==2 and study["temperature"]==.2
+    assert set(study["arms"])=={*(f"B{i}" for i in range(10)),"B5_VECTOR"}
+    for case in study["cases"]:
+        assert case["expected_quote"] in case["document"]
+        assert case["family_id"].startswith("P08.")
+
+
 def test_missing_golden_catalog_entry_fails(tmp_path: Path) -> None:
     app = _copy_fixture_tree(tmp_path)
     _write_goldens(app, _read_goldens(app)[:-1])

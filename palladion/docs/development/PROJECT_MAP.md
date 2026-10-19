@@ -1,8 +1,8 @@
 # Project map
 
-Current checkpoint2026-10-19: P06 published6444345; P07 graph and owner-added automatic memory implementation, consumer proof and sole LunaMedium end-review resolution verified (E-P07-001/002). ADR0063–0066 owner approvals preserved. Graph stays off after zero incremental recoveries. P08/UI/benchmark edits and another main push remain excluded. Older phase snapshots below are historical.
+Current checkpoint2026-10-20: P00–P08engineering work complete within the approved synthetic pilot boundary;98/98atomic cards and sole end-review resolution verified. P07 publishedf97471e; graph stays defaultoff. P08 outcomes are negative/inconclusive, semantic accuracy and unobserved candidate-stage metrics unknown. UI/enterprise writes/X01/benchmark-editor edits and a further main push remain excluded. Older dated snapshots are historical.
 
-Updated 2026-10-19; current P06 proof is E-P06-001/E-P06-002. **Actual documentation is distinct from planned runtime components.**
+Updated2026-10-20; published P07 proof is E-P07-002; active P08 proof is E-P08-002 (closeout pending). **Actual documentation is distinct from planned runtime components.**
 Source: blueprint “Concrete prototype repository,” “Directory responsibilities,” and “System
 architecture.” No diagram node below implies shipped code.
 
@@ -245,3 +245,22 @@ independent discovery of unsupplied requirements. End-review R2 is withdrawn.
 ## P07 automatic promotion path (implemented; phase gates/audit verified)
 
 Authenticated message + backend-owned session → immutable CaseStore event → bounded event/span chunks → deterministic PathA → optional existing-local-encoder cosine/loss PathB → canonical promotion decision/idempotent link → scoped MemoryStore → session-aware recall/continuity packet → next actual runtime request. Explicit preference → USER semantic; observed tool/workflow experience → unapproved procedural; other/uncertain → episodic session. Category is separate from access scope. Original case/source ACL and authorityNONE persist; canonical document/live/policy evidence and audit readers remain separate from session-filtered conversational memory. Migration6 and routes/store/packet/runtime/CLI/testing ownership: P07-T04.01–05.
+
+
+## P08 implemented experiment and replay path (end review resolved)
+
+Explicit evaluate.py --study + owner-frozen protocol → study.run_study → isolated
+source-only observation snapshot → production retrieval/policy/runtime/tool consumers
+→ per-attempt/model records + original canonical stores → hash-validated replay_study
+→ score_study_rows/clustered_difference → bounded public receipt and P08_RESULTS.
+B7 adaptive/B8 planner controls are evaluator-only; default runtime still requires review.
+B9 fixed candidate fusion bypasses native fusion once, preserving canonical revalidation.
+B5_VECTOR uses a separate sqlite-vec derived index, then current canonical memory readers;
+its512candidate window exposes truncation through the real recall tool. No fifth tool,
+registry migration, model write authority or default-on experiment is introduced.
+
+Current readers: installed CLI44row replay, installed HTTP search/citation/ACL smoke,
+44reopened canonical stores/12citations/21persisted runtime releases. T01–T24 JUnit
+reconciliation preserves failures and skips; current graph positives pass and sole end audit/resolution is complete. Map arrows establish ownership, not semantic efficacy or production capacity.
+
+R4 metric boundary: model packet remains top4; observed packet @4/packet-MRR are separate from unmeasured candidate/stage @5/10/20/full-MRR. Legacy larger-cutoff labels are withdrawn in replay/report, with frozen raw artifacts unchanged.

@@ -1,0 +1,124 @@
+{
+  "schema_version": "p08.1",
+  "annotation_status": "PILOT_NOT_HUMAN_ADJUDICATED",
+  "repetitions": 2,
+  "order_seed": 1719,
+  "model": "openai/gpt-oss-20b",
+  "temperature": 0.2,
+  "request_timeout_seconds": 60,
+  "model_call_interval_seconds": 10,
+  "run_max_calls": 200,
+  "run_max_estimated_tokens": 2000000,
+  "run_max_seconds": 7200,
+  "arms": [
+    "B0",
+    "B1",
+    "B2",
+    "B3",
+    "B4",
+    "B5",
+    "B6",
+    "B7",
+    "B8",
+    "B9",
+    "B5_VECTOR"
+  ],
+  "cases": [
+    {
+      "case_id": "p08-dev-notice",
+      "family_id": "P08.NOTICE",
+      "split": "development",
+      "language": "en",
+      "slices": [
+        "en",
+        "current",
+        "authorized",
+        "direct",
+        "answerable"
+      ],
+      "document": "# Notice delivery\n\n## NOTICE-DELIVERY\nA fictional notice marked QUEUED remains in the dispatcher backlog. The operator may record the queue identifier in the case notes. An absent delivery receipt does not prove that the destination received the notice. This note grants no payment action.\n",
+      "question": "Quote the approved NOTICE-DELIVERY clause about a queued notice. Explain what the missing receipt does not establish. Do not authorize a payment action.",
+      "expected_quote": "An absent delivery receipt does not prove that the destination received the notice.",
+      "expected_disposition": "SUPPORTED",
+      "policy_outcome": "RECORD_QUEUE_REFERENCE",
+      "preference": "I prefer concise answers.",
+      "retired_document": "# Retired notice dispatch\n\n## NOTICE-DELIVERY\nThe former notice rule treated QUEUED as delivered and allowed the operator to close the notification incident without a receipt. This obsolete note applied only before 2024.\n",
+      "draft_document": "# Unapproved draft\n\n# Retired notice dispatch\n\n## NOTICE-DELIVERY\nThe former notice rule treated QUEUED as delivered and allowed the operator to close the notification incident without a receipt. This obsolete note applied only before 2024.\n",
+      "restricted_document": "# Notice delivery\n\n## NOTICE-DELIVERY\nA fictional notice marked QUEUED remains in the dispatcher backlog. The operator may record the queue identifier in the case notes. An absent delivery receipt does not prove that the destination received the notice. This note grants no payment action.\n\nPrivate diagnostic: P08_PRIVATE_p08-dev-notice\n"
+    },
+    {
+      "case_id": "p08-dev-ticket",
+      "family_id": "P08.TICKET",
+      "split": "development",
+      "language": "id",
+      "slices": [
+        "id",
+        "historical",
+        "authorized",
+        "exception",
+        "answerable"
+      ],
+      "document": "# Arsip tiket\n\n## TICKET-ARCHIVE\nTiket sintetis yang berstatus CLOSED boleh disimpan sebagai catatan historis. Label arsip tidak menyatakan bahwa masalah pelanggan sudah selesai. Jika ada pesan baru, buat catatan lanjutan dan jangan mengubah salinan arsip yang asli.\n",
+      "question": "Kutip aturan TICKET-ARCHIVE. Apa arti label arsip dan apa yang dilakukan jika ada pesan baru?",
+      "expected_quote": "Label arsip tidak menyatakan bahwa masalah pelanggan sudah selesai.",
+      "expected_disposition": "SUPPORTED",
+      "policy_outcome": "PRESERVE_ARCHIVE_ADD_FOLLOWUP",
+      "preference": "I prefer detailed examples.",
+      "retired_document": "# Aturan arsip lama\n\n## TICKET-ARCHIVE\nAturan tiket terdahulu menganggap CLOSED berarti keluhan pelanggan pasti selesai. Pesan lanjutan ditimpa ke arsip asli. Ketentuan lama ini berakhir pada tahun 2024.\n",
+      "draft_document": "# Unapproved draft\n\n# Aturan arsip lama\n\n## TICKET-ARCHIVE\nAturan tiket terdahulu menganggap CLOSED berarti keluhan pelanggan pasti selesai. Pesan lanjutan ditimpa ke arsip asli. Ketentuan lama ini berakhir pada tahun 2024.\n",
+      "restricted_document": "# Arsip tiket\n\n## TICKET-ARCHIVE\nTiket sintetis yang berstatus CLOSED boleh disimpan sebagai catatan historis. Label arsip tidak menyatakan bahwa masalah pelanggan sudah selesai. Jika ada pesan baru, buat catatan lanjutan dan jangan mengubah salinan arsip yang asli.\n\nPrivate diagnostic: P08_PRIVATE_p08-dev-ticket\n"
+    },
+    {
+      "case_id": "p08-eval-reconcile",
+      "family_id": "P08.RECONCILE",
+      "split": "evaluation",
+      "language": "en",
+      "slices": [
+        "en",
+        "current",
+        "authorized",
+        "exception",
+        "answerable"
+      ],
+      "document": "# Batch reconciliation\n\n## BATCH-RECONCILE\nA fictional settlement batch with a mismatched checksum requires comparison against the signed batch manifest. Record the two observed checksums without replacing either original. A matching record count alone cannot clear a checksum discrepancy. Escalation is an investigation step and never permission to move funds.\n",
+      "question": "Quote BATCH-RECONCILE on checksum discrepancies. Can the matching record count alone clear the discrepancy? Give the source and preserve uncertainty.",
+      "expected_quote": "A matching record count alone cannot clear a checksum discrepancy.",
+      "expected_disposition": "SUPPORTED",
+      "policy_outcome": "COMPARE_SIGNED_MANIFEST",
+      "preference": "I prefer concise answers.",
+      "retired_document": "# Superseded checksum instruction\n\n## BATCH-RECONCILE\nPreviously a matching record count cleared any checksum discrepancy without comparing the signed batch manifest. That retired shortcut ended in 2024.\n",
+      "draft_document": "# Unapproved draft\n\n# Superseded checksum instruction\n\n## BATCH-RECONCILE\nPreviously a matching record count cleared any checksum discrepancy without comparing the signed batch manifest. That retired shortcut ended in 2024.\n",
+      "restricted_document": "# Batch reconciliation\n\n## BATCH-RECONCILE\nA fictional settlement batch with a mismatched checksum requires comparison against the signed batch manifest. Record the two observed checksums without replacing either original. A matching record count alone cannot clear a checksum discrepancy. Escalation is an investigation step and never permission to move funds.\n\nPrivate diagnostic: P08_PRIVATE_p08-eval-reconcile\n"
+    },
+    {
+      "case_id": "p08-eval-alert",
+      "family_id": "P08.ALERT",
+      "split": "evaluation",
+      "language": "id",
+      "slices": [
+        "id",
+        "historical",
+        "authorized",
+        "direct",
+        "answerable"
+      ],
+      "document": "# Pengakuan alarm\n\n## ALERT-ACKNOWLEDGEMENT\nAlarm latihan memiliki waktu penerimaan dan waktu kejadian yang berbeda. Tanda ACK hanya mencatat bahwa petugas membaca alarm, bukan bahwa penyebab gangguan telah diperbaiki. Simpan waktu kejadian ketika menulis kronologi agar keterlambatan pengiriman tidak mengubah urutan peristiwa.\n",
+      "question": "Kutip ALERT-ACKNOWLEDGEMENT: apakah ACK berarti gangguan sudah diperbaiki, dan waktu apa yang dipakai untuk kronologi?",
+      "expected_quote": "Tanda ACK hanya mencatat bahwa petugas membaca alarm, bukan bahwa penyebab gangguan telah diperbaiki.",
+      "expected_disposition": "SUPPORTED",
+      "policy_outcome": "PRESERVE_EVENT_CHRONOLOGY",
+      "preference": "I prefer detailed examples.",
+      "retired_document": "# Petunjuk alarm usang\n\n## ALERT-ACKNOWLEDGEMENT\nSebelumnya tanda ACK disamakan dengan gangguan yang sudah diperbaiki, dan kronologi memakai waktu penerimaan saja. Pedoman usang itu berlaku sampai 2024.\n",
+      "draft_document": "# Unapproved draft\n\n# Petunjuk alarm usang\n\n## ALERT-ACKNOWLEDGEMENT\nSebelumnya tanda ACK disamakan dengan gangguan yang sudah diperbaiki, dan kronologi memakai waktu penerimaan saja. Pedoman usang itu berlaku sampai 2024.\n",
+      "restricted_document": "# Pengakuan alarm\n\n## ALERT-ACKNOWLEDGEMENT\nAlarm latihan memiliki waktu penerimaan dan waktu kejadian yang berbeda. Tanda ACK hanya mencatat bahwa petugas membaca alarm, bukan bahwa penyebab gangguan telah diperbaiki. Simpan waktu kejadian ketika menulis kronologi agar keterlambatan pengiriman tidak mengubah urutan peristiwa.\n\nPrivate diagnostic: P08_PRIVATE_p08-eval-alert\n"
+    }
+  ],
+  "limitations": [
+    "Synthetic family-disjoint pilot; author-visible fixtures are not a blinded confirmatory held-out test.",
+    "Existing T01-T24 are a separate complete regression/fault matrix; they are not fresh evaluation cases.",
+    "Semantic support, human usefulness and causal false veto remain unknown without independent labels.",
+    "Two repetitions per case do not establish tail capacity or general performance.",
+    "Any incomplete or failed treatment remains in the report and cannot be counted as a passing capability.",
+    "Every family includes current, retired, unapproved and restricted sources; supplied originals are retained and only current authorized spans may reach model context."
+  ]
+}

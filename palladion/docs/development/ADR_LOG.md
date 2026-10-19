@@ -1352,9 +1352,216 @@ Verification: planned proof, result, evidence and execution/deferred state
 Amendment history: old answer/date/reason and superseding decision
 ```
 
-Next free ADR number: 0071. Accepted directions do not grant implementation GO.
+Next free ADR number: 0087. Accepted directions do not grant implementation GO.
+
+## ADR-0075 — Development pilot launch configuration and resource accounting
+
+**Status:** ACCEPTED coordinator fixture/configuration within ADR-0019/0071/0072/0074, 2026-10-19.
+**Authority:** Full P08 GO, approved stochastic transport and isolated experiments; final evaluation protocol still needs an owner-approved freeze after calibration.
+**Question:** What actual development data and bounds precede the frozen evaluation?
+**Why:** Existing T01–T24 and P02 data are inspected regression/substrate evidence, not fresh generated-answer calibration or independent human truth.
+**Options:** Reuse inspected corpus as confirmatory data (rejected), or supply separate fictional document/case families to development and evaluation stores.
+**Recommendation:** `p08_study.json` declares two development and two evaluation families, English/Indonesian, two repeated generations, shuffled order seed1719, selected GPT-OSS20B/temperature0.2. Development executes B0/B1 only. Supply only each case's own original, approve through real registry, index and resolve canonical spans. Fictional zero-input routing policies exercise approved execution/time; required-fact/conflict/temporal rigor remains the separate full T01–T24 matrix. No new enterprise fact or action authority. Development/evaluation have different immutable run IDs; all raw responses, source snapshots, manifests, calls and failures persist in ignored runtime storage. No source/collection deletion.
+**What affects what:** evaluation/study.py lifecycle and existing evaluate.py CLI; source snapshots include untracked implementation bytes. Per-phase hard caps200model attempts,160000conservatively estimated token allowance and7200seconds; per-request60seconds, main≤5/critic≤3/planner≤1/tools≤8. Failed calls count; no retry. Actual provider usage and estimates stay separate; missing usage/billing stays unknown. New B9 fixed candidates feed the same canonical rerank/context owner without an extra native fusion; gold IDs derive from canonical original chunks before retrieval, never from returned hits.
+**My answer (editable):** Coordinator launch detail under accepted directions. Final targets/tradeoffs and the separate evaluation freeze await actual B0/B1 observations and owner review; no confirmatory claim authorized.
+**Verification:** Source/type/guard checks in progress; no development/evaluation provider result claimed before execution.
+
+## ADR-0073 — Frozen experimental mechanics and sidecar ownership
+
+**Status:** ACCEPTED coordinator implementation within approved ADR-0072, 2026-10-19.
+**Authority:** Owner-approved isolated controls and sqlite-vec sidecar; existing typed runtime and reader contracts.
+**Question:** Which inspectable mechanics implement the approved experiments?
+**Why:** Treatment identity must disclose actual work rather than imply a native ANN index or an empirically calibrated risk classifier.
+**Options:** Implicit/default switches (rejected), or explicit evaluator objects with frozen mechanics and preserved serving defaults.
+**Recommendation:** Use `ExperimentControls` only from the synthetic evaluator. B7 flags typed OPERATIONAL_GUIDANCE/POLICY_RESULT or the recorded policy/action vocabulary; measure euphemism false skips without post-result tuning. B8 adds at most one separately logged same-model planner suggestion call; all four tools remain available after failure. Compare k60 RRF against min-max CombSUM on identical raw candidate lists, with deterministic ties by ID. Vector sidecar stores only IDs, scope metadata, model/content hashes and embeddings; exact sqlite-vec cosine over at most512owner-scoped rows, canonical reader before distance/content return. It is not ANN. Baseline structured/FTS recall remains first; vector augmentation is explicit.
+**What affects what:** agent/experiments.py, loop/tools optional hooks, memory/vector.py, core/evaluation.py, redacted planner-role telemetry and owning tests. No registry migration, default bypass, training/calibration claim or source of new authority.
+**My answer (editable):** Coordinator detail under accepted ADR-0072; owner approval preserved there.
+**Verification:** uv installed sqlite-vec0.1.9; actual in-memory extension reports SQLite3.50.4/vecv0.1.9 and orthogonal cosine distance1. Sidecar reopen/owner isolation/revocation/load-disabled guard passes. Runtime controls and full reader/evaluation proof remain in progress.
+
+## ADR-0074 — Explicit hosted sampling for repeated evaluation
+
+**Status:** ACCEPTED; explicit owner async answer, 2026-10-19.
+**Authority:** Rule4 for an additive transport configuration contract; P08 repeated stochastic generations.
+**Question:** May the existing Groq transport accept an optional validated temperature, default0, with the study explicitly selecting0.2?
+**Why:** Transport currently hardcodes temperature0. Repeating that is useful engineering evidence but cannot be mislabeled a deliberately stochastic sampling treatment.
+**Options:** Retain temperature0 and report that limit, or add an optional bounded sampling parameter while preserving every existing caller/default.
+**Recommendation:** Optional finite temperature in[0,1], default0; only explicitly enabled P08 study selects0.2 for both development calibration and evaluation. Same selected GPT-OSS20B throughout, no model fallback. Record repetitions, shuffled order/seed, unknown provider seed reproducibility, actual attempts/tokens/failures. Freeze separate run-wide attempt/token/time caps before calls; no retry or per-request deadline expansion.
+**What affects what:** agent/llm.py constructor/from_env_file and payload, evaluator CLI/manifest and transport guard tests. No credential, tool, model choice, release or default sampling change.
+**My answer (editable):** Approve optional temperature; study uses 0.2 (Recommended).
+
+**Verification:** Current source hardcodes temperature0. Owner approved before the additive implementation; stochastic study proof remains pending.
+
+## ADR-0071 — P08 calibration order and pilot evidence boundary
+
+**Status:** ACCEPTED coordinator implementation within ADR-0019/0021, 2026-10-19.
+**Authority:** Explicit P08 GO and the verified start-adversary sequencing finding.
+**Question:** How do calibration and frozen evaluation remain distinct without invented independent labels?
+**Why:** P02 measured retrieval only; existing T01–T24 cases have already been inspected. No independent semantic annotations or usefulness ratings are evidenced.
+**Options:** Reuse inspected cases as confirmatory held-out evidence (rejected), or retain them as regression/development and create disjoint synthetic development/evaluation families with immutable artifacts.
+**Recommendation:** Persist actual generated-answer B0/B1 development runs first. Derive and record empirical targets/tradeoffs, freeze the owner-approved protocol and family/source hashes, then execute the declared evaluation grid. Semantic support/usefulness/generalization remain unknown without independent humans. Existing T01–T24 remain the complete regression/fault matrix, not unseen held-out data. New evaluation remains a frozen synthetic pilot.
+**What affects what:** P08-T01.01/.02 sequencing, fixture/manifests/scorer/CLI, tests and research/gate status; no release-default change.
+**My answer (editable):** Inherits ADR-0019's accepted pilot-only method and P08 GO. The concrete final protocol and targets must be reviewable before evaluation execution.
+**Verification:** Start adversary read the complete blueprint and identified the absent calibration boundary; implementation pending.
+
+## ADR-0072 — Isolated experimental controls and derived vector index
+
+**Status:** ACCEPTED; explicit owner async answer, 2026-10-19.
+**Authority:** Rule 4 and P08-T02.03–06 for optional interaction contracts and extension installation.
+**Question:** May P08 add explicit evaluator-only treatment configuration and a pinned sqlite-vec sidecar with bounded optional recall integration?
+**Why:** B7/B8/B9/vector controls are absent. Ablation controls must not weaken ordinary mandatory review; vector hits must retain canonical memory authorization and validity.
+**Options:** Leave these experiments pending direction, or implement isolated controls and an explicitly enabled derived index. Changing serving defaults or adding a fifth tool is rejected.
+**Recommendation:** Add synthetic evaluator controls: B7 frozen risk-triggered advisory review with false-skip controls against paired B6; B8 nonexclusive planner using the same selected Groq model, separately charged (main ≤5, critic ≤3, planner ≤1, total ≤9); B9 one alternative fusion over identical frozen dense/sparse candidates, without native fusion when the alternative owns combination. Pin sqlite-vec 0.1.9 using uv, in a separate derived SQLite sidecar; load only the packaged extension and immediately disable further extension loading. Revalidate vector hits through current MemoryStore owner/scope/session/source/validity readers. No registry schema migration or existing-data rewrite; optional internal hooks default absent. Ordinary HTTP/runtime mandatory review stays unchanged.
+**What affects what:** Evaluator/treatment and memory-vector owners, compatible optional internal hooks if required, pyproject/uv.lock, explicit CLI/config, tests/gates. No write privilege, hidden model fallback or implicit enablement. Require fresh/populated sidecar/readback, stale/revoked/cross-scope and extension-failure controls.
+**My answer (editable):** Approve isolated controls and sqlite-vec sidecar (Recommended).
+
+**Verification:** Owner approved; implementation and compatibility proof pending. Official Python example demonstrates loading the packaged extension and disabling loading afterward; PyPI lists 0.1.9. Installed Windows/Python compatibility remains unproven. Final fusion choice is recorded before measurements. Sources: [sqlite-vec Python example](https://github.com/asg017/sqlite-vec/blob/main/examples/simple-python/demo.py), [package metadata](https://pypi.org/project/sqlite-vec/), [Qdrant hybrid queries](https://qdrant.tech/documentation/search/hybrid-queries/).
 
 
 ## P07 final phase-local disposition (2026-10-19)
 
 E-P07-002 records all11cards, actual source/installed/CLI/provider and original-reader proof, the sole GPT6LunaMedium end audit and same-reviewer resolution. The reviewer read the full blueprint (§1–§18), I01–I15, graph and memory amendment; three current-facing document contradictions were fixed and rechecked. No confirmed source defect remained. Graph has0incremental recoveries in4paired queries and stays off by default; controlled path recovery proves integration only. PathA automatic promotion and opt-in bounded local PathB retain original ACL/authorityNONE;4mechanical pilot labels pass,2semantic labels remain unknown. Historical failures and intermediate pending statuses above remain dated snapshots, not current scope. No unanswered P07 owner ADR; P08 adjudication, generalization and external comparisons remain excluded.
+
+
+## ADR-0076 — Correct the one-call baseline capability contract before freeze
+
+**Status:** ACCEPTED in-scope experimental defect correction,2026-10-19.
+**Authority:** P08 B0–B3 one-LLM document-only definitions; universal Rule5.
+**Question:** Why do no-tool baseline prompts ask for four tools and a critic?
+**Why:** Development launch0/r1 reused DRAFT_INSTRUCTIONS, which explicitly asks for native tool investigation and later critic. R1 recorded four Indonesian provider400/tool_use_failed while all four English calls returned. This is a concrete prompt/capability contradiction, not evidence that a language or model is universally defective. R1 all8observations/4failures remain intact.
+**Options:** Ignore provider errors or insert fake outputs (rejected), or fix the baseline prompt owner and launch a separately versioned complete development run before final targets/evaluation freeze.
+**Recommendation:** Dedicated one-call no-tool JSON Draft prompt derived from the actual Draft schema; no tools/critic instructions, no new provider/model/corpus/sampling choice. Retain actual raw draft plus common-gate response separately, disclose baseline policy/critic capability gaps instead of attributing wrapper-induced qualification to raw semantic error. Mark actual retrieval status in the ledger so common rendering does not claim no search occurred. Preserve all original runs and prompts; no threshold tuning on evaluation data.
+**What affects what:** evaluation/study.py baseline prompt, prompt hash and search attribution, prompt guard and development artifacts. Ordinary runtime/gate/transport unchanged.
+**My answer (editable):** Coordinator correction of the owning experimental consumer, supported by the already authorized arm definition.
+**Verification:** R1 safe provider diagnostics show tool_use_failed; the mechanism is plausible but the corrected actual-run result is still required. No claim that it fixes every provider failure.
+
+## ADR-0077 — Complete source-state calibration and physical-index disclosure
+
+**Status:** ACCEPTED coordinator correction within P08,2026-10-19.
+**Authority:** Blueprint current-source/approval/ACL invariants and P08 calibration/manifests; no serving contract change.
+**Question:** Does a single-current-document calibration establish behavior with competing source states or a physical HNSW index?
+**Why:** It does neither. R2 received8/8responses but recovered the exact quote in4/8; its original one-source artifacts remain intact. Tiny collections may use a scan despite an ANN query request.
+**Options:** Overstate the original pilot (rejected), or retain it and run a separately versioned final development calibration before owner freeze.
+**Recommendation:** Add family-local retired, unapproved draft and restricted source fixtures to both predeclared folds. Bind every supplied document into split/corpus hashes. Current source gold remains unchanged; do not tune expected outcomes to observed answers. Record actual collection point/indexed-vector counts and pinned reranker manifest/fingerprint. Label physical-index absence and do not infer HNSW performance. B7 compares B6, vector augmentation compares B5; replay computes case-clustered paired cost differences from all attempts.
+**What affects what:** p08_study.json, evaluation/study.py, core split guards, final development manifests and research report. No source-authority, release, serving default or new dependency change.
+**My answer (editable):** Coordinator implementation detail under P08 and accepted ADR0071–75. Concrete evaluation targets and freeze still require owner review after final development observations.
+**Verification:** R2 raw run p08_b13ffe65a8d7435a94a07d4f4a7049d4 preserves8calls/8responses,4exact quote recoveries and0wrapped SUPPORTED results. Rich-source calibration and physical index readback remain pending.
+
+## ADR-0078 — Isolate canonical history across experimental observations
+
+**Status:** ACCEPTED coordinator defect correction before evaluation,2026-10-19.
+**Authority:** P08 paired ablations, scope isolation and fixed-input requirements.
+**Question:** Are separate sessions sufficient to isolate repeated treatment observations?
+**Why:** No: USER semantic preferences and canonical case history deliberately survive sessions. Reusing one case database could contaminate a later arm with another arm's generated history. Development B0/B1 did not persist runtime answers, but full runtime arms would.
+**Options:** Rely on session changes (rejected), or clone the same source-only canonical snapshot for each observation before any runtime event.
+**Recommendation:** SQLite backup to a new observation-owned database plus exact originals copy, preserving source IDs, approvals, generations and private ACL. Never rewrite the source snapshot. Seed the same prior preference event for B4–B8/vector, with B4 continuity disabled; B4's workload no longer omits the history that its paired B5 receives. Setup cloning stays outside measured request latency and is disclosed separately.
+**What affects what:** evaluation/study.py only; canonical serving/session/memory contracts unchanged. No new dependency or source-authority store; unique derived observation resources remain retained.
+**My answer (editable):** Coordinator correction within explicitly approved isolated P08 experiments.
+**Verification:** Source trace confirms USER memory is cross-session; full evaluation has not begun. Actual clone/reopen/isolation guard and final measurement remain required.
+
+## ADR-0079 — Owner-approved final pilot freeze and token ceiling
+
+**Status:** ACCEPTED; explicit owner async answer,2026-10-19.
+**Authority:** P08-T01.01 owner-approved final protocol; accepted ADR0071/74/75.
+**Question:** May the concrete44observation protocol and conservative token ceiling be frozen after development?
+**Why:** Development now records real generated answers, source-state competition, failures and calibrated mechanical targets. The160000estimated-token cap could prevent meaningful coverage of all11arms.
+**Options:** Keep160000and record budget-limited observations, or raise only this ceiling to2000000while retaining200calls/7200seconds and request limits.
+**Recommendation:** Freeze evidence/P08_PROTOCOL_FREEZE.md:2cases×11arms×2repetitions,20Btemperature0.2,seed1719,10secondspacing,no retry/fallback. Targets≥0.5exactquote recovery,1.0releasedcitationresolvability,0restrictedcanaryleakage and no budget overrun. Preserve all failure denominators; semantic accuracy/usefulness/causal conclusions remain unknown.
+**What affects what:** Study config/guard, immutable machine protocol/calibration hashes, evaluator/report. No serving default, call count, request deadline or model change.
+**My answer (editable):** Approve protocol and estimated-token ceiling (Recommended).
+**Verification:** Owner approved before evaluation. Machine freeze and grid execution still require actual artifacts; approval is not evidence of targets passing.
+
+## ADR-0080 — Explicit application assets for the installed evaluator
+
+**Status:** ACCEPTED in-scope packaging defect correction,2026-10-19.
+**Authority:** P08 entry-point/installed consumer proof; existing script-owned application root pattern.
+**Question:** Can the installed study module infer the repository fixture folder from its package file location?
+**Why:** A wheel lives under site-packages, so parents[3]/data is not the application fixture directory. The existing scripts already own the correct application root; moving evaluator logic into a package must preserve that consumer input.
+**Options:** Rely on a source checkout location (rejected), or pass the script's existing application root into the study and its setup/observation owners.
+**Recommendation:** Optional explicit app root on the evaluator, supplied by scripts/evaluate.py; helpers receive it for fixtures/config/cache/runtime. Preserve source defaults and existing study semantics. No global-path mutation or extra package copies. The currently executing grid uses its frozen source snapshot and unchanged correct source-root behavior; this repair affects installed path discovery, not its treatment/corpus/model.
+**What affects what:** evaluation/study.py, scripts/evaluate.py and installed entry-point proof. No provider, serving, data schema or frozen fixture change.
+**My answer (editable):** Coordinator owning-consumer repair under P08 and Rule5.
+**Verification:** Source trace proves file-location inference differs between checkout and site-packages. Current installed CLI root/override guard passes; installed44row replay and HTTP smoke pass (E-P08-002).
+
+## ADR-0081 — Preserve typed degradation for native search timeouts
+
+**Status:** ACCEPTED small owning-layer defect correction,2026-10-20.
+**Authority:** Existing DependencyUnavailable contract and P08 partial-outage/failure-accounting tasks; Rule5.
+**Question:** Why does a real Qdrant HTTP408 bypass the existing dependency-unavailable handling?
+**Why:** The frozen-critic continuation encountered a native408. The adapter normalizes transport exceptions and HTTP5xx, but lets HTTP408/429 escape as UnexpectedResponse, defeating existing typed degradation. This is distinct from fixing service slowness or retrying a failed call.
+**Options:** Treat native timeout/throttle as unhandled errors (rejected), or normalize them in the existing Qdrant call owner while preserving validation/auth error behavior.
+**Recommendation:** Map408/429 alongside5xx to existing DependencyUnavailable; preserve400/401/403 and no retries. Add native library response guards and actual search smoke. Do not rewrite graph queries: later graph failures also hit MERGE/cleanup, and VM pause evidence does not establish a query-code root cause.
+**What affects what:** storage/qdrant.py and tests/test_retrieval.py; existing downstream typed unavailable handling is reused. No new response schema, dependency, default deadline, retry or authorization grant.
+**My answer (editable):** Coordinator in-scope correction of promised timeout degradation, not a new contract or architecture.
+**Verification:** Real408 traceback retained runtime/p08-frozen-critic-r1.log. Native408/429/503 versus400/403 mapping group17PASS; final source/wheel/HTTP controls pass (E-P08-002). Original grid is complete and remains bound to its unchanged source snapshot.
+
+## ADR-0082 — Retain known usage within partially failed observations
+
+**Status:** ACCEPTED in-scope scoring defect correction,2026-10-20.
+**Authority:** P08 all-attempt cost accounting and unknown-is-not-zero rule.
+**Question:** Should a later failed call erase earlier known token usage from the same observation's arm total?
+**Why:** Raw calls retain every received usage, but the row-level aggregate is empty when any invocation lacks usage. The first arm scorer consequently undercounts known partial usage even though the global attempt reader is correct.
+**Options:** Use only complete-row usage (rejected), or join immutable attempt usage by each row's recorded call numbers during replay.
+**Recommendation:** Preserve raw rows unchanged. Enrich scorer inputs with per-attempt usage from the bound call artifact; sum all known received tokens while reporting missing attempts and incomplete runs separately. Public mechanical receipt carries those same usage inputs and must reproduce raw-replay metrics exactly. No failed usage is assigned zero or inferred billing.
+**What affects what:** core/evaluation.py, evaluation/study.py replay, scorer guard and derived report export only; no provider calls, frozen treatment, runtime output or original artifact mutation.
+**My answer (editable):** Coordinator correction of the owning report reader under existing accounting requirements.
+**Verification:** Raw91attempts preserve54750knownreceivedtokens; mixed successful/unknown scorer group18PASS. Raw replay and bounded public receipt metrics match; known arm totals equal54750 (E-P08-002).
+
+## ADR-0083 — Propagate vector candidate-window incompleteness
+
+**Status:** ACCEPTED correction to the new opt-in P08 consumer,2026-10-20.
+**Authority:** Approved ADR0072 bounded vector augmentation and existing recall coverage semantics.
+**Question:** Does the recall handler disclose truncation in both its baseline and vector candidate windows?
+**Why:** VectorMemory records its512candidate truncation flag, but the handler currently reports only the structured/FTS reader's flag. The existing exhaustive=false remains truthful, yet the specific incompleteness field can be wrong.
+**Options:** Leave the producer flag unread (rejected), or combine it with baseline incompleteness only when vector recall actually runs.
+**Recommendation:** OR the current vector last_truncated into the existing recall coverage flag. Exact-ID/no-query/default paths do not inherit stale vector flags. Use an actual513derived-row guard with canonical denial and the real tool consumer.
+**What affects what:** agent/tools.py optional vector branch and tests/test_memory.py; no new tool, field, default or authority change.
+**My answer (editable):** Coordinator local producer-to-reader correction inside the approved new experiment.
+**Verification:** Actual513derived-row window → canonical denial → real recall handler guard1PASS39.29s; no-query/default branch does not inherit stale flags. Final source/wheel controls pass (E-P08-002).
+
+
+## ADR-0084 — Explicit alternate model for a separate continuity control
+
+**Status:** ACCEPTED in-scope model selection under owner-approved ADR0036,2026-10-20.
+**Authority:** Owner authorizes Groq Qwen/120B/20B selection with explicit recording, no hidden fallback.
+**Question:** Which approved model should execute the fresh, separate continuity control after the20B frozen critic run?
+**Why:** Actual20B response headers report daily token quota199674/200000 and HTTP429. The frozen grid and in-progress critic observations must retain their selected model and failures.
+**Options:** Attempt another20B control under near-exhausted daily quota, or explicitly select the already-approved120B for a separate versioned continuity pilot.
+**Recommendation:** Finish recording the20B critic conditions unchanged, then execute one explicitly enabled memory pilot using Groq openai/gpt-oss-120b with10secondspacing and existing request/call limits. No failed call retry, cross-model pooled metric or replacement of the frozen grid.
+**What affects what:** Only the next explicit scripts/evaluate.py --memory command and its separate run manifest/report; no source, dependency, serving default or frozen treatment change.
+**My answer (editable):** Coordinator selects an already owner-approved model for this distinct control, not hidden fallback.
+**Verification:** Live20B quota diagnostic preserved in p06-57815987982f4322997fc434305ebe83.json. Separate120B run p05-b55c4c1197d646f299746de55263886f completed all3conditions,32859known tokens; failures/omission retained, not pooled with20B (E-P08-002).
+
+
+## ADR-0085 — Correct legacy continuity report after mandatory critic integration
+
+**Status:** ACCEPTED owning report defect correction,2026-10-20.
+**Authority:** Rule5 comment/report behavior mismatch; P08 per-attempt accounting.
+**Question:** Does the existing memory pilot still run without a critic as its report says?
+**Why:** run_memory constructs the current default AgentRuntime through configure_agent. Since P06 that runtime always invokes independent review; the old report's critic=false is stale. Received-usage lists alone also omit failed attempts.
+**Options:** Disable the mandatory reviewer to match an old label (rejected), or report the actual constant reviewer and persist redacted per-attempt records.
+**Recommendation:** Label critic=true/held constant across continuity arms; retain initial and per-condition role/stage/status/attempt/usage/error_code records from the canonical attempt events. Do not alter runtime, source fixtures, model budget or continuity comparison.
+**What affects what:** scripts/evaluate.py run_memory report only. Earlier reports remain unchanged; frozen P08 grid and active critic source snapshot remain immutable.
+**My answer (editable):** Coordinator corrects the actual report producer before its fresh consumer proof.
+**Verification:** Live source trace run_memory → configure_agent → AgentRuntime default review; Installed120B pilot completed all3conditions and records22startedcalls/failed/schema/cancelled attempts, with critic=true/heldconstant; exact script hash matches retained snapshot (E-P08-002).
+
+
+## ADR-0086 — Withdraw unobserved retrieval cutoffs after top-four truncation
+
+**Status:** ACCEPTED owning measurement defect correction,2026-10-20.
+**Authority:** End-review R4; P08 unknown-is-not-zero/retained-failure rules and approved pilot boundary ADR0071/0079.
+**Question:** Can the final top-four model packet measure candidate Recall@5/10/20 and full-ranking MRR?
+**Why:** _observe scores only HybridSearch result.passages after limit4, while score_ranked_references defaults to5/10/20. These labels cannot observe ranks5–20 and are not valid candidate-stage measurements. The frozen raw run retained this defect; no higher-stage quality claim is supported.
+**Options:** Rerun a new separately frozen experiment with full-stage capture for new claims, or withdraw the invalid higher-cutoff labels now and expose only actually observed packet metrics.
+**Recommendation:** Preserve frozen inputs/source/rows/calls/completion unchanged. Future evaluator scoring names final-packet @4/packet-MRR and leaves unobserved candidate/stage @5/10/20/full-MRR unknown. Replay/report explicitly withdraw legacy top-four scores mislabeled as larger cutoffs. No new metric values are inferred from missing ranks, no source/model/treatment tuning or provider rerun. Higher-stage performance remains unmeasured.
+**What affects what:** core/evaluation.py bounded packet scorer, evaluation/study.py scorer/replay notice, tests and derived reports only. Serving result cap and frozen44observations stay unchanged; no schema/dependency/API contract change.
+**My answer (editable):** Coordinator corrects a newly authored report producer/reader; this withdraws an invalid claim rather than inventing missing evidence or narrowing a required metric.
+**Verification:** Reviewer traced limit4 → default5/10/20. Final20installed guards distinguish rank5/rank10 from top4 and prove the canonical evaluator keeps exactly4model evidence IDs. Installed44row replay and65/65wheel byte proof pass; same LunaMedium reviewer confirms R4 resolved. No fresh candidate-quality result claimed (E-P08-003).
+
+
+P08 final verification index2026-10-20: approved ADR0071–0079 directions executed in
+versioned calibration/freeze/grid artifacts; ADR0080–0085 owning fixes have actual
+source/installed/consumer evidence at E-P08-002. ADR0086 metric withdrawal and sole
+reviewer resolution verified at E-P08-003. Acceptance never means positive hypothesis
+or availability of missing stage/semantic measurements. Initial pending verification
+statements in dated entries describe their decision-time state; this index records
+completed engineering proof and retained research limits.

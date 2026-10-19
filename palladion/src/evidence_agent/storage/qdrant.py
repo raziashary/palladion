@@ -104,7 +104,7 @@ class QdrantIndex:
         except ResponseHandlingException as error:
             raise DependencyUnavailable() from error
         except UnexpectedResponse as error:
-            if error.status_code is not None and error.status_code >= 500:
+            if error.status_code is not None and (error.status_code in {408,429} or error.status_code >= 500):
                 raise DependencyUnavailable() from error
             raise
 

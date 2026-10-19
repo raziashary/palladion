@@ -24,7 +24,15 @@ def main() -> None:
     parser.add_argument("--enable-graph",action="store_true")
     parser.add_argument("--graph-partition",default=settings.graph_partition)
     parser.add_argument("--graph-timeout",type=float,default=settings.graph_timeout_seconds)
+    parser.add_argument("--integrity-tests",type=Path,nargs="+",help="Read saved P08 JUnit reports only")
+    parser.add_argument("--control-map",type=Path,default=Path("data/demo/p08_integrity_controls.json"))
     args = parser.parse_args()
+    if args.integrity_tests:
+        from evidence_agent.core.evaluation import reconcile_integrity_tests
+        controls=json.loads(args.control_map.read_text(encoding="utf-8"))
+        report=reconcile_integrity_tests(args.integrity_tests,controls)
+        print(json.dumps(report,indent=2))
+        raise SystemExit(0 if report["all_declared_checks_pass"] else 1)
     index = QdrantIndex(url=args.url, collection_name=args.collection, bm25_profile=settings.bm25_profile)
     graph=Neo4jIndex(uri=settings.neo4j_uri,partition=args.graph_partition,
         timeout_seconds=args.graph_timeout) if args.enable_graph else None
