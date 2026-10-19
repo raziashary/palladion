@@ -131,6 +131,8 @@ informative lines instead (`excerpt-v1`) and cannot reproduce them. The owner's 
 
 ### How the owner labels
 
+The step-by-step version is in [the owner's labelling guide](development/OWNER_LABELLING_GUIDE.md); the summary follows.
+
 All files are under `artifacts/fixtures/S/generator/audit/` (produced by `scripts/generate_data.py --audit-packet`).
 
 1. Open `worksheet.md`. It lists the 30 items in a readable form. For each item decide which of six labels fits, using only

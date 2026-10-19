@@ -61,6 +61,7 @@ def test_identifiers_are_kept_whole_beside_their_parts() -> None:
         assert expected in tokens
     assert identifiers("MS-4021, ms-4021 and POL-020@v2") == ["ms-4021", "pol-020@v2"]
     assert tokenize("Refund   WINDOW") == ["refund", "window"]
+    assert "end-to-end" not in tokenize("an end-to-end check") and identifiers("pre-authorization and end-to-end") == []
 
 
 def test_scores_match_a_hand_computed_okapi_bm25(tmp_path: Path) -> None:

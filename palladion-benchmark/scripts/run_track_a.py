@@ -17,6 +17,7 @@ import json
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -25,6 +26,7 @@ import palladion_runtime
 from benchmark.adapters.common import AdapterError, Condition, PublishedView
 from benchmark.adapters.dense import DEFAULT_URL
 from benchmark.adapters.palladion import TABLE_FILE, PalladionArm
+from benchmark.config import load_all
 from benchmark.fixtures.manifest import Layout, Namespace
 from benchmark.run_manifest import tree_state
 from benchmark.track_a import (
@@ -32,6 +34,7 @@ from benchmark.track_a import (
     DescribedArm,
     RunSpec,
     TrackAError,
+    UnavailableArm,
     build_local_arms,
     execute,
     load_pinned_models,
@@ -40,10 +43,45 @@ from benchmark.track_a import (
 PROJECT = Path(__file__).resolve().parents[1]
 
 
+def qdrant_pin() -> str:
+    return load_all(PROJECT / "configs").comparators.shared_models["qdrant_server"].value
+
+
 def run_qdrant(command: str) -> int:
     script = str(PROJECT / "scripts" / "qdrant_server.py")
     args = [sys.executable, script, command] + (["--detach"] if command == "start" else [])
     return subprocess.run(args, check=False, capture_output=True, text=True, timeout=180).returncode
+
+
+def palladion_arm(
+    view: PublishedView,
+    runtime: palladion_runtime.PalladionRuntime,
+    options: argparse.Namespace,
+    condition: Condition,
+    index_dir: Path,
+    builds: list[dict[str, Any]],
+) -> DescribedArm:
+    """R7a over the isolated runtime. A setup failure is recorded; R7a stays in the run as not run, with its reason."""
+    try:
+        runtime.start()
+        arm = PalladionArm(
+            view, runtime.base_url, palladion_runtime.load_tokens(), mode=options.palladion_mode, condition=condition
+        )
+        table = index_dir / TABLE_FILE
+        index_dir.mkdir(parents=True, exist_ok=True)
+        record: dict[str, Any] = {"arm": "R7a", "status": "BUILT"}
+        if options.load_palladion:
+            report = arm.load_corpus(table)
+            record["load"] = {"uploaded": report.uploaded, "approved": report.approved, "revoked": report.revoked}
+        arm.read_table(table)
+        record["verify"] = arm.verify_load()
+        arm.build_index(str(view.root), "track_a")
+        builds.append(record)
+        return arm
+    except (AdapterError, palladion_runtime.PalladionRuntimeError, OSError, ValueError) as exc:
+        reason = f"R7a setup failed: {type(exc).__name__}"
+        builds.append({"arm": "R7a", "status": "FAILED", "error": type(exc).__name__, "reason": str(exc)[:200]})
+        return UnavailableArm("R7a", reason)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -85,27 +123,13 @@ def main(argv: list[str] | None = None) -> int:
         adapters: dict[str, DescribedArm] = {}
         local, builds = build_local_arms(
             view, arms, condition=condition, index_dir=index_dir, qdrant_url=options.qdrant_url,
-            encoder=encoder, reranker=reranker,
+            encoder=encoder, reranker=reranker, expected_qdrant=qdrant_pin(),
         )  # fmt: skip
         adapters.update(local)
         trees = {}
         if options.palladion:
             runtime = palladion_runtime.PalladionRuntime(rerank=options.palladion_mode == "reranked")
-            runtime.start()
-            arm = PalladionArm(
-                view,
-                runtime.base_url,
-                palladion_runtime.load_tokens(),
-                mode=options.palladion_mode,
-                condition=condition,
-            )
-            table = index_dir / TABLE_FILE
-            index_dir.mkdir(parents=True, exist_ok=True)
-            if options.load_palladion:
-                arm.load_corpus(table)
-            arm.read_table(table)
-            arm.build_index(str(view.root), "track_a")
-            adapters["R7a"] = arm
+            adapters["R7a"] = palladion_arm(view, runtime, options, condition, index_dir, builds)
             trees["R7a"] = tree_state(palladion_runtime.application_dir(), label="palladion")
         spec = RunSpec(options.run_id, options.split, condition, options.k, options.budget, options.root, options.out)
         outcome = execute(spec, adapters, builds=builds, system_trees=trees)

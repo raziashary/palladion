@@ -280,3 +280,13 @@ def test_the_manifests_digest_of_the_gold_file_is_the_one_gold_named_key_a_run_m
         )
 
     assert "a JSON key names gold" in rules(validate_run(planted(clean_run, tmp_path, plant), root=s_root))
+
+
+def test_gold_text_is_also_looked_for_as_it_reads_inside_a_json_file(s_questions: tuple[GoldRecord, ...]) -> None:
+    from dataclasses import replace
+
+    awkward = 'He said "refunds" within 72 hours - café rule'
+    record = replace(s_questions[0], required_claims=(awkward,))
+    texts = gold_texts([record])
+    assert awkward in texts and json.dumps(awkward)[1:-1] in texts
+    assert json.dumps({"content": awkward}).count(json.dumps(awkward)[1:-1]) == 1

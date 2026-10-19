@@ -37,9 +37,9 @@ flowchart LR
 | Configs | `configs/{benchmark,comparators,evaluation,fixtures}.yaml` (B01, tuned in B08) |
 | Fixtures | `benchmark/fixtures/{entities,knowledge,operations,world,phrasebook,documents,artifacts,manifest,questions,question_gen,live_api,validation,audit}.py` (B02, extended B07, B08) |
 | Evaluation | `benchmark/eval/` normalize, evidence_sets, retrieval, statistics, cost_latency, score_run (B03, built); citations, policy, abstention, judge_audit (B05); memory, critic, tool_use (B07) |
-| Adapters | bm25, dense, hybrid, palladion (B04); hipporag2, graphrag, lightrag (B06); langchain, langgraph, google_adk (B07) |
+| Adapters | `benchmark/adapters/` common, models, bm25, dense, hybrid, palladion (B04, built); hipporag2, graphrag, lightrag (B06); langchain, langgraph, google_adk (B07) |
 | Analysis | `benchmark/analysis/tables.py` (B03, built); `plots.py`, `reports.py` (B08) |
-| Scripts | `generate_data.py` (B02), `build_indices.py`, `run_track_a.py`, `validate_results.py` (B04), `run_track_b.py` (B05), `run_track_c.py` (B07) |
+| Scripts | `generate_data.py` (B02), `qdrant_server.py`, `palladion_runtime.py`, `build_indices.py`, `run_track_a.py`, `score_track_a.py`, `validate_results.py` (B04, built); `benchmark/track_a.py` and `benchmark/results_check.py` hold their logic; `run_track_b.py` (B05), `run_track_c.py` (B07) |
 | Tests | the eight protocol test files plus `test_generator_pool.py`, owned by the same cards as their modules |
 | Docs | `scoring_rubric.md`, `annotation_guide.md` (B05); `reproducibility.md` (B01, final B08); `dataset_card.md` (B02) |
 

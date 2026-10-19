@@ -72,15 +72,28 @@ def verify(directory: Path, spec: ModelSpec) -> None:
         raise ModelIntegrityError(f"model file(s) differ from the pin: {', '.join(wrong)}")
 
 
-def fetch(spec: ModelSpec, cache_dir: Path) -> Path:
+MAX_DOWNLOAD_BYTES = 1024 * 1024 * 1024
+
+
+def fetch(spec: ModelSpec, cache_dir: Path, *, max_bytes: int = MAX_DOWNLOAD_BYTES) -> Path:
     """Download exactly the listed files at the pinned revision into ``cache_dir`` and return the snapshot folder.
 
-    This is the only place a model is downloaded. Call it from an explicit command, never at import or on first use.
+    The total size is read from the Hub first and refused above ``max_bytes``; a pinned spec is verified after the
+    download. This is the only place a model is downloaded: call it from an explicit command, never at import or on
+    first use.
     """
-    from huggingface_hub import snapshot_download
+    from huggingface_hub import HfApi, snapshot_download
 
+    info = HfApi().model_info(spec.repository, revision=spec.revision, files_metadata=True)
+    sizes = {s.rfilename: s.size or 0 for s in (info.siblings or [])}
+    absent = [f for f in spec.files if f not in sizes]
+    if absent:
+        raise ModelIntegrityError(f"the repository has no file(s): {', '.join(absent)}")
+    total = sum(sizes[f] for f in spec.files)
+    if total > max_bytes:
+        raise ModelIntegrityError(f"the download is {total} bytes, above the bound of {max_bytes}")
     cache_dir.mkdir(parents=True, exist_ok=True)
-    return Path(
+    folder = Path(
         snapshot_download(
             repo_id=spec.repository,
             revision=spec.revision,
@@ -89,6 +102,9 @@ def fetch(spec: ModelSpec, cache_dir: Path) -> Path:
             token=False,
         )
     )
+    if spec.is_pinned:
+        verify(folder, spec)
+    return folder
 
 
 def spec_from_pin(pin: Pin) -> ModelSpec:

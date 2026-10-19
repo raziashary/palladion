@@ -192,3 +192,53 @@ def test_the_runtime_record_names_the_commit_mode_and_pins() -> None:
         json.loads(json.dumps(runtime.pins_from_source()))["embedding_revision"]
         == "faf4aa4225822f3bc6376869cb1164e8e3feedd0"
     )
+
+
+def test_a_model_snapshot_that_differs_from_the_pin_is_not_copied_into_palladion(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from benchmark.adapters.models import ModelIntegrityError, spec_from_pin
+
+    shared = load_comparators_config(ROOT / "configs" / "comparators.yaml").shared_models
+    caches = []
+    for name in ("embeddings", "reranker"):
+        spec = spec_from_pin(shared[name])
+        snapshot = tmp_path / name / "models--org--name" / "snapshots" / spec.revision
+        for file in spec.files:
+            (snapshot / file).parent.mkdir(parents=True, exist_ok=True)
+            (snapshot / file).write_bytes(b"not the pinned bytes")
+        caches.append(tmp_path / name)
+    monkeypatch.setattr(runtime, "MODEL_CACHES", tuple(caches))
+    worktree = tmp_path / "worktree"
+    with pytest.raises(ModelIntegrityError, match="differ from the pin"):
+        runtime.install_model_cache(worktree)
+    assert not list((worktree / "palladion" / "runtime" / "model_cache" / "huggingface").glob("models--*"))
+
+
+def test_a_probe_that_palladion_cannot_answer_does_not_prove_the_demo_sources_are_gone(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def answers(status: str, warnings: list[str]) -> object:
+        def post(base_url: str, path: str, token: str, body: dict[str, object] | None = None) -> tuple[int, object]:
+            if path.endswith("/revoke"):
+                return 200, {}
+            return 200, {"status": status, "warnings": warnings, "passages": []}
+
+        return post
+
+    tokens = {"admin-a": "x", "reader-a": "y"}
+    for status, warnings in (("UNAVAILABLE", []), ("DEGRADED", ["INDEX_UNAVAILABLE"])):
+        monkeypatch.setattr(runtime, "post", answers(status, warnings))
+        with pytest.raises(runtime.PalladionRuntimeError, match="revocation is unproven"):
+            runtime.revoke_demo_sources("http://x", {"d": "rev_1"}, tokens)
+    monkeypatch.setattr(runtime, "post", answers("OK", []))
+    runtime.revoke_demo_sources("http://x", {"d": "rev_1"}, tokens)
+
+
+def test_prepare_fails_the_command_when_the_contributors_defaults_changed(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    record = {"worktree": {}, "pins": {}, "live_state_unchanged": False, "demo_revisions_revoked": 4}
+    monkeypatch.setattr(runtime, "prepare", lambda reset=False: record)
+    assert runtime.main(["prepare", "--reset"]) == 1
+    assert "changed while preparing" in capsys.readouterr().err

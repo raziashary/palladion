@@ -239,3 +239,42 @@ def test_the_pinned_model_retrieves_a_semantic_paraphrase_over_the_real_corpus(
         assert report["mean_recall"] >= 0.9
     finally:
         arm.close()
+
+
+def test_the_index_records_the_qdrant_version_and_a_measured_ann_recall(stand_in: DenseArm) -> None:
+    stats = stand_in.index_stats()
+    assert stats["qdrant_server_version"] == "1.19.2"
+    recall = stats["ann_recall"]
+    assert recall["queries"] == 25 and recall["k"] == 10 and 0.9 <= recall["mean_recall"] <= 1.0
+
+
+def test_a_default_collection_belongs_to_one_model_condition_and_set_of_chunks(
+    view: PublishedView, s_published: Path, tmp_path: Path, qdrant_server: str
+) -> None:
+    names = []
+    for condition in (Condition.C1, Condition.C2):
+        arm = DenseArm(view, HashingEncoder(), tmp_path, qdrant_url=qdrant_server, condition=condition)
+        arm.build_index(str(s_published), "S")
+        names.append(arm.collection)
+        arm.close()
+    assert names[0] != names[1] and all(n.startswith("bench_r1_") for n in names)
+    assert names[0].endswith("_C1_" + names[0].rsplit("_", 1)[1])
+    other = DenseArm(view, HashingEncoder(), tmp_path, qdrant_url=qdrant_server, chunk_words=60)
+    other.build_index(str(s_published), "S")
+    assert other.collection not in names, "another chunking never reuses or deletes a collection in use"
+    other.close()
+
+
+def test_a_cached_vector_file_that_no_longer_matches_its_seal_is_recomputed(
+    view: PublishedView, s_published: Path, tmp_path: Path, qdrant_server: str
+) -> None:
+    first = DenseArm(view, HashingEncoder(), tmp_path, qdrant_url=qdrant_server, collection="bench_test_cache")
+    first.build_index(str(s_published), "S")
+    assert first.index_stats()["embeddings_from_cache"] is False
+    first.close()
+    vectors = next(tmp_path.glob("vectors-*.npy"))
+    vectors.write_bytes(vectors.read_bytes() + b"tamper")
+    second = DenseArm(view, HashingEncoder(), tmp_path, qdrant_url=qdrant_server, collection="bench_test_cache")
+    second.build_index(str(s_published), "S")
+    assert second.index_stats()["embeddings_from_cache"] is False, "a changed cache file is not trusted"
+    second.close()

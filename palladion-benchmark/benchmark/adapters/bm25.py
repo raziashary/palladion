@@ -26,6 +26,7 @@ from benchmark.adapters.common import (
     build_chunks,
     candidate_from_chunk,
     enforce_budget,
+    flags_from_notes,
 )
 from benchmark.contracts import EvidenceCandidate, RetrievalRequest
 
@@ -36,15 +37,20 @@ _WORD = re.compile(r"[^\W_]+")
 IDENTIFIER = re.compile(r"[A-Za-z]{2,}(?:-[A-Za-z0-9]+)+(?:@v\d+)?")
 
 
+def _identifier_matches(text: str) -> list[str]:
+    """Hyphenated codes and versioned ids that hold a digit (``MS-4021``, ``POL-020@v2``); plain compounds do not."""
+    return [m for m in IDENTIFIER.findall(text) if any(ch.isdigit() for ch in m)]
+
+
 def tokenize(text: str) -> list[str]:
     """Case-folded words plus whole identifiers (a hyphenated code with digits or a versioned id)."""
-    return [w.casefold() for w in _WORD.findall(text)] + [m.casefold() for m in IDENTIFIER.findall(text)]
+    return [w.casefold() for w in _WORD.findall(text)] + [m.casefold() for m in _identifier_matches(text)]
 
 
 def identifiers(text: str) -> list[str]:
     """The whole identifiers in a text, case-folded, in order of appearance without repeats."""
     seen: dict[str, None] = {}
-    for match in IDENTIFIER.findall(text):
+    for match in _identifier_matches(text):
         seen.setdefault(match.casefold(), None)
     return list(seen)
 
@@ -144,6 +150,9 @@ class Bm25Arm:
     @property
     def chunks(self) -> list[Chunk]:
         return list(self._chunks)
+
+    def call_flags(self) -> tuple[str, ...]:
+        return flags_from_notes(self.last_notes)
 
     # -- ranking ---------------------------------------------------------------------------------
 

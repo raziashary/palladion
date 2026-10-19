@@ -12,6 +12,7 @@ from __future__ import annotations
 import hashlib
 import json
 import time
+import urllib.request
 from collections.abc import Iterable, Sequence
 from pathlib import Path
 from typing import Any, Protocol
@@ -40,6 +41,7 @@ from benchmark.adapters.common import (
     build_chunks,
     candidate_from_chunk,
     enforce_budget,
+    flags_from_notes,
 )
 from benchmark.adapters.models import ModelSpec, verify
 from benchmark.contracts import EvidenceCandidate, RetrievalRequest
@@ -55,6 +57,8 @@ HNSW_EF_CONSTRUCT = 100
 HNSW_EF_SEARCH = 64
 UPSERT_BATCH = 256
 EMBED_BATCH = 32
+ANN_SAMPLE = 25  # queries for the approximate-versus-exact check at build time
+ANN_QUERY_CHARACTERS = 200
 TIE_MARGIN = 10  # extra hits requested so that equal scores at the cut are ordered by chunk id, not by the graph
 SCORE_DIGITS = 6
 
@@ -154,7 +158,8 @@ class DenseArm:
         self.condition = condition
         self.chunk_words = chunk_words
         self.access = AccessFilter(view, condition)
-        self.collection = collection or f"bench_r1_{encoder.fingerprint[:12]}"
+        self._collection_name = collection
+        self.collection = collection or f"bench_r1_{encoder.fingerprint[:8]}_{condition.value}"
         self._client = QdrantClient(url=self.qdrant_url, timeout=60)
         self._chunks: list[Chunk] = []
         self._by_id: dict[str, Chunk] = {}
@@ -171,6 +176,8 @@ class DenseArm:
         self._chunks = build_chunks(self.view, self.chunk_words)
         self._by_id = {c.chunk_id: c for c in self._chunks}
         digest = chunk_digest(self._chunks)
+        if self._collection_name is None:  # a collection belongs to one model, condition and set of chunks
+            self.collection = f"bench_r1_{self.encoder.fingerprint[:8]}_{self.condition.value}_{digest[:8]}"
         vectors, cached = self._vectors_for(digest)
         self._vectors = vectors
         embedded = time.perf_counter()
@@ -188,6 +195,8 @@ class DenseArm:
             "collection": self.collection,
             "hnsw": {"m": HNSW_M, "ef_construct": HNSW_EF_CONSTRUCT, "ef_search": HNSW_EF_SEARCH},
             "embeddings_from_cache": cached,
+            "qdrant_server_version": self.server_version(),
+            "ann_recall": self.measure_ann_recall(),
             "condition": self.condition.value,
             "embed_ms": (embedded - started) * 1000,
             "build_ms": (time.perf_counter() - started) * 1000,
@@ -223,6 +232,9 @@ class DenseArm:
         }
         return list(bundle.kept)
 
+    def call_flags(self) -> tuple[str, ...]:
+        return flags_from_notes(self.last_notes)
+
     def close(self) -> None:
         self._client.close()
 
@@ -251,6 +263,21 @@ class DenseArm:
         ]
         scored.sort(key=lambda item: (-item[1], item[0]))  # equal scores order by chunk id, not by graph position
         return scored[:limit]
+
+    def server_version(self) -> str:
+        """The version the Qdrant server reports, recorded with the index so a result is tied to the binary."""
+        with urllib.request.urlopen(self.qdrant_url + "/", timeout=10) as response:
+            return str(json.loads(response.read())["version"])
+
+    def measure_ann_recall(self, sample: int = ANN_SAMPLE, k: int = 10) -> dict[str, Any]:
+        """Approximate-versus-exact recall on queries taken evenly from the corpus, recorded in the index stats."""
+        step = max(1, len(self._chunks) // sample)
+        principals = [p.principal_id for p in self.view.identity.principals] or ["-"]
+        queries = [
+            (chunk.text[:ANN_QUERY_CHARACTERS], principals[i % len(principals)])
+            for i, chunk in enumerate(self._chunks[::step][:sample])
+        ]
+        return self.ann_recall(queries, k)
 
     def ann_recall(self, queries: Sequence[tuple[str, str]], k: int) -> dict[str, Any]:
         """Mean overlap of approximate and exact top-k over (query, principal) pairs; 1.0 means HNSW lost nothing."""
@@ -284,8 +311,12 @@ class DenseArm:
     def _vectors_for(self, digest: str) -> tuple[np.ndarray, bool]:
         self.index_dir.mkdir(parents=True, exist_ok=True)
         key = hashlib.sha256(f"{self.encoder.fingerprint}:{digest}".encode()).hexdigest()[:16]
-        path = self.index_dir / f"vectors-{key}.npy"
-        if path.exists():
+        path, seal = self.index_dir / f"vectors-{key}.npy", self.index_dir / f"vectors-{key}.sha256"
+        if (
+            path.exists()
+            and seal.exists()
+            and hashlib.sha256(path.read_bytes()).hexdigest() == seal.read_text().strip()
+        ):
             cached = np.load(path)
             if cached.shape == (len(self._chunks), self.encoder.dimension):
                 return cached, True
@@ -293,6 +324,7 @@ class DenseArm:
         if vectors.shape != (len(self._chunks), self.encoder.dimension):
             raise AdapterError("the encoder returned vectors of an unexpected shape")
         np.save(path, vectors)
+        seal.write_text(hashlib.sha256(path.read_bytes()).hexdigest(), encoding="utf-8")
         return vectors, False
 
     def _load_collection(self, vectors: np.ndarray) -> None:

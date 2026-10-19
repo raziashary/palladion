@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from collections.abc import Callable
 from functools import partial
 from pathlib import Path
@@ -127,3 +128,74 @@ def test_the_downloaded_snapshots_match_the_pins_when_present() -> None:
     if not cache.exists():
         pytest.skip("models are not downloaded on this machine")
     assert found == 2
+
+
+class FakeFile:
+    def __init__(self, name: str, size: int) -> None:
+        self.rfilename, self.size = name, size
+
+
+def fake_hub(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, sizes: dict[str, int], content: dict[str, bytes]
+) -> list[str]:
+    """Stand in for the Hub: file sizes from model_info, and a download that writes ``content`` into a folder."""
+    import huggingface_hub
+
+    calls: list[str] = []
+
+    def model_info(self: object, repo: str, revision: str, files_metadata: bool) -> object:
+        calls.append("info")
+        return type("Info", (), {"siblings": [FakeFile(n, s) for n, s in sizes.items()]})()
+
+    def snapshot_download(**kwargs: object) -> str:
+        calls.append("download")
+        folder = tmp_path / "downloaded"
+        for name, data in content.items():
+            (folder / name).parent.mkdir(parents=True, exist_ok=True)
+            (folder / name).write_bytes(data)
+        return str(folder)
+
+    monkeypatch.setattr(huggingface_hub.HfApi, "model_info", model_info)
+    monkeypatch.setattr(huggingface_hub, "snapshot_download", snapshot_download)
+    return calls
+
+
+def test_fetch_checks_the_size_first_then_downloads_and_verifies(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    from benchmark.adapters.models import fetch
+
+    good = {"a.bin": b"weights", "b.json": b"{}"}
+    spec = ModelSpec("org/name", REVISION, tuple(good), {n: hashlib.sha256(d).hexdigest() for n, d in good.items()})
+    calls = fake_hub(monkeypatch, tmp_path, {"a.bin": 7, "b.json": 2, "other": 10**9}, good)
+    folder = fetch(spec, tmp_path / "cache")
+    assert calls == ["info", "download"] and (folder / "a.bin").read_bytes() == b"weights"
+
+
+def test_fetch_refuses_an_oversized_download_before_downloading(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    from benchmark.adapters.models import fetch
+
+    spec = ModelSpec("org/name", REVISION, ("a.bin",), {})
+    calls = fake_hub(monkeypatch, tmp_path, {"a.bin": 5_000}, {"a.bin": b"x"})
+    with pytest.raises(ModelIntegrityError, match="above the bound"):
+        fetch(spec, tmp_path / "cache", max_bytes=1_000)
+    assert calls == ["info"], "nothing is downloaded when the bound is exceeded"
+
+
+def test_fetch_refuses_a_file_the_repository_does_not_have(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    from benchmark.adapters.models import fetch
+
+    fake_hub(monkeypatch, tmp_path, {"a.bin": 1}, {"a.bin": b"x"})
+    with pytest.raises(ModelIntegrityError, match="no file"):
+        fetch(ModelSpec("org/name", REVISION, ("a.bin", "missing.bin"), {}), tmp_path / "cache")
+
+
+def test_fetch_refuses_a_download_that_differs_from_the_pin(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    from benchmark.adapters.models import fetch
+
+    spec = ModelSpec("org/name", REVISION, ("a.bin",), {"a.bin": "0" * 64})
+    fake_hub(monkeypatch, tmp_path, {"a.bin": 7}, {"a.bin": b"weights"})
+    with pytest.raises(ModelIntegrityError, match="differ from the pin"):
+        fetch(spec, tmp_path / "cache")

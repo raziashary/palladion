@@ -53,7 +53,7 @@ def test_the_launcher_pin_equals_the_pin_in_comparators_yaml() -> None:
 # --------------------------------------------------------------------------- refusals
 
 
-@pytest.mark.parametrize("port", [16333, 16334, 16332])
+@pytest.mark.parametrize("port", [16333, 16334, 16332, 18080, 18079])
 def test_palladions_ports_and_their_neighbours_are_refused(port: int) -> None:
     with pytest.raises(launcher.LauncherError, match="Palladion"):
         launcher.ensure_allowed_port(port)

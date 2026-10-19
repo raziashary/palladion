@@ -27,6 +27,7 @@ from benchmark.adapters.common import (
     Condition,
     candidate_from_chunk,
     enforce_budget,
+    flags_from_notes,
 )
 from benchmark.adapters.dense import DenseArm
 from benchmark.adapters.models import ModelSpec, verify
@@ -112,6 +113,9 @@ class HybridArm:
         self.rrf_k, self.depth = rrf_k, depth
         self.last_notes: dict[str, Any] = {}
         self._stats: dict[str, Any] = {}
+
+    def call_flags(self) -> tuple[str, ...]:
+        return flags_from_notes(self.last_notes)
 
     def build_index(self, source_manifest_uri: str, index_namespace: str) -> None:
         started = time.perf_counter()
@@ -216,6 +220,9 @@ class RerankedArm:
     def last_notes(self) -> dict[str, Any]:
         """Truncation and exact-key notes of the latest call (the bundle is finished by the shared hybrid code)."""
         return self.hybrid.last_notes
+
+    def call_flags(self) -> tuple[str, ...]:
+        return flags_from_notes(self.last_notes)
 
     def build_index(self, source_manifest_uri: str, index_namespace: str) -> None:
         self.hybrid.build_index(source_manifest_uri, index_namespace)

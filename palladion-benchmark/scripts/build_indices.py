@@ -22,6 +22,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from benchmark.adapters.common import AdapterError, Condition, PublishedView, build_chunks
 from benchmark.adapters.dense import DEFAULT_URL
+from benchmark.config import load_all
 from benchmark.track_a import LOCAL_ARMS, TrackAError, build_local_arms, load_pinned_models
 
 PROJECT = Path(__file__).resolve().parents[1]
@@ -39,6 +40,7 @@ def corpus_facts(view: PublishedView) -> dict[str, Any]:
         "characters": sum(c.characters for c in chunks),
         "extraction_failures": unreadable,
         "tables_lost": 0,
+        "tables_lost_basis": "no table parser exists: pipe tables stay as text, so none can be lost by parsing",
         "note": "documents are Markdown text with pipe tables kept as text; nothing is parsed away",
     }
 
@@ -77,6 +79,7 @@ def main(argv: list[str] | None = None) -> int:
         built, records = build_local_arms(
             view, arms, condition=Condition(options.condition), index_dir=options.index_dir,
             qdrant_url=options.qdrant_url, encoder=encoder, reranker=reranker,
+            expected_qdrant=load_all(PROJECT / "configs").comparators.shared_models["qdrant_server"].value,
         )  # fmt: skip
         report = {"corpus": corpus_facts(view), "condition": options.condition, "arms": records}
         options.index_dir.mkdir(parents=True, exist_ok=True)

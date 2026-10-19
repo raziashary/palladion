@@ -9,9 +9,9 @@ reaches it only through an adapter. The design is the
 [research protocol v1.0](docs/vision/palladion_retrieval_benchmark_research_protocol.md); its hypotheses H1–H8 are
 **unmeasured**.
 
-**Current state:** the development suite (B00), the harness foundation (B01), the synthetic S-tier fixture (B02) and the scorers (B03) exist. The harness has typed contracts, strict
+**Current state:** the development suite (B00), the harness foundation (B01), the synthetic S-tier fixture (B02), the scorers (B03) and the Track A machinery (B04) exist. The harness has typed contracts, strict
 configuration, an arm registry, run manifests, a paired runner, a CLI, a secret scanner and a generator pool over three Groq
-models. The S-tier fixture (1,200 fictional documents, 100 pilot questions, `scripts/generate_data.py`, `docs/dataset_card.md`) is built; its label audit is waiting for the owner's labels. The scorers (`benchmark/eval/`, `benchmark/analysis/`) are proven against perfect, empty and shuffled control arms. There is no retriever adapter and no measurement of a real arm yet; hypotheses H1–H8 remain untested. See
+models. The S-tier fixture (1,200 fictional documents, 100 pilot questions, `scripts/generate_data.py`, `docs/dataset_card.md`) is built; its label audit is waiting for the owner's labels. The scorers (`benchmark/eval/`, `benchmark/analysis/`) are proven against perfect, empty and shuffled control arms. R0 to R3 and an HTTP-only adapter for Palladion run end to end through the real runner and validator, but the pilot measurement has not been run (it waits for the label audit; see [the labelling guide](docs/development/OWNER_LABELLING_GUIDE.md)), so there is no measured result yet; hypotheses H1–H8 remain untested. See
 [progress](docs/development/PROGRESS.md).
 
 ## What it will compare

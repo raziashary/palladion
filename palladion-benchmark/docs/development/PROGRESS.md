@@ -5,6 +5,8 @@ command observations and review receipts live in the [evidence log](EVIDENCE_LOG
 
 ## Current checkpoint
 
+B04 (Track A arms and pilot machinery) is BUILT with one open card: thirteen of fourteen cards are done and proven (E-B04-002 to E-B04-004; the pre-phase adversary is E-B04-001), and B04-T05.01 (the pilot measurement) waits for the owner's labels (B02-T07.02, see the [labelling guide](OWNER_LABELLING_GUIDE.md)). The shared harness, a Docker-free Qdrant launcher, R0 to R3 with Palladion's pinned models, an isolated Palladion runtime with the HTTP-only R7a adapter, the build, run, score and validate commands all exist; `uv run pytest` passes 981 tests with ruff and strict mypy clean, every planted defect is killed, and two real smokes (R0 to R3 and R7a over the full corpus) pass the validator. They are not the pilot and support no ranking claim.
+
 B03 (evaluation core) is BUILT and audited: all eight cards are done and proven (E-B03-002 to E-B03-004), with the pre-phase adversary in E-B03-001. The scorers cover identity and text alignment, SlotCoverage and CompleteSet, ranking and provenance metrics, paired statistics, latency and cost, scorecards and a score-run driver, and the perfect, empty and shuffled controls run through the real Runner with an injected registry. `uv run pytest` passes 790 tests with ruff and strict mypy clean; every planted defect is killed. B02 is built with one open card: B02-T07.02 (pilot label audit) waits for the owner's labels (E-B02-005); the S-tier fixture has 1,200 fictional documents and 100 pilot questions.
 
 
@@ -27,7 +29,7 @@ Still open and tracked: OQ03 (read Palladion's interface at B04), OQ09 (license,
 | B01 | DONE | E-B01-001 to E-B01-006 |
 | B02 | IN_PROGRESS | Built, E-B02-001 to E-B02-005; B02-T07.02 awaits the owner's labels (the model pass is done) |
 | B03 | DONE | E-B03-001 to E-B03-004; the metrics are proven against the controls, not yet against any real arm |
-| B04 | PLANNED | Depends on B02, B03; needs Palladion's interface (OQ03) |
+| B04 | IN_PROGRESS | Built, E-B04-001 to E-B04-004; B04-T05.01 (pilot) awaits the owner's labels |
 | B05 | PLANNED | Depends on B04 and B01-T05 |
 | B06 | PLANNED | Depends on B04; quota question OQ06 |
 | B07 | PLANNED | Depends on B04, B05, B02 |
@@ -44,23 +46,22 @@ Still open and tracked: OQ03 (read Palladion's interface at B04), OQ09 (license,
 | BG-GOLD | PARTIAL | E-B02-002, E-B02-005: schema, mapping, slots, family-grouped partitions and gold-support checks pass; the two-reader audit is open (owner labels pending) |
 | BG-METRIC | PARTIAL | E-B03-002, E-B03-003: retrieval, evidence-set, cost and latency metrics with hand-computed cases and controls; answer-level metrics (B05), graph and system metrics (B06, B07) remain |
 | BG-STATS | PARTIAL | E-B03-002, E-B03-003: known effect, simulated coverage, clustering, exact tests and bounds; power sizing and preregistered pairings remain (B08) |
-| BG-ADAPTER | PARTIAL | Registry, capability matrix and contract tests exist (E-B01-003); no real adapter yet, so B04, B06 and B07 obligations remain |
-| BG-FAIR | NOT_RUN | B04 |
-| BG-TRACKA | NOT_RUN | B04 |
+| BG-ADAPTER | PARTIAL | Registry and contract tests (E-B01-003); five real adapters with capabilities proven in tests and two real smokes (E-B04-002); B06 and B07 arms remain |
+| BG-FAIR | PARTIAL | E-B04-002: one chunker, filter, budget and tie rule for R0 to R3, C1 and C2 differ only in the filter, R7a's differences declared (BR22, BR24, BR27, BR28); equal-budget claims need the pilot |
+| BG-TRACKA | PARTIAL | E-B04-002: runner, scorer and validator work on real runs; the pilot measurement (B04-T05.01) is open |
 | BG-TRACKB | NOT_RUN | B05 |
 | BG-TRACKC | NOT_RUN | B07 |
 | BG-SECURITY | PARTIAL | Secret scan, key handling and the arm-visible allowlist (E-B01-002, E-B01-003); tenant and role visibility in the manifest, the barrier scan of the published tree, existence-hiding live reads and inert injection documents (E-B02-002); retriever-side enforcement remains for B04 onward |
 | BG-PREREG | NOT_RUN | B08 |
 | BG-ABLATION | NOT_RUN | B08 |
-| BG-REPRO | PARTIAL | Manifest and ledger digests, deterministic config digests (E-B01-003); same-seed corpus digests across processes (E-B02-002); result validation remains for B04 |
+| BG-REPRO | PARTIAL | Manifest and ledger digests, deterministic config digests (E-B01-003); same-seed corpus digests across processes (E-B02-002); result validation exists and passes real runs (E-B04-002); the sealed confirmatory run is B08 |
 | BG-REPORT | PARTIAL | E-B03-002: run states beside scores, ITT and conditional tables; the full report with negative findings and fairness deviations is B08 |
 
 ## Blocked or waiting cards (the checker prints these as notices)
 
-B04-T03.01 on reading Palladion's live interface (OQ03); B06-T04.01 on running Neo4j without Docker (OQ12); B04-T01.02 and B04-T02.02 on reading Palladion's pins (OQ04, OQ05 answered; the reranker download needs the owner's yes);
-B07-T04.01 on Palladion shipping a critic switch (OQ11 answered: FEATURE_NOT_SUPPORTED until then); B08-T03.01 on OQ10 (confirmatory pairings, owner deferred; must be answered before the seal);
+B04-T05.01 on the owner's labels (B02-T07.02); B06-T04.01 on running Neo4j without Docker (OQ12); B07-T04.01 on Palladion shipping a critic switch (OQ11 answered: FEATURE_NOT_SUPPORTED until then); B08-T03.01 on OQ10 (confirmatory pairings, owner deferred; must be answered before the seal);
 B08-T07.01 on OQ09 (dataset license, owner deferred; must be answered before then); B08-T01.02 on the paraphrase gate. B02-T07.02 waits for the owner's labels.
 
 ## Next action
 
-B04 (retrieval arms and the Track A pilot) needs its own pre-phase adversary and owner scope; it is not started. Owner action outstanding: label the 30-item packet (see the dataset card). Open decisions that gate later work: OQ03, OQ09, OQ10 and OQ12.
+Owner action outstanding: label the 30-item packet with the [labelling guide](OWNER_LABELLING_GUIDE.md); then B04-T05.01 (pilot) can run. B05 needs its own pre-phase adversary and scope. Open decisions that gate later work: OQ09, OQ10 and OQ12.

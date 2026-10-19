@@ -38,7 +38,7 @@ from benchmark.fixtures.manifest import (
 )
 from benchmark.fixtures.questions import GoldRecord, read_gold
 from benchmark.registry import default_registry
-from benchmark.run_manifest import RunManifest, TreeState, collect_hardware, sha256_of, tree_state
+from benchmark.run_manifest import RunManifest, TreeState, collect_hardware, read_verified, sha256_of, tree_state
 from benchmark.runner import (
     ArmBinding,
     PlanRegistry,
@@ -195,6 +195,7 @@ def build_local_arms(
     encoder: Encoder | None = None,
     reranker: Reranker | None = None,
     chunk_words: int | None = None,
+    expected_qdrant: str | None = None,
 ) -> tuple[dict[str, DescribedArm], list[dict[str, Any]]]:
     """R0 to R3 over shared indexes (one lexical and one dense index serve every arm that needs them).
 
@@ -236,6 +237,9 @@ def build_local_arms(
                 raise AdapterError("the dense arms need the pinned embedding model")
             arm = DenseArm(view, encoder, index_dir, qdrant_url=qdrant_url, condition=condition, chunk_words=words)
             arm.build_index(published, "track_a")
+            reported = arm.index_stats()["qdrant_server_version"]
+            if expected_qdrant is not None and reported != expected_qdrant:
+                raise AdapterError(f"the Qdrant server is {reported}, but the pin is {expected_qdrant}")
             shared.dense = arm
         return shared.dense
 
@@ -295,6 +299,9 @@ def _manifest(
     models: dict[str, str | None] = {}
     if arm_id in ("R1", "R2", "R3"):
         models["embeddings"] = f"{shared['embeddings'].value}@{shared['embeddings'].revision}"
+    if arm_id in ("R1", "R2", "R3"):
+        qdrant = shared["qdrant_server"]
+        models["qdrant_server"] = f"{qdrant.value}@sha256:{next(iter(qdrant.digests.values()))}"
     if arm_id == "R3":
         models["reranker"] = f"{shared['reranker'].value}@{shared['reranker'].revision}"
     reasons = {
@@ -370,7 +377,13 @@ def execute(
     for arm_id, adapter in adapters.items():
         describe = adapter.describe()
         path = spec.out / f"manifest-{arm_id}.json"
-        if not path.exists():
+        if path.exists():
+            recorded = read_verified(path).retrieval_config
+            if (recorded.get("k"), recorded.get("budget_words"), recorded.get("metadata_condition")) != (
+                spec.k, spec.budget_words, spec.condition.value,
+            ):  # fmt: skip
+                raise TrackAError(f"manifest-{arm_id}.json was written under a different K, budget or condition")
+        else:
             _manifest(spec, arm_id, describe, settings, digests, bundle, system_trees.get(arm_id)).write(path)
         bindings.append(ArmBinding(arm_id, adapter, path))
     runner = Runner(

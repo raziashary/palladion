@@ -832,3 +832,31 @@ def test_flagged_records_are_counted_in_the_summary(tmp_path: Path) -> None:
     case = RunnerCase(CaseRequest(qid(1), "q", "p1", "snap1", "2026-10-18T03:00:00Z", None, {}, 4000, None, 0))
     summary = runner.run([case], split="pilot")
     assert summary.status_counts == {"OK": 1} and summary.flag_counts == {"BUDGET_VIOLATION_UNVERIFIED": 1}
+
+
+@dataclass
+class Flagged(Good):
+    """A retriever that reports notes about its latest call, as the Track A arms do."""
+
+    notes: Any = ("BUDGET_TRUNCATED", "FILTERED_AFTER_RANKING=3")
+
+    def call_flags(self) -> Any:
+        return self.notes
+
+
+def test_an_arms_notes_about_a_call_are_kept_as_ledger_flags(tmp_path: Path) -> None:
+    world = build(tmp_path, {"R0": Flagged()})
+    summary = world.run(2)
+    assert summary.status_counts == {"OK": 2}
+    assert {r.flags for r in finals(world).values()} == {("BUDGET_TRUNCATED", "FILTERED_AFTER_RANKING=3")}
+    assert summary.flag_counts == {"BUDGET_TRUNCATED": 2, "FILTERED_AFTER_RANKING=3": 2}
+
+
+def test_malformed_notes_make_the_pair_invalid_instead_of_being_stored(tmp_path: Path) -> None:
+    for bad in (["a list"], ("",), ("x" * 81,), "text", (1,)):
+        sub = tmp_path / f"case{abs(hash(str(bad)))}"
+        sub.mkdir()
+        world = build(sub, {"R0": Flagged(notes=bad)})
+        world.run(1)
+        (record,) = finals(world).values()
+        assert record.status is RunStatus.INVALID_RUN and record.code == "CONTRACT_VIOLATION", bad

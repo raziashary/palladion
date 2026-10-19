@@ -27,8 +27,13 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from benchmark.adapters.models import spec_from_pin, verify
+from benchmark.config import load_all
+
 PINNED_COMMIT = "6444345209cabd9dc0b637c53ee063dd2fe87303"
 BENCH = Path(__file__).resolve().parents[1]
+PROJECT = BENCH
+sys.path.insert(0, str(BENCH))
 REPO = BENCH.parent
 WORKTREE = BENCH / "artifacts" / f"palladion-{PINNED_COMMIT[:7]}"
 RUNTIME_ROOT = BENCH / "artifacts" / "palladion-runtime"
@@ -108,13 +113,23 @@ def sync_environment(worktree: Path = WORKTREE) -> None:
 
 
 def install_model_cache(worktree: Path = WORKTREE) -> None:
-    """Give Palladion the benchmark's already-verified model files so it does not download them again."""
+    """Give Palladion the benchmark's model files so it does not download them again, verified against the pins.
+
+    Each snapshot is checked against its digests before it is copied and again where Palladion will read it.
+    """
+    shared = load_all(PROJECT / "configs").comparators.shared_models
     target = application_dir(worktree) / "runtime/model_cache/huggingface"
     target.mkdir(parents=True, exist_ok=True)
-    for cache in MODEL_CACHES:
-        for folder in cache.glob("models--*"):
-            if not (target / folder.name).exists():
-                shutil.copytree(folder, target / folder.name)
+    for name, cache in (("embeddings", MODEL_CACHES[0]), ("reranker", MODEL_CACHES[1])):
+        spec = spec_from_pin(shared[name])
+        found = sorted(cache.glob(f"models--*/snapshots/{spec.revision}"))
+        if not found:
+            raise PalladionRuntimeError(f"the {name} model is not downloaded")
+        verify(found[0], spec)
+        folder = found[0].parents[1]
+        if not (target / folder.name).exists():
+            shutil.copytree(folder, target / folder.name)
+        verify(target / folder.name / "snapshots" / spec.revision, spec)
 
 
 def live_state() -> dict[str, Any]:
@@ -251,6 +266,7 @@ class PalladionRuntime:
         self.stop()
 
 
+OUTAGE_WARNINGS = frozenset({"INDEX_UNAVAILABLE", "INDEX_MANIFEST_MISMATCH", "ACCEPTED_BUT_UNINDEXED"})
 DEMO_PROBES = (
     "reversal review settlement",
     "exception delay approved appendix",
@@ -293,7 +309,9 @@ def revoke_demo_sources(base_url: str, revisions: dict[str, str], tokens: dict[s
                 tokens["reader-a"],
                 {"case_id": "case-42", "query": query, "mode": mode, "limit": 12},
             )
-            if status != 200 or any(p["revision_id"] in demo for p in body["passages"]):
+            if status != 200 or body["status"] == "UNAVAILABLE" or set(body["warnings"]) & OUTAGE_WARNINGS:
+                raise PalladionRuntimeError("Palladion could not answer the probe, so the revocation is unproven")
+            if any(p["revision_id"] in demo for p in body["passages"]):
                 raise PalladionRuntimeError("a Palladion demo document is still retrievable after revocation")
 
 
@@ -325,7 +343,12 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         if args.command == "prepare":
-            print(json.dumps(prepare(reset=args.reset), indent=2))
+            record = prepare(reset=args.reset)
+            print(json.dumps(record, indent=2))
+            if not record["live_state_unchanged"]:
+                message = "FAIL: Palladion's own root or collection changed while preparing; inspect before trusting"
+                print(message, file=sys.stderr)
+                return 1
         elif args.command == "state":
             print(
                 json.dumps({"worktree": worktree_state(), "pins": pins_from_source(), "live": live_state()}, indent=2)

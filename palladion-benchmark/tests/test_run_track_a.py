@@ -218,3 +218,34 @@ def test_a_second_run_in_the_same_directory_cannot_repeat_the_plan(s_root: Path,
     assert sum(1 for r in RunLedger(tmp_path / "run" / "ledger.jsonl").records if r.is_final) == n, (
         "no pair is run twice"
     )
+
+
+def test_truncation_notes_reach_the_ledger_as_flags(s_root: Path, tmp_path: Path) -> None:
+    view = PublishedView.load(s_root / "published")
+    arms, builds = build_local_arms(view, ["R0"], condition=Condition.C2, index_dir=tmp_path / "index")
+    tight = RunSpec("run-a-0007", "smoke", Condition.C2, K, 30, s_root, tmp_path / "run")
+    outcome = execute(tight, arms, builds=builds)
+    flagged = [r for r in RunLedger(tmp_path / "run" / "ledger.jsonl").records if r.is_final and r.flags]
+    assert flagged and all("BUDGET_TRUNCATED" in r.flags for r in flagged)
+    assert outcome.summary.flag_counts["BUDGET_TRUNCATED"] == len(flagged)
+    assert validate_run(tmp_path / "run", root=s_root) == []
+
+
+def test_a_manifest_written_under_another_k_is_not_reused(s_root: Path, tmp_path: Path) -> None:
+    arms, builds = r0_only(s_root, tmp_path / "index")
+    execute(spec(s_root, tmp_path / "run", "run-a-0008"), arms, builds=builds)
+    different = RunSpec("run-a-0008", "smoke", Condition.C2, 5, BUDGET, s_root, tmp_path / "run")
+    with pytest.raises(TrackAError, match="different K, budget or condition"):
+        execute(different, arms, builds=builds)
+
+
+def test_a_qdrant_server_that_is_not_the_pinned_version_fails_the_dense_arms_build(
+    qdrant_server: str, s_root: Path, tmp_path: Path
+) -> None:
+    view = PublishedView.load(s_root / "published")
+    _, builds = build_local_arms(
+        view, ["R1"], condition=Condition.C2, index_dir=tmp_path, qdrant_url=qdrant_server,
+        encoder=HashingEncoder(), expected_qdrant="9.9.9",
+    )  # fmt: skip
+    assert builds[0]["status"] == "FAILED" and builds[0]["error"] == "AdapterError"
+    assert "9.9.9" in builds[0]["reason"]

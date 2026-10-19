@@ -342,6 +342,20 @@ class _Holder:
     error: BaseException | None = None
 
 
+def _arm_flags(adapter: object) -> tuple[str, ...]:
+    """Notes an arm made about its latest call (truncation, filtering, warnings), kept with the ledger record.
+
+    An arm offers them through an optional ``call_flags()``; each must be a short non-empty string.
+    """
+    provider = getattr(adapter, "call_flags", None)
+    if not callable(provider):
+        return ()
+    flags = provider()
+    if not isinstance(flags, tuple) or not all(isinstance(f, str) and 0 < len(f) <= 80 for f in flags):
+        raise ContractError("call_flags() must return a tuple of short non-empty strings")
+    return flags
+
+
 class Runner:
     def __init__(
         self,
@@ -444,7 +458,7 @@ class Runner:
                 raise ContractError("retrieve() returned more candidates than the request limit")
             if [c.rank for c in candidates] != list(range(1, len(candidates) + 1)):
                 raise ContractError("candidate ranks must be 1..n in order")
-            return [c.to_dict() for c in candidates], ()
+            return [c.to_dict() for c in candidates], _arm_flags(adapter)
         if not isinstance(request, CaseRequest) or not isinstance(adapter, SystemAdapter):
             raise ContractError(f"{binding.arm_id} is not a system arm")
         adapter.reset_case(request.question_id)

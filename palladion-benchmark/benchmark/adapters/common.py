@@ -19,6 +19,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
+from typing import Any
 
 from benchmark.contracts import EvidenceCandidate
 from benchmark.eval.normalize import clause_spans
@@ -261,3 +262,20 @@ def enforce_budget(candidates: Sequence[EvidenceCandidate], max_words: int) -> B
 def _replace(candidate: EvidenceCandidate, **changes: object) -> EvidenceCandidate:
     data = {**candidate.to_dict(), **changes}
     return EvidenceCandidate.from_dict(data)
+
+
+def flags_from_notes(notes: Mapping[str, Any]) -> tuple[str, ...]:
+    """Short ledger flags for what an arm did to its latest result: truncation, filtering, exact keys, warnings."""
+    flags: list[str] = []
+    if notes.get("truncated"):
+        flags.append("BUDGET_TRUNCATED")
+    if notes.get("dropped"):
+        flags.append(f"BUDGET_DROPPED={notes['dropped']}")
+    if notes.get("cut_words"):
+        flags.append(f"BUDGET_CUT={notes['cut_words']}")
+    if notes.get("filtered_after_ranking"):
+        flags.append(f"FILTERED_AFTER_RANKING={notes['filtered_after_ranking']}")
+    if notes.get("exact_key_chunks"):
+        flags.append(f"EXACT_KEY_CHUNKS={len(notes['exact_key_chunks'])}")
+    flags += [f"PALLADION_WARNING={w}"[:80] for w in notes.get("palladion_warnings", ())]
+    return tuple(flags)

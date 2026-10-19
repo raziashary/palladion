@@ -38,6 +38,8 @@ def main(argv: list[str] | None = None) -> int:
     except (OSError, ValueError) as exc:
         print(f"refused: a secrets file could not be read ({type(exc).__name__})", file=sys.stderr)
         return 2
+    if not values:
+        print("note: no secret values supplied; only credential patterns were scanned", file=sys.stderr)
     findings = validate_run(options.run_dir, root=options.root, secret_values=values)
     if findings:
         for finding in findings:

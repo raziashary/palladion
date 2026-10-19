@@ -5,6 +5,7 @@ from __future__ import annotations
 import ast
 import hashlib
 import json
+from dataclasses import replace
 from pathlib import Path
 from typing import Any, cast
 
@@ -408,3 +409,73 @@ def test_each_half_of_the_passage_integrity_check_can_refuse_on_its_own(tmp_path
         server.search_body = {"status": "OK", "warnings": [], "passages": [body]}
         with pytest.raises(ContractError, match="differs from the published bytes"):
             arm(server, tmp_path).retrieve(request())
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        {"status": "DEGRADED", "warnings": [], "passages": []},
+        {"status": "DEGRADED", "warnings": ["SOMETHING_NEW"], "passages": []},
+        {"status": "MAYBE", "warnings": [], "passages": []},
+    ],
+)
+def test_a_status_or_warning_the_adapter_does_not_know_is_a_fault_not_an_empty_answer(
+    tmp_path: Path, body: dict[str, Any]
+) -> None:
+    server = Palladion()
+    server.search_body = body
+    with pytest.raises(TransientInfrastructureError, match="unknown status or warning"):
+        arm(server, tmp_path).retrieve(request())
+
+
+def test_a_passage_boundary_inside_a_character_is_a_contract_error() -> None:
+    with pytest.raises(ContractError, match="inside a character"):
+        utf8_to_character_offsets("Ünï", 1, 3)  # byte 1 is the middle of the two-byte Ü
+
+
+def test_the_arm_reports_what_it_did_to_a_call_as_flags(tmp_path: Path) -> None:
+    server = Palladion()
+    server.search_body = {
+        "status": "DEGRADED",
+        "warnings": ["COVERAGE_SCOPE_TRUNCATED"],
+        "passages": [passage(TEXTS["D3"], "rev_D3", 0, 10), passage(TEXTS["D1"], "rev_D1", 0, 12)],
+    }
+    built = arm(server, tmp_path)
+    built.retrieve(request(principal="P-1", budget=2))
+    flags = built.call_flags()
+    assert "FILTERED_AFTER_RANKING=1" in flags and "PALLADION_WARNING=COVERAGE_SCOPE_TRUNCATED" in flags
+    assert any(f.startswith("BUDGET_") for f in flags)
+
+
+def test_verify_load_refuses_when_none_of_the_sampled_documents_can_be_found(tmp_path: Path) -> None:
+    server = Palladion()
+    built = arm(server, tmp_path)
+    built.load_corpus(tmp_path / TABLE_FILE)
+    server.search_body = {"status": "OK", "warnings": [], "passages": []}  # Palladion holds something else entirely
+    with pytest.raises(AdapterError, match="does not describe it"):
+        built.verify_load(sample=5)
+
+
+def test_the_load_probe_never_sends_a_code_that_palladion_would_refuse(tmp_path: Path) -> None:
+    sent: list[str] = []
+
+    def handler(http: httpx.Request) -> httpx.Response:
+        if http.url.path == "/search":
+            sent.append(json.loads(http.content)["query"])
+            return httpx.Response(
+                200, json={"status": "OK", "warnings": [], "passages": [passage(TEXTS["D1"], "rev_1", 0, 12)]}
+            )
+        if http.url.path == "/index-health":
+            return httpx.Response(200, json={"warnings": []})
+        return Palladion().handle(http)
+
+    coded = replace(record("D1", "approved"), title="Memo: change to POL-020 window")
+    built = PalladionArm(
+        PublishedView(tmp_path, [coded], IDENTITY, TEXTS),
+        "http://palladion.test",
+        TOKENS,
+        client=httpx.Client(transport=httpx.MockTransport(handler)),
+    )
+    built.map_revisions({"rev_1": "D1"})
+    report = built.verify_load(sample=1)
+    assert sent == ["Memo: change to window"] and report["reachable_by_title"] == 1

@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import time
 from collections.abc import Mapping
 from dataclasses import dataclass, field
@@ -34,6 +35,7 @@ from benchmark.adapters.common import (
     PublishedView,
     count_words,
     enforce_budget,
+    flags_from_notes,
 )
 from benchmark.contracts import (
     ArmUnavailable,
@@ -55,10 +57,14 @@ APPROVER = "admin-a"
 CASE = "case-42"
 UNAVAILABLE_WARNINGS = frozenset({"INDEX_UNAVAILABLE", "INDEX_MANIFEST_MISMATCH"})
 RETRYABLE_WARNINGS = frozenset({"ACCEPTED_BUT_UNINDEXED"})
+# Warnings that describe a normal answer: a truncated coverage report at scale, an identifier Palladion lacks.
+NOTE_WARNINGS = frozenset({"COVERAGE_SCOPE_TRUNCATED", "EXACT_IDENTIFIER_NOT_FOUND"})
 APPROVE_STATES = frozenset({"approved", "retired", "non_normative", "withdrawn"})
 REVOKE_STATES = frozenset({"withdrawn"})
 TIMEOUT_SECONDS = 60.0
 TABLE_FILE = "palladion_revisions.json"
+# What Palladion reads as an identifier in a query (copied from its documented behaviour, not imported).
+IDENTIFIER_SHAPE = re.compile(r"(?<![A-Za-z0-9])(?:[A-Z][A-Z0-9_.]*[-.][A-Z0-9_.-]+)(?![A-Za-z0-9])")
 
 
 @dataclass(frozen=True)
@@ -88,7 +94,10 @@ def utf8_to_character_offsets(text: str, start_byte: int, end_byte: int) -> tupl
     raw = text.encode("utf-8")
     if not 0 <= start_byte <= end_byte <= len(raw):
         raise ContractError("a Palladion passage lies outside the document it names")
-    return len(raw[:start_byte].decode("utf-8")), len(raw[:end_byte].decode("utf-8"))
+    try:
+        return len(raw[:start_byte].decode("utf-8")), len(raw[:end_byte].decode("utf-8"))
+    except UnicodeDecodeError as exc:
+        raise ContractError("a Palladion passage boundary falls inside a character") from exc
 
 
 class PalladionArm:
@@ -137,6 +146,9 @@ class PalladionArm:
         except httpx.TransportError as exc:
             raise ArmUnavailable("Palladion is not reachable") from exc
 
+    def call_flags(self) -> tuple[str, ...]:
+        return flags_from_notes(self.last_notes)
+
     def close(self) -> None:
         if self._owns_client:
             self._client.close()
@@ -151,6 +163,10 @@ class PalladionArm:
             "acl": "harness post-filter on Palladion output (C2); Palladion's own role ACL is not exercised",
             "clock": "Palladion wall clock; no as-of parameter (BR22)",
             "ingestion": "native: each document uploaded whole and chunked by Palladion",
+            "corpus": "approved, retired, non_normative and withdrawn-then-revoked documents are approved in Palladion",
+            "unapproved": "drafts and unapproved proposals are uploaded, never approved, and so not retrievable by R7a",
+            "states": "approval in Palladion means retrievable, not authoritative; retired and withdrawn states and "
+            "supersession links cannot be expressed through its API (declared gaps)",
         }
 
     # -- loading (B04-T03.02) --------------------------------------------------------------------
@@ -243,13 +259,22 @@ class PalladionArm:
             if self._table_state(record.doc_id) != "APPROVED":
                 continue
             principal = self.view.identity.principals[0].principal_id
+            probe = " ".join(
+                IDENTIFIER_SHAPE.sub(" ", record.title).split()
+            )  # Palladion refuses a query naming an unknown code
+            if not probe:
+                continue
             request = RetrievalRequest(
-                "q-0000000000000000", record.title, principal, "load-check", "2026-10-18T03:00:00Z", None, {},
+                "q-0000000000000000", probe, principal, "load-check", "2026-10-18T03:00:00Z", None, {},
                 MAX_PALLADION_LIMIT, 100000,
             )  # fmt: skip
             hits = self._search(request, "lexical")
             checked += 1
             reached += any(h.source_document_id == record.doc_id for h in hits)
+        if checked and not reached:
+            raise AdapterError(
+                "none of the sampled documents can be found in Palladion; the revision table does not describe it"
+            )
         return {
             "documents": len(documents),
             "index_warnings": coverage["warnings"],
@@ -326,6 +351,15 @@ class PalladionArm:
             raise ArmUnavailable("Palladion was asked to rerank but its reranker is unavailable")
         if warnings & RETRYABLE_WARNINGS:
             raise TransientInfrastructureError("Palladion reports accepted sources that are not indexed")
+        unexpected = sorted(warnings - NOTE_WARNINGS)
+        if (
+            unexpected
+            or body.get("status") not in ("OK", "DEGRADED")
+            or (body.get("status") == "DEGRADED" and not warnings)
+        ):
+            raise TransientInfrastructureError(
+                f"Palladion answered with an unknown status or warning: {unexpected or body.get('status')}"
+            )
         self.last_notes = {"palladion_status": body.get("status"), "palladion_warnings": sorted(warnings)}
         return [self._candidate(passage, rank) for rank, passage in enumerate(body["passages"], start=1)]
 

@@ -19,4 +19,4 @@ Start with the [project instructions](../AGENTS.md), then follow the reading ord
 
 The Palladion system's documents live in [palladion/docs](../../palladion/docs/README.md); they are read for
 interface facts and never edited from here. [reproducibility.md](reproducibility.md) exists as a checklist started in B01;
-[dataset_card.md](dataset_card.md) describes the S-tier fixture (B02); `scoring_rubric.md` and `annotation_guide.md` are created by their owning tasks and do not exist yet.
+[dataset_card.md](dataset_card.md) describes the S-tier fixture (B02); [the owner's labelling guide](development/OWNER_LABELLING_GUIDE.md) says how to label the 30 pilot questions; `scoring_rubric.md` and `annotation_guide.md` are created by their owning tasks and do not exist yet.

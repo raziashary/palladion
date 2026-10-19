@@ -20,7 +20,7 @@ Updated 2026-10-19. Navigation aid only; the user, the protocol, source and ADRs
 
 ## Locked decisions and open items
 
-Accepted: BADR-0001 to BADR-0023 (all; BADR-0018 to BADR-0023 are the B02 decisions). All BADRs are accepted as of 2026-10-18 (BADR-0006 phase breakdown, BADR-0008 one model per question, BADR-0013 benchmark-local .env). Still open and tracked: OQ03 (read Palladion's interface at B04), OQ09 (license, before B08-T07.01), OQ10 (pairings, before B08-T03.01). Open questions OQ01–OQ11 in [risks and open questions](RISKS_AND_OPEN_QUESTIONS.md).
+Accepted: BADR-0001 to BADR-0025 (all; BADR-0018 to BADR-0023 are the B02 decisions, BADR-0024 B03, BADR-0025 B04). All BADRs are accepted as of 2026-10-18 (BADR-0006 phase breakdown, BADR-0008 one model per question, BADR-0013 benchmark-local .env). Still open and tracked: OQ03 (read Palladion's interface at B04), OQ09 (license, before B08-T07.01), OQ10 (pairings, before B08-T03.01). Open questions OQ01–OQ11 in [risks and open questions](RISKS_AND_OPEN_QUESTIONS.md).
 
 ## What exists in code (B01)
 
@@ -31,6 +31,12 @@ Accepted: BADR-0001 to BADR-0023 (all; BADR-0018 to BADR-0023 are the B02 decisi
   `uv run python -m benchmark.secret_scan --staged`. `make` is not installed and Docker cannot run on the author's machine; Qdrant runs Docker-free under WSL (BADR-0017, launcher built in B04).
 - The live generator proof (3 calls, 3 of 3 approved models answered) is the only provider use so far; the key lives in the gitignored `palladion-benchmark/.env` and has never been printed.
 - Free-tier limits seen: 8,000 tokens per minute on each approved model. Pre-assignment budgets stay null until daily limits are stated (BADR-0015).
+
+## What exists in code (B04)
+
+- `benchmark/adapters/`: `common.py` (published-namespace view, chunker, whitespace-word counts, neutral ACL filter C1/C2, budget enforcer, harness-attributed candidates, ledger flags), `models.py` (pinned model fetch and verify), `bm25.py` (R0), `dense.py` (R1, Qdrant HNSW, recorded ANN recall), `hybrid.py` (R2 fusion, R3 rerank), `palladion.py` (R7a over HTTP only). `benchmark/track_a.py` builds the local arms and runs Track A through the real Runner; `benchmark/results_check.py` validates a run directory. Scripts: `qdrant_server.py` (checksum-pinned, WSL, port 17333), `palladion_runtime.py` (detached worktree at 6444345, own root, collection and port 18081), `build_indices.py`, `run_track_a.py`, `score_track_a.py`, `validate_results.py`.
+- Key facts: pins live in `configs/comparators.yaml` with revisions and file digests; R7a sees only what Palladion's HTTP API returns, mapped to published documents through a revision table; documents loaded over HTTP get no identifier aliases (BR24); never run the Palladion runtime on Palladion's own root, port 18080 or collection `knowledge_chunks_v1`; models, binaries and indexes are under gitignored `artifacts/`. Evidence E-B04-001 to E-B04-004 (981 tests). Pilot waits for the owner's labels ([guide](OWNER_LABELLING_GUIDE.md)).
+- The tests start the benchmark's Qdrant and a real isolated Palladion (about 15 minutes for the whole suite); the real-runtime test creates the worktree under `artifacts/` if it is missing.
 
 ## What exists in code (B03)
 

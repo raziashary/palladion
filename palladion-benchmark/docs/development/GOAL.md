@@ -22,7 +22,7 @@ its status is read from its own documents and source, never assumed.
 | O01: Harness runs paired, bounded, randomized experiments with immutable manifests and a proven generator entry point | B01; BG-HARNESS, BG-REPRO; E-B01-002 to E-B01-006 | DONE |
 | O02: Audited synthetic S-tier world, corpus, gold and validation report | B02; BG-FIXTURE, BG-GOLD, BG-SECURITY; E-B02-001 to E-B02-005 | IN_PROGRESS |
 | O03: Scorers distinguish perfect, empty and shuffled systems and implement the protocol's statistics | B03; BG-METRIC, BG-STATS, BG-REPORT; E-B03-002 to E-B03-004 | DONE |
-| O04: Track A pilot for R0, R1, R2, R3 and R7a | B04; BG-ADAPTER, BG-FAIR, BG-TRACKA | PLANNED |
+| O04: Track A pilot for R0, R1, R2, R3 and R7a | B04; BG-ADAPTER, BG-FAIR, BG-TRACKA; E-B04-001 to E-B04-004 | IN_PROGRESS |
 | O05: Answer-level scorers and Track B pilot with the recorded generator pool | B05; BG-METRIC, BG-TRACKB | PLANNED |
 | O06: Graph and research comparators R4–R7b measured with full cost, or recorded NOT_RUN reasons | B06; BG-ADAPTER, BG-TRACKA | PLANNED |
 | O07: Native end-to-end systems E0–E4, memory, critic and tool metrics, 19 mutations and 7 invariants | B07; BG-TRACKC, BG-FIXTURE, BG-SECURITY | PLANNED |

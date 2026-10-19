@@ -68,7 +68,9 @@ def gold_texts(records: Iterable[GoldRecord]) -> list[str]:
         for extra in (record.abstention_note, record.policy_outcome):
             if extra:
                 texts.add(extra)
-    return sorted(t for t in texts if len(t) >= MIN_GOLD_TEXT)
+    long = [t for t in texts if len(t) >= MIN_GOLD_TEXT]
+    escaped = [json.dumps(t)[1:-1] for t in long]  # how the same text reads inside a JSON file
+    return sorted({*long, *escaped})
 
 
 def _load_json(path: Path, findings: list[Finding]) -> Any | None:
