@@ -106,7 +106,7 @@ versions, drafts that claim board approval in their body, and two equally approv
 
 ## Label audit
 
-**Status: the model pass on the final fixture is done; the owner's labels are pending (B02-T07.02 is open).** The design is BADR-0019. A seeded sample of 30
+**Status: done (2026-10-19). The labels were made by the coordinator under the owner's delegation, one reader who built the pipeline (BADR-0026, E-B02-006).** The design is BADR-0019. A seeded sample of 30
 pilot questions (3 per stratum, covering each answerability value present in the stratum) is shown without gold to the owner
 and to a blinded language-model pass. Agreement is owner against model and each against the gold; it is not human against
 human, and neither reader is independent of the templates. The model sees the question, the principal, the live read
@@ -122,12 +122,12 @@ those labels no longer belong to the shipped questions and were archived, not re
 | Model, first prompt (documents cut at 600 characters, so rule clauses were missing) | 36 | 7 of 30 (23%) |
 | Model, second prompt (documents cut at 900 characters) | 37 | 12 of 30 (40%) |
 | Model, final fixture, prompt `excerpt-v1` | 36 | 17 of 30 (57%) |
-| Owner | 0 | pending |
+| Coordinator (delegated), final fixture | 0 | 29 of 30 (97%, kappa 0.94) |
 
 On the final fixture, the gold's cited documents were among the model's documents for only 1 of the 23 questions that have cited
 evidence (the model agreed there); on the earlier build it was 2 of 23. So the low agreement mostly reflects what the model was shown, not a measured defect in the
 gold, and it does not show the gold is right. The two prompts used a fixed-length document prefix; the current code selects the
-informative lines instead (`excerpt-v1`) and cannot reproduce them. The owner's pass, who can search all 1,200 documents, is the real check.
+informative lines instead (`excerpt-v1`) and cannot reproduce them. The reader's pass, who could search all 1,200 documents, is the real check, but it is one non-independent reader: it found one reader error and three defective synthesis questions (their gold omits policies the question asks for; withdrawn from the pilot, BR29).
 
 ### How the owner labels
 

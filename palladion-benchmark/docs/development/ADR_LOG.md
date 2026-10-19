@@ -520,3 +520,23 @@ show the decision working, and is kept separate from acceptance.
 **Verification:** Each rule has a test with a negative control in its owning B04 task; the pilot records every pin, digest, K, budget and condition.
 
 **Amendment after the build and the post-phase audit (E-B04-002, E-B04-004), 2026-10-19:** (a) Every benchmark principal maps to one Palladion reader in one case; under C2 the neutral filter is applied to Palladion's output after its ranking, so R7a can return fewer than K candidates, and the number dropped is a ledger flag. (b) Documents are loaded into Palladion as approved (approved, retired, non_normative), approved then revoked (withdrawn) or left as draft (draft, unapproved proposal); approval there means retrievable, not authoritative, and retired and withdrawn states and supersession links are declared gaps. (c) Documents loaded over HTTP get no identifier aliases, so a query naming a code is answered with nothing by Palladion (BR24); this is recorded, not worked around. (d) R7a validity follows Palladion's wall clock (BR22). (e) Dense results with equal scores are ordered by chunk id after asking for ten extra hits, so a rebuild gives the same list. (f) The validator allows exactly one gold-named key, `gold_manifest_sha256`, in a manifest, which is evaluator-side by design. (g) Item 9 reads: Track A runs the smoke or dev split; the pilot measurement uses the smoke split only. (h) Downloads: the embedding model was 252 MB, the reranker 92 MB, Qdrant 33 MB; the owner re-approved after the larger size was stated.
+
+## BADR-0026 — Label audit delegated to the coordinator; dispositions
+
+**Status:** ACCEPTED; 2026-10-19.
+
+**Authority:** Owner message, 2026-10-19: no time to label, "please just label it by yourself and push". The dispositions below are coordinator decisions inside B02-T07.02 and may be amended by the owner.
+
+**Question:** Who reads the 30-item packet when the owner will not, what does that reading count for, and what happens to the defects it finds?
+
+**Why:** BADR-0019 expected an owner reading. Without one the pilot would stay blocked, but a reading by the builder is weaker evidence than a human's.
+
+**Options:** (a) Keep B02-T07.02 open until the owner labels; (b) coordinator labels blind, records the limit, keeps BG-GOLD PARTIAL and asks the owner to relabel or accept before the seal; (c) skip the audit.
+
+**Recommendation:** (b).
+
+**What affects what:** B02-T07.02 closes; B04-T05.01 unblocks after the three-question withdrawal; BG-GOLD stays PARTIAL; B08-T03.01 gains the relabel-or-accept step and the generator correction.
+
+**My answer (editable):** Accepted as (b). The three synthesis questions a-1c1517e1c363, a-29081870dc64 and a-4bcb97ff166b are withdrawn from the pilot by a recorded list, the gold is not edited, and the generator is corrected before the seal (BR29). The reader's one wrong label (a-3e78c6bf81ce) is not a gold defect.
+
+**Verification:** E-B02-006 holds the report, denominators, the item-level reasons and the limits; the exclusion list is tested in B04-T05.01.

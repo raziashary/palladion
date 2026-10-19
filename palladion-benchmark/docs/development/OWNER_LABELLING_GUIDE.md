@@ -1,5 +1,7 @@
 # How to label the 30 pilot questions (B02-T07.02)
 
+> **Status, 2026-10-19:** the owner delegated this audit to the coordinator (BADR-0026, E-B02-006), so the card is closed. This guide stays for an independent relabel before the seal: edit a copy of `owner_labels.jsonl` and run the report.
+
 This is the one document you need. It tells you what the labels are for, exactly what to do, in which order, and what
 happens afterwards. Plan on one to two hours. Nothing here needs a model, a key or a network connection.
 

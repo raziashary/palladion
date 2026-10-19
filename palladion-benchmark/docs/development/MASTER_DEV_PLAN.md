@@ -530,12 +530,12 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
 
 <a id="b02-t07-02"></a>
 
-- [ ] **B02-T07.02 — Stratified pilot label audit**
+- [x] **B02-T07.02 — Stratified pilot label audit**
   - **Files:** `palladion-benchmark/benchmark/fixtures/audit.py`, `palladion-benchmark/tests/test_label_audit.py`, `palladion-benchmark/docs/dataset_card.md`, `palladion-benchmark/docs/development/EVIDENCE_LOG.md`.
   - **Depends:** B02-T07.01, OQ08, BADR-0019, BADR-0020.
   - **Change:** Build a blinded, seeded, stratified audit packet (about 30 items); the owner labels it and also checks that the cited clauses exist in the rendered text and suffice; a blinded LLM second pass runs under the BADR-0019 call budget; record agreement with denominators (owner against LLM, not human against human), disagreements, and fix or withdraw defective cases before any measurement.
   - **Proof:** MEASUREMENT; BG-GOLD; agreement statistic with denominators and the non-independence limit stated; defects found and their disposition recorded; every post-audit gold edit logged with hashes; the packet holds no gold field.
-  - **Evidence:** Not yet executed.
+  - **Evidence:** E-B02-006, BADR-0026; 30 of 30 labelled blind then checked against the cited clauses; 29 of 30 agree with the gold (kappa 0.94); one disagreement settled, three set-question golds withdrawn.
 
 ### Atomic tasks — B03
 
@@ -733,9 +733,9 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
 <a id="b04-t05-01"></a>
 
 - [ ] **B04-T05.01 — Track A pilot measurement**
-  - **Files:** `palladion-benchmark/docs/development/EVIDENCE_LOG.md`, `palladion-benchmark/docs/development/PROGRESS.md`.
+  - **Files:** `palladion-benchmark/scripts/score_track_a.py`, `palladion-benchmark/benchmark/eval/score_run.py`, `palladion-benchmark/tests/test_score_run.py`, `palladion-benchmark/docs/development/EVIDENCE_LOG.md`, `palladion-benchmark/docs/development/PROGRESS.md`.
   - **Depends:** B04-T04.03, B02-T07.02.
-  - **Change:** Run R0, R1, R2, R3 and R7a on the pilot (smoke partition only; the S-tier test partition stays unread), inspect failures by hand, and record scores with denominators; pilot results are excluded from held-out claims.
+  - **Change:** Withdraw the three synthesis questions whose gold omits policies the question asks for (BADR-0026, BR29) through a recorded exclusion list the scorer applies, so every score states 97 of 100 questions; then run R0, R1, R2, R3 and R7a on the pilot (smoke partition only; the S-tier test partition stays unread), inspect failures by hand, and record scores with denominators; pilot results are excluded from held-out claims.
   - **Proof:** MEASUREMENT; BG-TRACKA, BG-METRIC; exact commands, counts and raw failures preserved; no superiority claim.
   - **Evidence:** Not yet executed.
 
@@ -1031,7 +1031,7 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
 - [ ] **B08-T03.01 — Preregistration and seal**
   - **Files:** `palladion-benchmark/docs/development/RESEARCH_PROTOCOL.md`, `palladion-benchmark/configs/evaluation.yaml`, `palladion-benchmark/docs/reproducibility.md`.
   - **Depends:** B08-T02.03, OQ10.
-  - **Change:** Complete the protocol checklist, freeze methods, code, prompts, the ablation list with its base treatments, minimum meaningful effects and the calibration plan, seal test manifests with SHA-256, lock primary pairings, equivalence margin and multiplicity procedure.
+  - **Change:** Complete the protocol checklist, freeze methods, code, prompts, the ablation list with its base treatments, minimum meaningful effects and the calibration plan, seal test manifests with SHA-256, lock primary pairings, equivalence margin and multiplicity procedure. Before the seal the owner either relabels the 30-item pilot packet or accepts the delegated reading in writing, and the synthesis golds are corrected at the generator (BADR-0026, BR29).
   - **Proof:** DOC; BG-PREREG; sealed hashes verify; an edit after sealing is detected and flags later results exploratory.
   - **Evidence:** Not yet executed.
 
