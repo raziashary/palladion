@@ -162,10 +162,10 @@ Goal O04. Read protocol §2.1, §3, §7.4 and §19.1 Slice 2. Depends on B02 and
 
 | Task | Work and producer → consumer | Acceptance / proof |
 |---|---|---|
-| B04-T01 | R0 and R1 over shared chunks | Exact-ID and semantic probes behave; ANN loss measured |
-| B04-T02 | R2 and R3 with C1/C2 and equal token budgets | Budgets equal by counted tokens |
-| B04-T03 | R7a Palladion adapter | HTTP only; no import; unavailable is NOT_RUN |
-| B04-T04 | Build, Track A runner and result validator | No gold in artifacts; leakage rejected |
+| B04-T01 | Shared harness, pins, launcher, R0 and R1 | Exact-ID and semantic probes behave; ANN loss measured; chunks tile documents |
+| B04-T02 | R2 and R3 with C1/C2 and equal token budgets | Budgets equal by counted words |
+| B04-T03 | R7a Palladion adapter and isolated runtime | HTTP only; no import; unavailable is NOT_RUN; Palladion's live state untouched |
+| B04-T04 | Build, Track A runner, scoring entry point and result validator | No gold in artifacts; leakage rejected; test split refused |
 | B04-T05 | Pilot measurement | Counts and failures recorded; no superiority claim |
 
 Exit: Track A pilot for R0, R1, R2, R3 and R7a with manual failure inspection. Pilot excluded from held-out claims.
@@ -613,85 +613,121 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
 
 ### Atomic tasks — B04
 
+<a id="b04-t01-03"></a>
+
+- [ ] **B04-T01.03 — Shared Track A harness: chunker, counted tokens, neutral ACL filter, budgets**
+  - **Files:** `palladion-benchmark/benchmark/adapters/__init__.py`, `palladion-benchmark/benchmark/adapters/common.py`, `palladion-benchmark/tests/test_adapters_common.py`.
+  - **Depends:** B03-T01.01, B02-T03.01, B01-T03.01, BADR-0025.
+  - **Change:** One parser and chunker for R0 to R3 over the published namespace only (an arm receives the published directory and an index directory, never the snapshot root); chunks carry document id, clause ids and character offsets so candidates arrive with harness-attributed provenance; counted tokens are whitespace words with characters also reported; a neutral filter applies the principal's tenant and role from the published manifest identically to every arm (condition C2) and can be switched off (condition C1); a budget enforcer truncates a bundle to the stated token budget and flags the truncation.
+  - **Proof:** UNIT; BG-ADAPTER, BG-FAIR, BG-SECURITY; chunks tile every document with no loss and every clause maps to a chunk; the filter removes exactly the documents the manifest denies and an arm cannot be built from a path that holds annotation namespaces; two bundles at the same budget differ by at most one chunk in counted words; an over-budget bundle is truncated and flagged.
+  - **Evidence:** Not yet executed.
+
+<a id="b04-t01-04"></a>
+
+- [ ] **B04-T01.04 — Pins, dependencies and run recording**
+  - **Files:** `palladion-benchmark/pyproject.toml`, `palladion-benchmark/configs/comparators.yaml`, `palladion-benchmark/benchmark/config.py`, `palladion-benchmark/benchmark/registry.py`, `palladion-benchmark/benchmark/eval/score_run.py`, `palladion-benchmark/tests/test_adapter_pins.py`.
+  - **Depends:** B04-T01.03, B03-T07.01, BADR-0005, BADR-0025.
+  - **Change:** Add fastembed, onnxruntime, qdrant-client and huggingface-hub at the versions Palladion pins; extend the pin schema with repository, revision and file digests for models and with version and digest for a binary; declare each arm's capabilities honestly in the registry; the Track A runner records K, token budget, metadata condition and fusion constant in the manifest's retrieval configuration and the scorer refuses a K that differs from it.
+  - **Proof:** UNIT; BG-ADAPTER, BG-REPRO; an unpinned model is refused in confirmatory mode; the scorer rejects a run scored at another K; every capability cell for R0 to R3 and R7a is a word, never blank.
+  - **Evidence:** Not yet executed.
+
+<a id="b04-t01-05"></a>
+
+- [ ] **B04-T01.05 — Docker-free Qdrant launcher**
+  - **Files:** `palladion-benchmark/scripts/qdrant_server.py`, `palladion-benchmark/tests/test_qdrant_launcher.py`.
+  - **Depends:** B04-T01.04, BADR-0017.
+  - **Change:** A checksum-pinned official standalone Qdrant release run under WSL (Ubuntu) on 127.0.0.1:17333 with its own data directory; refuses a checksum mismatch, a busy port and any attempt to use Palladion's port or store; stops only the process it started.
+  - **Proof:** INTEGRATION; BG-REPRO; the launcher starts, answers a health call, stops, and leaves port 16333 untouched; a wrong checksum, a busy port and a request for Palladion's store are each refused for that reason.
+  - **Evidence:** Not yet executed.
+
 <a id="b04-t01-01"></a>
 
 - [ ] **B04-T01.01 — R0 lexical arm over the shared chunks**
-  - **Files:** `palladion-benchmark/benchmark/adapters/bm25.py`.
-  - **Depends:** B03-T01.01, B02-T03.01, B01-T03.01.
-  - **Change:** Shared parser, chunk boundaries and metadata; build_index, retrieve and index_stats; declared capabilities.
-  - **Proof:** INTEGRATION; BG-ADAPTER, BG-TRACKA; an exact error-code query ranks its clause first; unsupported ACL filtering is declared, not faked.
+  - **Files:** `palladion-benchmark/benchmark/adapters/bm25.py`, `palladion-benchmark/tests/test_bm25.py`.
+  - **Depends:** B04-T01.03, B03-T01.01, B02-T03.01, B01-T03.01.
+  - **Change:** A standard-library Okapi BM25 over the shared chunks with identifier-preserving tokenization; build_index, retrieve and index_stats; capabilities declared.
+  - **Proof:** INTEGRATION; BG-ADAPTER, BG-TRACKA; an exact error-code query ranks its clause first; hand-computed BM25 scores match; unsupported ACL filtering is declared, not faked (the neutral filter is the harness wrapper).
   - **Evidence:** Not yet executed.
 
 <a id="b04-t01-02"></a>
 
 - [ ] **B04-T01.02 — R1 dense arm and approximate-vs-exact check**
-  - **Files:** `palladion-benchmark/benchmark/adapters/dense.py`.
-  - **Depends:** B04-T01.01, OQ04.
-  - **Change:** Pinned embedding model and HNSW index; periodic exact k-NN comparison on a representative subset.
-  - **Proof:** INTEGRATION; BG-ADAPTER; ANN recall against exact search is measured and recorded; embedding revision is pinned.
+  - **Files:** `palladion-benchmark/benchmark/adapters/dense.py`, `palladion-benchmark/tests/test_dense.py`.
+  - **Depends:** B04-T01.01, B04-T01.05, OQ04, BADR-0025.
+  - **Change:** The pinned embedding model through fastembed and a Qdrant HNSW collection in the benchmark's own server; exact k-NN comparison on a representative subset; embedding revision and file digest verified at load.
+  - **Proof:** INTEGRATION; BG-ADAPTER; ANN recall against exact search is measured and recorded; the embedding revision is pinned; a tampered model file is refused.
   - **Evidence:** Not yet executed.
 
 <a id="b04-t02-01"></a>
 
 - [ ] **B04-T02.01 — R2 hybrid fusion and the two metadata conditions**
-  - **Files:** `palladion-benchmark/benchmark/adapters/hybrid.py`.
+  - **Files:** `palladion-benchmark/benchmark/adapters/hybrid.py`, `palladion-benchmark/tests/test_hybrid.py`.
   - **Depends:** B04-T01.02.
-  - **Change:** R0+R1 reciprocal-rank fusion with a pinned constant, exact-key channel reported separately, and C1 text-only versus C2 evidence-governed wrappers.
-  - **Proof:** INTEGRATION; BG-ADAPTER, BG-FAIR; C1 and C2 differ only in the declared metadata; the fusion constant appears in the manifest.
+  - **Change:** R0+R1 reciprocal-rank fusion with a pinned constant, exact-key channel reported separately, and C1 text-only versus C2 evidence-governed wrappers over the shared harness filter.
+  - **Proof:** INTEGRATION; BG-ADAPTER, BG-FAIR; C1 and C2 differ only in the neutral filter; the fusion constant appears in the manifest; fusion matches a hand-computed example.
   - **Evidence:** Not yet executed.
 
 <a id="b04-t02-02"></a>
 
 - [ ] **B04-T02.02 — R3 reranker arm and token-budget enforcement**
-  - **Files:** `palladion-benchmark/benchmark/adapters/hybrid.py`.
-  - **Depends:** B04-T02.01, OQ05.
-  - **Change:** Pinned cross-encoder over R2 candidates; enforce the 4k and 8k evidence token budgets by counted tokens.
-  - **Proof:** INTEGRATION; BG-FAIR; two arms at the same budget deliver within tolerance of the same counted tokens; an over-budget bundle is truncated and flagged.
+  - **Files:** `palladion-benchmark/benchmark/adapters/hybrid.py`, `palladion-benchmark/tests/test_hybrid.py`.
+  - **Depends:** B04-T02.01, OQ05, BADR-0025.
+  - **Change:** The pinned cross-encoder over R2 candidates with its revision and digest verified; both evidence token budgets enforced by the shared enforcer.
+  - **Proof:** INTEGRATION; BG-FAIR; two arms at the same budget deliver within one chunk of the same counted words; an over-budget bundle is truncated and flagged; the reranker's language limit is recorded.
+  - **Evidence:** Not yet executed.
+
+<a id="b04-t03-03"></a>
+
+- [ ] **B04-T03.03 — Isolated Palladion runtime for R7a**
+  - **Files:** `palladion-benchmark/scripts/palladion_runtime.py`, `palladion-benchmark/tests/test_palladion_runtime.py`.
+  - **Depends:** B04-T03.01, BADR-0016, BADR-0025.
+  - **Change:** Create a detached git worktree of Palladion at a recorded commit under the benchmark's artifacts, a dedicated runtime root, Qdrant collection and port (its own Qdrant on 17333, never 16333), seed it with Palladion's own seed code, read the tokens it writes only inside the adapter process, start and stop only the processes it started, and record the commit, mode, graph setting and embedding and reranker pins read from that worktree's source.
+  - **Proof:** INTEGRATION; BG-REPRO, BG-SECURITY; Palladion's default root and port are untouched (checked before and after); a dirty source tree is refused or recorded; tokens never reach a log, manifest or artifact.
   - **Evidence:** Not yet executed.
 
 <a id="b04-t03-01"></a>
 
 - [ ] **B04-T03.01 — R7a Palladion retrieval adapter over its HTTP API**
-  - **Files:** `palladion-benchmark/benchmark/adapters/palladion.py`.
-  - **Depends:** B01-T03.01, OQ03.
-  - **Change:** Authenticated calls to Palladion's search interface with the principal injected by the harness and an explicit principal-to-case mapping; no import of Palladion code. Pin search mode and graph hop setting in comparators.yaml and read them back into the manifest. Palladion's search takes only case, query, mode and a limit of at most 12 and no clock or token budget, so the adapter truncates by counted tokens on the harness side, marks K=20 and any frozen-clock requirement it cannot honor as NOT_RUN or FEATURE_NOT_SUPPORTED, and declares these as capability differences.
-  - **Proof:** INTEGRATION; BG-ADAPTER, BG-SECURITY, BG-FAIR; a static scan finds no palladion package import; a real call returns candidates; a K=20 request is flagged, not silently capped; Palladion unavailable is NOT_RUN, never a zero score.
+  - **Files:** `palladion-benchmark/benchmark/adapters/palladion.py`, `palladion-benchmark/tests/test_palladion_adapter.py`.
+  - **Depends:** B01-T03.01, B04-T01.03, OQ03.
+  - **Change:** Authenticated calls to Palladion's search interface with the principal injected by the harness and an explicit principal-to-case mapping; no import of Palladion code. Candidates carry the published document id through a revision-to-document table written at upload. A response whose status is UNAVAILABLE or DEGRADED is a run state (NOT_RUN or INVALID_RUN with its code), never an empty list. Palladion's search takes only case, query, mode and a limit of at most 12, no clock and no token budget: the adapter truncates by counted words on the harness side, marks K=20 and any frozen-clock requirement it cannot honor as NOT_RUN or FEATURE_NOT_SUPPORTED, and declares the differences. Client timeouts and concurrency are bounded.
+  - **Proof:** INTEGRATION; BG-ADAPTER, BG-SECURITY, BG-FAIR; a static scan finds no palladion package import; a real call returns candidates mapped to published documents; a K=20 request is flagged, not silently capped; an UNAVAILABLE or DEGRADED body and an unreachable server are NOT_RUN or INVALID_RUN, never a zero score; a reranked request against a server started without the reranker is refused.
   - **Evidence:** Not yet executed.
 
 <a id="b04-t03-02"></a>
 
 - [ ] **B04-T03.02 — Load the published corpus into Palladion through its authenticated source interface**
-  - **Files:** `palladion-benchmark/benchmark/adapters/palladion.py`.
-  - **Depends:** B04-T03.01, B02-T03.01.
-  - **Change:** Upload each published document as the fixture's uploader and approve it as an independent approver through Palladion's source and approval endpoints, mirroring the fixture registry's states; wire per-case live observations to the benchmark mock where Palladion's interface allows, otherwise declare the gap.
-  - **Proof:** INTEGRATION; BG-ADAPTER, BG-FAIR; read back counts and hashes against the corpus manifest; a draft is never approved; a mismatch fails the load.
+  - **Files:** `palladion-benchmark/benchmark/adapters/palladion.py`, `palladion-benchmark/tests/test_palladion_adapter.py`.
+  - **Depends:** B04-T03.01, B04-T03.03, B02-T03.01.
+  - **Change:** Upload each published document as a seeded uploader and approve it as a distinct seeded approver through Palladion's source and approval endpoints, mirroring the fixture registry's states that its interface can express (draft stays unapproved; retired and withdrawn states are declared gaps); split any document above Palladion's size limits and record how; wire per-case live observations only where the interface allows, otherwise declare the gap.
+  - **Proof:** INTEGRATION; BG-ADAPTER, BG-FAIR; read back counts of approved revisions against the corpus manifest and verify through search that each approved document is reachable; a draft is never approved; a mismatch fails the load.
   - **Evidence:** Not yet executed.
 
 <a id="b04-t04-01"></a>
 
 - [ ] **B04-T04.01 — Index build entry point**
-  - **Files:** `palladion-benchmark/scripts/build_indices.py`, `palladion-benchmark/scripts/qdrant_server.py`, `palladion-benchmark/tests/test_qdrant_launcher.py`.
-  - **Depends:** B04-T02.02, B04-T03.01, BADR-0017.
-  - **Change:** Docker-free Qdrant launcher: a checksum-pinned official standalone release run under WSL on 127.0.0.1:17333 with its own data directory, never touching Palladion's store (own implementation of the same method). Build per-arm indexes for a snapshot in two modes, common-chunk (shared parser and boundaries) and native-ingestion (each system parses the originals with its defaults); record time, size, tokens, extraction failures and lost tables.
-  - **Proof:** SMOKE; BG-REPRO; rebuild from the same manifest yields matching counts; a failed build is recorded rather than skipped.
+  - **Files:** `palladion-benchmark/scripts/build_indices.py`, `palladion-benchmark/tests/test_build_indices.py`.
+  - **Depends:** B04-T02.02, B04-T01.05, BADR-0025.
+  - **Change:** Build per-arm indexes for a snapshot from the published namespace only, in common-chunk mode (shared parser and boundaries); native-ingestion mode is deferred (BADR-0025). Record time, size, tokens, extraction failures and lost tables; a failed build is recorded.
+  - **Proof:** SMOKE; BG-REPRO; rebuild from the same manifest yields matching counts; a failed build is recorded rather than skipped; the entry point refuses a snapshot root that holds annotation namespaces as its corpus argument.
   - **Evidence:** Not yet executed.
 
 <a id="b04-t04-02"></a>
 
-- [ ] **B04-T04.02 — Track A runner**
-  - **Files:** `palladion-benchmark/scripts/run_track_a.py`.
-  - **Depends:** B04-T04.01, B01-T04.01, B03-T02.01, B03-T03.02, B03-T05.01.
-  - **Change:** Run arms on a split with intention-to-treat accounting and write run artifacts with manifests.
-  - **Proof:** SMOKE; BG-TRACKA; the artifacts contain no gold field; arms not run appear with a reason.
+- [ ] **B04-T04.02 — Track A runner and scoring entry point**
+  - **Files:** `palladion-benchmark/scripts/run_track_a.py`, `palladion-benchmark/scripts/score_track_a.py`, `palladion-benchmark/tests/test_run_track_a.py`.
+  - **Depends:** B04-T04.01, B04-T03.01, B01-T04.01, B03-T02.01, B03-T03.02, B03-T05.01, B03-T07.01.
+  - **Change:** Run arms on a split with intention-to-treat accounting through the real Runner, refuse the test split without the recorded seal, record K, budget and condition in each manifest, write run artifacts with manifests, and score a run directory into scorecards and a states table.
+  - **Proof:** SMOKE; BG-TRACKA; the artifacts contain no gold field; arms not run appear with a reason; the test split is refused; a run scored at a different K is rejected.
   - **Evidence:** Not yet executed.
 
 <a id="b04-t04-03"></a>
 
 - [ ] **B04-T04.03 — Result validation entry point**
-  - **Files:** `palladion-benchmark/scripts/validate_results.py`.
+  - **Files:** `palladion-benchmark/scripts/validate_results.py`, `palladion-benchmark/tests/test_validate_results.py`.
   - **Depends:** B04-T04.02.
-  - **Change:** Check schema, call and token budgets, leakage and hashes of a run directory.
-  - **Proof:** INTEGRATION; BG-REPRO, BG-FAIR; a run directory containing planted gold text or a read of the locked-test namespace is rejected; a clean directory passes.
+  - **Change:** Check schema, call and token budgets, gold and secret leakage by scanning artifacts for every gold string, question-id family and token, manifest and ledger hashes, and that the run read only the published namespace and the split's own annotation file (recorded by the runner).
+  - **Proof:** INTEGRATION; BG-REPRO, BG-FAIR; a run directory containing planted gold text, a planted token or a record of a locked-test read is rejected; a clean directory passes.
   - **Evidence:** Not yet executed.
 
 <a id="b04-t05-01"></a>

@@ -497,3 +497,24 @@ show the decision working, and is kept separate from acceptance.
 **Verification:** Each rule has a hand-computed test and a planted-defect control in the owning B03 task.
 
 **Amendment after the post-phase audit (E-B03-004), 2026-10-19:** (a) A `doc` locator, or none, names the document only: it credits the document unit and the clauses the candidate's text reproduces. (b) Text alignment is computed for every candidate and kept apart from identity credit; a claimed `live:` id is no claim. (c) A candidate leaks when it names a document the principal may not see, or reproduces at least 0.3 of the phrases of such a document that no visible document also contains. (d) Precision counts every relevant candidate; MRR, nDCG, MAP and gain count a slot once. (e) Harm metrics (exposure, authority confusion, wrong vintage) have no intention-to-treat value and are summarised over completed pairs; benefit metrics give a non-completed pair zero when the gold says the metric applies, for non-binary metrics too (an extension of item 7). (f) "Applies" is decided by scoring an empty return, so applicability follows the gold. (g) Entity-disambiguation error is dropped from B03 (no fixture gold carries it). (h) Spend on a failed call counts; a call with no report is missing. Owner may amend before the first measurement.
+
+
+## BADR-0025 — B04 decisions after the pre-phase adversary
+
+**Status:** ACCEPTED; 2026-10-19.
+
+**Authority:** Owner answers in chat, 2026-10-19: provision an isolated Palladion runtime; harness provenance counts as headline identity; approve the embedding model, the reranker and the Qdrant binary downloads; neutral harness ACL filter. The remaining items are coordinator decisions inside task scope after E-B04-001; the owner may amend.
+
+**Question:** How are the Track A arms built, fed, filtered, budgeted and recorded, and how does R7a run without touching Palladion's live state?
+
+**Why:** The adversary (E-B04-001) showed that no card owned the chunker or tokenizer, that R0 to R3 have no access control or clock, that Palladion's runtime, principals and tokens come only from its own seed, and that the pilot's isolation, budget and K were unrecorded.
+
+**Options:** (a) Build the shared harness first and give every arm the same chunks, filter and budget; (b) let each arm do its own parsing, filtering and truncation.
+
+**Recommendation:** Option (a). (1) Arms read the published namespace and an index directory only. (2) Chunks tile each document, carry document id, clause ids and offsets, and arrive as harness-attributed provenance that earns headline identity, labelled in every table; text-only arms get alignment credit only. (3) Counted tokens are whitespace words, characters also reported; two bundles at one budget may differ by at most one chunk. (4) A neutral filter by the principal's tenant and role (condition C2) is applied to every arm and a no-filter run (C1) is reported beside it. (5) R0 is a standard-library BM25; R1 uses Palladion's pinned embedding model (OQ04) through fastembed and a Qdrant HNSW collection on the benchmark's own server (127.0.0.1:17333, WSL, checksum-pinned); R3 uses Palladion's reranker (OQ05); fusion is reciprocal-rank with a pinned constant. (6) R7a runs from a detached worktree of Palladion at a recorded commit with its own root, collection and port, seeded by Palladion's own seed code; it is labelled native-ingestion in the common-chunk comparison; unavailable or degraded responses are run states, never empty lists. (7) Native-ingestion mode for the other arms is deferred to a later phase. (8) Arm isolation targets accidental leakage; subprocess isolation stays at B08. (9) The pilot runs the smoke partition only; the runner refuses the test split without a recorded seal and records which annotation file it read.
+
+**What affects what:** B04-T01.01 to B04-T05.01, B05 (R3 and R7a feed Track B), B06 (graph arms reuse the harness), B08 (seal, isolation), BG-ADAPTER, BG-FAIR, BG-TRACKA, BG-REPRO, BG-SECURITY.
+
+**My answer (editable):** Items 1 to 4, 6 and the downloads accepted by the owner (2026-10-19). Items 5, 7 to 9 accepted in scope under the owner's blanket permission; the owner may amend before the first measurement.
+
+**Verification:** Each rule has a test with a negative control in its owning B04 task; the pilot records every pin, digest, K, budget and condition.
