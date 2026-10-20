@@ -341,7 +341,20 @@ class RetrievalRequest:
         return cls(**{name: data[name] for name in field_names(cls) if name in data})
 
 
-_CANDIDATE_OPTIONAL = ("evidence_path", "additional_metadata", "source_document_id", "source_sha256")
+_CANDIDATE_OPTIONAL = ("evidence_path", "additional_metadata", "source_document_id", "source_sha256", "relation")
+_RELATION_KEYS = ("subject", "predicate", "object", "supporting_ids")
+
+
+def _relation(value: Mapping[str, Any]) -> Mapping[str, Any]:
+    """A typed edge as a graph arm reports it. Every key is required and nothing else is accepted."""
+    if not isinstance(value, Mapping) or set(value) != set(_RELATION_KEYS):
+        raise ContractError(f"EvidenceCandidate.relation must hold exactly {', '.join(_RELATION_KEYS)}")
+    ids = value["supporting_ids"]
+    if not isinstance(ids, list | tuple) or not all(isinstance(i, str) and 0 < len(i) <= 200 for i in ids):
+        raise ContractError("EvidenceCandidate.relation.supporting_ids must be a list of short strings")
+    parts = {k: require_text(f"EvidenceCandidate.relation.{k}", value[k], max_len=300) for k in _RELATION_KEYS[:3]}
+    frozen: Mapping[str, Any] = freeze("EvidenceCandidate.relation", {**parts, "supporting_ids": list(ids)})
+    return frozen
 
 
 @dataclass(frozen=True)
@@ -359,6 +372,7 @@ class EvidenceCandidate:
     additional_metadata: Mapping[str, Any]
     source_document_id: str | None = None
     source_sha256: str | None = None
+    relation: Mapping[str, Any] | None = None  # a graph arm's typed edge: subject, predicate, object, supporting ids
 
     def __post_init__(self) -> None:
         o = "EvidenceCandidate"
@@ -387,11 +401,16 @@ class EvidenceCandidate:
             set_(self, "source_sha256", require_text(_name(o, "source_sha256"), self.source_sha256, max_len=64))
             if not re.fullmatch(r"[0-9a-f]{64}", self.source_sha256):
                 raise ContractError(f"{o}.source_sha256 must be a lower-case SHA-256")
+        if self.relation is not None:
+            set_(self, "relation", _relation(self.relation))
         if self.native_citation_supported and self.source_version_id is None and self.source_document_id is None:
             raise ContractError(f"{o}: a native citation claim needs a source id (no phantom citations)")
 
     def to_dict(self) -> dict[str, Any]:
-        return {name: thaw(getattr(self, name)) for name in field_names(type(self))}
+        out = {name: thaw(getattr(self, name)) for name in field_names(type(self))}
+        if out["relation"] is None:
+            del out["relation"]  # a plain passage serializes exactly as before the field existed
+        return out
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> EvidenceCandidate:

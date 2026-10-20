@@ -133,7 +133,8 @@ def test_unpinned_entries_load_in_exploratory_mode_and_fail_in_confirmatory_mode
     assert config.system_under_test.is_pinned is True, (
         "Palladion is pinned to the commit the isolated runtime checks out"
     )
-    assert next(a for a in config.arms if a.arm_id == "R4").pin.is_pinned is False
+    assert next(a for a in config.arms if a.arm_id == "R7").pin.is_pinned is False
+    assert all(next(a for a in config.arms if a.arm_id == r).pin.is_pinned for r in ("R4", "R5", "R6"))
     with pytest.raises(ConfigError, match="confirmatory mode refuses unpinned"):
         load_comparators_config(CONFIGS / "comparators.yaml", confirmatory=True)
 
@@ -223,14 +224,14 @@ def test_one_floating_pin_among_pinned_ones_still_fails_confirmatory_mode(config
         '{kind: unpinned, value: "UNPINNED"}', f'{{kind: commit, value: "{COMMIT}"}}'
     )
     floated = re.sub(
-        r'(id: R4,.*?pin: )\{kind: commit, value: "' + COMMIT + r'"\}',
+        r'(id: R7,.*?pin: )\{kind: commit, value: "' + COMMIT + r'"\}',
         r'\1{kind: unpinned, value: "UNPINNED"}',
         text,
         count=1,
     )
     assert floated != text
     path.write_text(floated, encoding="utf-8")
-    with pytest.raises(ConfigError, match="R4"):
+    with pytest.raises(ConfigError, match="R7"):
         load_comparators_config(path, confirmatory=True)
 
 

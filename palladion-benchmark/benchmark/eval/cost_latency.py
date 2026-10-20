@@ -100,6 +100,10 @@ class OfflineCost:
 
     build_ms: float | None
     cost_usd: float | None
+    extraction_calls: float | None = None
+    extraction_prompt_tokens: float | None = None
+    extraction_completion_tokens: float | None = None
+    storage_bytes: float | None = None
 
     @classmethod
     def from_index_stats(cls, stats: Mapping[str, object]) -> OfflineCost:
@@ -111,7 +115,14 @@ class OfflineCost:
                 raise StatisticsError(f"index record field {key} must be a number or null")
             return float(value)
 
-        return cls(number("build_ms"), number("build_cost_usd"))
+        return cls(
+            number("build_ms"),
+            number("build_cost_usd"),
+            number("extraction_calls"),
+            number("extraction_prompt_tokens"),
+            number("extraction_completion_tokens"),
+            number("storage_bytes"),
+        )
 
 
 def amortized_cost_per_query(

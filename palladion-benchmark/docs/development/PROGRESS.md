@@ -5,7 +5,7 @@ command observations and review receipts live in the [evidence log](EVIDENCE_LOG
 
 ## Current checkpoint
 
-B06 (graph and research comparators) is STARTED: the pre-phase adversary ran (E-B06-001, 16 findings) and the owner decided the scope (BADR-0031). The plan now has three foundation cards (additive contracts, a comparator worker with a counting proxy, approved pins and downloads), the three comparator adapters, R7b as FEATURE_NOT_SUPPORTED with PF07 requested, four graph metrics the data supports, and a cold-state pilot on a matched subset. Nothing is built yet; no download or live call is authorized (OQ14). The full S tier is not run on the free tier (an estimate of 4 million tokens and 8 hours per system).
+B06 (graph and research comparators) is STARTED: the pre-phase adversary ran (E-B06-001, 16 findings) and the owner decided the scope (BADR-0031). The plan now has three foundation cards (additive contracts, a comparator worker with a counting proxy, approved pins and downloads), the three comparator adapters, R7b as FEATURE_NOT_SUPPORTED with PF07 requested, four graph metrics the data supports, and a cold-state pilot on a matched subset. Eight of nine cards are built and proven offline (E-B06-002, E-B06-003): the contracts, the worker and counting proxy, the pins, the three adapters on the real upstream code behind a fake provider, R7b as unsupported with PF07 requested, and the graph metrics. The cold-state pilot (B06-T06.01) needs your live limits (OQ14) and has not run; no live call has been made for B06. The full S tier is not run on the free tier (an estimate of 4 million tokens and 8 hours per system).
 
 B05 (answer-level evaluation and Track B) is DONE: all eleven cards are done (E-B05-002 to E-B05-005; the pre-phase adversary is E-B05-001). The first bounded live pass ran R2 and R3 over 8 questions with the primary Groq model: 16 of 20 authorized calls, 15 pairs OK and 1 invalid answer (cause not recorded, BR33), no rate limit and no failover; it is descriptive and supports no ranking (E-B05-005). The answer-gold, the citation, claim, policy and abstention scorers, the loss sweep, the label store and judge audit, the Track B runner, scorer and validator exist and were run end to end on the real corpus with an offline stand-in generator (261 of 261 pairs). R7a, the rest of the smoke split and any larger live pass wait for your instruction. B04 (Track A arms and pilot) is DONE: all fourteen cards are done and proven (E-B04-002 to E-B04-005; the pre-phase adversary is E-B04-001). The pilot ran R0 to R3 and R7a on the smoke split under C2 and C1 (500 of 500 pairs each, 97 questions scored after withdrawing three defective synthesis questions); the observations are in E-B04-005 and support no ranking claim. The shared harness, a Docker-free Qdrant launcher, R0 to R3 with Palladion's pinned models, an isolated Palladion runtime with the HTTP-only R7a adapter, the build, run, score and validate commands all exist; `uv run pytest` passes 981 tests with ruff and strict mypy clean, every planted defect is killed, and two real smokes (R0 to R3 and R7a over the full corpus) pass the validator. They are not the pilot and support no ranking claim.
 
@@ -33,7 +33,7 @@ Still open and tracked: OQ03 (read Palladion's interface at B04), OQ09 (license,
 | B03 | DONE | E-B03-001 to E-B03-004; the metrics are proven against the controls, not yet against any real arm |
 | B04 | DONE | E-B04-001 to E-B04-005; the pilot is exploratory, smoke split only |
 | B05 | DONE | Built and audited, E-B05-001 to E-B05-005; the first live pass (16 calls) is descriptive only |
-| B06 | IN_PROGRESS | Adversary E-B06-001, scope BADR-0031; foundation cards next; downloads and live limits wait on OQ14 |
+| B06 | IN_PROGRESS | Eight of nine cards done (E-B06-001 to E-B06-003); the cold-state pilot waits on live limits (OQ14) and the end audit |
 | B07 | PLANNED | Depends on B04, B05, B02 |
 | B08 | PLANNED | Depends on B04–B07 exits |
 | B09 | DEFERRED | Conditional replication and stress |
@@ -61,7 +61,7 @@ Still open and tracked: OQ03 (read Palladion's interface at B04), OQ09 (license,
 
 ## Blocked or waiting cards (the checker prints these as notices)
 
-B06-T00.03 and B06-T06.01 on OQ14 (approved downloads and live limits, asked per artifact and per run); B07-T04.01 on Palladion shipping a critic switch (OQ11 answered: FEATURE_NOT_SUPPORTED until then); B08-T03.01 on OQ10 (confirmatory pairings, owner deferred; must be answered before the seal) and OQ13 (owner relabels the pilot packet or accepts the delegated labels in writing; deferred 2026-10-20);
+B06-T06.01 on OQ14 (live limits for the extraction run, asked per run); B07-T04.01 on Palladion shipping a critic switch (OQ11 answered: FEATURE_NOT_SUPPORTED until then); B08-T03.01 on OQ10 (confirmatory pairings, owner deferred; must be answered before the seal) and OQ13 (owner relabels the pilot packet or accepts the delegated labels in writing; deferred 2026-10-20);
 B08-T07.01 on OQ09 (dataset license, owner deferred; must be answered before then); B08-T01.02 on the paraphrase gate. The synthesis golds are corrected before the seal (BR29).
 
 ## Next action

@@ -640,7 +640,7 @@ def test_run_fails_when_the_ledger_holds_a_final_for_a_pair_outside_the_plan(tmp
 
 def test_the_registry_blocks_arms_with_unverified_capabilities_before_any_call(tmp_path: Path) -> None:
     arm = Good()
-    world = build(tmp_path, {"R4": arm})
+    world = build(tmp_path, {"R7": arm})
     world.runner.required_capabilities = (Capability.ACL_FILTER,)
     summary = world.run(2)
     assert arm.calls == 0 and summary.status_counts == {"NOT_RUN": 2}

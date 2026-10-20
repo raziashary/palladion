@@ -158,6 +158,32 @@ def _harness_arm(test_file: str) -> Mapping[str, tuple[Support, str]]:
     }
 
 
+def _comparator_arm(arm_id: str) -> Mapping[str, tuple[Support, str]]:
+    """Capabilities of a third-party comparator run in a worker behind the counting proxy (BADR-0031, BR35)."""
+    return {
+        "native_citation": (
+            Support.UNSUPPORTED,
+            f"{arm_id} returns entities, relations or text units; the adapter maps them to the shared chunks",
+        ),
+        "acl_filter": (
+            Support.UNSUPPORTED,
+            "graph outputs carry no document id to filter on, so a principal filter cannot be enforced inside the "
+            "method; the harness filters the mapped chunks and reports the gap (BR35)",
+        ),
+        "temporal_filter": (Support.UNSUPPORTED, "the method has no as-of selection; the clock is not used (BR35)"),
+        "offline_cost": (
+            Support.SUPPORTED,
+            "extraction calls and tokens are metered by the counting proxy; tested in tests/test_comparator_worker.py",
+        ),
+    }
+
+
+R7B_REASON = (
+    "at the pinned commit Palladion accepts only EXCEPTION_TO links created in-process and no HTTP route creates "
+    "links, so an HTTP-only arm has no graph to expand (BR34, PF07)"
+)
+
+
 def _arm(
     arm_id: str,
     name: str,
@@ -200,9 +226,9 @@ def default_registry() -> ArmRegistry:
         _arm("R1", "Dense", (a,), "B04", overrides=_harness_arm("tests/test_dense.py")),
         _arm("R2", "Hybrid RRF", (a, b), "B04", overrides=_harness_arm("tests/test_hybrid.py")),
         _arm("R3", "Hybrid plus reranker", (a, b), "B04", overrides=_harness_arm("tests/test_hybrid.py")),
-        _arm("R4", "HippoRAG 2", (a,), "B06", graph=graph_by_definition),
-        _arm("R5", "GraphRAG Local", (a,), "B06", graph=graph_by_definition),
-        _arm("R6", "LightRAG", (a,), "B06", graph=graph_by_definition),
+        _arm("R4", "HippoRAG 2", (a,), "B06", graph=graph_by_definition, overrides=_comparator_arm("R4")),
+        _arm("R5", "GraphRAG Local", (a,), "B06", graph=graph_by_definition, overrides=_comparator_arm("R5")),
+        _arm("R6", "LightRAG", (a,), "B06", graph=graph_by_definition, overrides=_comparator_arm("R6")),
         _arm("R7", "Palladion retriever", (a, b), "B04", graph=palladion_graph),
         _arm(
             "R7a",
@@ -225,7 +251,14 @@ def default_registry() -> ArmRegistry:
                 ),
             },
         ),
-        _arm("R7b", "Palladion retriever with bounded graph", (a,), "B06", graph=palladion_graph),
+        _arm(
+            "R7b",
+            "Palladion retriever with bounded graph",
+            (a,),
+            "B06",
+            graph=palladion_graph,
+            forced=(RunStatus.FEATURE_NOT_SUPPORTED, R7B_REASON),
+        ),
         _arm("E0", "Plain LangChain two-step", (c,), "B07"),
         _arm("E1", "LangGraph agentic", (c,), "B07"),
         _arm(

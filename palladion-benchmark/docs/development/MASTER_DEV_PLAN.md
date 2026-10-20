@@ -848,80 +848,80 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
 
 <a id="b06-t00-01"></a>
 
-- [ ] **B06-T00.01 — Additive contract extensions for graph arms**
+- [x] **B06-T00.01 — Additive contract extensions for graph arms**
   - **Files:** `palladion-benchmark/benchmark/run_manifest.py`, `palladion-benchmark/benchmark/track_a.py`, `palladion-benchmark/benchmark/eval/cost_latency.py`, `palladion-benchmark/benchmark/contracts.py`, `palladion-benchmark/benchmark/results_check.py`, `palladion-benchmark/tests/test_graph_contracts.py`.
   - **Depends:** B04-T04.02, B04-T04.03, B05-T08.01.
   - **Change:** Add, without changing any existing field, the arm ids R4 to R7b to the Track A arm list; an optional comparator pin (repository, commit, lock digest, interpreter) and native-configuration block in the manifest; an offline cost record with extraction calls, tokens and storage beside build time; and an optional relation field on a candidate. Old manifests, ledgers and results still validate unchanged.
   - **Proof:** UNIT; BG-ADAPTER, BG-REPRO; an old run directory validates byte for byte as before; a graph run without its pin or cost is rejected for that reason; the new fields appear in no gold-visible file.
-  - **Evidence:** Not yet executed.
+  - **Evidence:** E-B06-002; additive contracts: pin, extraction cost, relation field; an old run directory validates unchanged.
 
 <a id="b06-t00-02"></a>
 
-- [ ] **B06-T00.02 — Comparator worker and counting LLM proxy**
-  - **Files:** `palladion-benchmark/benchmark/adapters/worker.py`, `palladion-benchmark/benchmark/llm_proxy.py`, `palladion-benchmark/tests/test_comparator_worker.py`, `palladion-benchmark/tests/test_llm_proxy.py`.
+- [x] **B06-T00.02 — Comparator worker and counting LLM proxy**
+  - **Files:** `palladion-benchmark/benchmark/adapters/worker.py`, `palladion-benchmark/benchmark/llm_proxy.py`, `palladion-benchmark/comparators/protocol.py`, `palladion-benchmark/tests/comparator_stub.py`, `palladion-benchmark/tests/test_comparator_worker.py`, `palladion-benchmark/tests/test_llm_proxy.py`.
   - **Depends:** B06-T00.01, B01-T05.01.
   - **Change:** Run each comparator as a subprocess in its own environment behind a line-delimited JSON protocol (build, retrieve, stats, stop), with a local proxy in front of its LLM client that counts every call and token, enforces the call cap, token cap, pace and model list, and refuses everything once spent. A timed-out worker is killed and its spend is still counted (BR14). No key is written to a log, a record or the worker's environment dump.
   - **Proof:** INTEGRATION; BG-FAIR, BG-ADAPTER; a fake comparator that loops on calls is stopped at the cap; a hung worker is killed and the pair is a timeout, not a zero; a planted key never appears in any file; the proxy rejects a model outside the approved list.
-  - **Evidence:** Not yet executed.
+  - **Evidence:** E-B06-002; worker and counting proxy: a runaway comparator is stopped at the cap, a hung one is killed with its children, the key never reaches it.
 
 <a id="b06-t00-03"></a>
 
-- [ ] **B06-T00.03 — Comparator pins, approved downloads and isolated environments**
+- [x] **B06-T00.03 — Comparator pins, approved downloads and isolated environments**
   - **Files:** `palladion-benchmark/scripts/comparators.py`, `palladion-benchmark/configs/comparators.yaml`, `palladion-benchmark/tests/test_comparators.py`.
   - **Depends:** B06-T00.01, OQ14.
   - **Change:** For each of HippoRAG 2, GraphRAG and LightRAG: fetch the upstream source at a commit the owner approved by name, source and size, verify the repository identity and commit at run time, create an isolated uv environment on an interpreter the upstream supports, and record the lock digest and interpreter in the manifest. Nothing is downloaded before the owner approves that artifact.
   - **Proof:** INTEGRATION; BG-ADAPTER, BG-REPRO; a wrong commit or wrong repository identity is refused; an unapproved artifact is refused; the recorded pin reproduces the environment.
-  - **Evidence:** Not yet executed.
+  - **Evidence:** E-B06-002; the three approved checkouts verify by commit, the environments are described by lock digest and interpreter.
 
 <a id="b06-t01-01"></a>
 
-- [ ] **B06-T01.01 — R4 HippoRAG 2 adapter**
+- [x] **B06-T01.01 — R4 HippoRAG 2 adapter**
   - **Files:** `palladion-benchmark/benchmark/adapters/hipporag2.py`, `palladion-benchmark/comparators/hipporag2/worker.py`, `palladion-benchmark/tests/test_hipporag2.py`.
   - **Depends:** B06-T00.02, B06-T00.03, OQ06.
   - **Change:** Official pipeline at the pinned commit through the worker; its own indexing, extraction and retrieval, never our Qdrant search. Record native configuration and deviations, the query-time model calls (counted, or disabled and recorded), indexing cost and the embedding model. The graph input is the published document text only (no world relation, no supersession edge); native outputs are mapped to the shared 120-word chunks; ACL and as-of filtering are declared UNSUPPORTED, not simulated.
   - **Proof:** INTEGRATION; BG-ADAPTER, BG-FAIR; offline with a stub LLM and the real upstream retrieval code; a planted gold phrase in a document is rejected before indexing; the manifest holds the pin; unsupported affordances are listed, not zero.
-  - **Evidence:** Not yet executed.
+  - **Evidence:** E-B06-002, E-B06-003; the real HippoRAG 2 index and retrieve run offline behind the proxy; no live call.
 
 <a id="b06-t02-01"></a>
 
-- [ ] **B06-T02.01 — R5 GraphRAG Local adapter**
+- [x] **B06-T02.01 — R5 GraphRAG Local adapter**
   - **Files:** `palladion-benchmark/benchmark/adapters/graphrag.py`, `palladion-benchmark/comparators/graphrag/worker.py`, `palladion-benchmark/tests/test_graphrag.py`.
   - **Depends:** B06-T00.02, B06-T00.03, OQ06.
   - **Change:** Official local query mode at the pinned commit through the worker, with the same input, mapping, cost, ACL and as-of rules as R4. Global and DRIFT are exploratory modes with their own conditions and are not built in this phase (BADR-0031); nothing is merged into the R5 row.
   - **Proof:** INTEGRATION; BG-ADAPTER, BG-FAIR; same controls as R4; a community or entity summary that quotes a document the principal may not read is flagged by a planted probe.
-  - **Evidence:** Not yet executed.
+  - **Evidence:** E-B06-002, E-B06-003; the real GraphRAG standard index and local context builder run offline behind the proxy; no live call.
 
 <a id="b06-t03-01"></a>
 
-- [ ] **B06-T03.01 — R6 LightRAG adapter**
+- [x] **B06-T03.01 — R6 LightRAG adapter**
   - **Files:** `palladion-benchmark/benchmark/adapters/lightrag.py`, `palladion-benchmark/comparators/lightrag/worker.py`, `palladion-benchmark/tests/test_lightrag.py`.
   - **Depends:** B06-T00.02, B06-T00.03, OQ06.
   - **Change:** Official hybrid mode at an upstream commit whose repository identity is verified at run time, through the worker, with the same input, mapping, cost, ACL and as-of rules as R4.
   - **Proof:** INTEGRATION; BG-ADAPTER, BG-FAIR; same controls as R4; the repository identity and commit are verified when the arm is built.
-  - **Evidence:** Not yet executed.
+  - **Evidence:** E-B06-002, E-B06-003; the real LightRAG hybrid retrieval runs offline behind the proxy; no live call.
 
 <a id="b06-t04-01"></a>
 
-- [ ] **B06-T04.01 — R7b status at the pinned Palladion commit**
+- [x] **B06-T04.01 — R7b status at the pinned Palladion commit**
   - **Files:** `palladion-benchmark/benchmark/registry.py`, `palladion-benchmark/configs/comparators.yaml`, `palladion-benchmark/docs/development/PALLADION_FIXES.md`, `palladion-benchmark/tests/test_graph_arms.py`.
   - **Depends:** B04-T01.04, B04-T03.02, B06-T00.03.
   - **Change:** At 6444345 Palladion holds only EXCEPTION_TO links that its own code creates in-process, and no HTTP route creates links, so an HTTP-only arm cannot give it a graph. Declare R7b unsupported at the pin (a declared absence, FEATURE_NOT_SUPPORTED, never a zero), keep Neo4j and the compose service out of this phase, and record PF07 in PALLADION_FIXES.md (a route that registers links from published text only). The arm runs in a later card once PF07 lands and a pin that differs from R7a only by graph code exists.
   - **Proof:** UNIT; BG-ADAPTER; R7b resolves to FEATURE_NOT_SUPPORTED with its reason in every run that names it; it is never scored as zero; PF07 is written with what, where, why, how and proof.
-  - **Evidence:** Not yet executed.
+  - **Evidence:** E-B06-002; R7b is FEATURE_NOT_SUPPORTED at the pin, never a zero; PF07 written.
 
 <a id="b06-t05-01"></a>
 
-- [ ] **B06-T05.01 — Graph-specific metrics that the data supports**
+- [x] **B06-T05.01 — Graph-specific metrics that the data supports**
   - **Files:** `palladion-benchmark/benchmark/eval/graph_metrics.py`, `palladion-benchmark/tests/test_graph_metrics.py`.
   - **Depends:** B03-T03.02, B06-T00.01.
   - **Change:** Cross-document hop completion, edge provenance validity, false-association rate and traversal cost per useful slot, each with perfect, empty and shuffled controls and a hand-computed case. Relationship precision and recall, typed-traversal correctness, wrong-node merge and hub pollution are declared UNDEFINED with the missing data named (no relation output, no entity gold, no degree), not estimated.
   - **Proof:** UNIT; BG-METRIC; a planted unsupported edge raises the false-association rate; an undefined metric prints as undefined with its reason; small denominators are printed beside every figure.
-  - **Evidence:** Not yet executed.
+  - **Evidence:** E-B06-002; four graph metrics with controls, four declared undefined.
 
 <a id="b06-t06-01"></a>
 
 - [ ] **B06-T06.01 — Cold-state Track A run for graph arms on a matched subset**
-  - **Files:** `palladion-benchmark/docs/development/EVIDENCE_LOG.md`, `palladion-benchmark/docs/development/PROGRESS.md`.
+  - **Files:** `palladion-benchmark/benchmark/subset.py`, `palladion-benchmark/scripts/build_subset.py`, `palladion-benchmark/tests/test_subset.py`, `palladion-benchmark/docs/development/EVIDENCE_LOG.md`, `palladion-benchmark/docs/development/PROGRESS.md`.
   - **Depends:** B06-T01.01, B06-T02.01, B06-T03.01, B06-T04.01, B06-T05.01, OQ14.
   - **Change:** Run R4 to R6 from cold on a seeded subset of S (about 100 documents chosen by a recorded rule, with the questions they support) under the owner's call, token and model limits, and run R0 to R3 and R7a on the same subset so the comparison is matched. Cold means the working directory and every cache cleared and recorded. Report indexing time, extraction calls, tokens and storage beside query cost; label it a pilot on the smoke split; no ranking claim. The full S tier is not run on the free tier (estimated 4 million tokens and 8 hours per system).
   - **Proof:** MEASUREMENT; BG-TRACKA, BG-FAIR; the subset rule and its limits are recorded; indexing cost is reported with query cost; unsupported capabilities and R7b are listed; calls never exceed the owner's cap.

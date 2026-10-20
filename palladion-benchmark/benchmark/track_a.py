@@ -26,7 +26,14 @@ from benchmark.adapters.dense import DEFAULT_URL, DenseArm, Encoder, FastEmbedEn
 from benchmark.adapters.hybrid import FastEmbedReranker, HybridArm, RerankedArm, Reranker
 from benchmark.adapters.models import ModelSpec, spec_from_pin
 from benchmark.config import ConfigBundle, load_all
-from benchmark.contracts import ArmUnavailable, CacheCondition, EvidenceCandidate, RetrievalRequest, Track
+from benchmark.contracts import (
+    ArmUnavailable,
+    CacheCondition,
+    ContractError,
+    EvidenceCandidate,
+    RetrievalRequest,
+    Track,
+)
 from benchmark.fixtures import sha256_hex
 from benchmark.fixtures.manifest import (
     IdentityManifest,
@@ -38,7 +45,15 @@ from benchmark.fixtures.manifest import (
 )
 from benchmark.fixtures.questions import GoldRecord, read_gold
 from benchmark.registry import default_registry
-from benchmark.run_manifest import RunManifest, TreeState, collect_hardware, read_verified, sha256_of, tree_state
+from benchmark.run_manifest import (
+    ComparatorPin,
+    RunManifest,
+    TreeState,
+    collect_hardware,
+    read_verified,
+    sha256_of,
+    tree_state,
+)
 from benchmark.runner import (
     ArmBinding,
     PlanRegistry,
@@ -63,6 +78,15 @@ class DescribedArm(Protocol):
 
 
 LOCAL_ARMS = ("R0", "R1", "R2", "R3")
+# Third-party graph comparators: built and run in their own environment, identified by a ComparatorPin (BADR-0031).
+COMPARATOR_ARMS = ("R4", "R5", "R6")
+COST_KEYS = (
+    "build_ms",
+    "extraction_calls",
+    "extraction_prompt_tokens",
+    "extraction_completion_tokens",
+    "storage_bytes",
+)
 RUNNABLE_SPLITS = ("smoke", "dev")
 METHOD_VERSION = "1.0.0"
 FICTION = "The corpus, questions and identities are fictional (Meridian Switchworks)."
@@ -327,6 +351,15 @@ def _manifest(
     if arm_id == "R7a":
         method = None
         reasons["method_version"] = "the system under test is identified by its commit in system_under_test"
+    if arm_id in COMPARATOR_ARMS:
+        method = None
+        reasons["method_version"] = "a third-party comparator is identified by its pin in retrieval_config"
+        reasons["container_image_digest"] = "the comparator runs in an isolated uv environment recorded by its pin"
+        try:
+            ComparatorPin.from_dict(describe.get("comparator", {}))
+        except (KeyError, TypeError, ContractError) as exc:
+            raise TrackAError(f"{arm_id} needs a valid comparator pin in its description: {exc}") from None
+        models.update({str(k): str(v) for k, v in dict(describe.get("models", {})).items()})
     return RunManifest(
         run_id=spec.run_id,
         track=Track.RETRIEVAL_ONLY,

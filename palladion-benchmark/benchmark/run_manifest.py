@@ -93,6 +93,54 @@ class TreeState:
         return cls(data["label"], data["commit"], data["tree_sha256"], tuple(data["dirty_files"]))
 
 
+@dataclass(frozen=True)
+class ComparatorPin:
+    """What identifies a third-party comparator's build: where its code came from and how it was installed.
+
+    ``deviations`` lists every way the run differs from the upstream's own defaults, so a reader can see how official
+    the run is. A floating reference is refused: the commit is a full lower-case id.
+    """
+
+    repository: str
+    commit: str
+    lock_sha256: str
+    interpreter: str
+    native_config: Mapping[str, Any]
+    deviations: tuple[str, ...]
+
+    def __post_init__(self) -> None:
+        o = "ComparatorPin"
+        object.__setattr__(self, "repository", require_text(f"{o}.repository", self.repository, max_len=300))
+        if not self.repository.startswith("https://"):
+            raise ManifestError(f"{o}.repository must be an https URL")
+        if not _COMMIT.fullmatch(self.commit):
+            raise ManifestError(f"{o}.commit must be a 40-character lowercase hex id, not a branch or tag")
+        if not _HEX64.fullmatch(self.lock_sha256):
+            raise ManifestError(f"{o}.lock_sha256 must be a 64-character lowercase hex digest")
+        object.__setattr__(self, "interpreter", require_text(f"{o}.interpreter", self.interpreter, max_len=40))
+        object.__setattr__(self, "native_config", freeze(f"{o}.native_config", self.native_config))
+        deviations = tuple(require_text(f"{o}.deviations", d, max_len=300) for d in self.deviations)
+        object.__setattr__(self, "deviations", deviations)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "repository": self.repository,
+            "commit": self.commit,
+            "lock_sha256": self.lock_sha256,
+            "interpreter": self.interpreter,
+            "native_config": thaw(self.native_config),
+            "deviations": list(self.deviations),
+        }
+
+    @classmethod
+    def from_dict(cls, data: Mapping[str, Any]) -> ComparatorPin:
+        _only(cls.__name__, data, ("repository", "commit", "lock_sha256", "interpreter", "native_config", "deviations"))
+        return cls(
+            data["repository"], data["commit"], data["lock_sha256"], data["interpreter"],
+            data["native_config"], tuple(data["deviations"]),
+        )  # fmt: skip
+
+
 def _only(owner: str, data: Mapping[str, Any], allowed: tuple[str, ...]) -> None:
     unknown = sorted(set(data) - set(allowed))
     missing = sorted(set(allowed) - set(data))

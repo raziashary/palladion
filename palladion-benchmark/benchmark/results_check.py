@@ -34,10 +34,10 @@ from benchmark.adapters.common import count_words
 from benchmark.contracts import CaseResponse, ContractError, RunStatus, gold_like_key, screen_arm_visible
 from benchmark.fixtures.manifest import Layout, Namespace, manifest_digest
 from benchmark.fixtures.questions import GoldRecord
-from benchmark.run_manifest import ManifestError, read_verified
+from benchmark.run_manifest import ComparatorPin, ManifestError, read_verified
 from benchmark.runner import RunLedger, RunnerError
 from benchmark.secret_scan import scan_text
-from benchmark.track_a import RUNNABLE_SPLITS, TrackAError, read_annotations
+from benchmark.track_a import COMPARATOR_ARMS, COST_KEYS, RUNNABLE_SPLITS, TrackAError, read_annotations
 from benchmark.track_b import CONTROLLED_QA, asked_records, prompt_passages, read_prompt_ids
 
 MIN_GOLD_TEXT = 12
@@ -112,6 +112,8 @@ def validate_run(
         return [*findings, Finding(f"the annotation file cannot be read: {exc}", "read_log.json")]
     arms = [str(a) for a in config.get("arms", [])]
     findings += _check_manifests(run_dir, config, arms, log.annotation_sha256, log.published_manifest_sha256)
+    if not answer_run:
+        findings += _check_comparators(run_dir, config, arms)
     if answer_run:
         asked = asked_records(records, dict.fromkeys(config.get("withdrawn", []), ""), config.get("asked"))
         findings += _check_answer_ledger(run_dir, arms, asked)
@@ -157,6 +159,24 @@ def _check_manifests(
         for key, name in (("k", "k"), ("budget_words", "budget_words"), ("metadata_condition", "metadata_condition")):
             if recorded.get(key) != config.get(name):
                 findings.append(Finding(f"the manifest's {key} differs from the run configuration", path.name))
+    return findings
+
+
+def _check_comparators(run_dir: Path, config: Mapping[str, Any], arms: Sequence[str]) -> list[Finding]:
+    """A graph comparator's run must carry its pin and say what building its index cost (an unknown cost is null)."""
+    findings: list[Finding] = []
+    builds = {str(b.get("arm")): b for b in config.get("builds", []) if isinstance(b, Mapping)}
+    for arm in (a for a in arms if a in COMPARATOR_ARMS):
+        name = f"manifest-{arm}.json"
+        try:
+            ComparatorPin.from_dict(read_verified(run_dir / name).retrieval_config.get("comparator", {}))
+        except (ManifestError, ContractError, OSError, ValueError, KeyError, TypeError):
+            findings.append(Finding("a graph arm's manifest has no valid comparator pin", name))
+        stats = builds.get(arm, {}).get("stats")
+        if builds.get(arm, {}).get("status") != "BUILT" or not isinstance(stats, Mapping):
+            findings.append(Finding("a graph arm has no recorded index build", "run_config.json"))
+        elif missing := [k for k in COST_KEYS if k not in stats]:
+            findings.append(Finding(f"a graph arm's index cost lacks {', '.join(missing)} (null means unknown)", arm))
     return findings
 
 
