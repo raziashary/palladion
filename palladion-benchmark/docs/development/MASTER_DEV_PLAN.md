@@ -836,12 +836,12 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
 
 <a id="b05-t06-01"></a>
 
-- [ ] **B05-T06.01 — Track B pilot measurement with the real provider**
+- [x] **B05-T06.01 — Track B pilot measurement with the real provider**
   - **Files:** `palladion-benchmark/docs/development/EVIDENCE_LOG.md`, `palladion-benchmark/docs/development/PROGRESS.md`.
   - **Depends:** B05-T08.01, B05-T04.02.
-  - **Change:** BLOCKED until the owner authorizes bounded live use (calls, tokens, models and the quota assumption). Then a bounded pilot over R2, R3 and R7a with the recorded generator pool, replaying stored Track A candidates so only generator calls are live, starting with a small first pass; record quota, attempts and failures; outputs are single-run and descriptive.
+  - **Change:** A bounded first pass authorized by the owner (BADR-0029): R2 and R3 only, a seeded stratum-balanced subset of 8 questions, at most 20 generator calls in the recorded model order, 700 completion tokens, paced, no judge call. Stored retrieval is replayed through the real arms so only generator calls are live; record quota, attempts and failures; outputs are single-run and descriptive. R7a, the full smoke split and any further live use need a new owner instruction.
   - **Proof:** MEASUREMENT; BG-TRACKB; real-provider responses used; failures and rate-limit events preserved; no confirmatory claim.
-  - **Evidence:** Not yet executed.
+  - **Evidence:** E-B05-005; 16 of 16 real qwen calls on R2 and R3 over 8 questions, 15 pairs OK and 1 invalid, no rate limit and no failover; descriptive, single run, no ranking claim; R7a not run.
 
 ### Atomic tasks — B06
 

@@ -322,6 +322,7 @@ class GeneratorPool:
         record_path: Path | None = None,
         prompt_path: Path | None = None,
         screen_prompts: bool = True,
+        pace_seconds: float = 0.0,
         sleep: Callable[[float], None] = time.sleep,
         monotonic: Callable[[], float] = time.monotonic,
         wall_clock: Callable[[], datetime] | None = None,
@@ -341,6 +342,8 @@ class GeneratorPool:
         self._record_path = record_path
         self._prompt_path = prompt_path
         self._screen_prompts = screen_prompts
+        self._pace = max(0.0, pace_seconds)
+        self._last_dispatch: float | None = None
         self._calls = 0
         self._sleep, self._monotonic = sleep, monotonic
         self._wall_clock = wall_clock or (lambda: datetime.now(UTC))
@@ -360,13 +363,14 @@ class GeneratorPool:
         record_path: Path | None = None,
         prompt_path: Path | None = None,
         screen_prompts: bool = True,
+        pace_seconds: float = 0.0,
     ) -> GeneratorPool:
         """Build a pool with the real transport. Refuses before touching the env file unless enabled."""
         key = read_api_key(env_file, enabled=enabled)
         transport = HttpxTransport(key, timeout_seconds=settings.request_timeout_seconds)
         return cls(settings, transport, enabled=enabled, assignment=assignment, call_budget=call_budget,
                    record_path=record_path, prompt_path=prompt_path,
-                   screen_prompts=screen_prompts)  # fmt: skip
+                   screen_prompts=screen_prompts, pace_seconds=pace_seconds)  # fmt: skip
 
     def _sequence(self) -> int:
         """A running call number, so a retry by the runner does not repeat a record id."""
@@ -429,6 +433,7 @@ class GeneratorPool:
             if len(json.dumps(payload, ensure_ascii=False).encode()) > MAX_REQUEST_BYTES:
                 raise GenerationError("REQUEST_TOO_LARGE")
             self._check_time(deadline, cancel, needs=self.settings.request_timeout_seconds)
+            self._pace_before_dispatch(deadline)
             try:
                 self._budget.charge("generator")
             except BudgetExceededError:
@@ -463,6 +468,16 @@ class GeneratorPool:
                         self._mixed.add(question_id)
                     continue
             raise error
+
+    def _pace_before_dispatch(self, deadline: float | None) -> None:
+        """Keep a minimum time between dispatches, so a call is not spent on a limit the spacing would have avoided."""
+        if self._pace and self._last_dispatch is not None:
+            wait = self._last_dispatch + self._pace - self._monotonic()
+            if wait > 0:
+                if not self._fits(deadline, wait + self.settings.request_timeout_seconds):
+                    raise GenerationError("GENERATION_DEADLINE")
+                self._sleep(wait)
+        self._last_dispatch = self._monotonic()
 
     def _fits(self, deadline: float | None, seconds: float) -> bool:
         return deadline is None or self._monotonic() + seconds <= deadline

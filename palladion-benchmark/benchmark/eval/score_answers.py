@@ -42,7 +42,7 @@ from benchmark.fixtures.manifest import Layout, Namespace, Split, manifest_diges
 from benchmark.fixtures.questions import Answerability, GoldRecord
 from benchmark.runner import RunLedger
 from benchmark.track_a import RUNNABLE_SPLITS, read_annotations
-from benchmark.track_b import CONTROLLED_QA, eligible_records, mixed_model_questions, read_prompt_ids
+from benchmark.track_b import CONTROLLED_QA, asked_records, mixed_model_questions, read_prompt_ids
 
 INVALID_ANSWER = "INVALID_ANSWER"
 DELIVERED_MISMATCH = "DELIVERED_MISMATCH"
@@ -179,7 +179,7 @@ def score_answer_run(
     except (AnswerGoldError, OSError) as exc:
         raise ScoreRunError(f"the answer-gold cannot be used: {exc}") from exc
     gold_by_id = {g.question_id: g for g in golds}
-    chosen = eligible_records(records, withdrawn)
+    chosen = asked_records(records, withdrawn, config.get("asked"))
     unknown = sorted(set(withdrawn) - {r.question_id for r in records})
     if unknown:
         raise ScoreRunError(f"withdrawn question ids are not in the gold: {unknown[:3]}")

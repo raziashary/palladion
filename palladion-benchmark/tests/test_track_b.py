@@ -504,3 +504,64 @@ def test_the_reported_usage_counts_every_generator_call_including_a_rate_limit_r
     usage = system.report_usage()
     assert usage.main_calls == 2 and usage.prompt_tokens is not None
     assert system.report_trace()[0]["step"] == "retrieve"
+
+
+# --------------------------------------------------------------------- the first live pass: subset, pace, failover
+
+
+def test_a_subset_is_seeded_stratum_balanced_and_the_right_size(s_questions: tuple[GoldRecord, ...]) -> None:
+    from benchmark.track_b import pick_subset
+
+    eligible = [q for q in s_questions if "controlled_qa" in q.track_eligibility]
+    chosen = pick_subset(eligible, 8, seed=7)
+    assert len(chosen) == 8 == len(set(chosen)) and chosen == sorted(chosen)
+    strata = [next(q.stratum.value for q in eligible if q.question_id == i) for i in chosen]
+    assert len(set(strata)) == 8, "eight strata, one question each, before any stratum repeats"
+    assert pick_subset(eligible, 8, seed=7) == chosen and pick_subset(eligible, 8, seed=8) != chosen
+    assert len(pick_subset(eligible, 1000, seed=7)) == len(eligible)
+    with pytest.raises(TrackAError, match="at least one"):
+        pick_subset(eligible, 0, seed=7)
+
+
+def test_a_question_recorded_as_asked_must_be_eligible(s_questions: tuple[GoldRecord, ...]) -> None:
+    from benchmark.track_b import asked_records
+
+    native_only = next(q for q in s_questions if "controlled_qa" not in q.track_eligibility)
+    with pytest.raises(TrackAError, match="not eligible"):
+        asked_records(s_questions, None, [native_only.question_id])
+    assert asked_records(s_questions, None, None) == [q for q in s_questions if "controlled_qa" in q.track_eligibility]
+
+
+def test_a_subset_run_asks_only_those_questions_and_is_scored_and_validated(
+    s_root: Path, s_published_corpus: PublishedCorpus, s_questions: tuple[GoldRecord, ...], tmp_path: Path
+) -> None:
+    from benchmark.eval.score_answers import score_answer_run
+    from benchmark.results_check import validate_run
+    from benchmark.track_b import asked_records, pick_subset
+
+    eligible = [q for q in s_questions if "controlled_qa" in q.track_eligibility]
+    ids = tuple(pick_subset(eligible, 6, seed=7))
+    out = tmp_path / "subset"
+    spec = TrackBSpec("run-b-0006", "smoke", 10, 4000, s_root, out, question_ids=ids, case_deadline_seconds=300.0)
+    plan = plan_assignment(asked_records(s_questions, None, ids), GENERATOR, spec, 7)
+    pool = make_pool(out, dict(plan.assigned), ExtractiveStubTransport())
+    arms = {"R2": GoldRetriever("R2", s_published_corpus, s_questions)}
+    outcome = execute_track_b(spec, arms, pool, plan, s_published_corpus, GENERATOR, pool_label="offline-stub")
+    assert outcome.questions == 6 and {r.question_id for r in RunLedger(out / "ledger.jsonl").records} == set(ids)
+    config = json.loads((out / "run_config.json").read_text(encoding="utf-8"))
+    assert config["asked"] == sorted(ids) and config["case_deadline_seconds"] == 300.0
+    assert score_answer_run(run_dir=out, root=s_root).arms == ["R2"]
+    assert validate_run(out, root=s_root) == []
+
+
+def test_the_command_line_takes_a_subset_and_records_failover(s_root: Path, tmp_path: Path) -> None:
+    out = tmp_path / "limit"
+    done = run_script("--root", str(s_root), "--split", "smoke", "--out", str(out), "--run-id", "run-b-0007",
+                      "--arms", "R0", "--limit-questions", "5", "--allow-failover", "--pace-seconds", "0",
+                      "--case-deadline-seconds", "300")  # fmt: skip
+    assert done.returncode == 0, done.stderr
+    assert json.loads(done.stdout)["questions"] == 5
+    config = json.loads((out / "run_config.json").read_text(encoding="utf-8"))
+    assert config["failover"] is True and len(config["asked"]) == 5
+    manifest = read_verified(out / "manifest-R0.json")
+    assert manifest.retrieval_config["generator"]["failover"] is True

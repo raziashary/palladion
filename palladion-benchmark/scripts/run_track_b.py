@@ -43,9 +43,11 @@ from benchmark.track_b import (
     TOKENS_PER_QUESTION,
     ExtractiveStubTransport,
     TrackBSpec,
+    asked_records,
     eligible_records,
     execute_track_b,
     make_pool_paths,
+    pick_subset,
     plan_assignment,
 )
 
@@ -73,6 +75,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--max-completion-tokens", type=int, default=DEFAULT_COMPLETION_TOKENS)
     parser.add_argument("--tokens-per-question", type=int, default=TOKENS_PER_QUESTION)
     parser.add_argument("--withdrawn", type=Path, default=WITHDRAWN)
+    parser.add_argument("--limit-questions", type=int, default=None, help="ask a seeded, stratum-balanced subset")
+    parser.add_argument(
+        "--allow-failover", action="store_true", help="on a rate limit move down the approved model list (recorded)"
+    )
+    parser.add_argument("--pace-seconds", type=float, default=0.0, help="minimum time between provider calls")
+    parser.add_argument("--case-deadline-seconds", type=float, default=None, help="replaces the configured deadline")
     parser.add_argument("--qdrant-url", default=DEFAULT_URL)
     parser.add_argument("--start-qdrant", action="store_true")
     parser.add_argument("--palladion", action="store_true", help="add R7a over the isolated Palladion runtime")
@@ -116,15 +124,25 @@ def main(argv: list[str] | None = None) -> int:
             retrievers["R7a"] = run_track_a.palladion_arm(view, runtime, options, condition, index_dir, builds)
             trees["R7a"] = tree_state(palladion_runtime.application_dir(), label="palladion")
         benchmark_config = load_benchmark_config(PROJECT / "configs" / "benchmark.yaml")
-        generator = replace(benchmark_config.generator, max_completion_tokens=options.max_completion_tokens)
+        generator = replace(
+            benchmark_config.generator,
+            max_completion_tokens=options.max_completion_tokens,
+            allow_automatic_failover=options.allow_failover or benchmark_config.generator.allow_automatic_failover,
+        )
         withdrawn = read_withdrawn(options.withdrawn)
+        records, _ = read_annotations(options.root, options.split)
+        seed = benchmark_config.default_seed
+        subset = (
+            None
+            if options.limit_questions is None
+            else tuple(pick_subset(eligible_records(records, withdrawn), options.limit_questions, seed))
+        )
         spec = TrackBSpec(
             options.run_id, options.split, options.k, options.budget, options.root, options.out,
             condition=condition.value, live=live, tokens_per_question=options.tokens_per_question, withdrawn=withdrawn,
+            question_ids=subset, case_deadline_seconds=options.case_deadline_seconds, pace_seconds=options.pace_seconds,
         )  # fmt: skip
-        records, _ = read_annotations(options.root, options.split)
-        seed = spec.order_seed if spec.order_seed is not None else benchmark_config.default_seed
-        plan = plan_assignment(eligible_records(records, withdrawn), generator, spec, seed)
+        plan = plan_assignment(asked_records(records, withdrawn, subset), generator, spec, seed)
         options.out.mkdir(parents=True, exist_ok=True)
         record_path, prompt_path = make_pool_paths(options.out)
         pool: GeneratorPool
@@ -132,6 +150,7 @@ def main(argv: list[str] | None = None) -> int:
             pool = GeneratorPool.live(
                 generator, options.env_file, enabled=True, assignment=dict(plan.assigned),
                 call_budget=int(options.call_budget or 0), record_path=record_path, prompt_path=prompt_path,
+                pace_seconds=options.pace_seconds,
             )  # fmt: skip
             label = "groq"
         else:

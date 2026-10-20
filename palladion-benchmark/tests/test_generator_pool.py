@@ -736,3 +736,37 @@ def test_record_ids_do_not_repeat_when_the_same_question_is_asked_twice() -> Non
     first = instance.complete(Q1, MESSAGES).record.record_id
     second = instance.complete(Q1, MESSAGES).record.record_id
     assert first != second and first.startswith(f"{Q1}:{QWEN}:1:")
+
+
+def test_calls_are_spaced_by_the_pace_and_the_first_call_does_not_wait() -> None:
+    sleeps: list[float] = []
+    instance = GeneratorPool(
+        SETTINGS, FakeTransport([ok(QWEN), ok(QWEN), ok(QWEN)]), enabled=True, assignment={Q1: QWEN},
+        call_budget=10, pace_seconds=60.0, sleep=sleeps.append, monotonic=Clock(),
+        wall_clock=lambda: datetime(2026, 10, 18, 3, 0, tzinfo=UTC),
+    )  # fmt: skip
+    instance.complete(Q1, MESSAGES)
+    assert sleeps == []
+    instance.complete(Q1, MESSAGES)
+    instance.complete(Q1, MESSAGES)
+    assert len(sleeps) == 2 and all(59.0 < s <= 60.0 for s in sleeps)
+
+
+def test_a_pace_wait_that_would_overrun_the_deadline_refuses_the_call_and_spends_nothing() -> None:
+    transport = FakeTransport([ok(QWEN), ok(QWEN)])
+    instance = GeneratorPool(
+        SETTINGS, transport, enabled=True, assignment={Q1: QWEN}, call_budget=1, pace_seconds=60.0,
+        sleep=lambda _s: None, monotonic=Clock(), wall_clock=lambda: datetime(2026, 10, 18, 3, 0, tzinfo=UTC),
+    )  # fmt: skip
+    instance.complete(Q1, MESSAGES)
+    with pytest.raises(GenerationError) as caught:
+        instance.complete(Q1, MESSAGES, deadline=instance.now() + 100.0)  # 60 s wait + 60 s call does not fit
+    assert caught.value.code == "GENERATION_DEADLINE" and len(transport.payloads) == 1
+
+
+def test_no_pace_means_no_waiting() -> None:
+    sleeps: list[float] = []
+    instance, _ = pool([ok(QWEN), ok(QWEN)], sleeps=sleeps)
+    instance.complete(Q1, MESSAGES)
+    instance.complete(Q1, MESSAGES)
+    assert sleeps == []

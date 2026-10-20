@@ -35,8 +35,8 @@ Accepted: BADR-0001 to BADR-0025 (all; BADR-0018 to BADR-0023 are the B02 decisi
 ## What exists in code (B05)
 
 - `benchmark/fixtures/answer_gold.py` (evaluator-only answer targets in `answers_<split>.jsonl`, own digest, bound to the question file by digest); optional `Claim.kind/params` and `CaseResponse.action/policy_outcome/version_ids/from_payload`; `benchmark/generator.py` (fault classification, `deadline`, `cancel`, prompt screen and record, `screen_prompts=False` only for the evaluator-side label audit); `benchmark/eval/{answer_case,citations,claims,policy,abstention,score_answers,judge_audit}.py`; `benchmark/track_b.py`, `scripts/run_track_b.py`, `scripts/score_track_b.py`; the Track B branch of `results_check.py`; `render_answer_scorecard` in `analysis/tables.py`; `docs/scoring_rubric.md`, `docs/annotation_guide.md`.
-- Key facts: Track B reuses the Runner (a retriever plus the shared generator is a system arm); the prompt, schema, budget and gate are identical for every arm; what the generator was shown is read from `prompts.jsonl`; labels are keyed by question, arm, claim and citation; a judge label never stands over a human or deterministic one; no provider call has been made (the stand-in is `ExtractiveStubTransport`); the Track B split list is smoke only until dev gold exists.
-- Evidence: E-B05-001 to E-B05-004. Open: B05-T06.01 needs the owner's authorization for live use.
+- Key facts: Track B reuses the Runner (a retriever plus the shared generator is a system arm); the prompt, schema, budget and gate are identical for every arm; what the generator was shown is read from `prompts.jsonl`; labels are keyed by question, arm, claim and citation; a judge label never stands over a human or deterministic one; one bounded live pass has run (E-B05-005); the offline stand-in is `ExtractiveStubTransport`; the Track B split list is smoke only until dev gold exists.
+- Evidence: E-B05-001 to E-B05-005. One live pass ran (BADR-0029, 16 calls, R2 and R3, 8 questions); any more live use needs a new owner instruction. Open: BR33 (an invalid answer keeps no rule name).
 
 ## What exists in code (B04)
 

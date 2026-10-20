@@ -594,3 +594,25 @@ show the decision working, and is kept separate from acceptance.
 ### BADR-0028 amendment (2026-10-20): clarifications from the post-phase audit
 
 Dispositions that change or narrow the wording above (E-B05-004): **item 7**: a useful partial answer (0.2) is a correct answer to a PARTIAL question only (a correct report of a conflict is a full correct answer, 0); unauthorized disclosure is a cited source the principal may not read (delivered-but-uncited sources are a retrieval leak and are counted in Track A); each forbidden behaviour costs an event (wrong rule stated: inapplicable SOP; revealed or confirmed source: disclosure; status guessed: minor claim; a final outcome without the input is already a directive); one minor event per claim, not per reason. **Item 2**: the intention-to-treat accounting is for the two co-primary endpoints; coverage of abstentions, selective figures and loss are conditional on completion with the number of pairs that did not complete beside them. **Item 3**: what was delivered is read from the prompt the run kept, and an answer whose recorded delivered ids differ from it is an invalid answer. **Item 4**: the generator's deadline is set inside the Runner's, so a slow provider ends as a timeout from the provider and does not disable the arm; a hang in retrieval still does (BR14). The answer-gold's `as_of_basis` is carried for B07 and the labelling guide and has no scorer yet.
+
+## BADR-0029 — Live generator use for the first Track B pass (B05-T06.01)
+
+**Status:** ACCEPTED; 2026-10-20.
+
+**Authority:** Owner answers in chat, 2026-10-20: "I will authorize bounded live Groq use for the B05 pilot", then 20 calls, the primary model with failover down the approved list on a rate limit, and 700 completion tokens.
+
+**Question:** What may the first live Track B pass spend, on which models, and with what failover?
+
+**Why:** B05-T06.01 was blocked because no live use was authorized after the label audit (BADR-0019). The owner asked for a bounded first pass to measure real tokens, failures and rate limits before spending more.
+
+**Options:** (a) a small first pass of 20 calls; (b) 60 calls; (c) all 174 pairs; for models, the primary only or the explicit three-model chain.
+
+**Recommendation:** (a), with the primary model only; the owner chose the chain instead.
+
+**What affects what:** at most 20 generator calls in total, counting every dispatch including a call refused by a rate limit and every failover attempt; models `qwen/qwen3.8-27b`, then `openai/gpt-oss-120b` if it is rate limited, then `openai/gpt-oss-20b`, in that order only (an explicit, recorded failover: BADR-0008's switch rule, `allow_automatic_failover` for this run only); a question whose arms ran on different models is flagged, never dropped (BR13); completion cap 700 tokens; R2 and R3 only; a seeded subset of the eligible questions small enough that every pair can finish inside the cap (8 questions, 16 pairs, 4 calls of headroom); calls are paced so the observed 8,000 tokens per minute is not hit by design; the benchmark-local `.env`, an explicit enable flag, no key in any output. No judge call is authorized. The estimate of 5,000 to 6,000 prompt tokens per call is mine and unmeasured. Any further live use needs a new owner instruction.
+
+**My answer (editable):** Authorized as above for one pass; the results are single-run and descriptive.
+
+**Verification:** the run directory holds one generation record per dispatched call (cap check), every prompt, and the models used; E-B05-005 records the counts, failures and rate-limit events.
+
+**Outcome (2026-10-20):** the pass used 16 of the 20 calls, all on the primary model with no rate limit and no failover; 15 pairs were valid, 1 answer was invalid; see E-B05-005. R7a was not run: the owner's limits named R2 and R3 only, so the card's original R7a scope needs a new instruction.

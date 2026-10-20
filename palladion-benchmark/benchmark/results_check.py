@@ -38,7 +38,7 @@ from benchmark.run_manifest import ManifestError, read_verified
 from benchmark.runner import RunLedger, RunnerError
 from benchmark.secret_scan import scan_text
 from benchmark.track_a import RUNNABLE_SPLITS, TrackAError, read_annotations
-from benchmark.track_b import CONTROLLED_QA, eligible_records, prompt_passages, read_prompt_ids
+from benchmark.track_b import CONTROLLED_QA, asked_records, prompt_passages, read_prompt_ids
 
 MIN_GOLD_TEXT = 12
 # A manifest is an evaluator-side record: it holds the gold file's digest by design (never the arm-visible view).
@@ -113,7 +113,7 @@ def validate_run(
     arms = [str(a) for a in config.get("arms", [])]
     findings += _check_manifests(run_dir, config, arms, log.annotation_sha256, log.published_manifest_sha256)
     if answer_run:
-        asked = eligible_records(records, dict.fromkeys(config.get("withdrawn", []), ""))
+        asked = asked_records(records, dict.fromkeys(config.get("withdrawn", []), ""), config.get("asked"))
         findings += _check_answer_ledger(run_dir, arms, asked)
         findings += _check_generation(run_dir, config, arms)
     else:

@@ -19,7 +19,7 @@ import json
 import re
 import time
 from collections.abc import Mapping, Sequence
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 from typing import Any
 
@@ -46,7 +46,16 @@ from benchmark.fixtures.questions import GoldRecord
 from benchmark.generator import AssignmentPlan, GeneratorPool, TransportResponse, assign_models
 from benchmark.registry import default_registry
 from benchmark.run_manifest import RunManifest, TreeState, collect_hardware, read_verified, sha256_of, tree_state
-from benchmark.runner import ArmBinding, PlanRegistry, RunLedger, Runner, RunnerCase, RunnerSettings, RunSummary
+from benchmark.runner import (
+    ArmBinding,
+    PlanRegistry,
+    RunLedger,
+    Runner,
+    RunnerCase,
+    RunnerSettings,
+    RunSummary,
+    derived_rng,
+)
 from benchmark.track_a import FICTION, METHOD_VERSION, DescribedArm, TrackAError, read_annotations
 
 TRACK_B_SPLITS = ("smoke",)  # the dev split has no answer-gold yet
@@ -426,6 +435,9 @@ class TrackBSpec:
     order_seed: int | None = None
     config_dir: Path = Path(__file__).resolve().parents[1] / "configs"
     withdrawn: Mapping[str, str] | None = None
+    question_ids: tuple[str, ...] | None = None  # a subset of the eligible questions, recorded in the run
+    case_deadline_seconds: float | None = None  # replaces the configured case deadline for a paced live run
+    pace_seconds: float = 0.0  # recorded; the pool does the pacing
 
 
 @dataclass(frozen=True)
@@ -441,6 +453,38 @@ def eligible_records(records: Sequence[GoldRecord], withdrawn: Mapping[str, str]
     """Questions Track B asks: the controlled-QA ones that were not withdrawn after the label audit."""
     skip = set(withdrawn or ())
     return [r for r in records if CONTROLLED_QA in r.track_eligibility and r.question_id not in skip]
+
+
+def asked_records(
+    records: Sequence[GoldRecord], withdrawn: Mapping[str, str] | None, only: Sequence[str] | None
+) -> list[GoldRecord]:
+    """The eligible questions, narrowed to the ids a run recorded as asked (every one must be eligible)."""
+    eligible = eligible_records(records, withdrawn)
+    if only is None:
+        return eligible
+    wanted = set(only)
+    unknown = sorted(wanted - {r.question_id for r in eligible})
+    if unknown:
+        raise TrackAError(f"questions recorded as asked are not eligible for Track B: {unknown[:3]}")
+    return [r for r in eligible if r.question_id in wanted]
+
+
+def pick_subset(records: Sequence[GoldRecord], limit: int, seed: int) -> list[str]:
+    """A seeded, stratum-balanced subset of ``limit`` question ids: round-robin over the strata in a seeded order."""
+    if limit < 1:
+        raise TrackAError("a subset takes at least one question")
+    by_stratum: dict[str, list[str]] = {}
+    for record in sorted(records, key=lambda r: r.question_id):
+        by_stratum.setdefault(record.stratum.value, []).append(record.question_id)
+    for stratum, ids in by_stratum.items():
+        derived_rng(seed, f"subset:{stratum}").shuffle(ids)
+    picked: list[str] = []
+    rounds = max((len(ids) for ids in by_stratum.values()), default=0)
+    for position in range(rounds):
+        for stratum in sorted(by_stratum):
+            if position < len(by_stratum[stratum]) and len(picked) < limit:
+                picked.append(by_stratum[stratum][position])
+    return sorted(picked)
 
 
 def plan_assignment(
@@ -512,6 +556,7 @@ def _manifest(
                 "reasoning_effort": dict(generator.reasoning_effort),
                 "tokens_per_question": spec.tokens_per_question,
                 "single_model": len(set(plan.assigned.values())) <= 1,
+                "failover": generator.allow_automatic_failover,
                 "unassigned": len(plan.unassigned),
             },
         },
@@ -547,7 +592,7 @@ def execute_track_b(
         raise TrackAError("K and the evidence budget are at least 1")
     bundle = load_all(spec.config_dir)
     records, read_log = read_annotations(spec.root, spec.split)
-    chosen = eligible_records(records, spec.withdrawn)
+    chosen = asked_records(records, spec.withdrawn, spec.question_ids)
     gold_path = answer_gold_path(spec.root, Split(spec.split))
     if not gold_path.is_file():
         raise TrackAError("the answer-gold file for this split does not exist; generate it first")
@@ -583,6 +628,8 @@ def execute_track_b(
         "questions": sha256_of([r.to_dict() for r in requests]),
     }
     settings = RunnerSettings.from_config(bundle.benchmark, order_seed=spec.order_seed)
+    if spec.case_deadline_seconds is not None:
+        settings = replace(settings, case_deadline_seconds=spec.case_deadline_seconds)
     spec.out.mkdir(parents=True, exist_ok=True)
     system_trees = system_trees or {}
     bindings = []
@@ -625,11 +672,15 @@ def execute_track_b(
                 "budget_words": spec.budget_words,
                 "metadata_condition": spec.condition,
                 "questions": len(requests),
+                "asked": None if spec.question_ids is None else sorted(spec.question_ids),
+                "case_deadline_seconds": settings.case_deadline_seconds,
+                "pace_seconds": spec.pace_seconds,
                 "withdrawn": sorted(spec.withdrawn or ()),
                 "generator_pool": pool_label,
                 "live": spec.live,
                 "unassigned": list(plan.unassigned),
                 "single_model": len(set(plan.assigned.values())) <= 1,
+                "failover": generator.allow_automatic_failover,
                 "answer_targets_sha256": answer_gold_digest,
                 "prompt_sha256": PROMPT_DIGEST,
                 "notice": FICTION,
