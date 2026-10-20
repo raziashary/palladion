@@ -1,12 +1,12 @@
 # Palladion working memory
 
-Current checkpoint 2026-10-20: P10 implementation and consumer validation verified; final scoped checkpoint P10-T06.01 remains OPEN until stage/secret review, commit and approved main publication. 12 of 13 P10 cards are verified (124 of 126 overall); P09/PF03 remains separately OPEN. Source 458 PASS/32 explicit SKIP, installed 91 PASS/2 explicit SKIP, native PDF 1 PASS; later parser controls pass in overlapping 11-test source/installed runs. Final 70-file package comparison, static/docs gates and owned cleanup pass. Full-blueprint and current P10 documentation/source review complete; no full historical-document audit is claimed.
+Current checkpoint 2026-10-20: all 13 P10 cards complete against published feature checkpoint c3c0950 and E-P10-006–008. Source 458 PASS/32 explicit SKIP, installed 91 PASS/2 explicit SKIP, native PDF 1 PASS; additional parser controls pass in overlapping 11-test source/installed runs. Final 70-file package comparison, static/docs gates, current-phase Luna Medium review and owned cleanup pass. 125 of 126 total cards are checked; only P09-T02.07/PF03 performance acceptance remains OPEN. No full historical-document audit or production/semantic efficacy claim is made.
 
 Updated 2026-10-20. Navigation aid only; user/vision/source/ADRs retain authority.
 
 ## Current P10 verified checkpoint
 
-P10 has12of13cards verified; P10-T06.01 and P09-T02.07/PF03 remain open (124/126checked, not readiness).
+All13P10cards are complete against published source checkpoint c3c0950; only P09-T02.07/PF03 remains open (125/126checked, not readiness).
 ADR0096–0098 are accepted and verified: exact-proof scoped-admin graph HTTP; verbatim
 UTF8/code and bounded pypdf6.21.0/SQLitev7 original/extracted/page provenance; lexical-2
 weighted PathA and bounded own-session turn context consumed automatically. Four read
@@ -24,7 +24,7 @@ Single LunaMedium start adversary and end reviewer read the complete blueprint; 
 confirmed material source defect remained. Final parser evidence freshness resolved by
 focused checks/rebuilt wheel. Owned Qdrant stopped and recorded PID absent; storage
 preserved, Windows/WSL16333/16334/17687listeners absent. Neo4j not restarted on recovery.
-Scoped main push has owner approval; verify git/upstream for actual publication. Preserve
+Feature checkpoint c3c0950 is published to origin/main under owner approval; E-P10-008 records publication. Preserve
 all foreign benchmark/editor changes; only our PALLADION_FIXES.md appendix is scoped.
 
 Historical failures remain in E-P10-003–005/raw runtime logs: Windows98–99%RAM/uv1450/

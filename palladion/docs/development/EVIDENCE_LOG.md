@@ -2604,3 +2604,32 @@ negative control; original loose sk-prefix regex wrongly matched task-reading li
 and was corrected to a token boundary before concluding0. No secret values printed.
 Staged diff whitespace check passes. Final commit/main publication remains next under
 the owner's standing explicit approval; do not close T06 from this pre-commit receipt.
+
+### E-P10-008 — actual published feature and final T06 closure
+
+Feature commitc3c09509087c533bf93f111b5b8aec6a89b564d4 contains55reviewed scoped files
+only; git status after commit leaves foreign benchmark/editor changes untouched.
+Conventional subject and nonempty descriptive body explain contracts, verification,
+unknown provider outcome, partial historical-doc coverage and PF03 open acceptance.
+Immediately before publication, `git fetch origin`, `git log --format=fuller
+@{upstream}..HEAD` and `git rev-list --left-right --count @{upstream}...HEAD` inspected
+the full sole outgoing commit and showed0behind/1ahead. Established upstream origin/main.
+Owner's explicit standing main-push approval applies. `git push` exited0:
+9727f5e..c3c0950 main→main at https://github.com/raziashary/palladion.git.
+
+T06 status finding now resolved by actual checkpoint evidence: source/package/consumer/
+review/docs/cleanup/secret checks preceded this feature commit and publication. Only
+after push success did main check P10-T06.01 and synchronize all13P10cards complete,
+125of126overall. P09-T02.07/PF03 remains OPEN. This documentation closure is a separate
+logical verified unit and does not retroactively claim the earlier pre-commit checkbox
+was correct. No contract/acceptance reduction or foreign work publication occurred.
+
+Audit limits persist: full blueprint/current P10 portions of all12core docs covered;
+full historical12-document drift audit not established. No source defect remains from
+the scoped review. No new owner ADR answer is needed for P10. Actual publication of
+this closeout record is established by subsequent git history/upstream, not this text.
+
+Same end-reviewer final resolution: T06 status finding is resolved against the actual
+published55file checkpoint. Current plan/goal/progress/memory/safe receipt consistently
+show13/13P10 and125/126overall, PF03 separately open. No residual current-status
+contradiction found; historical12-doc coverage remains partial. No tests/mutations run.

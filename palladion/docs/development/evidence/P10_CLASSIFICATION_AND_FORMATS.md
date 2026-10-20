@@ -155,3 +155,18 @@ for those added tests/docstring is resolved by these current receipts. E-P10-007
 coverage and limits. Owned services stopped with storage preserved; Windows/WSL have
 no16333/16334/17687listeners. P10 has12of13cards verified; final scoped checkpoint T06 remains open until
 commit/publication. PF07handoff is complete while P09/PF03 remains open. Earlier pending/blocked text above is historical, not current status.
+
+## Published checkpoint and final task closure
+
+Feature checkpoint `c3c09509087c533bf93f111b5b8aec6a89b564d4` was committed with a
+Conventional Commit subject/descriptive body and published to the established
+`origin/main` under the owner's standing approval. Fetch verified0behind/1ahead;
+the complete outgoing commit message was inspected. Push exited0 from9727f5e to
+c3c0950. Only55scoped files were staged; foreign benchmark/editor dirt was excluded.
+P10-T06.01 now closes against that actual published checkpoint, rather than an expected
+future commit. All13P10cards complete; only P09-T02.07/PF03 remains open. This final
+documentation receipt is a separate logical closeout unit. E-P10-008 records proof.
+
+Review scope remains honest: the full blueprint and current P10 portions of all12
+core development docs were reviewed; the entire historical contents of all12 were not.
+No full historical-drift audit or semantic efficacy claim is inferred.

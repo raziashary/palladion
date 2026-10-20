@@ -123,7 +123,7 @@
     }
   ],
   "initial_observer_unreceived_invocation_cause": "UNKNOWN",
-  "phase_status": "OPEN_FINAL_SCOPED_CHECKPOINT_PENDING",
+  "phase_status": "COMPLETE_P10_ENGINEERING_PF03_REMAINS_OPEN",
   "recovered_checks": {
     "suite": {
       "artifact": "p10-recovered-suite.xml",
@@ -831,7 +831,8 @@
     "finding": "NO_CONFIRMED_MATERIAL_DEFECT",
     "remaining_evidence_gap": "RESOLVED_BY_FOCUSED_SOURCE_INSTALLED_PARSER_CHECKS_AND_FINAL70FILE_PROOF",
     "coverage": "FULL_BLUEPRINT_1_1784_CURRENT_P10_PORTIONS_OF_ALL12CORE_DOCS_AND_CHANGED_SOURCE_CONSUMERS",
-    "historical_document_limit": "GOAL_FULL_OTHER_HISTORICAL_PORTIONS_PARTIAL_SOME_WINDOWS_TRUNCATED_NO_FULL12HISTORICAL_AUDIT_CLAIM"
+    "historical_document_limit": "GOAL_FULL_OTHER_HISTORICAL_PORTIONS_PARTIAL_SOME_WINDOWS_TRUNCATED_NO_FULL12HISTORICAL_AUDIT_CLAIM",
+    "checkpoint_status_finding": "RESOLVED_SAME_REVIEWER_AFTER_ACTUAL_FEATURE_PUSH"
   },
   "cleanup": {
     "owned_qdrant": "STOPPED_RECORDED_PID_ABSENT",
@@ -843,5 +844,12 @@
     ],
     "windows_and_wsl_listeners": "NONE",
     "foreign_processes": "UNTOUCHED"
+  },
+  "publication": {
+    "feature_commit": "c3c09509087c533bf93f111b5b8aec6a89b564d4",
+    "upstream": "origin/main",
+    "push_exit_code": 0,
+    "scope_files": 55,
+    "final_task": "P10-T06.01_CLOSED_AGAINST_PUBLISHED_FEATURE"
   }
 }

@@ -17,7 +17,10 @@ repository from the blueprint's illustrative tree.
 
 ## Scope and integrity
 
-- Current mandate (2026-10-20): owner GO for P10 PF07 graph administration, extra
+- Current checkpoint (2026-10-20): P10 feature commitc3c0950 is published to origin/main;
+  all13P10cards close against its verified consumer/review/cleanup/publication evidence.
+  P09/PF03 remains the separate open performance obligation. The fulfilled owner mandate
+  covers P10 PF07 graph administration, extra
   UTF8/code/PDF ingestion, deterministic classification/continuity and public documentation,
   with explicit ADR0096–0098 approvals. P09/PF03 performance remains OPEN. The prior
   mandate below is retained as context: P09 independent reaudit and approved Part B PF01–PF06

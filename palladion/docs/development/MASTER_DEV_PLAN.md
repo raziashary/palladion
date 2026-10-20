@@ -1,6 +1,6 @@
 # Palladion master development plan
 
-Current checkpoint 2026-10-20: P10 implementation and consumer validation verified; final scoped checkpoint P10-T06.01 remains OPEN until stage/secret review, commit and approved main publication. 12 of 13 P10 cards are verified (124 of 126 overall); P09/PF03 remains separately OPEN. Source 458 PASS/32 explicit SKIP, installed 91 PASS/2 explicit SKIP, native PDF 1 PASS; later parser controls pass in overlapping 11-test source/installed runs. Final 70-file package comparison, static/docs gates and owned cleanup pass. Full-blueprint and current P10 documentation/source review complete; no full historical-document audit is claimed.
+Current checkpoint 2026-10-20: all 13 P10 cards complete against published feature checkpoint c3c0950 and E-P10-006–008. Source 458 PASS/32 explicit SKIP, installed 91 PASS/2 explicit SKIP, native PDF 1 PASS; additional parser controls pass in overlapping 11-test source/installed runs. Final 70-file package comparison, static/docs gates, current-phase Luna Medium review and owned cleanup pass. 125 of 126 total cards are checked; only P09-T02.07/PF03 performance acceptance remains OPEN. No full historical-document audit or production/semantic efficacy claim is made.
 
 Version 13, 2026-10-20. Scope anchor: [blueprint v0.2](../vision/palladion-blueprint-v2.md),
 especially “Locked decisions,” “Build plan,” “System invariants,” and the full walkthrough.
@@ -1411,7 +1411,7 @@ Pre-adversary receipt: evidence/P09_AUDIT_AND_HANDOFF.md. P09 parent exit requir
 
 ## P10 — Owner-requested ingestion, graph setup and memory continuity extensions
 
-Current owner GO2026-10-20; ADR0096–0098 explicitly accepted. P09/PF03 acceptance stays open, not waived by this phase. UI, enterprise adapters/writes and benchmark implementation remain excluded. Each new capability preserves the blueprint authority/ACL/four-tool invariants. The full-blueprint start adversary and sole end reviewer are complete (E-P10-001/007); current consumer gates and cleanup pass. 12of13P10cards are verified; P10-T06.01 stays open until the scoped checkpoint is published. Across the whole register124of126cards are checked; P09-T02.07 is the separate performance obligation, not a system-readiness percentage.
+Current owner GO2026-10-20; ADR0096–0098 explicitly accepted. P09/PF03 acceptance stays open, not waived by this phase. UI, enterprise adapters/writes and benchmark implementation remain excluded. Each new capability preserves the blueprint authority/ACL/four-tool invariants. The full-blueprint start adversary and sole end reviewer are complete (E-P10-001/007); current consumer gates and cleanup pass. All13P10cards are complete against published feature checkpoint c3c0950 (E-P10-008). Across the whole register125of126cards are checked; P09-T02.07 is the separate performance obligation, not a system-readiness percentage.
 
 | Task | Outcome | Exit |
 |---|---|---|
@@ -1520,7 +1520,7 @@ Current owner GO2026-10-20; ADR0096–0098 explicitly accepted. P09/PF03 accepta
 
 <a id="p10-t06-01"></a>
 
-- [ ] **P10-T06.01 — Verify end to end and resolve final review**
+- [x] **P10-T06.01 — Verify end to end and resolve final review**
   - **Files:** `AGENTS.md`, `palladion/docs/development/MASTER_DEV_PLAN.md`, `palladion/docs/development/GOAL.md`, `palladion/docs/development/PROGRESS.md`, `palladion/docs/development/PROJECT_MEMORY.md`, `palladion/docs/development/PROJECT_MAP.md`, `palladion/docs/development/PROJECT_LEARNING.md`, `palladion/docs/development/ADR_LOG.md`, `palladion/docs/development/EVIDENCE_LOG.md`, `palladion/docs/development/TESTING_GATES.md`, `palladion/docs/development/REQUIREMENTS_TRACEABILITY.md`, `palladion/docs/development/RESEARCH_PROTOCOL.md`, `palladion/docs/development/RISKS_AND_OPEN_QUESTIONS.md`, `palladion/docs/development/check_docs.py`, `palladion/pyproject.toml`, `palladion/uv.lock`, `palladion/scripts/validate_p10.py`, `palladion-benchmark/docs/development/PALLADION_FIXES.md`.
   - **Depends:** P10-T05.02, P10-T03.02.
   - **Change:** Stack/source/installed/actual service gates, one LunaMedium end reviewer/resolution, current docs/handoff completion, backup/own-port cleanup and scoped descriptive checkpoint; preserve PF03 and foreign work.
