@@ -13,12 +13,58 @@ The op "stop" ends the loop.
 from __future__ import annotations
 
 import json
+import socket
 import sys
 import traceback
 from collections.abc import Callable, Mapping
 from typing import Any, TextIO
 
 Handler = Callable[[dict[str, Any]], Any]
+
+
+LOOPBACK = frozenset({"127.0.0.1", "::1", "localhost"})
+
+
+class NetworkRefused(OSError):
+    """A non-loopback lookup or connection was attempted. The message is fixed; the host goes to stderr."""
+
+
+def _is_loopback(host: object) -> bool:
+    return host is None or host == "" or str(host) in LOOPBACK
+
+
+def _refuse(host: object, port: object) -> None:
+    print(f"NETWORK_REFUSED host={host!r} port={port!r}", file=sys.stderr, flush=True)
+    raise NetworkRefused("NETWORK_REFUSED")
+
+
+def guard_network() -> None:
+    """Refuse every name lookup and connection that leaves the loopback interface, for the worker's whole lifetime.
+
+    The counting proxy is a comparator's only route to a model; this makes that true of the process, not only of the
+    environment it was given (a library that read a key from somewhere else still could not reach the provider)."""
+    real_getaddrinfo = socket.getaddrinfo
+    real_connect = socket.socket.connect
+    real_connect_ex = socket.socket.connect_ex
+
+    def getaddrinfo(host: Any, port: Any, *args: Any, **kwargs: Any) -> Any:
+        if not _is_loopback(host):
+            _refuse(host, port)
+        return real_getaddrinfo(host, port, *args, **kwargs)
+
+    def connect(self: socket.socket, address: Any) -> None:
+        if isinstance(address, tuple) and not _is_loopback(address[0]):
+            _refuse(address[0], address[1])
+        real_connect(self, address)
+
+    def connect_ex(self: socket.socket, address: Any) -> int:
+        if isinstance(address, tuple) and not _is_loopback(address[0]):
+            _refuse(address[0], address[1])
+        return real_connect_ex(self, address)
+
+    socket.getaddrinfo = getaddrinfo  # type: ignore[assignment]
+    socket.socket.connect = connect  # type: ignore[method-assign]
+    socket.socket.connect_ex = connect_ex  # type: ignore[method-assign]
 
 
 def serve(handlers: Mapping[str, Handler], stdin: TextIO | None = None, stdout: TextIO | None = None) -> None:

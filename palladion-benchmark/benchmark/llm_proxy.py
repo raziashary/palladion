@@ -20,6 +20,7 @@ import threading
 import time
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
@@ -66,6 +67,9 @@ class Refusal:
     code: str
 
 
+_DAILY_LIMIT = b"tokens per day"  # the provider's own wording for a per-day token limit (Groq: TPD)
+
+
 def _estimate_tokens(payload: Mapping[str, Any]) -> int:
     """A deliberately high guess of the prompt size (three characters a token), used only to refuse before spending."""
     return len(json.dumps(payload.get("messages", ""), ensure_ascii=False)) // 3 + 1
@@ -96,10 +100,11 @@ class CountingProxy:
         self._dispatch_lock = threading.Lock()  # one provider call at a time, so the caps are exact
         self._last_dispatch: float | None = None
         self._totals: dict[str, int] = dict.fromkeys(
-            ("calls", "rate_limited", "errors", "refused", "prompt_tokens", "completion_tokens",
+            ("calls", "rate_limited", "errors", "refused", "prompt_tokens", "completion_tokens", "estimated_tokens",
              "embedding_requests", "embedding_inputs"), 0
         )  # fmt: skip
         self._sequence = 0
+        self._daily_wall = False  # the provider said the day's tokens are used up, so no call can succeed now
 
     def __repr__(self) -> str:
         return "CountingProxy(<redacted>)"
@@ -113,14 +118,14 @@ class CountingProxy:
     @property
     def spent_tokens(self) -> int:
         with self._lock:
-            return self._totals["prompt_tokens"] + self._totals["completion_tokens"]
+            return self._totals["prompt_tokens"] + self._totals["completion_tokens"] + self._totals["estimated_tokens"]
 
     def _record(self, **fields: Any) -> None:
         if self._record_path is None:
             return
         with self._lock:
             self._sequence += 1
-            row = {"sequence": self._sequence, **fields}
+            row = {"sequence": self._sequence, "at": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"), **fields}
         with self._record_path.open("a", encoding="utf-8") as handle:
             handle.write(json.dumps(row, sort_keys=True) + "\n")
 
@@ -166,12 +171,15 @@ class CountingProxy:
         estimate = _estimate_tokens(payload)
         with self._lock:
             calls = self._totals["calls"]
-            spent = self._totals["prompt_tokens"] + self._totals["completion_tokens"]
-            if calls >= self.limits.max_calls or spent + estimate + completion_cap > self.limits.max_tokens:
+            spent = self._totals["prompt_tokens"] + self._totals["completion_tokens"] + self._totals["estimated_tokens"]
+            walled = self._daily_wall
+            if walled or calls >= self.limits.max_calls or spent + estimate + completion_cap > self.limits.max_tokens:
                 over = True
             else:
                 over = False
                 self._totals["calls"] += 1  # reserved before the call, so nothing can slip past the cap
+        if walled:
+            return self._refuse(429, "DAILY_LIMIT_REACHED", model=model)
         if over:
             return self._refuse(403, "BUDGET_EXHAUSTED", model=model)
         if self.limits.pace_seconds and self._last_dispatch is not None:
@@ -190,18 +198,28 @@ class CountingProxy:
             failure = "PROVIDER_UNAVAILABLE"
         latency_ms = (self._monotonic() - began) * 1000.0
         if response is None:
+            # Whether the provider processed the prompt is unknown: the worst case is charged, shown as an estimate.
             with self._lock:
                 self._totals["errors"] += 1
+                self._totals["estimated_tokens"] += estimate + completion_cap
             self._record(outcome="ERROR", code=failure, model=model, latency_ms=latency_ms, http_status=None)
             return Refusal(502, failure)
         prompt, completion = _usage(response)
         with self._lock:
             if response.status == 429:
                 self._totals["rate_limited"] += 1
+                if _DAILY_LIMIT in response.body:
+                    self._daily_wall = True  # every later call would be refused too and would use a call
             elif response.status != 200:
                 self._totals["errors"] += 1
-            self._totals["prompt_tokens"] += prompt if prompt is not None else estimate
-            self._totals["completion_tokens"] += completion if completion is not None else 0
+            if response.status == 200:
+                # A reply that omits its usage is charged at the worst case (the prompt estimate and the full
+                # completion cap), shown apart from the provider's own numbers. A refusal (429, other) spent nothing.
+                self._totals["prompt_tokens"] += prompt if prompt is not None else 0
+                self._totals["completion_tokens"] += completion if completion is not None else 0
+                self._totals["estimated_tokens"] += (estimate if prompt is None else 0) + (
+                    completion_cap if completion is None else 0
+                )
         outcome = "OK" if response.status == 200 else ("RATE_LIMITED" if response.status == 429 else "ERROR")
         self._record(
             outcome=outcome, model=model, http_status=response.status, prompt_tokens=prompt,

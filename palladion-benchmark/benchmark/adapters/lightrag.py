@@ -48,7 +48,7 @@ def build_lightrag_arm(
     condition: Condition = Condition.C2,
     chunk_words: int = DEFAULT_CHUNK_WORDS,
     build_timeout: float = 3600.0,
-    query_timeout: float = 120.0,
+    query_timeout: float = 100.0,
 ) -> WorkerArm:
     """Start the LightRAG worker in its environment, wired to the proxy, and return arm R6."""
     return launch_arm(

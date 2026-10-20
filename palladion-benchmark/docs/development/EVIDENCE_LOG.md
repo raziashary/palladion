@@ -481,3 +481,62 @@ From `palladion-benchmark/`, 2026-10-20, Windows, CPython 3.14 for the benchmark
 ## E-B06-003 — What each adapter does with the upstream, and what it left out
 
 R4: `HippoRAG.index` (two model calls per distinct chunk) and `retrieve` (fact retrieval, recognition memory, Personalized PageRank); one recognition-memory call per query when candidate facts exist; embeddings through the proxy; retries disabled; a recognition-memory failure raises instead of falling back silently. R5: `build_index` standard method over one document per chunk, then `get_local_search_engine(...).context_builder.build_context` only; no answer call. R6: `LightRAG.ainsert` with ids equal to chunk ids and `aquery_data` in hybrid mode, which makes one keyword-extraction model call per query; the default tokenizer with the approved cache; pipmaster installers refused. Exact-duplicate chunk texts are indexed once by R4 and R6 and expanded back to every chunk id at retrieval.
+
+## E-B06-004 — Live cold-state pilot of R4, R5 and R6 on the 60-document subset (BADR-0032)
+
+2026-10-20, Windows, from `palladion-benchmark/`, subset `artifacts/fixtures/Ssub60` (12 questions, 60 documents, 103 chunks, seed 7), command `scripts/run_graph_arms.py ... --enable-live`. Authorizations: BADR-0032 (qwen, 300 calls, 900,000 tokens, 20 s), BADR-0033 to BADR-0036 (resume and model changes), BADR-0037 (private-experiment posture). The proxy wrote one row per call, numbers and codes only (`proxy.jsonl` in each run directory).
+
+**R6 LightRAG (the only comparator run live).** Six attempts at one index build; each resumed the previous one's saved state:
+
+| Run | Model, completion cap, pace | Provider calls | Answered | Rate-limited | Tokens | Outcome |
+|---|---|---|---|---|---|---|
+| `g-r6-failed-no-spend` | (none) | 0 | 0 | 0 | 0 | worker failed on a relative path before any call (defect fixed) |
+| `g-r6-qwen-stopped` | qwen3.8-27b, 700, 20 s | 243 | 80 | 163 | 211,014 | stopped by me: per-minute output limit (1,000 tokens); the 163 rejections came in streaks of up to 48 in a row |
+| `g-r6-b` | gpt-oss-120b, 700, 20 s | 13 | 13 (all empty) | 0 | 35,150 | every reply cut off at the cap by hidden reasoning, empty content; build FAILED |
+| `g-r6-c` | qwen, 700, 60 s | 0 | 0 | 0 | 0 | worker defect: failed documents were never retried (fixed, tested) |
+| `g-r6-d` | qwen, 700, 60 s | 31 | 3 | 28 | 8,216 | stopped by me: qwen 200,000 tokens per day reached |
+| `g-r6-e` | gpt-oss-120b, 2,000, 30 s | 78 | 65 | 13 | 250,828 | stopped by me: gpt-oss-120b 200,000 tokens per day reached |
+| `g-r6-f` | gpt-oss-20b, 2,000, 30 s | 45 | 41 | 4 | 162,787 | stopped by me: gpt-oss-20b 200,000 tokens per day reached |
+
+Total over the six: 410 provider calls (202 HTTP-200 replies, of which the 13 of `g-r6-b` were empty cut-offs, so 189 usable; 208 rate-limited, counted), 667,995 tokens, about 4.7 MB of comparator state on disk at the end. **Result: R6 indexed 63 of 103 chunks (documents with status "processed"); 29 failed, 11 were interrupted; it never completed its build, so no query was run and no retrieval number exists for it.** The 202 answered calls averaged 3,308 tokens each (all 667,995 tokens were in answered calls); per chunk indexed that is about 10,600 tokens (667,995 over 63), inflated by work paid twice (the interrupted rate-limited attempts and the 13 truncated calls), so a full 103-chunk build would cost on the order of 700,000 to 1,100,000 tokens for this subset (an estimate from a partial run). Limits hit: qwen 1,000 output tokens per minute and 200,000 per day, gpt-oss-120b and gpt-oss-20b 200,000 per day; all three models' daily quotas were used on this one comparator. gpt-oss models spend the 700-token cap on hidden reasoning and answer only with a larger cap.
+
+**R4 HippoRAG 2 and R5 GraphRAG Local: not run live.** They were not attempted: all three approved models were at their daily limit after R6, so they are recorded as quota-blocked (a result, not a zero); nothing was spent on them. Their offline proof is E-B06-002 and E-B06-003.
+
+**Cost to extrapolate (an estimate, not a measurement of a full run):** about 3,300 tokens per call and about 3 calls per indexed chunk for LightRAG (202 over 63, including repeated work) on this data (partial-run estimate); the full S tier of roughly 4 million tokens per system stands; the free tier allows 200,000 tokens per model per day, so a full S build would not fit the free tier in any reasonable time, which the owner does not buy (BADR-0037).
+
+**Records.** The four runs I stopped from outside have no run record of their own (no ledger or manifest): their `spend.json` was rebuilt from `proxy.jsonl` afterwards with `run_graph_arms.py --reconstruct` and says so (`reconstructed_from_book`, status `STOPPED_BY_OPERATOR`). `proxy.jsonl` rows now carry the time of each call; the six runs above predate that, so their pacing cannot be checked from the books. The `worker.stderr` files hold the Groq organization identifier from rate-limit messages (an account identifier, no key; the run directories are gitignored). `lock_sha256` in the pins is a digest of the resolved package list (names and versions from `uv pip freeze`), not of a hash-pinned lockfile.
+
+**Defects found by the live run, fixed with tests:** relative paths in the worker (`g-r6-failed-no-spend`); a LightRAG resume never retried failed documents and recorded failed duplicates; LightRAG ran several model calls and writers at once, colliding on Windows ("access denied" on the status file) and on the per-minute limit; the run script gained `--resume-from`. Not fixed, disclosed: the final R6 index mixes three models, so even a completed build would be a pilot, not a like-for-like result.
+
+**Matched baseline on the same subset (offline, no quota).** `scripts/run_track_a.py --root artifacts/fixtures/Ssub60 --split smoke --out artifacts/runs/sub60-c2 --run-id sub60-c2 --k 10 --budget 4000 --condition C2 --start-qdrant`: R0 to R3, 12 questions, 48 pairs all OK; `validate_results.py` PASS; `score_track_a.py ... --withdrawn` with an empty list (the library's list names questions outside this subset) scored 48 pairs. Overall, 11 eligible questions, descriptive only, bootstrap intervals in `scorecard.md`: success at 10 R0 0.636, R1 0.273, R2 0.636, R3 0.545; recall at 10 R0 0.439, R1 0.250, R2 0.462, R3 0.379. The subset is easier than the full tier by construction (its documents are the questions' gold and decoys), so these numbers are for comparing arms on this subset only. R7a (Palladion) was not run on the subset: it needs the isolated Palladion runtime loaded with this corpus and the Palladion contributor is changing the system; it stays for B08 after the re-pin.
+
+**Validator change made because of this run:** a graph arm whose build failed and names its error is a recorded result (every pair `NOT_RUN`); before, `validate_results.py` rejected such a run, hiding the very failure it should show. A failed record without an error, or a built record without its cost, is still rejected (tests in `test_graph_contracts.py`).
+
+**Limits.** One comparator, partial; no query was answered by a graph arm; no comparison and no ranking claim. Spend after the first attempt followed new owner instructions each time (BADR-0033 to BADR-0036); the first attempt stayed inside BADR-0032 and I ended three runs myself when the provider rejected nearly every call.
+
+## E-B06-005 — B06 end-of-phase audit: findings and dispositions
+
+2026-10-20. One read-only auditor (Haiku 5.5, medium; BADR-0003) read the whole protocol, the B06 cards, BADR-0029 to BADR-0037, E-B06-001 to E-B06-004 and the code, with no credentials and no ability to run anything. Eighteen findings. I verified the load-bearing ones by running code (finding 1, below) or recounting the books. Dispositions:
+
+| # | Finding | Verified | Disposition |
+|---|---|---|---|
+| 1 | Importing `litellm` loads the benchmark `.env` (python-dotenv walks up from litellm's own directory), so the provider key would enter R4's and R5's process | Yes: in `env-graphrag` and `env-HippoRAG` a script importing litellm gained `GROQ_API_KEY` (names printed, never values); `env-LightRAG` has no litellm; `-c` code reads the current directory instead, so the first probe was misleading and the final test uses a script file. R4 and R5 never ran live, R6 does not import litellm, so no key reached a worker that ran | Fixed: `launch_arm` sets `LITELLM_MODE=PRODUCTION`; test with a positive control (without the switch the key appears) and the negative (with it, absent) in both environments |
+| 2 | Only R5's worker had a socket guard | Yes | Fixed: the guard moved to `comparators/protocol.py` and all three workers call it before serving; tests for the guard, and that each worker calls it |
+| 3 | B06-T06.01 was checked though its acceptance is not met (R7a not run, R4 and R5 not run, R6 incomplete, resumed not cold) | Yes | Accepted at first (card unchecked); then the owner chose "Accept partial, close B06" (2026-10-20): the card is closed with its limits written in E-B06-004 and here |
+| 4 | Four stopped R6 runs have no run record | Yes | Fixed: `run_graph_arms.py` writes `spend.json` on any error leaving the run (status `INTERRUPTED`) and has `--reconstruct`; the four were rebuilt from their books and say so |
+| 5 | A query timeout was recorded as NOT_RUN/ARM_UNAVAILABLE; the worker query timeout equalled the case deadline | Yes | Fixed: a worker timeout on a query raises `TimeoutError` (recorded TIMEOUT); the default query timeout is 100 s, below the 120 s case deadline. A provider refusal during a query is still `INVALID_RUN` by exception type name only; not changed (the worker reports only a type name by design) |
+| 6 | Proxy token accounting gaps: missing completion usage free; 429 charged an estimate not reported | Yes | Fixed: a 200 without usage is charged the prompt estimate and the full completion cap, a lost connection the worst case, a 429 nothing; `estimated_tokens` is shown apart from the provider's numbers; tests with exact values |
+| 7 | BADR-0033 reads the cap per run where BADR-0032 said per comparator | Yes | Owner answered: per run, as used (BADR-0033 answer line) |
+| 8 | Numbers that did not reproduce (streak length, 43 vs 31 calls, 35 vs 36 chunks, 202 vs 189 usable) | Yes | Corrected in place |
+| 9 | PF07 status stale | Yes | Updated: PF07 is delivered in Palladion; R7b needs a new pin (owner decision at B07/B08) |
+| 10 | The 1,384-passed claim has no log | Yes | The earlier log was not kept. Final run after the fixes, from `palladion-benchmark/`: `uv run pytest -q -p no:cacheprovider` (log `artifacts/runs/full-suite6.log`, gitignored): 1412 passed, 1 warning (an invalid escape sequence in `test_graphrag.py`, fixed afterwards), exit 0, 34 minutes; `ruff check` and strict `mypy` clean |
+| 11 | A failed build carries no cost in the run result | Yes | Fixed: `builds[]` carries `spend_before_failure`; test |
+| 12 | ACL wording inconsistent | Yes | BR35 reworded |
+| 13 | Edge grounding was a substring test and an empty endpoint counted as grounded | Yes | Fixed: whole-word matching, empty endpoints never grounded; test, and a mutant (substring again) is killed |
+| 14 | `lock_sha256` is not a lockfile digest | Yes | Documented in E-B06-004; the field is a digest of the resolved package list |
+| 15 | Stale status lines; "quota-blocked" stated as fact | Yes | Reworded: not attempted, quota exhaustion observed on R6 |
+| 16 | Proxy rows have no timestamps | Yes | Fixed for new runs (`at`); the six R6 runs predate it, said in E-B06-004 |
+| 17 | No automatic stop on a daily-quota wall | Yes | Fixed: a 429 that says "tokens per day" makes the proxy refuse further calls (`DAILY_LIMIT_REACHED`) without counting them; test |
+| 18 | Organization id in worker.stderr | Yes | Noted in E-B06-004; account identifier only, run directories are gitignored |
+
+**Not verified by the auditor and by me:** the mutant counts in E-B06-002 (8 on the proxy and worker, 6 on graph metrics, 5 on contracts, 5 on `WorkerArm`) have no saved output; they are retained as a claim of the session and not relied on. New mutants this round: whole-word matching (killed).

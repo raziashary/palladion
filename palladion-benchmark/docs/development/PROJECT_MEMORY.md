@@ -20,7 +20,7 @@ Updated 2026-10-19. Navigation aid only; the user, the protocol, source and ADRs
 
 ## Locked decisions and open items
 
-Accepted: BADR-0001 to BADR-0030 (all; BADR-0018 to BADR-0023 are the B02 decisions, BADR-0024 B03, BADR-0025 B04, BADR-0026 to BADR-0029 the audit, alias, B05 and live-use decisions, BADR-0030 the deferred owner items). All BADRs are accepted as of 2026-10-20 (BADR-0006 phase breakdown, BADR-0008 one model per question, BADR-0013 benchmark-local .env). Still open and tracked: OQ03 (read Palladion's interface at B04), OQ09 (license, before B08-T07.01), OQ10 (pairings, before B08-T03.01), OQ13 (label audit stance, before B08-T03.01). Open questions OQ01–OQ13 in [risks and open questions](RISKS_AND_OPEN_QUESTIONS.md).
+Accepted: BADR-0001 to BADR-0037 (all; BADR-0031 to BADR-0037 are the B06 decisions: scope, live extraction limits, resumes on other models, and the private-experiment posture; BADR-0018 to BADR-0023 are the B02 decisions, BADR-0024 B03, BADR-0025 B04, BADR-0026 to BADR-0029 the audit, alias, B05 and live-use decisions, BADR-0030 the deferred owner items). All BADRs are accepted as of 2026-10-20 (BADR-0006 phase breakdown, BADR-0008 one model per question, BADR-0013 benchmark-local .env). Still open and tracked: OQ03 (read Palladion's interface at B04), OQ09 (license, before B08-T07.01), OQ10 (pairings, before B08-T03.01), OQ13 (label audit stance, before B08-T03.01). Open questions OQ01–OQ13 in [risks and open questions](RISKS_AND_OPEN_QUESTIONS.md).
 
 ## What exists in code (B01)
 
@@ -31,6 +31,12 @@ Accepted: BADR-0001 to BADR-0030 (all; BADR-0018 to BADR-0023 are the B02 decisi
   `uv run python -m benchmark.secret_scan --staged`. `make` is not installed and Docker cannot run on the author's machine; Qdrant runs Docker-free under WSL (BADR-0017, launcher built in B04).
 - The live generator proof (3 calls, 3 of 3 approved models answered) is the only provider use so far; the key lives in the gitignored `palladion-benchmark/.env` and has never been printed.
 - Free-tier limits seen: 8,000 tokens per minute on each approved model. Pre-assignment budgets stay null until daily limits are stated (BADR-0015).
+
+## What exists in code (B06)
+
+- `benchmark/llm_proxy.py` (counting proxy: call, token, completion and model caps, pace, local embeddings, per-run bearer token, worst-case charging, stop at a daily limit, timestamped book), `comparators/protocol.py` (worker protocol and the loopback-only guard), `benchmark/adapters/worker.py` (`ComparatorWorker`, `WorkerArm`, `launch_arm`: allow-listed environment, `LITELLM_MODE=PRODUCTION`), `comparators/{hipporag2,graphrag,lightrag}/worker.py` with thin adapters `benchmark/adapters/{hipporag2,graphrag,lightrag}.py`, `benchmark/eval/graph_metrics.py` (four metrics defined, four declared undefined), `benchmark/subset.py` and `scripts/{comparators,build_subset,run_graph_arms}.py` (`--resume-from`, `--reconstruct`), additive contract fields (pin, extraction cost, relation).
+- Key facts: comparators run in their own pinned Python 3.12 environments under gitignored `artifacts/comparators/`; the key stays in the proxy; R7b is FEATURE_NOT_SUPPORTED at the pin (PF07 has since landed in Palladion, so a re-pin is needed); a failed build that names its error is a recorded result; the free tier (200,000 tokens per day per model) stopped the live pilot after R6 reached 63 of 103 chunks (BR39). Matched baseline R0 to R3 ran on `artifacts/fixtures/Ssub60`.
+- Evidence: E-B06-001 to E-B06-005. No graph arm has a measured retrieval result; the benchmark is the owner's private experiment (BADR-0037).
 
 ## What exists in code (B05)
 

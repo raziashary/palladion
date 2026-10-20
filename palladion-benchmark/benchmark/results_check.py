@@ -172,8 +172,11 @@ def _check_comparators(run_dir: Path, config: Mapping[str, Any], arms: Sequence[
             ComparatorPin.from_dict(read_verified(run_dir / name).retrieval_config.get("comparator", {}))
         except (ManifestError, ContractError, OSError, ValueError, KeyError, TypeError):
             findings.append(Finding("a graph arm's manifest has no valid comparator pin", name))
-        stats = builds.get(arm, {}).get("stats")
-        if builds.get(arm, {}).get("status") != "BUILT" or not isinstance(stats, Mapping):
+        record = builds.get(arm, {})
+        stats = record.get("stats")
+        if record.get("status") == "FAILED" and isinstance(record.get("error"), str) and record["error"]:
+            continue  # a build that failed and says why is a result; every pair of the arm is a run state
+        if record.get("status") != "BUILT" or not isinstance(stats, Mapping):
             findings.append(Finding("a graph arm has no recorded index build", "run_config.json"))
         elif missing := [k for k in COST_KEYS if k not in stats]:
             findings.append(Finding(f"a graph arm's index cost lacks {', '.join(missing)} (null means unknown)", arm))

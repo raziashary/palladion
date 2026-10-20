@@ -27,7 +27,6 @@ import asyncio
 import importlib.util
 import json
 import os
-import socket
 import sys
 import urllib.request
 from importlib import metadata
@@ -58,7 +57,10 @@ def _load_protocol() -> Any:
     return module
 
 
-serve = _load_protocol().serve
+_protocol = _load_protocol()
+serve = _protocol.serve
+NetworkRefused = _protocol.NetworkRefused
+guard_network = _protocol.guard_network
 
 # Worker-side switches. Build params carry only corpus, workdir and namespace, so these are fixed here and recorded.
 COMMUNITY_REPORTS = False  # one LLM call per community: too costly for the test corpus
@@ -69,7 +71,6 @@ CHUNK_OVERLAP = 100
 ENCODING = "o200k_base"  # native default; loaded from TIKTOKEN_CACHE_DIR, never downloaded
 LOCAL_LEVEL = 2  # the CLI's default community level for local search
 CREATION_DATE = "2026-10-18T00:00:00Z"  # fixed, so the same corpus always produces the same input rows
-LOOPBACK = frozenset({"127.0.0.1", "::1", "localhost"})
 WORKFLOWS = [
     "load_input_documents",
     "create_base_text_units",
@@ -92,51 +93,12 @@ NATIVE_DEVIATIONS = (
 )
 
 
-class NetworkRefused(OSError):
-    """A non-loopback lookup or connection was attempted. The message is fixed; the host goes to stderr."""
-
-
 class IndexingFailed(RuntimeError):
     """A GraphRAG workflow finished with an error. The workflow names go to stderr, not the protocol."""
 
 
 class NotBuilt(RuntimeError):
     """Retrieval was asked before a successful build, or the environment lacks the proxy settings."""
-
-
-def _is_loopback(host: object) -> bool:
-    return host is None or host == "" or str(host) in LOOPBACK
-
-
-def _refuse(host: object, port: object) -> None:
-    print(f"NETWORK_REFUSED host={host!r} port={port!r}", file=sys.stderr, flush=True)
-    raise NetworkRefused("NETWORK_REFUSED")
-
-
-def guard_network() -> None:
-    """Refuse every name lookup and connection that leaves the loopback interface, for the worker's whole lifetime."""
-    real_getaddrinfo = socket.getaddrinfo
-    real_connect = socket.socket.connect
-    real_connect_ex = socket.socket.connect_ex
-
-    def getaddrinfo(host: Any, port: Any, *args: Any, **kwargs: Any) -> Any:
-        if not _is_loopback(host):
-            _refuse(host, port)
-        return real_getaddrinfo(host, port, *args, **kwargs)
-
-    def connect(self: socket.socket, address: Any) -> None:
-        if isinstance(address, tuple) and not _is_loopback(address[0]):
-            _refuse(address[0], address[1])
-        real_connect(self, address)
-
-    def connect_ex(self: socket.socket, address: Any) -> int:
-        if isinstance(address, tuple) and not _is_loopback(address[0]):
-            _refuse(address[0], address[1])
-        return real_connect_ex(self, address)
-
-    socket.getaddrinfo = getaddrinfo  # type: ignore[assignment]
-    socket.socket.connect = connect  # type: ignore[method-assign]
-    socket.socket.connect_ex = connect_ex  # type: ignore[method-assign]
 
 
 guard_network()

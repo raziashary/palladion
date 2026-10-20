@@ -475,17 +475,19 @@ def test_a_failed_request_is_a_contract_error_but_a_dead_worker_makes_the_arm_un
     view = view_of(s_root)
     with pytest.raises(ContractError):
         arm_over(Failing("WORKER_ValueError"), s_root, tmp_path).retrieve(request(view))
-    for code in ("TIMEOUT", "EXITED", "WORKER_DEAD", "REPLY_TOO_LARGE"):
+    for code in ("EXITED", "WORKER_DEAD", "REPLY_TOO_LARGE"):
         with pytest.raises(ArmUnavailable, match=code):
             arm_over(Failing(code), s_root, tmp_path / code).retrieve(request(view))
+    with pytest.raises(TimeoutError):  # the ledger records TIMEOUT for this, not NOT_RUN
+        arm_over(Failing("TIMEOUT"), s_root, tmp_path / "TIMEOUT").retrieve(request(view))
 
 
-def test_a_hung_comparator_makes_the_arm_unavailable_and_it_stays_so(tmp_path: Path, s_root: Path) -> None:
+def test_a_hung_comparator_is_a_timeout_and_the_arm_is_unavailable_after_it(tmp_path: Path, s_root: Path) -> None:
     with served(Provider(), tmp_path) as server:
         arm = make_arm(tmp_path, server, s_root, query_timeout=1.5)
         arm.build_index(str(s_root / "published"), "track_a")
         view = view_of(s_root)
-        with pytest.raises(ArmUnavailable, match="TIMEOUT"):
+        with pytest.raises(TimeoutError):
             arm.retrieve(request(view, query="HANG"))
         with pytest.raises(ArmUnavailable, match="WORKER_DEAD"):
             arm.retrieve(request(view))
@@ -603,3 +605,110 @@ def test_a_malformed_relation_or_one_citing_a_chunk_outside_the_corpus_is_a_cont
     )
     with pytest.raises(ContractError):
         arm.retrieve(request(view))
+
+
+def test_the_pin_records_what_actually_ran_once_the_index_is_built(tmp_path: Path, s_root: Path) -> None:
+    class Reporting(Scripted):
+        def request(self, op: str, params: Any, *, timeout: float) -> Any:
+            if op == "build":
+                return {"mode": "hybrid", "deviations": ["no rerank model"], "llm": MODEL}
+            return super().request(op, params, timeout=timeout)
+
+    arm = arm_over(Reporting({"hits": []}), s_root, tmp_path)
+    comparator = arm.describe()["comparator"]
+    assert comparator["native_config"] == {"mode": "hybrid", "llm": MODEL}
+    assert comparator["deviations"] == ["no rerank model"]
+    assert comparator["commit"] == "c" * 40 and ComparatorPin.from_dict(comparator).lock_sha256 == "d" * 64
+
+
+def test_the_worker_is_given_absolute_paths_because_it_runs_in_another_directory(
+    tmp_path: Path, s_root: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    worker = Scripted({"hits": []})
+    arm = WorkerArm("R4", worker, PIN, view=view_of(s_root), work_dir=Path("relative-work"), models={}, usage=dict)  # type: ignore[arg-type]
+    arm.build_index(str(s_root / "published"), "track_a")
+    ((_, params),) = worker.asked
+    assert Path(params["corpus"]).is_absolute() and Path(params["workdir"]).is_absolute()
+    assert Path(params["corpus"]).is_file()
+
+
+# ------------------------------------------------------------------ the process is loopback-only; no key is read
+
+
+NETWORK_PROBE = """
+import importlib.util, socket, sys
+spec = importlib.util.spec_from_file_location("p", {protocol!r})
+p = importlib.util.module_from_spec(spec); spec.loader.exec_module(p)
+p.guard_network()
+for host, port in (("example.com", 9), ("127.0.0.1", 9)):
+    try:
+        socket.create_connection((host, port), timeout=2)
+        print(host, "CONNECTED")
+    except p.NetworkRefused:
+        print(host, "REFUSED")
+    except OSError:
+        print(host, "REACHED_NETWORK_LAYER")
+"""
+
+
+def test_the_protocol_guard_refuses_outside_loopback_and_lets_loopback_through() -> None:
+    protocol = Path(__file__).resolve().parents[1] / "comparators" / "protocol.py"
+    done = subprocess.run(
+        [sys.executable, "-I", "-c", NETWORK_PROBE.format(protocol=str(protocol))],
+        capture_output=True, text=True, timeout=60, check=False,
+    )  # fmt: skip
+    assert done.stdout.split() == ["example.com", "REFUSED", "127.0.0.1", "REACHED_NETWORK_LAYER"], done.stderr
+
+
+@pytest.mark.parametrize("name", ["hipporag2", "graphrag", "lightrag"])
+def test_every_comparator_worker_installs_the_guard_before_serving(name: str) -> None:
+    text = (Path(__file__).resolve().parents[1] / "comparators" / name / "worker.py").read_text(encoding="utf-8")
+    assert text.count("guard_network()") == 1 and text.index("guard_network()") < text.index("serve(")
+
+
+def test_the_launcher_switches_off_litellm_reading_a_dotenv_file(tmp_path: Path, s_root: Path) -> None:
+    from benchmark.adapters.worker import launch_arm
+
+    with served(Provider(), tmp_path) as server:
+        arm = launch_arm(
+            "R4", script=STUB, interpreter=Path(sys.executable), server=server, pin=PIN, view=view_of(s_root),
+            work_dir=tmp_path / "work", llm_model=MODEL, embedding_model="local-minilm",
+        )  # fmt: skip
+        try:
+            assert arm._worker._extra_env["LITELLM_MODE"] == "PRODUCTION"
+        finally:
+            arm.close()
+
+
+LITELLM_PROBE = """
+import os, sys
+lines = open({dotenv!r}, encoding="utf-8").read().splitlines()
+names = {{l.split("=", 1)[0].strip() for l in lines if "=" in l and not l.lstrip().startswith("#")}}
+before = set(os.environ)
+import litellm
+print(sorted(n for n in names if n in os.environ and n not in before))
+"""
+
+
+@pytest.mark.parametrize("environment", ["env-graphrag", "env-HippoRAG"])
+def test_importing_litellm_in_a_comparator_environment_does_not_load_the_projects_dotenv(
+    environment: str, tmp_path: Path
+) -> None:
+    root = Path(__file__).resolve().parents[1]
+    interpreter = root / "artifacts" / "comparators" / environment / "Scripts" / "python.exe"
+    if not interpreter.is_file() or not (root / ".env").is_file():
+        pytest.skip("needs the comparator environment and a local .env to plant the key")
+    probe = tmp_path / "probe_litellm.py"  # a script file: python-dotenv only walks up from a file, not from -c
+    probe.write_text(LITELLM_PROBE.format(dotenv=str(root / ".env")), encoding="utf-8")
+    base = {"PATH": os.environ.get("PATH", ""), "SYSTEMROOT": os.environ.get("SYSTEMROOT", "C:\\Windows")}
+
+    def leaked(extra: dict[str, str]) -> str:
+        done = subprocess.run(
+            [str(interpreter), "-I", str(probe)], capture_output=True, text=True, timeout=600, check=False,
+            env={**base, **extra}, cwd=tmp_path,
+        )  # fmt: skip
+        return done.stdout.strip()
+
+    assert leaked({}) != "[]", "positive control: without the switch the import does load the key"
+    assert leaked({"LITELLM_MODE": "PRODUCTION"}) == "[]"

@@ -228,7 +228,7 @@ def test_a_relation_needs_both_names_in_the_chunk_and_the_chunk_in_the_relations
     """Negative controls against the worker's own rule: a missing end, or another text unit, gives no relation."""
     code = RELATION_PROBE.format(worker=str(WORKER))
     env = {
-        "PATH": os.environ.get("PATH", ""), "SYSTEMROOT": os.environ.get("SYSTEMROOT", "C:\Windows"),
+        "PATH": os.environ.get("PATH", ""), "SYSTEMROOT": os.environ.get("SYSTEMROOT", "C:\\Windows"),
         "NLTK_DATA": str(tmp_path), "TIKTOKEN_CACHE_DIR": str(cache_dir),
         "COMPARATOR_PROTOCOL": str(ROOT / "comparators" / "protocol.py"), **WORKER_ENV,
     }  # fmt: skip

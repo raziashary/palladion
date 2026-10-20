@@ -33,6 +33,7 @@ import json
 import os
 import re
 from collections.abc import Coroutine
+from dataclasses import asdict
 from functools import partial
 from importlib import metadata
 from pathlib import Path
@@ -68,6 +69,7 @@ assert _PROTOCOL is not None and _PROTOCOL.loader is not None
 _protocol = importlib.util.module_from_spec(_PROTOCOL)
 _PROTOCOL.loader.exec_module(_protocol)
 serve = _protocol.serve
+_protocol.guard_network()  # the proxy is this process's only route to a model
 
 # The benchmark's pinned embedding model, paraphrase-multilingual-MiniLM-L12-v2 (configs/comparators.yaml).
 EMBEDDING_DIM = 384
@@ -125,6 +127,26 @@ def _read_corpus(path: str) -> list[dict[str, str]]:
     return rows
 
 
+async def _resume_unfinished(rag: LightRAG, ids: set[str]) -> None:
+    """Finish what an earlier attempt in this working directory left half done.
+
+    Inserting a text whose id is already stored only records a failed duplicate and processes nothing, and the
+    pipeline's own scan skips failed documents (retrying them is a manual action of the upstream's server). So the
+    duplicate records are dropped (they would be processed as new documents and pay twice), the failed documents of
+    this corpus are marked pending again, and the pipeline runs over them and over any interrupted ones."""
+    failed = await rag.doc_status.get_docs_by_statuses([DocStatus.FAILED])
+    junk = [k for k, v in failed.items() if k not in ids and "File name already exists" in (v.error_msg or "")]
+    if junk:
+        await rag.doc_status.delete(junk)
+    again = {
+        k: asdict(v) | {"status": DocStatus.PENDING.value, "error_msg": None} for k, v in failed.items() if k in ids
+    }
+    if again:
+        await rag.doc_status.upsert(again)
+    if await rag.doc_status.get_docs_by_statuses([DocStatus.PENDING, DocStatus.PROCESSING]):
+        await rag.apipeline_process_enqueue_documents()
+
+
 def build(params: dict[str, Any]) -> dict[str, Any]:
     """Index the corpus with the upstream pipeline. Exact-duplicate texts are inserted once (see the adapter)."""
     global _INDEX
@@ -148,6 +170,8 @@ def build(params: dict[str, Any]) -> dict[str, Any]:
         working_dir=str(workdir),
         llm_model_func=partial(_complete, model),
         llm_model_name=model,
+        llm_model_max_async=1,  # the proxy dispatches one call at a time; parallel writers also race on Windows
+        max_parallel_insert=1,
         embedding_func=EmbeddingFunc(
             embedding_dim=EMBEDDING_DIM,
             func=partial(openai_embed.func, model=embed_model, base_url=base_url, api_key=api_key),
@@ -156,7 +180,12 @@ def build(params: dict[str, Any]) -> dict[str, Any]:
     index = _Index(rag, loop, {r["chunk_id"]: r["text"] for r in rows}, siblings)
     _run(index, rag.initialize_storages())
     ids = [row["chunk_id"] for row in inserted]
-    _run(index, rag.ainsert([row["text"] for row in inserted], ids=ids, file_paths=ids))
+    _run(index, _resume_unfinished(rag, set(ids)))
+    stored = _run(index, rag.aget_docs_by_ids(ids))
+    new = [row for row in inserted if row["chunk_id"] not in stored]  # a stored id is never inserted again
+    if new:
+        new_ids = [row["chunk_id"] for row in new]
+        _run(index, rag.ainsert([row["text"] for row in new], ids=new_ids, file_paths=new_ids))
     statuses = _run(index, rag.aget_docs_by_ids(ids))
     # The doc-status storage returns each record as a plain mapping; its status is the DocStatus value.
     not_processed = [i for i in ids if i not in statuses or statuses[i].get("status") != DocStatus.PROCESSED.value]

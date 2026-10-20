@@ -392,3 +392,61 @@ def test_a_missing_package_is_reported_by_name_and_never_installed(tmp_path: Pat
     )
     assert done.returncode == 0, done.stderr[-500:]
     assert "REFUSED" in done.stdout and "package-that-does-not-exist" in done.stdout
+
+
+# --------------------------------------------------------------------------- finishing an interrupted build
+
+
+class Truncating(Canned):
+    """The provider's failure seen in the pilot: the completion is cut off at the cap with no content."""
+
+    broken = True
+
+    def post(self, payload: Any) -> TransportResponse:
+        if not self.broken:
+            return super().post(payload)
+        self.payloads.append(dict(payload))
+        body = {
+            "id": "fake", "object": "chat.completion", "created": 0, "model": MODEL,
+            "choices": [{"index": 0, "finish_reason": "length", "message": {"role": "assistant", "content": ""}}],
+            "usage": {"prompt_tokens": 40, "completion_tokens": 700, "total_tokens": 740},
+        }  # fmt: skip
+        return TransportResponse(200, {"content-type": "application/json"}, json.dumps(body).encode())
+
+
+def test_a_build_interrupted_by_provider_failures_is_finished_in_the_same_directory_without_duplicates(
+    tmp_path: Path,
+) -> None:
+    rows = [
+        {"chunk_id": f"c-{i}", "doc_id": f"d-{i}", "text": f"Meridian Switchworks sells product number {i}."}
+        for i in range(4)
+    ]
+    corpus = write_corpus(tmp_path / "corpus.jsonl", rows)
+    workdir = tmp_path / "n"
+    params = {"corpus": str(corpus), "workdir": str(workdir), "namespace": "x"}
+    provider = Truncating()
+    limits = ProxyLimits(
+        max_calls=2000, max_tokens=10_000_000, max_completion_tokens=700, pace_seconds=0.0, models=(MODEL,)
+    )
+    for broken in (True, False):
+        provider.broken = broken
+        proxy = CountingProxy(
+            provider, limits, record_path=tmp_path / f"proxy-{broken}.jsonl",
+            embedder=HashingEncoder().embed_documents, embedding_model=EMBED,
+        )  # fmt: skip
+        running = ProxyServer(proxy, token=TOKEN)
+        running.start()
+        worker = raw_worker(tmp_path, running)
+        try:
+            if broken:
+                with pytest.raises(WorkerError, match="WORKER_LightRagFault"):
+                    worker.request("build", params, timeout=300)
+            else:
+                built = worker.request("build", params, timeout=300)
+                assert built["documents"] == 4
+        finally:
+            worker.stop()
+            running.stop()
+    records = json.loads((workdir / "kv_store_doc_status.json").read_text(encoding="utf-8"))
+    assert sorted(records) == [f"c-{i}" for i in range(4)], "no duplicate record from the second attempt"
+    assert {r["status"] for r in records.values()} == {"processed"}

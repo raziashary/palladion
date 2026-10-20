@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import threading
 import urllib.error
 import urllib.request
@@ -112,11 +113,32 @@ def test_a_call_that_could_overrun_the_token_cap_is_refused_before_it_is_made(tm
     assert proxy.usage()["calls"] == 0, "a refused call does not use a call"
 
 
-def test_a_missing_usage_is_charged_at_the_estimate_never_as_free(tmp_path: Path) -> None:
+def test_a_missing_usage_is_charged_at_the_worst_case_never_as_free(tmp_path: Path) -> None:
     silent = TransportResponse(200, {}, json.dumps({"choices": [{"message": {"content": "x"}}]}).encode())
     proxy = make(Fake(silent), tmp_path)
     assert isinstance(proxy.chat(body()), TransportResponse)
-    assert proxy.spent_tokens > 0
+    usage = proxy.usage()
+    assert usage["prompt_tokens"] == 0 and usage["completion_tokens"] == 0, "the provider reported nothing"
+    assert usage["estimated_tokens"] >= 700, "the full completion cap is charged, and shown apart from reported tokens"
+    assert proxy.spent_tokens == usage["estimated_tokens"]
+
+
+def test_a_provider_refusal_spends_no_tokens_and_a_lost_connection_is_charged_at_the_worst_case(tmp_path: Path) -> None:
+    limited = TransportResponse(429, {}, json.dumps({"error": {"message": "slow down"}}).encode())
+    proxy = make(Fake(limited), tmp_path)
+    assert isinstance(proxy.chat(body()), TransportResponse)
+    assert proxy.usage()["rate_limited"] == 1 and proxy.spent_tokens == 0
+
+    lost = make(Fake(ConnectionError("down")), tmp_path)
+    assert isinstance(lost.chat(body()), Refusal)
+    assert lost.usage()["errors"] == 1 and lost.spent_tokens >= 700
+
+
+def test_every_row_of_the_book_carries_the_time_of_the_call(tmp_path: Path) -> None:
+    proxy = make(Fake(), tmp_path)
+    proxy.chat(body())
+    rows = [json.loads(line) for line in (tmp_path / "proxy.jsonl").read_text(encoding="utf-8").splitlines()]
+    assert rows and all(re.fullmatch(r"\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ", r["at"]) for r in rows)
 
 
 def test_concurrent_callers_cannot_slip_past_the_call_cap(tmp_path: Path) -> None:
@@ -326,3 +348,20 @@ def test_a_short_token_is_refused() -> None:
 
 def test_the_paths_a_comparator_uses_are_the_openai_ones() -> None:
     assert (CHAT_PATH, EMBEDDINGS_PATH) == ("/v1/chat/completions", "/v1/embeddings")
+
+
+def test_a_daily_token_limit_stops_the_run_instead_of_spending_calls_on_refusals(tmp_path: Path) -> None:
+    daily = TransportResponse(
+        429,
+        {},
+        json.dumps({"error": {"message": "Rate limit reached ... on tokens per day (TPD): Limit 200000"}}).encode(),
+    )
+    minute = TransportResponse(429, {}, json.dumps({"error": {"message": "on tokens per minute (TPM)"}}).encode())
+    transport = Fake(minute, daily, reply())
+    proxy = make(transport, tmp_path, max_calls=10)
+    assert isinstance(proxy.chat(body()), TransportResponse), "a per-minute limit is passed on and the run goes on"
+    assert proxy.usage()["calls"] == 1
+    assert isinstance(proxy.chat(body()), TransportResponse)  # the daily limit is passed on once
+    refused = proxy.chat(body())
+    assert isinstance(refused, Refusal) and refused.code == "DAILY_LIMIT_REACHED"
+    assert proxy.usage()["calls"] == 2 and len(transport.payloads) == 2, "no further call is made or counted"

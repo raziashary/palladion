@@ -16,6 +16,7 @@ returns no edges has no false-association rate, not a perfect one.
 
 from __future__ import annotations
 
+import re
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 
@@ -119,6 +120,12 @@ def _cited_text(corpus: PublishedCorpus, citation: str) -> str | None:
     return None if span is None else doc.text[span[0] : span[1]]
 
 
+def _mentions(body: str, name: str) -> bool:
+    """Whether the folded name occurs in the folded text as whole words (an empty name is never grounded)."""
+    needle = fold(name)
+    return bool(needle) and re.search(rf"(?<!\w){re.escape(needle)}(?!\w)", body) is not None
+
+
 def score_edges(edges: Iterable[Mapping[str, object]], corpus: PublishedCorpus) -> EdgeScores:
     total = resolved = grounded = 0
     for edge in edges:
@@ -129,7 +136,7 @@ def score_edges(edges: Iterable[Mapping[str, object]], corpus: PublishedCorpus) 
             continue
         resolved += 1
         body = fold(" ".join(t for t in texts if t is not None))
-        if fold(str(edge["subject"])) in body and fold(str(edge["object"])) in body:
+        if _mentions(body, str(edge["subject"])) and _mentions(body, str(edge["object"])):
             grounded += 1
     return EdgeScores(total, resolved, grounded)
 

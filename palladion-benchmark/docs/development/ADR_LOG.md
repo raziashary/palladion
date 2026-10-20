@@ -656,3 +656,127 @@ Dispositions that change or narrow the wording above (E-B05-004): **item 7**: a 
 **My answer (editable):** Accepted as above.
 
 **Verification:** E-B06-001 holds the adversary receipt and dispositions; the plan, gates and checker reflect the new cards; each later B06 card closes only with its own proof.
+
+## BADR-0032 — Live extraction for the graph comparators' cold-state pilot (B06-T06.01)
+
+**Status:** ACCEPTED; 2026-10-20.
+
+**Authority:** Owner answers in chat, 2026-10-20: subset "60 documents, 12 questions"; comparators "All three, one after another"; limits "300 calls, 900k tokens, 20 s pace".
+
+**Question:** What may the live cold-state run of R4, R5 and R6 spend, and on what?
+
+**Why:** E-B06-001 showed the full tier does not fit the free tier. The owner chose a matched subset and stated limits so the pilot measures real extraction cost and failures without a runaway.
+
+**Options:** a smaller or larger subset (36 or 100 documents); LightRAG alone first; other call and token limits.
+
+**Recommendation:** the options chosen.
+
+**What affects what:** per comparator, in the order R6, R4, R5: at most 300 provider calls and 900,000 tokens (prompt plus completion as the provider reports them), at least 20 seconds between calls, completion capped at 700 tokens, model `qwen/qwen3.8-27b` only (the proxy refuses any other and has no failover), no judge call, no retry beyond what counts against the call cap (a rate-limited and a failed call each use a call). Enforced outside the comparator by the counting proxy; the proxy refuses everything once a cap is reached and a comparator that cannot finish indexing inside its cap is reported as FAILED with its spend, never extended. Embeddings are local and spend nothing. The subset is `artifacts/fixtures/Ssub60`: 12 questions, 60 documents, 103 chunks (BADR-0031 rule, seed 7). Any further live use, a larger subset or a second attempt needs a new owner instruction.
+
+**My answer (editable):** Authorized as above for one run per comparator.
+
+**Verification:** each run directory holds `proxy.jsonl` (one row per call) and `spend.json` (calls, tokens, refusals against the limits); E-B06-004 records the counts and failures.
+
+## BADR-0033 — Resume the R6 pilot on gpt-oss after a per-minute output-token wall (B06-T06.01)
+
+**Status:** ACCEPTED; 2026-10-20.
+
+**Authority:** Owner answers in chat, 2026-10-20: "look cant we just resume this? and is the rate limit only to qwen models? you know it is fine if we switch models as well"; model "gpt oss 120B, if it hits the same problem then GPT OSS 20B"; cap "300 calls, 900k tokens".
+
+**Question:** The first full R6 attempt (run directory now `artifacts/runs/g-r6-qwen-stopped`, qwen) stopped by me at 243 calls: 80 OK, 163 rate-limited (HTTP 429), about 211,000 tokens, the provider's answer being a per-minute output-token limit of 1,000 for that model. How is R6 finished?
+
+**Why:** Calls that were rate-limited counted against BADR-0032's cap and bought nothing; Groq limits are per model; LightRAG keeps its finished extractions on disk, so the work already paid for need not be repeated.
+
+**Options:** record R6 as failed; wait and retry on qwen; resume on a different approved model; restart cold.
+
+**Recommendation:** the option chosen.
+
+**What affects what:** a new run `g-r6-b` copies the comparator state of `g-r6` (`--resume-from`; `g-r6-qwen-stopped` stays as it was) and finishes extraction on `openai/gpt-oss-120b`; only if that model also hits a wall, one further resumed run on `openai/gpt-oss-20b`. One model per run (the proxy still refuses any other and has no failover). Each run has its own authorization of at most 300 calls, 900,000 tokens, at least 20 s between calls, completion capped at 700, no judge call; rate-limited calls count. The index therefore mixes models (qwen for the first 80 calls, then gpt-oss) and the retrieval-time keyword calls use the resumed model; this is a recorded deviation and the result is a pilot, not a like-for-like score. Combined spend is reported across `g-r6-qwen-stopped` and the resumed runs. R4 and R5 keep their own 300/900k authorization each and are not yet run. Any further attempt needs a new owner instruction.
+
+**My answer (editable):** Authorized as above.
+
+**Verification:** each run directory holds `proxy.jsonl` and `spend.json` (with `resumed_from`); E-B06-004 reports both segments.
+
+## BADR-0034 — R6 resumed on qwen at a 60 s pace after the gpt-oss attempt failed (B06-T06.01)
+
+**Status:** ACCEPTED; 2026-10-20.
+
+**Authority:** Owner answer in chat, 2026-10-20: "Resume on qwen, 60 s pace".
+
+**Question:** The `g-r6-b` run (BADR-0033, `openai/gpt-oss-120b`) made 13 calls and every one was cut off at the 700-token completion cap with empty content (about 698 reasoning tokens each), so the build FAILED. How is R6 continued?
+
+**Why:** gpt-oss models spend the whole completion budget on hidden reasoning, so they cannot answer inside the owner's 700 cap; qwen answered 80 calls; its wall was 1,000 output tokens per minute, and with each call reserving up to 700, one call per 60 s stays under it.
+
+**Options:** resume on qwen at 60 s; raise the cap to 2000 on gpt-oss; stop and record R6 as failed.
+
+**Recommendation:** the option chosen.
+
+**What affects what:** run `g-r6-c` copies the comparator state of `g-r6-b` (a superset of the qwen run's finished extractions) and finishes on `qwen/qwen3.8-27b`, at most 300 calls, 900,000 tokens, 60 s between calls, completion capped at 700, no failover, rate-limited calls count. The gpt-oss-20b fallback of BADR-0033 is withdrawn (same reasoning behavior). Spend across `g-r6-qwen-stopped` (243 calls), `g-r6-b` (13) and `g-r6-c` is reported together. Any further attempt needs a new owner instruction.
+
+**My answer (editable):** Authorized as above. Owner, 2026-10-20: the "300 calls, 900k tokens" of BADR-0032 means per run; the 410 calls of the six R6 runs are accepted as within it.
+
+**Verification:** `proxy.jsonl` and `spend.json` in each run directory; E-B06-004.
+
+**Amendment, 2026-10-20 (BADR-0034):** run `g-r6-c` made no provider call and failed to build: the upstream skips failed documents when a stored id is inserted again, so nothing was reprocessed (a defect of the benchmark's LightRAG worker, not of the provider). The worker now marks this corpus's failed documents pending, drops the duplicate records, inserts only ids not yet stored, and runs LightRAG with one model call and one insert at a time (the proxy dispatches one call at a time, and parallel writers collided on Windows with "access denied" in the first run). Tested with a provider that truncates, then a provider that answers, over one working directory. The same authorization (300 calls, 900,000 tokens, 60 s pace, qwen) is used once more as run `g-r6-d`, resumed from `g-r6-c`; no call was spent by `g-r6-c`.
+
+## BADR-0035 — R6 resumed on gpt-oss-120b with a 2,000-token completion cap after qwen's daily limit (B06-T06.01)
+
+**Status:** ACCEPTED; 2026-10-20.
+
+**Authority:** Owner answer in chat, 2026-10-20: "Allow gpt-oss with 2000 cap".
+
+**Question:** Run `g-r6-d` (qwen, 60 s pace) made 31 provider calls (the book has 43 rows, 12 of them local embeddings), 3 answered and the rest rejected by Groq's limit of 200,000 tokens per day for that model, which the earlier attempts had used up. How does the R6 pilot continue?
+
+**Why:** R6 has 36 of 103 chunks indexed. qwen has no quota left today; gpt-oss models have their own quota but spend the 700-token cap on hidden reasoning (BADR-0034), so they need a larger completion cap.
+
+**Options:** wait for the quota; record the pilot as quota-blocked; gpt-oss with a larger cap.
+
+**Recommendation:** the option chosen (the owner's).
+
+**What affects what:** run `g-r6-e` is resumed from `g-r6-d` and uses `openai/gpt-oss-120b` only, with the completion cap raised from 700 to 2,000 for this run (the owner's explicit change), at most 300 calls and 900,000 tokens (unchanged), 30 s between calls (above the 20 s minimum), no failover, rate-limited calls counted. The index mixes models and cap settings (qwen for the first part; gpt-oss after), a recorded deviation: this is a pilot, not a like-for-like score. Spend across all R6 runs (`g-r6-qwen-stopped`, `g-r6-b`, `g-r6-d`, `g-r6-e`) is reported together. R4 and R5 are not run on this authorization. A further attempt needs a new owner instruction.
+
+**My answer (editable):** Authorized as above.
+
+**Verification:** `proxy.jsonl` and `spend.json` of each run; E-B06-004.
+
+## BADR-0036 — R6 resumed on gpt-oss-20b after gpt-oss-120b's daily limit (B06-T06.01)
+
+**Status:** ACCEPTED; 2026-10-20.
+
+**Authority:** Owner answer in chat, 2026-10-20: "Finish on gpt-oss-20b".
+
+**Question:** Run `g-r6-e` (gpt-oss-120b, completion cap 2,000, 30 s pace) made about 80 provider calls and about 251,000 tokens (65 answered, the rest rejected) before Groq's limit of 200,000 tokens per day for that model stopped it; R6 had 58 of 103 chunks indexed. How is R6 finished?
+
+**Why:** Each model has its own daily quota; gpt-oss-20b is the owner-approved smaller model (ADR-0036 of the system project) and has not been used today.
+
+**Options:** gpt-oss-20b; record the pilot and run later; wait for the quota window.
+
+**Recommendation:** the option chosen (the owner's).
+
+**What affects what:** run `g-r6-f` is resumed from `g-r6-e` and uses `openai/gpt-oss-20b` only, completion cap 2,000, at most 300 calls and 900,000 tokens, 30 s between calls, no failover, rate-limited calls counted. The R6 index now mixes three models (qwen, gpt-oss-120b, gpt-oss-20b), a recorded deviation; the result remains a pilot, not a like-for-like score. If this model also reaches a limit the run is stopped and R6 is reported as partial. R4 and R5 are not run on this authorization. A further attempt needs a new owner instruction.
+
+**My answer (editable):** Authorized as above.
+
+**Verification:** `proxy.jsonl` and `spend.json` of each R6 run; E-B06-004.
+
+## BADR-0037 — The benchmark is the owner's private experiment, scoped to the free tier (standing posture)
+
+**Status:** ACCEPTED; 2026-10-20.
+
+**Authority:** Owner message in chat, 2026-10-20: "it is fine doing switching models for testing, or even using your own subagents or even stopping some of the work. Palladion is simply an experiment of mine and palladion-benchmark is my own way of seeing did my hypothesis work, I will not claim it publicly this is a proper research paper ... the benchmark can be suited and tailored as per what we have and as per the constraints (I'm not buying API keys for side projects)."
+
+**Question:** How strict is the benchmark's scope, given a private experiment on free-tier quotas?
+
+**Why:** Free-tier daily token limits (200,000 per model per day) stopped three consecutive R6 attempts; the owner does not intend a public research claim.
+
+**Options:** keep the full-protocol scope and wait for quota; or tailor the scope to what the free tier allows.
+
+**Recommendation:** the second (the owner's).
+
+**What affects what:** (1) Switching among the three approved Groq models for live runs is allowed without asking each time, recorded per run (which model, which cap), never hidden. (2) Live comparator runs are best-effort pilots: a comparator that cannot finish within the free quota is reported as partial or quota-blocked with its spend, not extended with new money and not waited on; stopping a run early is allowed. (3) The matched subset, caps and pacing may be tailored to the quota. (4) Subagents may be used beyond the adversary and auditor where useful (the model rule for them is unchanged: Haiku 5.5). (5) Unchanged: no fabricated, imputed or silently dropped result; failures and partial runs are results; no secret in a repository or a subagent; no purchase of keys; the information barrier; claims stay descriptive and private (no "best RAG", no public research claim). Wording that promises seal-grade or publishable rigor in the README and report (B08-T07.01) is to be written as a private experiment with its limits.
+
+**My answer (editable):** Accepted as above.
+
+**Verification:** E-B06-004 reports each R6 segment with its model; B08 documents carry the private-experiment framing.
+
+**Closure, 2026-10-20 (BADR-0037):** owner chose "Accept partial, close B06": B06-T06.01 is closed with its limits written in E-B06-004 and E-B06-005 (R6 63 of 103 chunks, no query answered; R4 and R5 not attempted; R7a not run on the subset). Completing the live graph runs stays optional (BR39).

@@ -42,7 +42,7 @@ def build_hipporag2_arm(
     condition: Condition = Condition.C2,
     chunk_words: int = DEFAULT_CHUNK_WORDS,
     build_timeout: float = 3600.0,
-    query_timeout: float = 120.0,
+    query_timeout: float = 100.0,
 ) -> WorkerArm:
     """Start the HippoRAG 2 worker in its environment, wired to the proxy, and return arm R4."""
     return launch_arm(

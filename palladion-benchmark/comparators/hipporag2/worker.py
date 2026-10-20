@@ -47,6 +47,7 @@ assert _protocol_spec is not None and _protocol_spec.loader is not None
 _protocol = importlib.util.module_from_spec(_protocol_spec)
 _protocol_spec.loader.exec_module(_protocol)
 serve = _protocol.serve
+_protocol.guard_network()  # the proxy is this process's only route to a model
 
 
 class RecognitionMemoryError(RuntimeError):

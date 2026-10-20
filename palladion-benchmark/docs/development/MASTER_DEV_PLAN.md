@@ -920,12 +920,12 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
 
 <a id="b06-t06-01"></a>
 
-- [ ] **B06-T06.01 — Cold-state Track A run for graph arms on a matched subset**
-  - **Files:** `palladion-benchmark/benchmark/subset.py`, `palladion-benchmark/scripts/build_subset.py`, `palladion-benchmark/tests/test_subset.py`, `palladion-benchmark/docs/development/EVIDENCE_LOG.md`, `palladion-benchmark/docs/development/PROGRESS.md`.
+- [x] **B06-T06.01 — Cold-state Track A run for graph arms on a matched subset**
+  - **Files:** `palladion-benchmark/benchmark/subset.py`, `palladion-benchmark/scripts/build_subset.py`, `palladion-benchmark/scripts/run_graph_arms.py`, `palladion-benchmark/tests/test_subset.py`, `palladion-benchmark/tests/test_run_graph_arms.py`, `palladion-benchmark/docs/development/EVIDENCE_LOG.md`, `palladion-benchmark/docs/development/PROGRESS.md`.
   - **Depends:** B06-T01.01, B06-T02.01, B06-T03.01, B06-T04.01, B06-T05.01, OQ14.
   - **Change:** Run R4 to R6 from cold on a seeded subset of S (about 100 documents chosen by a recorded rule, with the questions they support) under the owner's call, token and model limits, and run R0 to R3 and R7a on the same subset so the comparison is matched. Cold means the working directory and every cache cleared and recorded. Report indexing time, extraction calls, tokens and storage beside query cost; label it a pilot on the smoke split; no ranking claim. The full S tier is not run on the free tier (estimated 4 million tokens and 8 hours per system).
   - **Proof:** MEASUREMENT; BG-TRACKA, BG-FAIR; the subset rule and its limits are recorded; indexing cost is reported with query cost; unsupported capabilities and R7b are listed; calls never exceed the owner's cap.
-  - **Evidence:** Not yet executed.
+  - **Evidence:** E-B06-004, E-B06-005; closed with limits by the owner (BADR-0037): R6 63 of 103 chunks over 410 calls, R4 and R5 not attempted, R0 to R3 matched on the subset, no ranking claim.
 
 ### Atomic tasks — B07
 

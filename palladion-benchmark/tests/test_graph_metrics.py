@@ -171,6 +171,17 @@ def test_matching_is_case_and_whitespace_insensitive(
     assert score_edges(shouted, s_published_corpus).false_association_rate == 0.0
 
 
+def test_an_endpoint_that_is_only_part_of_a_word_or_empty_is_not_grounded(
+    grounded: list[dict[str, Any]], s_published_corpus: PublishedCorpus
+) -> None:
+    whole = grounded[0]
+    assert score_edges([whole], s_published_corpus).false_association_rate == 0.0, "positive control: the word itself"
+    fragment = {**whole, "subject": whole["subject"][1:-1]}  # inside the word, but not a word of the text
+    assert score_edges([fragment], s_published_corpus).false_association_rate == 1.0
+    empty = {**whole, "object": "  "}
+    assert score_edges([empty], s_published_corpus).false_association_rate == 1.0
+
+
 def test_only_candidates_that_carry_a_relation_contribute_edges() -> None:
     edge = {"subject": "a", "predicate": "b", "object": "c", "supporting_ids": ["D#1.1"]}
     plain = make_candidate("text", 1)

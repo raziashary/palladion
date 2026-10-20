@@ -227,10 +227,24 @@ def test_the_validator_rejects_a_cost_record_that_omits_a_field_but_accepts_an_e
     assert len(found) == 1
 
 
-def test_a_failed_build_is_not_a_recorded_build(s_root: Path, tmp_path: Path) -> None:
+def test_a_failed_build_that_does_not_say_why_is_not_a_recorded_build(s_root: Path, tmp_path: Path) -> None:
     out = tmp_path / "failed"
     run_graph(s_root, out, GraphStub(PublishedView.load(s_root / "published")), built=False)
     assert any("no recorded index build" in f.rule for f in validate_run(out, root=s_root))
+
+
+def test_a_failed_build_that_names_its_error_is_a_recorded_result(
+    graph_run: Path, s_root: Path, tmp_path: Path
+) -> None:
+    copy = tmp_path / "run"
+    shutil.copytree(graph_run, copy)
+    config = json.loads((copy / "run_config.json").read_text(encoding="utf-8"))
+    config["builds"] = [{"arm": config["builds"][0]["arm"], "status": "FAILED", "error": "ArmUnavailable"}]
+    (copy / "run_config.json").write_text(json.dumps(config), encoding="utf-8")
+    assert not any("index build" in f.rule or "index cost" in f.rule for f in validate_run(copy, root=s_root))
+    config["builds"][0]["error"] = ""
+    (copy / "run_config.json").write_text(json.dumps(config), encoding="utf-8")
+    assert any("no recorded index build" in f.rule for f in validate_run(copy, root=s_root))
 
 
 def test_a_run_without_graph_arms_is_unchanged_by_the_new_checks(s_root: Path, tmp_path: Path) -> None:

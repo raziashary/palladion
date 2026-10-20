@@ -258,7 +258,7 @@ class WorkerArm:
         chunk_words: int = DEFAULT_CHUNK_WORDS,
         unsupported: Sequence[str] = (),
         build_timeout: float = 3600.0,
-        query_timeout: float = 120.0,
+        query_timeout: float = 100.0,
     ) -> None:
         self.arm_id = arm_id
         self._worker = worker
@@ -289,9 +289,9 @@ class WorkerArm:
         except ContractError:
             raise AdapterError("the corpus handed to a comparator contains a gold-like marker") from None
         self._work_dir.mkdir(parents=True, exist_ok=True)
-        corpus_path = self._work_dir / "corpus.jsonl"
+        corpus_path = (self._work_dir / "corpus.jsonl").resolve()  # the worker runs in another directory
         corpus_path.write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows), encoding="utf-8")
-        native_dir = self._work_dir / "native"
+        native_dir = (self._work_dir / "native").resolve()
         before = dict(self._usage())
         started = time.perf_counter()
         try:
@@ -303,6 +303,16 @@ class WorkerArm:
         except WorkerError as exc:
             raise ArmUnavailable(f"{self.arm_id} could not build its index: {exc.code}") from None
         after = dict(self._usage())
+        if isinstance(native, dict):  # the pin now records what actually ran: the native configuration and deviations
+            reported = native.get("deviations")
+            self._pin = ComparatorPin(
+                self._pin.repository,
+                self._pin.commit,
+                self._pin.lock_sha256,
+                self._pin.interpreter,
+                {k: v for k, v in native.items() if k != "deviations"},
+                tuple(str(d) for d in reported) if isinstance(reported, list) else self._pin.deviations,
+            )
         self._chunks = {c.chunk_id: c for c in chunks}
         self._stats = {
             "build_ms": (time.perf_counter() - started) * 1000.0,
@@ -328,6 +338,8 @@ class WorkerArm:
                 "retrieve", {"query": request.query, "limit": wanted}, timeout=self._query_timeout
             )
         except WorkerError as exc:
+            if exc.code == "TIMEOUT":  # a query that overran is a TIMEOUT result, not an arm that was never available
+                raise TimeoutError(f"{self.arm_id} did not answer within {self._query_timeout:g} s") from None
             if exc.code in _UNAVAILABLE:
                 raise ArmUnavailable(f"{self.arm_id} worker failed: {exc.code}") from None
             raise ContractError(f"{self.arm_id} could not answer: {exc.code}") from None
@@ -429,14 +441,15 @@ def launch_arm(
     condition: Condition = Condition.C2,
     chunk_words: int = DEFAULT_CHUNK_WORDS,
     build_timeout: float = 3600.0,
-    query_timeout: float = 120.0,
+    query_timeout: float = 100.0,
+    extra_env: Mapping[str, str] | None = None,
 ) -> WorkerArm:
     """Start a comparator's worker in its own environment, wired to the proxy, and return the arm that drives it.
 
     The worker gets the proxy's address and per-run token, the two model names, and the directory holding
     the path of ``comparators/protocol.py`` in ``COMPARATOR_PROTOCOL``. It never gets the provider key.
     """
-    env = server.environment(llm_model=llm_model, embedding_model=embedding_model)
+    env = {**(extra_env or {}), **server.environment(llm_model=llm_model, embedding_model=embedding_model)}
     comparators = Path(__file__).resolve().parents[2] / "comparators"
     # Not PYTHONPATH: a directory named like the package (comparators/lightrag) would shadow the installed one.
     env["COMPARATOR_PROTOCOL"] = str(comparators / "protocol.py")
@@ -452,6 +465,9 @@ def launch_arm(
             "ANONYMIZED_TELEMETRY": "False",
             "DO_NOT_TRACK": "1",
             "LITELLM_LOCAL_MODEL_COST_MAP": "True",
+            # litellm otherwise loads the first .env it finds above its own directory on import, and that is this
+            # project's .env with the provider key; PRODUCTION is its documented switch for not reading one.
+            "LITELLM_MODE": "PRODUCTION",
         }
     )
     work_dir.mkdir(parents=True, exist_ok=True)

@@ -22,24 +22,53 @@ REQUIRED = (
     ROOT + "AGENTS.md",
     ROOT + "docs/README.md",
     VISION,
-    *(DEV + name + ".md" for name in (
-        "MASTER_DEV_PLAN", "GOAL", "ADR_LOG", "TESTING_GATES", "RESEARCH_PROTOCOL",
-        "REQUIREMENTS_TRACEABILITY", "PROJECT_MAP", "PROJECT_MEMORY", "PROJECT_LEARNING",
-        "RISKS_AND_OPEN_QUESTIONS", "PROGRESS", "EVIDENCE_LOG",
-    )),
+    *(
+        DEV + name + ".md"
+        for name in (
+            "MASTER_DEV_PLAN",
+            "GOAL",
+            "ADR_LOG",
+            "TESTING_GATES",
+            "RESEARCH_PROTOCOL",
+            "REQUIREMENTS_TRACEABILITY",
+            "PROJECT_MAP",
+            "PROJECT_MEMORY",
+            "PROJECT_LEARNING",
+            "RISKS_AND_OPEN_QUESTIONS",
+            "PROGRESS",
+            "EVIDENCE_LOG",
+        )
+    ),
 )
 # Paths a card may own besides the protocol tree (BADR-0010) and the development suite.
 EXTRA_FILES = {
-    ROOT + "README.md", ROOT + "AGENTS.md", ROOT + "docs/README.md",
-    ROOT + "benchmark/generator.py", ROOT + "tests/test_generator_pool.py", ROOT + "docs/dataset_card.md",
-    ROOT + "benchmark/secret_scan.py", ROOT + "tests/test_secret_scan.py", ROOT + "benchmark/config.py",
-    ROOT + "scripts/qdrant_server.py", ROOT + "tests/test_qdrant_launcher.py",
-    ROOT + "tests/test_world.py", ROOT + "tests/test_documents.py", ROOT + "tests/test_live_api.py",
+    ROOT + "README.md",
+    ROOT + "AGENTS.md",
+    ROOT + "docs/README.md",
+    ROOT + "benchmark/generator.py",
+    ROOT + "tests/test_generator_pool.py",
+    ROOT + "docs/dataset_card.md",
+    ROOT + "benchmark/secret_scan.py",
+    ROOT + "tests/test_secret_scan.py",
+    ROOT + "benchmark/config.py",
+    ROOT + "scripts/qdrant_server.py",
+    ROOT + "tests/test_qdrant_launcher.py",
+    ROOT + "tests/test_world.py",
+    ROOT + "tests/test_documents.py",
+    ROOT + "tests/test_live_api.py",
     ROOT + "tests/test_generate_data.py",
-    ROOT + "benchmark/fixtures/answer_gold.py", ROOT + "tests/test_answer_gold.py", ROOT + "tests/test_citations.py",
-    ROOT + "benchmark/eval/claims.py", ROOT + "tests/test_claims.py", ROOT + "tests/test_policy.py",
-    ROOT + "tests/test_abstention.py", ROOT + "tests/test_judge_audit.py", ROOT + "benchmark/track_b.py",
-    ROOT + "tests/test_track_b.py", ROOT + "scripts/score_track_b.py", ROOT + "benchmark/eval/score_answers.py",
+    ROOT + "benchmark/fixtures/answer_gold.py",
+    ROOT + "tests/test_answer_gold.py",
+    ROOT + "tests/test_citations.py",
+    ROOT + "benchmark/eval/claims.py",
+    ROOT + "tests/test_claims.py",
+    ROOT + "tests/test_policy.py",
+    ROOT + "tests/test_abstention.py",
+    ROOT + "tests/test_judge_audit.py",
+    ROOT + "benchmark/track_b.py",
+    ROOT + "tests/test_track_b.py",
+    ROOT + "scripts/score_track_b.py",
+    ROOT + "benchmark/eval/score_answers.py",
     ROOT + "tests/test_score_answers.py",
     ROOT + "tests/test_graph_contracts.py",
     ROOT + "benchmark/adapters/worker.py",
@@ -49,6 +78,8 @@ EXTRA_FILES = {
     ROOT + "benchmark/subset.py",
     ROOT + "scripts/build_subset.py",
     ROOT + "tests/test_subset.py",
+    ROOT + "scripts/run_graph_arms.py",
+    ROOT + "tests/test_run_graph_arms.py",
     ROOT + "tests/comparator_stub.py",
     ROOT + "tests/test_llm_proxy.py",
     ROOT + "scripts/comparators.py",
@@ -63,16 +94,43 @@ EXTRA_FILES = {
     ROOT + "tests/test_graph_arms.py",
     ROOT + "benchmark/eval/graph_metrics.py",
     ROOT + "tests/test_graph_metrics.py",
-    ROOT + "benchmark/fixtures/phrasebook.py", ROOT + "benchmark/fixtures/artifacts.py",
+    ROOT + "benchmark/fixtures/phrasebook.py",
+    ROOT + "benchmark/fixtures/artifacts.py",
     ROOT + "benchmark/fixtures/question_gen.py",
-    ROOT + "benchmark/eval/score_run.py", ROOT + "tests/test_score_run.py", ROOT + "tests/test_cost_latency.py", ROOT + "tests/test_tables.py", ROOT + "tests/test_palladion_adapter.py", ROOT + "tests/test_build_indices.py", ROOT + "scripts/score_track_a.py", ROOT + "tests/test_run_track_a.py", ROOT + "tests/test_validate_results.py", ROOT + "tests/test_adapters_common.py", ROOT + "tests/test_adapter_pins.py", ROOT + "tests/test_bm25.py", ROOT + "tests/test_dense.py", ROOT + "tests/test_hybrid.py", ROOT + "scripts/palladion_runtime.py", ROOT + "tests/test_palladion_runtime.py", ROOT + "benchmark/adapters/__init__.py", ROOT + "benchmark/adapters/common.py", ROOT + "benchmark/adapters/models.py", ROOT + "benchmark/track_a.py", ROOT + "benchmark/results_check.py", ROOT + "tests/test_evidence_metrics.py",
+    ROOT + "benchmark/eval/score_run.py",
+    ROOT + "tests/test_score_run.py",
+    ROOT + "tests/test_cost_latency.py",
+    ROOT + "tests/test_tables.py",
+    ROOT + "tests/test_palladion_adapter.py",
+    ROOT + "tests/test_build_indices.py",
+    ROOT + "scripts/score_track_a.py",
+    ROOT + "tests/test_run_track_a.py",
+    ROOT + "tests/test_validate_results.py",
+    ROOT + "tests/test_adapters_common.py",
+    ROOT + "tests/test_adapter_pins.py",
+    ROOT + "tests/test_bm25.py",
+    ROOT + "tests/test_dense.py",
+    ROOT + "tests/test_hybrid.py",
+    ROOT + "scripts/palladion_runtime.py",
+    ROOT + "tests/test_palladion_runtime.py",
+    ROOT + "benchmark/adapters/__init__.py",
+    ROOT + "benchmark/adapters/common.py",
+    ROOT + "benchmark/adapters/models.py",
+    ROOT + "benchmark/track_a.py",
+    ROOT + "benchmark/results_check.py",
+    ROOT + "tests/test_evidence_metrics.py",
     ROOT + "tests/test_retrieval_metrics.py",
     ROOT + "tests/conftest.py",
-    ROOT + "benchmark/fixtures/entities.py", ROOT + "benchmark/fixtures/knowledge.py",
+    ROOT + "benchmark/fixtures/entities.py",
+    ROOT + "benchmark/fixtures/knowledge.py",
     ROOT + "benchmark/fixtures/operations.py",
-    ROOT + "benchmark/fixtures/audit.py", ROOT + "tests/test_partitions.py", ROOT + "tests/test_label_audit.py",
-    ROOT + "tests/test_config_loader.py", ROOT + "tests/test_run_manifest.py",
-    ROOT + "tests/test_runner.py", ROOT + "tests/test_cli.py",
+    ROOT + "benchmark/fixtures/audit.py",
+    ROOT + "tests/test_partitions.py",
+    ROOT + "tests/test_label_audit.py",
+    ROOT + "tests/test_config_loader.py",
+    ROOT + "tests/test_run_manifest.py",
+    ROOT + "tests/test_runner.py",
+    ROOT + "tests/test_cli.py",
 }
 PHASES = [f"B{n:02d}" for n in range(10)]
 ARMS = {"R0", "R1", "R2", "R3", "R4", "R5", "R6", "R7", "R7a", "R7b", "E0", "E1", "E2", "E3", "E4"}
@@ -87,8 +145,17 @@ CARD = re.compile(
     re.MULTILINE | re.DOTALL,
 )
 FIELDS = ("Files", "Depends", "Change", "Proof")
-ADR_FIELDS = ("Status", "Authority", "Question", "Why", "Options", "Recommendation",
-              "What affects what", "My answer (editable)", "Verification")
+ADR_FIELDS = (
+    "Status",
+    "Authority",
+    "Question",
+    "Why",
+    "Options",
+    "Recommendation",
+    "What affects what",
+    "My answer (editable)",
+    "Verification",
+)
 
 
 def prose(text: str) -> str:
@@ -181,8 +248,13 @@ def validate_atomic_register(plan: str, vision: str, parents: set[str]) -> list[
             errors.append(f"{ident}: no exact owning file paths")
         for path in files:
             in_scope = path.startswith(ROOT) and ".." not in Path(path).parts
-            allowed = path in planned or path in REQUIRED or path in EXTRA_FILES or path == DEV + "check_docs.py" or path in {
-                ROOT + "pyproject.toml", ROOT + "uv.lock", ROOT + ".gitignore"}
+            allowed = (
+                path in planned
+                or path in REQUIRED
+                or path in EXTRA_FILES
+                or path == DEV + "check_docs.py"
+                or path in {ROOT + "pyproject.toml", ROOT + "uv.lock", ROOT + ".gitignore"}
+            )
             if not in_scope:
                 errors.append(f"{ident}: owning file outside the benchmark folder: {path}")
             elif not allowed:
@@ -240,7 +312,7 @@ def validate_atomic_register(plan: str, vision: str, parents: set[str]) -> list[
             writers.setdefault(path, []).append(ident)
     for path, idents in sorted(writers.items()):
         for i, first in enumerate(idents):
-            for second in idents[i + 1:]:
+            for second in idents[i + 1 :]:
                 if first not in ancestors(second) and second not in ancestors(first):
                     errors.append(f"Unordered writers of {path}: {first} and {second}")
     return errors
@@ -390,7 +462,9 @@ def validate(documents: dict[str, str]) -> list[str]:
             errors.append(f"{phase} is DONE in PROGRESS but has unchecked cards")
         if rows[phase] in {"PLANNED", "DEFERRED"} and done:
             errors.append(f"{phase} is {rows[phase]} in PROGRESS but has checked cards")
-    gate_rows = set(re.findall(r"^\| (BG-[A-Z0-9]+) \| (?:NOT_RUN|PARTIAL|PASS|FAIL|BLOCKED) \|", progress, re.MULTILINE))
+    gate_rows = set(
+        re.findall(r"^\| (BG-[A-Z0-9]+) \| (?:NOT_RUN|PARTIAL|PASS|FAIL|BLOCKED) \|", progress, re.MULTILINE)
+    )
     if gate_rows != groups["gate"]:
         errors.append("PROGRESS gate table must list every defined gate with a valid state")
     goal = documents[DEV + "GOAL.md"]
@@ -430,42 +504,87 @@ def self_test(documents: dict[str, str]) -> int:
         "undefined decision reference": (gates, documents[gates] + "\nBADR-9999\n"),
         "undefined evidence reference": (gates, documents[gates] + "\nE-B99-999\n"),
         "removed mutation row": (gates, documents[gates].replace("| M19 |", "| removed |", 1)),
-        "mutation row without gate": (gates, documents[gates].replace(
-            "| M01 | Wrong latest version: newer but not yet effective SOP | B07-T07.01 | BG-FIXTURE, BG-GOLD |",
-            "| M01 | Wrong latest version | B07-T07.01 | none |")),
+        "mutation row without gate": (
+            gates,
+            documents[gates].replace(
+                "| M01 | Wrong latest version: newer but not yet effective SOP | B07-T07.01 | BG-FIXTURE, BG-GOLD |",
+                "| M01 | Wrong latest version | B07-T07.01 | none |",
+            ),
+        ),
         "removed protocol section row": (trace, documents[trace].replace("| §22 |", "| removed |", 1)),
         "removed invariant row": (trace, documents[trace].replace("| BI18 |", "| removed |", 1)),
         "missing atomic field": (plan, documents[plan].replace("  - **Files:**", "  - **Omitted:**", 1)),
         "missing proof kind": (plan, documents[plan].replace("**Proof:** DOC;", "**Proof:** unexplained;", 1)),
-        "missing proof gate": (plan, documents[plan].replace("**Proof:** SMOKE; BG-HARNESS;", "**Proof:** SMOKE; none;", 1)),
-        "unknown dependency": (plan, documents[plan].replace("**Depends:** B00-T01.01.", "**Depends:** B99-T99.99.", 1)),
-        "atomic dependency cycle": (plan, documents[plan].replace(
-            "**Depends:** B00-T01.01.", "**Depends:** B00-T01.02.", 1)),
-        "dependency on a later phase": (plan, documents[plan].replace(
-            "**Depends:** B01-T01.01.", "**Depends:** B03-T01.01.", 1)),
-        "card owns file outside the benchmark": (plan, documents[plan].replace(
-            "`palladion-benchmark/benchmark/cli.py`", "`palladion/src/evidence_agent/cli.py`", 1)),
-        "card owns unrecorded file": (plan, documents[plan].replace(
-            "`palladion-benchmark/benchmark/cli.py`", "`palladion-benchmark/benchmark/surprise.py`", 1)),
+        "missing proof gate": (
+            plan,
+            documents[plan].replace("**Proof:** SMOKE; BG-HARNESS;", "**Proof:** SMOKE; none;", 1),
+        ),
+        "unknown dependency": (
+            plan,
+            documents[plan].replace("**Depends:** B00-T01.01.", "**Depends:** B99-T99.99.", 1),
+        ),
+        "atomic dependency cycle": (
+            plan,
+            documents[plan].replace("**Depends:** B00-T01.01.", "**Depends:** B00-T01.02.", 1),
+        ),
+        "dependency on a later phase": (
+            plan,
+            documents[plan].replace("**Depends:** B01-T01.01.", "**Depends:** B03-T01.01.", 1),
+        ),
+        "card owns file outside the benchmark": (
+            plan,
+            documents[plan].replace(
+                "`palladion-benchmark/benchmark/cli.py`", "`palladion/src/evidence_agent/cli.py`", 1
+            ),
+        ),
+        "card owns unrecorded file": (
+            plan,
+            documents[plan].replace(
+                "`palladion-benchmark/benchmark/cli.py`", "`palladion-benchmark/benchmark/surprise.py`", 1
+            ),
+        ),
         "unowned protocol tree file": (plan, documents[plan].replace("`palladion-benchmark/benchmark/cli.py`", "")),
         "protocol tree changed": (VISION, vision_tree),
-        "unordered writers of a shared file": (plan, documents[plan].replace(
-            "**Depends:** B04-T01.04, B04-T03.02, B06-T00.03.\n  - **Change:** At 6444345",
-            "**Depends:** B04-T01.04, B04-T03.02.\n  - **Change:** At 6444345", 1)),
-        "checked card with missing file": (plan, documents[plan].replace(
-            f"- [ ] **{open_card} ", f"- [x] **{open_card} ", 1)),
+        "unordered writers of a shared file": (
+            plan,
+            documents[plan].replace(
+                "**Depends:** B04-T01.04, B04-T03.02, B06-T00.03.\n  - **Change:** At 6444345",
+                "**Depends:** B04-T01.04, B04-T03.02.\n  - **Change:** At 6444345",
+                1,
+            ),
+        ),
+        "checked card with missing file": (
+            plan,
+            documents[plan].replace(f"- [ ] **{open_card} ", f"- [x] **{open_card} ", 1),
+        ),
         "missing ADR question": (adr, documents[adr].replace("**Question:**", "**Omitted question:**", 1)),
         "missing ADR authority": (adr, documents[adr].replace("**Authority:**", "**Omitted authority:**", 1)),
-        "accepted ADR with OPEN answer": (adr, documents[adr].replace(
-            "**My answer (editable):** In this repo, own uv project", "**My answer (editable):** OPEN own uv project", 1)),
-        "proposed ADR with an answer": (adr, documents[adr].replace(
-            "**Status:** ACCEPTED; 2026-10-18.", "**Status:** PROPOSED; 2026-10-18.", 1)),
+        "accepted ADR with OPEN answer": (
+            adr,
+            documents[adr].replace(
+                "**My answer (editable):** In this repo, own uv project",
+                "**My answer (editable):** OPEN own uv project",
+                1,
+            ),
+        ),
+        "proposed ADR with an answer": (
+            adr,
+            documents[adr].replace("**Status:** ACCEPTED; 2026-10-18.", "**Status:** PROPOSED; 2026-10-18.", 1),
+        ),
         "open question without decision": (risks, documents[risks].replace("| BADR-0006 | OPEN", "| none | OPEN", 1)),
-        "PROGRESS done with unchecked cards": (progress, documents[progress].replace(
-            f"| {planned} | PLANNED |", f"| {planned} | DONE |", 1)),
-        "PROGRESS gate removed": (progress, documents[progress].replace("| BG-TRACKC | NOT_RUN |", "| removed | NOT_RUN |", 1)),
+        "PROGRESS done with unchecked cards": (
+            progress,
+            documents[progress].replace(f"| {planned} | PLANNED |", f"| {planned} | DONE |", 1),
+        ),
+        "PROGRESS gate removed": (
+            progress,
+            documents[progress].replace("| BG-TRACKC | NOT_RUN |", "| removed | NOT_RUN |", 1),
+        ),
         "second PROJECT_MEMORY": (ROOT + "docs/PROJECT_MEMORY.md", "# copy\n"),
-        "arm registry row removed": (DEV + "RESEARCH_PROTOCOL.md", documents[DEV + "RESEARCH_PROTOCOL.md"].replace("| E2 |", "| removed |", 1)),
+        "arm registry row removed": (
+            DEV + "RESEARCH_PROTOCOL.md",
+            documents[DEV + "RESEARCH_PROTOCOL.md"].replace("| E2 |", "| removed |", 1),
+        ),
     }
     for label, (path, replacement) in mutations.items():
         altered = dict(documents)
@@ -495,22 +614,41 @@ def main() -> int:
     state = checked_tasks(plan)
     tree, _ = protocol_tree(documents[VISION])
     trace = documents[DEV + "REQUIREMENTS_TRACEABILITY.md"]
-    counts = {name: len(table_ids(trace, pat)) for name, pat in (
-        ("sections", r"^\| §(\d+) \|"), ("hypotheses", r"^\| (H\d) \|"),
-        ("ablations", r"^\| (A\d{2}) \|"), ("strata", r"^\| (Q\d{1,2}) \|"),
-        ("invariants", r"^\| (BI\d{2}) \|"))}
+    counts = {
+        name: len(table_ids(trace, pat))
+        for name, pat in (
+            ("sections", r"^\| §(\d+) \|"),
+            ("hypotheses", r"^\| (H\d) \|"),
+            ("ablations", r"^\| (A\d{2}) \|"),
+            ("strata", r"^\| (Q\d{1,2}) \|"),
+            ("invariants", r"^\| (BI\d{2}) \|"),
+        )
+    }
     counts["mutations"] = len(table_ids(documents[DEV + "TESTING_GATES.md"], r"^\| (M\d{2}) \|"))
-    print(f"PASS: {len(documents)} Markdown files; local links, anchors and stable IDs resolve; "
-          + ", ".join(f"{n} {k}" for k, n in counts.items()) + " mapped")
-    statuses = dict(re.findall(r"^## (BADR-\d{4}) [^\n]*\n\n\*\*Status:\*\* (\w+)", documents[DEV + "ADR_LOG.md"], re.MULTILINE))
+    print(
+        f"PASS: {len(documents)} Markdown files; local links, anchors and stable IDs resolve; "
+        + ", ".join(f"{n} {k}" for k, n in counts.items())
+        + " mapped"
+    )
+    statuses = dict(
+        re.findall(r"^## (BADR-\d{4}) [^\n]*\n\n\*\*Status:\*\* (\w+)", documents[DEV + "ADR_LOG.md"], re.MULTILINE)
+    )
     answered = set(re.findall(r"^\| (OQ\d{2}) \|.*\| ANSWERED", documents[DEV + "RISKS_AND_OPEN_QUESTIONS.md"], re.M))
     for ident, fields in atomic_tasks(plan).items():
-        blockers = sorted({d for d in re.findall(r"\b(?:BADR-\d{4}|OQ\d{2})\b", fields.get("Depends", ""))
-                           if (d.startswith("OQ") and d not in answered) or (d.startswith("BADR") and statuses.get(d) != "ACCEPTED")})
+        blockers = sorted(
+            {
+                d
+                for d in re.findall(r"\b(?:BADR-\d{4}|OQ\d{2})\b", fields.get("Depends", ""))
+                if (d.startswith("OQ") and d not in answered)
+                or (d.startswith("BADR") and statuses.get(d) != "ACCEPTED")
+            }
+        )
         if blockers and not state.get(ident):
             print(f"NOTICE: {ident} waits on unanswered {', '.join(blockers)}")
-    print(f"PASS: {len(state)} atomic tasks ({sum(state.values())} checked); fields, acyclic dependencies and "
-          f"ownership of all {len(tree)} protocol-tree files verified")
+    print(
+        f"PASS: {len(state)} atomic tasks ({sum(state.values())} checked); fields, acyclic dependencies and "
+        f"ownership of all {len(tree)} protocol-tree files verified"
+    )
     print("Structural check only: no benchmark behavior, semantic fidelity or research claim is verified")
     return self_test(documents) if options.self_test else 0
 
