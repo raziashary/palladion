@@ -449,3 +449,8 @@ From `palladion-benchmark/`, 2026-10-20, run `b-live-1` (kept under `artifacts/r
 - **Not done:** R7a, the other 79 smoke questions, condition C1, repetitions, any judge call, the dev split. All need a new owner instruction (BADR-0029).
 - Limits: one model, one seed, one run; a 6-question denominator; the stand-in replay is not used here, so every answer is a real qwen answer to a real prompt.
 - Final checks after the pass: `uv run pytest` 1180 passed (815 s); ruff, format and strict mypy clean; docs checker and its self-test pass; ports 17333, 17334 and 18081 are free.
+
+## E-B05-006 — Rejected answers name the rule they broke (BR33)
+
+From `palladion-benchmark/`, 2026-10-20. `parse_answer` now raises `AnswerRejected` (a `ContractError`) with one of 11 fixed rules (`NO_TEXT`, `NOT_JSON`, `NOT_IN_SCHEMA`, `FIELD_NOT_STRING`, `VOCABULARY`, `OUTCOME_VOCABULARY`, `VERSION_IDS`, `CLAIMS_NOT_LIST`, `CLAIM_NOT_OBJECT`, `CLAIM_FIELD_TYPE`, `FIELD_INVALID`), and the Runner keeps an exception's `ledger_flags` on the failure record as `ANSWER_REJECTED=<rule>`. The status and code are unchanged (INVALID_RUN, `CONTRACT_VIOLATION`), so no scorer or validator changed. Tests: 14 bad answers each map to their rule; an unknown rule cannot be built; a run whose model replies out of schema leaves the rule on every final record and a planted canary in the reply appears in no run file; malformed failure notes are dropped and the failure is still recorded. Two mutants (drop the failure notes; drop the wrapping of contract errors) were each killed. Limit: the live pair from E-B05-005 predates this and stays unexplained.
+- Final checks: `uv run pytest` 1187 passed (976 s); ruff, format and strict mypy clean; docs checker and its self-test pass.

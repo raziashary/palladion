@@ -1060,7 +1060,7 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
 
 - [ ] **B08-T03.01 — Preregistration and seal**
   - **Files:** `palladion-benchmark/docs/development/RESEARCH_PROTOCOL.md`, `palladion-benchmark/configs/evaluation.yaml`, `palladion-benchmark/docs/reproducibility.md`.
-  - **Depends:** B08-T02.03, OQ10.
+  - **Depends:** B08-T02.03, OQ10, OQ13.
   - **Change:** Complete the protocol checklist, freeze methods, code, prompts, the ablation list with its base treatments, minimum meaningful effects and the calibration plan, seal test manifests with SHA-256, lock primary pairings, equivalence margin and multiplicity procedure. Before the seal the owner either relabels the 30-item pilot packet or accepts the delegated reading in writing, and the synthesis golds are corrected at the generator (BADR-0026, BR29).
   - **Proof:** DOC; BG-PREREG; sealed hashes verify; an edit after sealing is detected and flags later results exploratory.
   - **Evidence:** Not yet executed.
@@ -1096,7 +1096,7 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
 
 - [ ] **B08-T07.01 — Final audit and publication package**
   - **Files:** `palladion-benchmark/docs/reproducibility.md`, `palladion-benchmark/docs/dataset_card.md`, `palladion-benchmark/README.md`.
-  - **Depends:** B08-T05.01, B08-T06.01.
+  - **Depends:** B08-T05.01, B08-T06.01, OQ09.
   - **Change:** Error attribution, developer-effort observations (first-build hours, adapter count, setup failures, tuning time per arm), final reproducibility checklist, dataset card and README; a reader can reconstruct a run from its manifest.
   - **Proof:** DOC; BG-REPRO, BG-REPORT; independent end review; claims limited to measured strata.
   - **Evidence:** Not yet executed.

@@ -356,6 +356,17 @@ def _arm_flags(adapter: object) -> tuple[str, ...]:
     return flags
 
 
+def _failure_flags(error: BaseException) -> tuple[str, ...]:
+    """Fixed notes an exception offers through ``ledger_flags`` (such as the rule a rejected answer broke).
+
+    Anything that is not a tuple of short non-empty strings is dropped: a failure record must never itself fail.
+    """
+    flags = getattr(error, "ledger_flags", ())
+    if isinstance(flags, tuple) and all(isinstance(f, str) and 0 < len(f) <= 80 for f in flags):
+        return flags
+    return ()
+
+
 class Runner:
     def __init__(
         self,
@@ -513,7 +524,7 @@ class Runner:
         if holder.error is not None:
             status, origin, code = classify_exception(holder.error)
             retryable = isinstance(holder.error, TransientInfrastructureError)
-            return _Outcome(status, origin, code, None, duration_ms, retryable, started)
+            return _Outcome(status, origin, code, None, duration_ms, retryable, started, _failure_flags(holder.error))
         return _Outcome(RunStatus.OK, None, None, holder.value, duration_ms, False, started, holder.flags)
 
     # -- one pair -----------------------------------------------------------

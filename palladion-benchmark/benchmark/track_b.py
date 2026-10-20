@@ -146,22 +146,63 @@ def prompt_ids(user_message: str) -> list[str]:
 # --------------------------------------------------------------------------- the answer
 
 
+ANSWER_RULES = (
+    "NO_TEXT",
+    "NOT_JSON",
+    "NOT_IN_SCHEMA",
+    "FIELD_NOT_STRING",
+    "VOCABULARY",
+    "OUTCOME_VOCABULARY",
+    "VERSION_IDS",
+    "CLAIMS_NOT_LIST",
+    "CLAIM_NOT_OBJECT",
+    "CLAIM_FIELD_TYPE",
+    "FIELD_INVALID",
+)
+
+
+class AnswerRejected(ContractError):
+    """An answer outside the schema. ``rule`` is one fixed name from ``ANSWER_RULES``; the ledger keeps it as a flag.
+
+    The reply itself is never copied into a record: only which rule it broke.
+    """
+
+    def __init__(self, rule: str, message: str) -> None:
+        if rule not in ANSWER_RULES:
+            raise ValueError(f"unknown answer rule: {rule}")
+        super().__init__(message)
+        self.rule = rule
+        self.ledger_flags = (f"ANSWER_REJECTED={rule}",)
+
+
 def _text(value: object, name: str, *, allow_null: bool = False) -> str | None:
     if value is None and allow_null:
         return None
     if not isinstance(value, str):
-        raise ContractError(f"the answer's {name} is not a string")
+        raise AnswerRejected("FIELD_NOT_STRING", f"the answer's {name} is not a string")
     return value
 
 
 def parse_answer(text: str | None, request: CaseRequest, run_id: str, delivered: Sequence[str]) -> CaseResponse:
-    """Read the generator's JSON into a ``CaseResponse``. Anything outside the schema is an invalid answer."""
+    """Read the generator's JSON into a ``CaseResponse``. Anything outside the schema is an invalid answer.
+
+    The error is always an ``AnswerRejected`` naming the rule, also for a value the contracts refuse (too long).
+    """
+    try:
+        return _read_answer(text, request, run_id, delivered)
+    except AnswerRejected:
+        raise
+    except ContractError:
+        raise AnswerRejected("FIELD_INVALID", "a field of the answer is outside its contract") from None
+
+
+def _read_answer(text: str | None, request: CaseRequest, run_id: str, delivered: Sequence[str]) -> CaseResponse:
     if not text:
-        raise ContractError("the generator returned no text")
+        raise AnswerRejected("NO_TEXT", "the generator returned no text")
     try:
         data = json.loads(text)
     except ValueError:
-        raise ContractError("the answer is not valid JSON") from None
+        raise AnswerRejected("NOT_JSON", "the answer is not valid JSON") from None
     allowed = {
         "evidence_status",
         "abstention_reason",
@@ -172,33 +213,35 @@ def parse_answer(text: str | None, request: CaseRequest, run_id: str, delivered:
         "claims",
     }
     if not isinstance(data, dict) or set(data) - allowed:
-        raise ContractError("the answer is not a JSON object in the schema")
+        raise AnswerRejected("NOT_IN_SCHEMA", "the answer is not a JSON object in the schema")
     try:
         status = EvidenceStatus(str(data.get("evidence_status")))
         reason_text = _text(data.get("abstention_reason"), "abstention_reason", allow_null=True)
         reason = AbstentionReason(reason_text) if reason_text is not None else None
         action = Action(str(data.get("action"))).value
     except ValueError:
-        raise ContractError("the answer names a status, reason or action outside the vocabulary") from None
+        raise AnswerRejected(
+            "VOCABULARY", "the answer names a status, reason or action outside the vocabulary"
+        ) from None
     outcome = _text(data.get("policy_outcome"), "policy_outcome", allow_null=True)
     if outcome is not None and outcome not in OUTCOMES:
-        raise ContractError("the answer names a policy outcome outside the vocabulary")
+        raise AnswerRejected("OUTCOME_VOCABULARY", "the answer names a policy outcome outside the vocabulary")
     versions = data.get("version_ids", [])
     if not isinstance(versions, list) or not all(isinstance(v, str) for v in versions):
-        raise ContractError("version_ids must be a list of strings")
+        raise AnswerRejected("VERSION_IDS", "version_ids must be a list of strings")
     raw_claims = data.get("claims", [])
     if not isinstance(raw_claims, list):
-        raise ContractError("claims must be a list")
+        raise AnswerRejected("CLAIMS_NOT_LIST", "claims must be a list")
     claims = []
     known = {k.value for k in ClaimKind}
     for number, raw in enumerate(raw_claims, start=1):
         if not isinstance(raw, dict):
-            raise ContractError("a claim must be an object")
+            raise AnswerRejected("CLAIM_NOT_OBJECT", "a claim must be an object")
         kind = raw.get("kind")
         citations = raw.get("citations", [])
         params = raw.get("params", {})
         if not isinstance(citations, list) or not isinstance(params, dict):
-            raise ContractError("a claim's citations must be a list and its params an object")
+            raise AnswerRejected("CLAIM_FIELD_TYPE", "a claim's citations must be a list and its params an object")
         claims.append(
             Claim(
                 f"c{number}",

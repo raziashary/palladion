@@ -170,16 +170,67 @@ def test_a_valid_answer_becomes_a_case_response_with_the_delivered_ids(s_questio
 
 
 @pytest.mark.parametrize(
-    "text",
+    ("text", "rule"),
     [
-        "", "not json", "[]", good_json(extra=1), good_json(action="IMPROVISE"), good_json(evidence_status="MAYBE"),
-        good_json(policy_outcome="DUNNO"), good_json(version_ids="POL-1"), good_json(claims="x"),
-        good_json(claims=[1]), good_json(abstention_reason="BECAUSE"),
+        ("", "NO_TEXT"), ("not json", "NOT_JSON"), ("[]", "NOT_IN_SCHEMA"), (good_json(extra=1), "NOT_IN_SCHEMA"),
+        (good_json(action="IMPROVISE"), "VOCABULARY"), (good_json(evidence_status="MAYBE"), "VOCABULARY"),
+        (good_json(policy_outcome="DUNNO"), "OUTCOME_VOCABULARY"), (good_json(policy_outcome=7), "FIELD_NOT_STRING"),
+        (good_json(version_ids="POL-1"), "VERSION_IDS"), (good_json(claims="x"), "CLAIMS_NOT_LIST"),
+        (good_json(claims=[1]), "CLAIM_NOT_OBJECT"), (good_json(abstention_reason="BECAUSE"), "VOCABULARY"),
+        (good_json(claims=[{"kind": "WINDOW", "citations": "POL-1@v1#4.1"}]), "CLAIM_FIELD_TYPE"),
+        pytest.param(
+            good_json(claims=[{"kind": "WINDOW", "text": "x" * 100_000, "citations": []}]),
+            "FIELD_INVALID",
+            id="too-long",
+        ),
     ],
 )  # fmt: skip
-def test_an_answer_outside_the_schema_is_an_invalid_answer(text: str, s_questions: tuple[GoldRecord, ...]) -> None:
-    with pytest.raises(ContractError):
+def test_an_answer_outside_the_schema_is_rejected_with_the_rule_it_broke(
+    text: str, rule: str, s_questions: tuple[GoldRecord, ...]
+) -> None:
+    from benchmark.track_b import ANSWER_RULES, AnswerRejected
+
+    with pytest.raises(AnswerRejected) as caught:
         parse_answer(text, request_for(s_questions[0]), "run-1", [])
+    assert caught.value.rule == rule and rule in ANSWER_RULES
+    assert caught.value.ledger_flags == (f"ANSWER_REJECTED={rule}",)
+    assert isinstance(caught.value, ContractError), "the Runner still classes it as a contract violation"
+
+
+def test_an_unknown_answer_rule_cannot_be_made() -> None:
+    from benchmark.track_b import AnswerRejected
+
+    with pytest.raises(ValueError, match="unknown answer rule"):
+        AnswerRejected("MADE_UP", "x")
+
+
+def test_a_rejected_live_answer_leaves_its_rule_in_the_ledger_and_the_reply_nowhere(
+    s_root: Path, s_published_corpus: PublishedCorpus, s_questions: tuple[GoldRecord, ...], tmp_path: Path
+) -> None:
+    from benchmark.generator import TransportResponse
+    from benchmark.track_b import eligible_records
+
+    class Rambling:
+        def post(self, payload: Any) -> TransportResponse:
+            reply = json.dumps({"evidence_status": "MAYBE", "answer_text": "SECRET-REPLY-CANARY"})
+            body = {"model": STUB_MODEL, "choices": [{"message": {"content": reply}}],
+                    "usage": {"prompt_tokens": 9, "completion_tokens": 9, "total_tokens": 18}}  # fmt: skip
+            return TransportResponse(200, {}, json.dumps(body).encode())
+
+    out = tmp_path / "rejected"
+    spec = TrackBSpec("run-b-0008", "smoke", 10, 4000, s_root, out)
+    plan = plan_assignment(eligible_records(s_questions, None), GENERATOR, spec, 7)
+    pool = make_pool(out, dict(plan.assigned), Rambling())
+    arms = {"R2": GoldRetriever("R2", s_published_corpus, s_questions)}
+    execute_track_b(spec, arms, pool, plan, s_published_corpus, GENERATOR, pool_label="offline-stub")
+    finals = [r for r in RunLedger(out / "ledger.jsonl").records if r.is_final]
+    assert (
+        finals
+        and {r.status for r in finals} == {RunStatus.INVALID_RUN}
+        and {r.code for r in finals} == {"CONTRACT_VIOLATION"}
+    )
+    assert {r.flags for r in finals} == {("ANSWER_REJECTED=VOCABULARY",)}
+    assert "SECRET-REPLY-CANARY" not in "".join(f.read_text(encoding="utf-8") for f in out.glob("*.jsonl"))
 
 
 def test_an_unknown_claim_kind_is_kept_as_unclassified_not_dropped(s_questions: tuple[GoldRecord, ...]) -> None:

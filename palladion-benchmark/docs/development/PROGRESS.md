@@ -18,7 +18,7 @@ on this machine (owner, 2026-10-18), so the Makefile and the compose file were c
 Decisions in force: in-repo uv project (BADR-0001); generator pool qwen/qwen3.8-27b, openai/gpt-oss-120b, openai/gpt-oss-20b with per-question pre-assignment and no automatic switch
 (BADR-0007, BADR-0008, BADR-0015); template-first corpus (BADR-0009); Haiku 5.5 reviewers only (BADR-0003); push to main allowed (BADR-0004); benchmark-local `.env` (BADR-0013);
 phase plan approved (BADR-0006); dependencies and extra files (BADR-0014); required citation field, subprocess isolation from B04 and pinned system-under-test checkout (BADR-0016); no Docker, Qdrant as a standalone binary under WSL (BADR-0017).
-Still open and tracked: OQ03 (read Palladion's interface at B04), OQ09 (license, before B08-T07.01) and OQ10 (pairings, before B08-T03.01); see
+Still open and tracked: OQ03 (read Palladion's interface at B04), OQ09 (license, before B08-T07.01), OQ10 (pairings, before B08-T03.01) and OQ13 (label audit stance, before B08-T03.01); see
 [risks and open questions](RISKS_AND_OPEN_QUESTIONS.md).
 
 ## Phase state
@@ -59,8 +59,8 @@ Still open and tracked: OQ03 (read Palladion's interface at B04), OQ09 (license,
 
 ## Blocked or waiting cards (the checker prints these as notices)
 
-B06-T04.01 on running Neo4j without Docker (OQ12); B07-T04.01 on Palladion shipping a critic switch (OQ11 answered: FEATURE_NOT_SUPPORTED until then); B08-T03.01 on OQ10 (confirmatory pairings, owner deferred; must be answered before the seal);
-B08-T07.01 on OQ09 (dataset license, owner deferred; must be answered before then); B08-T01.02 on the paraphrase gate. Before the seal the owner relabels the pilot packet or accepts the delegated reading, and the synthesis golds are corrected (BR29).
+B06-T04.01 on running Neo4j without Docker (OQ12); B07-T04.01 on Palladion shipping a critic switch (OQ11 answered: FEATURE_NOT_SUPPORTED until then); B08-T03.01 on OQ10 (confirmatory pairings, owner deferred; must be answered before the seal) and OQ13 (owner relabels the pilot packet or accepts the delegated labels in writing; deferred 2026-10-20);
+B08-T07.01 on OQ09 (dataset license, owner deferred; must be answered before then); B08-T01.02 on the paraphrase gate. The synthesis golds are corrected before the seal (BR29).
 
 ## Next action
 

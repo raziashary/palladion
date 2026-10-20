@@ -19,6 +19,7 @@ from benchmark.contracts import (
     CapabilityUnsupported,
     CaseRequest,
     CaseResponse,
+    ContractError,
     ErrorOrigin,
     EvidenceCandidate,
     EvidenceStatus,
@@ -860,3 +861,35 @@ def test_malformed_notes_make_the_pair_invalid_instead_of_being_stored(tmp_path:
         world.run(1)
         (record,) = finals(world).values()
         assert record.status is RunStatus.INVALID_RUN and record.code == "CONTRACT_VIOLATION", bad
+
+
+@dataclass
+class Refusing(Good):
+    """A retriever whose failure carries notes through ``ledger_flags``."""
+
+    notes: Any = ("ANSWER_REJECTED=NOT_JSON",)
+
+    def retrieve(self, request: RetrievalRequest) -> list[EvidenceCandidate]:
+        error = ContractError("bad")
+        error.ledger_flags = self.notes  # type: ignore[attr-defined]
+        raise error
+
+
+def test_the_notes_an_exception_carries_are_kept_on_the_failure_record(tmp_path: Path) -> None:
+    world = build(tmp_path, {"R0": Refusing()})
+    world.run(1)
+    (record,) = finals(world).values()
+    assert record.status is RunStatus.INVALID_RUN and record.code == "CONTRACT_VIOLATION"
+    assert record.flags == ("ANSWER_REJECTED=NOT_JSON",)
+
+
+def test_malformed_failure_notes_are_dropped_and_the_failure_is_still_recorded(tmp_path: Path) -> None:
+    for bad in (["list"], ("",), ("x" * 81,), "text", (1,)):
+        sub = tmp_path / f"fail{abs(hash(str(bad)))}"
+        sub.mkdir()
+        refusing = Refusing()
+        refusing.notes = bad
+        world = build(sub, {"R0": refusing})
+        world.run(1)
+        (record,) = finals(world).values()
+        assert record.status is RunStatus.INVALID_RUN and record.flags == (), bad

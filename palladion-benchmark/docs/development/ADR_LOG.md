@@ -616,3 +616,23 @@ Dispositions that change or narrow the wording above (E-B05-004): **item 7**: a 
 **Verification:** the run directory holds one generation record per dispatched call (cap check), every prompt, and the models used; E-B05-005 records the counts, failures and rate-limit events.
 
 **Outcome (2026-10-20):** the pass used 16 of the 20 calls, all on the primary model with no rate limit and no failover; 15 pairs were valid, 1 answer was invalid; see E-B05-005. R7a was not run: the owner's limits named R2 and R3 only, so the card's original R7a scope needs a new instruction.
+
+## BADR-0030 — Owner items stay deferred, each pinned to its phase (2026-10-20)
+
+**Status:** ACCEPTED; 2026-10-20.
+
+**Authority:** Owner answers in chat, 2026-10-20: no further live Groq use before B06; "none now" for OQ09, OQ10 and the label-audit stance, "put all three each respectively in their appropriate phase in the MDP and other dev suite".
+
+**Question:** Which owner items are settled before B06, and where do the rest wait?
+
+**Why:** None of the three blocks B06 or B07. Each blocks only a later card, and a deferred item that is not a dependency on its card is easy to miss.
+
+**Options:** settle them now; defer them with a tracked dependency; defer without one.
+
+**Recommendation:** defer with a tracked dependency (chosen).
+
+**What affects what:** OQ10 (confirmatory pairings) and the new OQ13 (the owner relabels the 30-item pilot packet or accepts the delegated labels in writing, BADR-0026) are dependencies of B08-T03.01 and block the seal; OQ09 (license) is a dependency of B08-T07.01. The checker prints each as a waiting notice. No further live use is authorized: BADR-0029 is spent at 16 of 20 calls, and the next Track B pass needs a new instruction.
+
+**My answer (editable):** Deferred as above.
+
+**Verification:** `check_docs.py` lists B08-T03.01 on OQ10 and OQ13 and B08-T07.01 on OQ09.
