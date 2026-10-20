@@ -24,6 +24,7 @@ class Passage(VersionedModel):
     line_end: int
     text: str
     sha256: str
+    pdf_provenance: dict[str, Any] | None = None
 
 
 class EvidenceResolver:
@@ -80,11 +81,16 @@ class EvidenceResolver:
                     hashlib.sha256(text_bytes).hexdigest() != chunk.content_sha256 or
                     hashlib.sha256(original).hexdigest() != chunk.source_sha256):
                 raise ResourceConflict
+            provenance = self.registry.extraction_provenance(principal, chunk.revision_id)
+            if provenance is not None:
+                provenance["pages"] = [page for page in provenance["pages"]
+                    if page["start_byte"] < chunk.end_byte and page["end_byte"] > chunk.start_byte]
         return Passage(citation_id=chunk.chunk_id, revision_id=chunk.revision_id,
                        generation=str(row["index_generation"]), section_id=chunk.section_id,
                        start_byte=chunk.start_byte, end_byte=chunk.end_byte,
                        line_start=chunk.line_start, line_end=chunk.line_end,
-                       text=text_bytes.decode("utf-8"), sha256=chunk.content_sha256)
+                       text=text_bytes.decode("utf-8"), sha256=chunk.content_sha256,
+                       pdf_provenance=provenance)
 
     def chunk(self, principal: Principal, passage: Passage) -> Chunk:
         return self.catalog.get_chunk(principal, passage.citation_id)
@@ -214,7 +220,8 @@ def read_runtime_evidence(search: object, principal: Principal, case_id: str,
         return {"evidence_id": identifier, "kind": "DOCUMENT", "text": item.text,
             "revision_id": item.revision_id, "section_id": item.section_id,
             "generation": item.generation, "start_byte": item.start_byte, "end_byte": item.end_byte,
-            "content_sha256": item.sha256}
+            "content_sha256": item.sha256,
+            **({"pdf_provenance": item.pdf_provenance} if item.pdf_provenance is not None else {})}
     if identifier.startswith("live_"):
         observation = read_observation(registry, principal, case_id, identifier)
         # The operation owner controls freshness; a prior successful read is not current forever.
@@ -302,6 +309,7 @@ def public_citation(item: dict[str, Any]) -> dict[str, Any]:
               "generation", "operation", "observed_at", "source_event_at", "data_as_of",
               "source_system", "status", "family_id", "version_id", "time_basis", "as_of"}
     fields.add("clause_refs")
+    fields.add("pdf_provenance")
     return {k: v for k, v in item.items() if k in fields}
 
 

@@ -380,6 +380,25 @@ class Hypothesis(VersionedModel):
     label: Literal["HYPOTHESIS"] = "HYPOTHESIS"
 
 
+class ConversationClaim(VersionedModel):
+    text: str = Field(min_length=1, max_length=512)
+    evidence_ids: tuple[str, ...] = Field(min_length=1, max_length=12)
+
+
+class ConversationTurn(VersionedModel):
+    request_event_id: str
+    release_event_id: str | None = None
+    trace_id: str
+    at: str
+    user_query: str | None = Field(default=None, max_length=512)
+    assistant_response: str | None = Field(default=None, max_length=512)
+    released_claims: tuple[ConversationClaim, ...] = Field(default=(), max_length=3)
+    omitted_claims: int = Field(default=0, ge=0)
+    previous_request_id: str | None = None
+    authority: Literal["NONE"] = "NONE"
+    verification: Literal["REQUIRES_RECHECK"] = "REQUIRES_RECHECK"
+
+
 class ContinuityPacket(VersionedModel):
     case_id: str = Field(min_length=1)
     tenant_id: str = Field(min_length=1)
@@ -391,6 +410,9 @@ class ContinuityPacket(VersionedModel):
     open_questions: tuple[str, ...] = ()
     evidence_handles: tuple[SourceRef, ...] = ()
     previous_attempts: tuple[dict[str, Any], ...] = ()
+    conversation_turns: tuple[ConversationTurn, ...] = Field(default=(), max_length=4)
+    conversation_omitted: int = Field(default=0, ge=0)
+    conversation_truncated: bool = False
     last_disposition: GateDisposition | None = None
     generated_at: datetime
 

@@ -28,8 +28,8 @@ PROTOTYPES: tuple[tuple[Category, str], ...] = (
 )
 _TOOLS = {"search_knowledge", "evaluate_policy", "lookup_live_data", "recall_memory"}
 _BLOCKED = re.compile(
-    r"\b(transaction|settlement|merchant|refund|reverse|payment|policy|approve|"
-    r"system|ignore|instruction|credential|password|secret|token|api.?key|tenant|scope|"
+    r"\b(transactions?|settlements?|merchants?|refunds?|revers(?:e|al)s?|payments?|polic(?:y|ies)|approv(?:e|al)s?|"
+    r"systems?|ignor(?:e|ing)|instructions?|credentials?|passwords?|secrets?|tokens?|api.?keys?|tenants?|scopes?|"
     r"transaksi|pembayaran|rekening|kebijakan)\b",
     re.IGNORECASE,
 )
@@ -40,8 +40,46 @@ _EXPLICIT = re.compile(
 )
 _WEAK = re.compile(r"\b(?:for me|suits me|works better|lebih nyaman bagi saya)\b", re.IGNORECASE)
 _ATTRIBUTED = re.compile(
-    r"\b(?:she said|he said|they said|document says|user says|reported that|quote)\b", re.IGNORECASE
+    r"\b(?:she said|he said|they said|document says|user says|reported that|quote|"
+    r"according to|my colleague|the customer)\b", re.IGNORECASE
 )
+_TEMPORARY = re.compile(
+    r"\b(?:this (?:answer|time|message|request|session)|for now|today|just now|"
+    r"do not remember|don't remember|forget|delete|erase|not my preference)\b", re.IGNORECASE
+)
+_PREFERENCE_TOPIC = re.compile(
+    r"\b(?:brief|concise|short|detailed|verbose|long|answers?|explanations?|examples?|"
+    r"english|indonesian|bahasa|indonesia|tables?|bullets?|points?|emojis?|"
+    r"jawaban|singkat|penjelasan)\b", re.IGNORECASE
+)
+_SHORT_FORM = re.compile(
+    r"^(?:(?:please )?(?:be (?:brief|concise)|use (?:bullet points|tables|examples)|"
+    r"no emojis?)|(?:english|indonesian),? please|prefer (?:tables|examples)|"
+    r"tolong jawab dalam bahasa indonesia)[.!]?$", re.IGNORECASE
+)
+_NAME = re.compile(r"^(?:please )?call me [\w-]{1,40}(?: [\w-]{1,40})?[.!]?$", re.IGNORECASE)
+_WORKFLOW = re.compile(r"^(?:workflow:|procedure:|first\b)", re.IGNORECASE)
+_ACTIONS = re.compile(
+    r"\b(?:search_knowledge|evaluate_policy|lookup_live_data|recall_memory|"
+    r"search|retrieve|compare|verify|answer|respond)\b", re.IGNORECASE
+)
+_SEQUENCE = re.compile(r"\b(?:then|next|afterwards)\b", re.IGNORECASE)
+_WEIGHTS = {"explicit": 0.7, "short_form": 0.7, "topic": 0.3,
+            "workflow": 0.5, "sequence": 0.2, "distinct_actions": 0.3}
+_THRESHOLD = 1.0
+
+
+def deterministic_profile() -> dict[str, object]:
+    """Bind persisted decisions to actual patterns/weights, not just a version label."""
+    patterns = (_BLOCKED, _EXPLICIT, _WEAK, _ATTRIBUTED, _TEMPORARY,
+                _PREFERENCE_TOPIC, _SHORT_FORM, _NAME, _WORKFLOW, _ACTIONS, _SEQUENCE)
+    return {
+        "version": "lexical-2",
+        "patterns": [(pattern.pattern, pattern.flags) for pattern in patterns],
+        "weights": dict(_WEIGHTS), "threshold": _THRESHOLD,
+        "tools": sorted(_TOOLS), "max_bytes": 4096, "max_preference_chars": 512,
+        "scores_are_probabilities": False,
+    }
 
 
 @dataclass(frozen=True)
@@ -63,14 +101,37 @@ def deterministic(text: str, *, field_name: str, tool: str | None = None) -> Cla
         field_name != "query"
         or _BLOCKED.search(text)
         or _ATTRIBUTED.search(text)
-        or any(c in text for c in ('"', "`", "?", "\n"))
+        or _TEMPORARY.search(text)
+        or any(c in text for c in ('"', "`", "?", "\n", "“", "”"))
     ):
         return Classification("EPISODIC", "HARD_EPISODIC_BOUNDARY", {"path_a": 1.0})
     stripped = text.strip()
-    if _EXPLICIT.match(stripped) and len(stripped) <= 512:
+    if len(stripped) > 512:
+        return Classification("EPISODIC", "SESSION_CONTEXT", {"path_a": 1.0})
+    features = {
+        "explicit": bool(_EXPLICIT.match(stripped)),
+        "short_form": bool(_SHORT_FORM.fullmatch(stripped)),
+        "topic": bool(_PREFERENCE_TOPIC.search(stripped)),
+        "workflow": bool(_WORKFLOW.match(stripped)),
+        "sequence": bool(_SEQUENCE.search(stripped)),
+        "distinct_actions": len(set(m.lower() for m in _ACTIONS.findall(stripped))) >= 2,
+    }
+    semantic_score = min(1.0, sum(_WEIGHTS[k] for k in ("explicit", "short_form", "topic")
+                                 if features[k]))
+    procedural_score = sum(_WEIGHTS[k] for k in ("workflow", "sequence", "distinct_actions")
+                           if features[k])
+    scores = {"path_a": max(semantic_score, procedural_score),
+              "semantic_weight": semantic_score, "procedural_weight": procedural_score}
+    # A bounded name form is an explicit preference; temporal call requests are excluded.
+    if _NAME.fullmatch(stripped) and not re.search(r"\b(?:when|if|after)\b", stripped, re.I):
+        return Classification("SEMANTIC", "EXPLICIT_USER_PREFERENCE", {**scores, "path_a": 1.0},
+                              semantic_eligible=True)
+    if semantic_score >= _THRESHOLD:
         return Classification(
-            "SEMANTIC", "EXPLICIT_USER_PREFERENCE", {"path_a": 1.0}, semantic_eligible=True
+            "SEMANTIC", "EXPLICIT_USER_PREFERENCE", scores, semantic_eligible=True
         )
+    if procedural_score >= _THRESHOLD:
+        return Classification("PROCEDURAL", "UNAPPROVED_WORKFLOW", scores)
     if (
         _WEAK.search(stripped)
         and len(stripped) <= 512

@@ -132,7 +132,11 @@ provider calls; the explicitly enabled versioned message endpoint below runs the
 |---|---|---|
 | GET | `/health/live` or `/health` | Application liveness |
 | GET | `/health/ready` or `/ready` | SQLite, Qdrant and explicit model-boundary readiness; no provider probe |
-| POST | `/sources` | Bounded Markdown/plain-text upload and metadata |
+| POST | `/sources` | Bounded UTF8 text, JSON/JSONL/CSV/code/config upload and metadata |
+| POST | `/sources/import-pdf` | Bounded base64 digital-text PDF import with immutable original/extracted provenance |
+| GET | `/sources/{revision_id}/original-pdf` | Original PDF under current approved source access |
+| POST | `/v1/admin/cases/{case_id}/graph-links` | Atomic bounded source-proven navigation links; current scoped admin only |
+| GET | `/v1/cases/{case_id}/graph-links/{edge_id}` | Exact link proof under current endpoint/source ACLs |
 | POST | `/sources/{revision_id}/approve` | Independent approval and indexing |
 | POST | `/sources/{revision_id}/revoke` | Immediate source authority revocation |
 | POST | `/search` | Authorized passages, citations and coverage warnings |
@@ -153,7 +157,8 @@ For a seeded case, the search JSON body is:
 
 Search modes are `lexical`, `dense`, `hybrid` and `reranked`. Start the API with
 `scripts/serve.py --rerank` to enable its optional local cross-encoder. Discovery and
-reranking have explicit candidate budgets; returned passages are capped at12. Expected
+reranking have explicit candidate budgets; HTTP defaults to12 passages and allows up to40;
+the model's search tool remains capped at12. Expected
 reranker failures produce a degraded result with warnings. Index coverage, external
 inventory attestation and answer sufficiency remain separate concepts.
 
@@ -433,3 +438,104 @@ successes. The bounded derived sidecar stores only keys/timestamps (32 entries, 
 not evidence text. Cache errors fall back to fresh checks. Small workloads and cold
 misses may pay extra overhead; PF03 performance acceptance remains open pending the
 retained comparison. This status does not weaken citation or final-gate validation.
+
+## Source formats and PDF provenance
+
+`POST /sources` accepts UTF8 Markdown (`.md`, `.markdown`), plain text (`.txt`),
+JSON (`.json`, `application/json`), JSONL (`.jsonl`, `application/x-ndjson`),
+CSV (`.csv`, `text/csv`) and TSV (`.tsv`, `text/tab-separated-values`). Common code
+and configuration extensions use `text/plain`: `.py`, `.js`, `.jsx`, `.ts`, `.tsx`,
+`.java`, `.go`, `.rs`, `.c`, `.h`, `.cpp`, `.cs`, `.sql`, `.sh`, `.ps1`, `.yaml`,
+`.yml`, `.toml`, `.ini`, `.cfg`, `.xml`, `.html`, `.css`, `.log`. Structured/code
+files are indexed as verbatim text, without executing, repairing, parsing into
+business rules or reserializing them. Existing text HTTP limits remain65,536
+characters inside a128KiB request; the source parser's direct byte ceiling is10MiB.
+
+For a digital-text PDF, send the same upload metadata to `POST /sources/import-pdf`,
+with `mime_type: application/pdf`, a `.pdf` filename, and **base64** in `content`.
+Optional `sha256` identifies the original PDF. The endpoint limits original input to
+2MiB,50pages,256KiB extracted UTF8,10seconds and512MiB in an owned parser process;
+only this endpoint permits a3MiB JSON request. It rejects malformed, encrypted,
+image-only/empty-page and over-limit PDFs. OCR, Office files and archives are unsupported.
+Two nonqueued parser slots bound local concurrency; capacity exhaustion returns503.
+Text extraction can lose visual layout and has no claim of OCR or perfect reading order.
+
+Import creates a draft extracted-text revision (`<filename>.txt`) plus immutable
+original-PDF hash, extracted-text hash, pinned parser identity and page byte intervals.
+Independent approval and publication still apply. `/evidence/{chunk_id}` includes
+`pdf_provenance` with intersecting PDF pages; its offsets refer to **extracted UTF8**,
+not original PDF bytes. `GET /sources/{revision_id}/original-pdf` returns the original
+only while current approval and source ACLs permit it. SQLitev7 is additive; recognized
+persistent older databases receive a verified pre-upgrade backup before migration.
+
+## Typed graph administration
+
+`POST /v1/admin/cases/{case_id}/graph-links` accepts `{"links":[...]}` with up to16
+items. Each item names `from_chunk_id`, `to_chunk_id`, `relation_type`,
+`evidence_chunk_id`, `revision_id`, `start_byte`, `end_byte` and `quote`. Offsets are
+absolute canonical UTF8 offsets within the proof chunk; the nonempty quote must match
+that exact approved source version (maximum4096bytes). Types are `REQUIRES`,
+`APPLIES_TO`, `EXCEPTION_TO`, `REFERENCES`, `SUPERSEDES`, `POSSIBLY_SAME_AS`.
+
+Only a current case-member admin with `document:approve` and source access to all
+three chunks can register a link. A batch is atomic. Identical retries reuse IDs;
+changed proof for the same edge conflicts. Links enter as `EXTRACTED_UNREVIEWED`
+navigation candidates. Existing review/merge controls remain separate. An edge called
+`SUPERSEDES` does not alter canonical document supersession or policy precedence.
+Models have no link-writing tool.
+
+With graph enabled, the endpoint republishes affected revisions and requires physical
+projection readback before reporting `READY`. With graph off it stores canonical links
+and explicitly reports `NOT_ENABLED`; no graph expansion is claimed. Read back proof
+through `GET /v1/cases/{case_id}/graph-links/{edge_id}`. Revoking an endpoint or proof
+source immediately blocks that read even if derived graph data remains.
+
+## Automatic memory and conversation continuity
+
+Ordinary message serving calls `CaseStore.append`: persist the request/tool-result/
+released-response event first, then classify eligible bounded event chunks, validate
+scope/provenance and persist promotion decisions and memory. A failed promotion leaves
+the committed event and records a diagnostic; automatic does not mean infallible.
+Document ingestion does not promote arbitrary document prose into personal memory.
+
+Path A is deterministic and primary: weighted word/phrase cues recognize explicit
+preferences (including short forms) and explicit multi-step unapproved workflows.
+Hard attribution, privacy, operational-authority and temporary-request exclusions win.
+Scores are engineering weights, not probabilities. Uncertain text stays episodic.
+The optional separately enabled Path B job uses local embeddings/cosine and margin
+loss only for eligible ambiguous preferences; it cannot override hard boundaries.
+The stored profile binds the actual regex/weight configuration; no silent historical
+backfill or trained classifier is introduced.
+
+Semantic preferences are private USER-wide context across sessions, retaining origin
+case/source access requirements. Episodic memory is private to its backend session.
+Procedural memory records unapproved experience, never approved company procedure.
+Corrections, revocation, case closure and explicit sharing controls still apply.
+
+Preflight automatically builds and reads continuity memory before each model request.
+The packet carries the current goal, unresolved requirements, rechecked evidence
+handles, bounded memories and up to4 own-session conversation turns. Each turn has
+request/release/trace IDs, safe user-query and released-response context, chronology
+and a prior-turn reference; omitted/truncated context is disclosed. Queries whose
+promotion is revoked/corrected are suppressed. Only freshly authorized document-backed
+released claim text is replayed; prior live/policy claim text is omitted for new domain
+reads. No rejected draft or chain-of-thought enters this projection. All history is
+marked `NONE` authority and `REQUIRES_RECHECK`. Packet character limits can omit older
+turns. The current request is also passed separately as the user's actual question.
+
+`recall_memory` is an additional model-selected read, not the only memory read:
+preflight continuity already reads bounded authorized memory automatically.
+
+## What the live module connects to
+
+`lookup_live_data` dispatches to `live/gateway.py`, using the closed request contracts
+in `live/contracts.py`. The gateway checks current case/target scope, operation
+configuration, freshness, deadlines, response size and attempt/concurrency limits.
+It calls the configured adapter and persists a typed observation with timestamps and
+an audit trail. The final gate re-reads that observation before using it.
+
+The available reads are `get_transaction_status`, `get_settlement_status`,
+`get_incident_status` and `get_merchant_summary`. Current serving/demo configuration
+uses `live/mock.py` and fictional snapshots. It is the operational-data tool boundary;
+it is **not a production database connection**. There is no arbitrary SQL, URL,
+provider credential, payment write or target authorization supplied by the model.

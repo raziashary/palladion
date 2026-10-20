@@ -1,11 +1,30 @@
 # Current progress
 
-Current checkpoint 2026-10-20: P09 audit and benchmark-handoff remediation ACTIVE. P00–P08 are historical completed pilot work (98 cards); independent reaudit identified and corrected gate/evaluation proof gaps; P09 remains active for PF03 performance acceptance. See evidence/P09_AUDIT_AND_HANDOFF.md and ADR-0087–0095; PF03 performance remains open after owner-rejected0091 closure; opaque IDs and opt-in5second audit reuse are approved and implemented. Benchmark implementation/editor work, UI and enterprise writes remain excluded; owner authorized a scoped verified main push.
+Current checkpoint 2026-10-20: P10 implementation and consumer validation verified; final scoped checkpoint P10-T06.01 remains OPEN until stage/secret review, commit and approved main publication. 12 of 13 P10 cards are verified (124 of 126 overall); P09/PF03 remains separately OPEN. Source 458 PASS/32 explicit SKIP, installed 91 PASS/2 explicit SKIP, native PDF 1 PASS; later parser controls pass in overlapping 11-test source/installed runs. Final 70-file package comparison, static/docs gates and owned cleanup pass. Full-blueprint and current P10 documentation/source review complete; no full historical-document audit is claimed.
+
+Historical P09 checkpoint: P09 audit and benchmark-handoff remediation ACTIVE. P00–P08 are historical completed pilot work (98 cards); independent reaudit identified and corrected gate/evaluation proof gaps; P09 remains active for PF03 performance acceptance. See evidence/P09_AUDIT_AND_HANDOFF.md and ADR-0087–0095; PF03 performance remains open after owner-rejected0091 closure; opaque IDs and opt-in5second audit reuse are approved and implemented. Benchmark implementation/editor work, UI and enterprise writes remain excluded; owner authorized a scoped verified main push.
 
 Updated2026-10-20 (Asia/Bangkok). Atomic task state lives in MASTER_DEV_PLAN;
 command observations and review receipts live in EVIDENCE_LOG.
 
-## Active P09 checkpoint
+## P10 verified engineering checkpoint
+
+12of13P10atomic cards are verified with E-P10-001–007 and the safe consumer receipt; final P10-T06.01 remains open until commit/publication.
+Current source458PASS32SKIP109.65s, installed91PASS2SKIP44.62s, actual installed
+Qdrant PDF1PASS22.62s; later two parser-boundary additions pass in separate overlapping
+11-test source14.95s and installed14.65s runs. Final70source/wheel/installed files match;
+build, lint, types, dependencies, docs and installed foundation/policy smoke pass.
+One LunaMedium start adversary and one independent LunaMedium end reviewer read the
+full blueprint. No confirmed material implementation defect remained; the final
+parser evidence-freshness gap is resolved by the focused receipts and rebuilt package.
+Owned Qdrant stopped, recorded PID absent, storage preserved; Windows/WSL show no
+16333/16334/17687listeners. Foreign benchmark/editor work remains untouched.
+
+124of126total atomic cards are checked; P10-T06.01 and P09-T02.07/PF03 remain open. That is task
+tracking, not production readiness. Main publication of this scoped verified checkpoint
+is explicitly authorized; git history/upstream establish publication status.
+
+## Historical P09 mechanism checkpoint
 
 Five initial full-blueprint audits and the reused independent end-review resolution
 found and corrected gate, evaluation, alias, identity and coverage-bound defects.

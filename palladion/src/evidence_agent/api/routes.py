@@ -1,6 +1,8 @@
 """Authenticated source, evidence and bounded agent runtime API."""
 from __future__ import annotations
 
+import base64
+import binascii
 import hashlib
 import sqlite3
 from contextlib import closing, contextmanager
@@ -8,14 +10,17 @@ from pathlib import Path
 from typing import Iterator
 
 from fastapi import APIRouter, Header, HTTPException, Request
+from fastapi.responses import Response
 from pydantic import AwareDatetime
 
 from evidence_agent.api.schemas import (
     Approval,
     CaseProvision,
+    GraphLinks,
     MembershipProvision,
     Message,
     MessageResponse,
+    PdfUpload,
     PrincipalProvision,
     Search,
     Upload,
@@ -31,6 +36,41 @@ from evidence_agent.storage.registry import Registry
 from evidence_agent.storage.sqlite import Database
 
 router = APIRouter()
+
+
+@router.post("/v1/admin/cases/{case_id}/graph-links")
+def register_graph_links(case_id: str, body: GraphLinks, request: Request,
+                         authorization: str | None = Header(default=None)) -> object:
+    """Register up to16 typed, source-proven navigation candidates atomically.
+
+    Current case-member admins need document:approve and read access to both endpoints
+    and exact proof source/version/span. Repeats are idempotent; changed proof conflicts.
+    Graph-enabled publication is reconciled before READY. Graph-off returns NOT_ENABLED.
+    SUPERSEDES is navigation only and never changes deterministic policy precedence.
+    """
+    from evidence_agent.graph.registry import GraphRegistry
+    with services(request, authorization) as (registry, catalog, principal):
+        graph = GraphRegistry(catalog, principal, case_id)
+        identifiers = graph.register_links([link.model_dump() for link in body.links])
+        expansion = request.app.state.graph
+        if expansion is not None:
+            revisions = {graph.chunk(identifier).revision_id for link in body.links
+                         for identifier in (link.from_chunk_id, link.to_chunk_id, link.evidence_chunk_id)}
+            for revision in sorted(revisions):
+                IngestPipeline(catalog, request.app.state.index, expansion.backend).index(principal, revision)
+        with registry.database.transaction():
+            proofs = [graph.link_provenance(identifier) for identifier in identifiers]
+        return {"links": proofs, "projection": "READY" if expansion is not None else "NOT_ENABLED"}
+
+
+@router.get("/v1/cases/{case_id}/graph-links/{edge_id}")
+def graph_link(case_id: str, edge_id: str, request: Request,
+               authorization: str | None = Header(default=None)) -> object:
+    """Read an HTTP-created link's exact proof under current endpoint/source ACLs."""
+    from evidence_agent.graph.registry import GraphRegistry
+    with services(request, authorization) as (registry, catalog, principal):
+        with registry.database.transaction():
+            return GraphRegistry(catalog, principal, case_id).link_provenance(edge_id)
 
 
 @contextmanager
@@ -108,6 +148,59 @@ def upload(body: Upload, request: Request, authorization: str | None = Header(de
             valid_from=validated.valid_from, valid_to=validated.valid_to,
         )
         return {"revision_id": revision, "state": "STORED"}
+
+
+@router.post("/sources/import-pdf", status_code=201)
+def import_pdf(body: PdfUpload, request: Request,
+               authorization: str | None = Header(default=None)) -> object:
+    """Import base64 digital-text PDF as a draft with original/page provenance.
+
+    Requires current case document:upload before extraction.2MiB/50pages/256KiB text,
+    10seconds/512MiB child cap. Rejects encrypted/scanned/empty/unsupported documents.
+    Independent approval and reconciled indexing are still required for citation reads.
+    """
+    from evidence_agent.ingest.extraction import extract_pdf
+    with services(request, authorization) as (registry, _, principal):
+        registry.access.authorize(principal, tenant_id=principal.tenant_id,
+                                   case_id=body.case_id, grant="document:upload")
+        try:
+            raw = base64.b64decode(body.content, validate=True)
+        except (ValueError, binascii.Error) as error:
+            raise ValueError("Invalid PDF encoding") from error
+        if not body.filename.lower().endswith(".pdf") or (
+            body.sha256 is not None and hashlib.sha256(raw).hexdigest() != body.sha256
+        ):
+            raise ValueError("PDF filename/hash mismatch")
+        extraction = extract_pdf(raw)
+        text = extraction["text"].encode()
+        validated = validate_upload_metadata(registry, principal,
+            tenant_id=principal.tenant_id, case_id=body.case_id, family_id=body.family_id,
+            content=text, filename=body.filename + ".txt", content_type="text/plain",
+            expected_sha256=hashlib.sha256(text).hexdigest(), source_path=body.filename + ".txt",
+            owner_id=body.owner_id, allowed_principal_ids=tuple(body.allowed_principal_ids),
+            valid_from=body.valid_from, valid_to=body.valid_to)
+        revision = registry.register_extraction(principal, original=raw, filename=body.filename,
+            extraction=extraction, tenant_id=principal.tenant_id, case_id=validated.case_id,
+            family_id=validated.family_id, owner_id=validated.owner_id,
+            allowed_principal_ids=validated.allowed_principal_ids,
+            valid_from=validated.valid_from, valid_to=validated.valid_to)
+        return {"revision_id": revision, "state": "STORED",
+                "original_sha256": hashlib.sha256(raw).hexdigest(),
+                "extracted_sha256": hashlib.sha256(text).hexdigest(),
+                "page_count": len(extraction["pages"]), "offset_basis": "EXTRACTED_UTF8"}
+
+
+@router.get("/sources/{revision_id}/original-pdf")
+def original_pdf(revision_id: str, request: Request,
+                 authorization: str | None = Header(default=None)) -> Response:
+    """Read the immutable original PDF only under current approved source ACLs."""
+    with services(request, authorization) as (registry, _, principal):
+        with registry.database.transaction():
+            provenance = registry.extraction_provenance(principal, revision_id)
+            if provenance is None:
+                raise HTTPException(404, "No PDF provenance")
+            return Response(registry.originals.read(provenance["original_sha256"]),
+                media_type="application/pdf", headers={"Content-Disposition": "attachment; filename=source.pdf"})
 
 
 @router.post("/v1/admin/principals")

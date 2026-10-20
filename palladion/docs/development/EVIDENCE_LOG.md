@@ -2369,3 +2369,238 @@ prefix scanPASS (0matches), current static/doc gatesPASS. T05 closes in the desc
 verified commit containing these records; owner-approved push targets established
 origin/main only. No benchmark implementation/editor/environment/runtime/build file
 staged, and no published history rewritten. Handoff appendix alreadypublished914df24.
+
+
+## E-P10-001 — Owner scope and complete start-adversary receipt
+
+2026-10-20. Starting sharedmain9727f5e, only foreign .vscode/ and benchmark stackdump
+untracked. Current user authorizes PF07, classification expansion/weighted exploration,
+fixture clarity, PDF/JSON/code formats, live explanation, public terms and automatic
+bounded conversation context. Explicit async approvals ADR0096/0097/0098 precede code.
+No ambient named provider/database credentials; root.env/demo_auth never read/dispatched.
+
+Single independent p10_start_adversary, GPT6LunaMedium, read complete blueprint1784lines
+in contiguous nontruncated windows (§1–18/I01–I15), P10 cards/accepted decisions and
+actual graph/ingest/memory/live/fixture consumers. Read-only; no tests/services/network/
+credentials/git mutations. Confirmed gaps: no graph HTTP writer; chunk-only relation
+proof insufficient; Markdown/TXT-only parser+pipeline/API; no PDF memorycap; fixed PathA
+profile omits actual rules; packet omits turn projection; duplicated fixture timestamp
+primitives with differing errors; live upstream is mock; P10 gate/trace rows absent.
+
+Main confirms owning paths and updates plan/gates/trace before implementation. Durable
+graph exact-span proof uses the existing immutable case_events producer/reader pattern
+(like policy/live scope), bound to canonical graph edge and source original: no second
+graph schema or legacy context_links widening required. Thus auditor's suggested new
+graph schema migration is not necessary; missing-proof finding is confirmed, proposed
+storage remedy is superseded by an evidenced existing pattern. PDF provenance still
+needs acceptedv7. Corrected planned nonexistent test_foundation to realtest_goldens.
+
+Main baseline credential-free pytest -q --junitxml=runtime/p10-baseline.xml, fullraw
+runtime/p10-baseline.log; no live flags and no source edits while running. Destructive
+migration controls use tmp_path only; real-server suites skipped without explicit flags.
+Result pending. No phase/task/gate marked done from static review alone.
+
+### E-P10-002 — baseline and bounded implementation choices
+
+2026-10-20: credential-free baseline398PASS/31SKIP (runtime/p10-baseline.xml/log).
+Documentation checker126cards/21negativecontrolsPASS. Classifier frozen30synthetic
+controls before lexical implementation; focused classification/promotion59PASS/2SKIP.
+ADR0096 implementation bounds: atomic16links, exact4096byte quote, immutable
+GRAPH_LINK_REGISTERED case event per canonical edge; changed proof conflicts.
+Existing GraphRegistry owns endpoint/proof authorization and projection invalidation.
+ADR0097 implementation bounds: PDF2MiB/50pages/256KiB UTF8 output/10seconds,
+512MiB worker memory, explicit route-specific3MiB HTTP framing limit. Original
+PDF and extracted canonical text have distinct hashes, page intervals refer only
+to extracted UTF8 bytes. No OCR, Office, archives, embedded-file execution or fetch.
+These are implementation resource bounds within the approved contracts, not claims
+of parsing fidelity. Source/library/parser and consumer checks remain pending.
+
+### E-P10-003 — current source and actual consumer evidence
+
+Source full suite448PASS/31SKIP142.35s (runtime/p10-suite.xml/log). Current extra
+HTTP/PDF/process-capacity controls16PASS47.47s. Strict src/scripts mypy80filesPASS.
+Ruff broad sweep found5preexisting P09 test_handoff import-group violations plus
+one new test import group; corrected formatting only, no behavior change. Direct
+imports110files and structural126cards/21negativecontrolsPASS.
+
+Real service attempt1 failed initial Neo4j publication with a client transaction
+10second timeout before provider dispatch. Attempt2 reached setup but failed the
+new smoke script's explicit graph-setting consistency guard; coordinator omitted
+graph_enabled=True. Corrected the script, retaining both failed reports.
+Attempt3 completed all six actual graph/PDF/Groq/reopen checks.9model invocations,
+8responses; one unreceived invocation's exact failure cause was not preserved by
+the initial observer (UNKNOWN), not retrospectively inferred from last_failure=null.
+First budget main4/tools3/critic1; second main2/tools0/critic2, all within existing
+caps. Explicit Groq openai/gpt-oss-20b,15second pacing, no retry/fallback. Reports:
+runtime/p10-live-attempt1/2/3.json/log. Fresh UUID resources only; cleanup executed.
+
+uv isolated-wheel sync failed with Windows1450 resource exhaustion while services
+were running. This is a setup failure, not installed-package PASS. Stopping only
+our recorded services before retry. PDF admission now has2local nonqueued parser
+slots, limiting worker memory exposure to at most two512MiB jobs per API process;
+capacity exhaustion is503, with release on every exit. No serving-default model,
+authority, tool count or graph enablement change.
+
+### E-P10-004 — parser process launch correction
+
+Later overlapping source guard run:62PASS/1SKIP/2FAIL, both child deadlines (PDF10s,
+job-cap control5s), runtime/p10-preaudit-guards.log. These are retained failures.
+Owning inspection found Windows .venv/python.exe is a redirector: its actual Python
+child can be created before AssignProcessToJobObject, escaping a job assigned only
+to the redirector. Prior successful allocations do not exclude that launch race.
+Corrected PDF launch to the actual base interpreter with -I/-S and explicit current
+package/dependency directories; no site hooks, PYTHONPATH, credentials or shell.
+The parser blocks on stdin before pypdf import; parent assigns this actual process
+to its bounded job before sending input. POSIX retains private session/RLIMIT_AS.
+This also makes installed child code resolve from the installed package rather than
+an editable source hook. Existing10second runtime cap remains. Revalidation pending.
+
+### E-P10-005 — later focused proof and explicit host-resource hold
+
+Direct base-interpreter process controls3PASS5.41s (runtime/p10-minimal.log); later
+source focused86PASS/2SKIP207.24s, runtime/p10-current-focused.xml and
+runtime/p10-base-source-pytest.log. Exact selected files: test_extraction, formats_api,
+graph_api, storage, classification, memory and runtime_api. Package path was actual
+source; no real flags/provider credentials. Known skipped native/vector controls are
+not PASS. Separate broad recollection was interrupted under host exhaustion, not closed.
+
+Subsequent in-scope hardening still requires refresh: new opaque formats use
+utf8-verbatim-v1, preserving legacy mdtxt-v1; bare language fragments abstain and plural
+credential/password/token cues reject; graph-proof and original-PDF HTTP readback hold
+a DB snapshot. These decisions preserve approved authority/privacy/identity boundaries;
+no new dependency, tool, default enablement or policy power. Five additional lexical
+near-misses are separate from the original30frozen development controls. Current
+lexical profile hash is not yet measured; earlier hash stays labeled historical.
+
+Ruff src/scripts/testsPASS after first process fix; latest syntax/type/API/package
+refresh remains open. Isolated wheel environment locked dependencies installed after
+copy-mode retry, and its actual installed package path was verified. Current build
+attempt failed again when uv could not read cached packaging with Windows1450
+(runtime/p10-base-source-build.log). Stale wheel is not current source proof.
+
+Native memory diagnostics measured98–99% physical use and9–156MiB free. PowerShell
+could not create CoreCLR0x800705AA. WSL status/cleanup connection timed out with
+HCS_E_CONNECTION_TIMEOUT. Base Python later failed importing encodings; native dir
+confirmed C:/Python314/Lib/encodings/__init__.py exists (6127bytes), so deletion is not
+established. Owner was asked asynchronously to free unused-app RAM. No foreign process
+was stopped; no WSL shutdown or persistent-storage deletion was attempted. Owned
+Qdrant/Neo4j graceful stops were requested; final port/descendant cleanup is UNVERIFIED.
+
+Retraction: the initial PF07 DONE appendix described the earlier actual consumer
+checkpoint too broadly for current closeout. Struck DONE in place; now IMPLEMENTED /
+latest-byte gates and final review OPEN. Prior actual observations remain unchanged.
+Single final LunaMedium reviewer is not dispatched before current gates finish.
+No stage/commit/push; owner main-push approval persists. All13P10 cards stay unchecked.
+PROJECT_MEMORY Current P10 blocked checkpoint is the resume record. Temporary helper
+runtime/p10_record_checkpoint.py failed before execution; no safe JSON receipt was
+created by it and no result is inferred from that failed attempt.
+
+### E-P10-006 — recovered current source, installed and native consumers
+
+Owner asked to retry while preserving other work. Host recovered to84%physical memory
+use/1136MiB free. Canonical source `.venv/Scripts/python.exe -m pytest -q --tb=short
+--junitxml=runtime/p10-recovered-suite.xml` exited0:458PASS32explicitSKIP109.65s.
+Ruff `check src scripts tests` and strict mypy `src scripts`80files exit0. Dependency
+checker `--self-test`110files+4negative controls exit0. Docs checker `--self-test`
+21Markdown/126atomiccards/21negative controls exit0. Full suite has one existing
+Starlette/httpx test-client deprecation warning; no installed capability skip is PASS.
+
+Per-command UV_LINK_MODE=copy `python -m build --installer uv` built wheel and sdist,
+exit0. Existing isolated runtime/p10-wheel-venv received the wheel with uv pip install
+--link-mode copy --no-deps --reinstall, exit0. Import resolves from its site-packages;
+all70Python/SQL source/wheel/installed files compare exactly. Hashes and source pointers
+are in evidence/p10-consumer-observations.json; raw proof runtime/p10-recovered-wheel-proof.json.
+
+Installed `python -I -m pytest tests/test_classification.py tests/test_extraction.py
+tests/test_formats_api.py tests/test_graph_api.py tests/test_storage.py tests/test_memory.py
+tests/test_runtime_api.py -q --tb=short --junitxml=runtime/p10-recovered-installed.xml`
+exit0:91PASS2explicitSKIP44.62s. Installed `-I scripts/validate_foundation.py` and
+`-I scripts/validate_policy.py` exit0 with reopened original/policy consumers and0provider calls.
+
+Started only owned Qdrant through scripts/qdrant_server.py --wsl. Initial readiness
+probe got connection-refused before startup; later launcher reported loopback listening.
+Command-local PALLADION_TEST_QDRANT_URL=http://127.0.0.1:16333 enabled installed
+tests/test_formats_api.py::test_actual_qdrant_pdf_import_citation_and_revocation:
+1PASS22.62s, exit0, runtime/p10-recovered-native.xml/log. Real index upload/approval,
+distinct original/extracted provenance, original/citation readback, retry and current
+revocation denial passed; cleanup deletes only the freshly generated UUID collection.
+No provider enabled in recovered commands. Prior graph/Groq attempt3 retains its exact
+9invocations8responses/oneUNKNOWN snapshot; failed attempts1/2 are preserved.
+
+Current classifier fingerprint e39388a6ac7171962d26d1b13d6e461550b7d0b15c09ba4bfc6c0a1293b459f5;
+frozen30controls and5additional privacy/fragment near-misses pass. Precision/recall1
+on those developer synthetic controls is not a generalization claim. Single final
+LunaMedium review and closeout remain open; no commit/push yet, PF03 remains open.
+
+### E-P10-007 — single end review, final parser evidence and scoped closeout
+
+One independent /root/p10_end_review, GPT6LunaMedium/fresh context, read-only/no live
+credentials, read complete blueprint in contiguous ranges1–1784 (§§1–18/I01–I15),
+the governing reviewer contract/P10cards/ADR0096–98 answers, current source/test/evidence,
+README and authorized benchmark handoff. Review traced task→consumer→proof:
+
+| Owners | Consumer and gate evidence | Disposition |
+|---|---|---|
+| P10-T01.01/02 | Scoped admin HTTP→exact durable proof→Neo4j projection/search→current source readback; G-GRAPH/G-SOURCE/G-SECURITY, attempt3 + current graph API controls | No material defect confirmed |
+| P10-T02.01–04 | UTF8/PDF draft→independent approval→index→citation/original→revocation; v7 fresh/populated/backup/rollback; process memory/time/page/input/output controls; current installed native PDF | No material defect confirmed |
+| P10-T03.01/02 | Event→weighted hard-boundary category→versioned promotion→current memory; synthetic FP/FN controls and explicit unknown generalization | No material defect confirmed |
+| P10-T04.01/02 | Persisted own-session requests/releases→bounded safe turns→automatic packet→next actual Groq prompt; actor/session/correction/revocation controls | No material defect confirmed |
+| P10-T05/06 | Fixture guard semantics, public glossary/mock-live/automatic ownership, gates/package/docs and scoped cleanup | Evidence freshness gap resolved below |
+
+Reviewer assessed locked canonical authority, nonexclusive zeroLLMpreflight/fourreadtools,
+main≤5/critic≤3 including attempts, draft→critic→finalization→gate→continuity, source/
+ACL/time/policy/live/memory boundaries, navigation-only graph and research/security
+resource limits. No confirmed material implementation defect was found. Scope remains
+synthetic; no semantic accuracy/production readiness/comparison superiority follows.
+P09/PF03 is independently open, not waived or a P10 prerequisite. Reviewer ran no tests.
+
+Evidence freshness finding: the two added actual PDF page/output controls and parser
+docstring correction postdated E-P10-006. Main verified tests/test_extraction.py:
+source11PASS14.95s (p10-parser-boundaries.xml/log), installed11PASS14.65s
+(p10-final-parser-installed.xml/log), both exit0 and overlapping prior suites. They prove
+50pagesaccepted/51rejected and extracted output rejection below input cap. Source
+docstring now accurately distinguishes opaque whitespace from Markdown/TXT delimiters;
+no production behavior changed after broad source458/installed91checks. Rebuilt wheel
+and sdist with copy-mode build, installed with no-deps/reinstall; all70Python/SQL files
+match source/wheel/installed bytes. Final wheel SHA256a6241d204ac90ff862a2af0147cffa235b00bd758f93ceab988372273252ce01,
+raw runtime/p10-final-wheel-proof.json; safe receipt includes previous/current proof.
+Ruff and strict mypy80files pass after the docstring/test additions.
+
+Cleanup: qdrant_server.py --wsl --stop requested recordedPID483 termination; subsequent
+WSL native reader verifies /proc/483/exe absent, storage directory present. Windows
+Get-NetTCPConnection and WSLss show no16333/16334/17687listeners. Neo4j not restarted
+on recovery; no foreign process or data touched. ~~All13P10cards verified,125/126total checked~~ — corrected below: final checkpoint proof was still pending; P09-T02.07 remains open. Final docs/status/handoff synchronized; scoped stage/secret
+review and descriptive commit/main publication follow under standing owner approval.
+
+End-review R1 correction: T06 includes the scoped verified checkpoint, so checking it
+before the actual commit/publication was ahead of its proof. Main restored P10-T06.01
+OPEN and synchronized current records to12/13P10cards,124/126overall. No card contract
+or acceptance target changed. Finish stage/secret review and publish the feature
+checkpoint, then close T06 in a separate documentation receipt citing that actual
+commit. Earlier premature completion wording is struck above, not erased.
+
+Coverage clarification: the end reviewer fully read the blueprint but initially read
+selected current P10 portions of the12core development documents, not all historical
+content. Main requested completion of those remaining historical reads in bounded
+nontruncated windows before logging full12document coverage. This is an audit coverage
+obligation, not a newly confirmed source defect.
+
+Same-reviewer resolution: /root/p10_end_review confirmed no remaining P10 source/
+consumer/schema/test defect and resolved the parser evidence-freshness finding from
+the focused receipts and rebuilt70file proof. The task-status finding remains OPEN
+until actual scoped commit/publication; main has restored that status. Review directly
+covered the complete blueprint1–1784/§§1–18/I01–I15 and current P10/closeout portions
+of all12core development records. GOAL was read fully; historical portions of the
+other records were partial, some output windows truncated. No full historical12-doc
+drift audit is claimed or inferred. Earlier historical P09 audits retain their own
+coverage receipts. Current-phase review satisfies the master blueprint review contract;
+no governing rule or acceptance was narrowed. Reviewer ran no tests or mutations.
+
+Coordinator scoped staged review:55files, only Palladion plus root instructions/README
+and authorized PALLADION_FIXES.md appendix. No runtime/env/generated/foreign benchmark
+implementation file staged. Staged text/key scan finds0credential patterns, with
+planted in-memory Groq/provider key positive controls and a documentation-anchor
+negative control; original loose sk-prefix regex wrongly matched task-reading links
+and was corrected to a token boundary before concluding0. No secret values printed.
+Staged diff whitespace check passes. Final commit/main publication remains next under
+the owner's standing explicit approval; do not close T06 from this pre-commit receipt.

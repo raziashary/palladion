@@ -72,17 +72,22 @@ def build_packet(store: CaseStore, query: str, *, max_chars: int = 6000) -> Cont
                 observations.append(VerifiedObservation(fact_id=observed.lookup_id+":"+field,
                     predicate=field, value=observed.data[field], evidence_id=observed.lookup_id,
                     observed_at=observed.observed_at, freshness_status="RECHECK_FOR_CURRENT_DECISION"))
+    turns, omitted, truncated = store.conversation(suppress_queries=bool(controlled))
     packet = ContinuityPacket(case_id=store.case_id, tenant_id=store.principal.tenant_id,
         agent_role="investigator", current_goal=query[:512],
         verified_observations=tuple(observations[:3]), reported_facts=tuple(reported),
         hypotheses=tuple(hypotheses[:2]), open_questions=store.unresolved_questions(),
         evidence_handles=tuple(handles), last_disposition=GateDisposition(prior["disposition"]) if prior else None,
+        conversation_turns=turns, conversation_omitted=omitted, conversation_truncated=truncated,
         previous_attempts=tuple({"kind":"UNAPPROVED_PROCEDURAL_EXPERIENCE", "authority":"NONE",
             "at":m["set_at"], "payload":{"status":"UNAPPROVED_CONTEXT", "memory_id":m["memory_id"],
             "content":m["content"],"original_event_id":m["original_event_id"]}}
             for m in procedures)+tuple(e for e in events if e["kind"] in {"RUNTIME_ATTEMPT", "RUNTIME_TOOL_RESULT"})[-2:],
         generated_at=utc_clock())
     # Keep critical unresolved slots first; omit lower-priority context explicitly in metrics.
+    while len(packet.model_dump_json()) > max_chars and packet.conversation_turns:
+        packet = packet.model_copy(update={"conversation_turns": packet.conversation_turns[1:],
+            "conversation_omitted": packet.conversation_omitted + 1, "conversation_truncated": True})
     for field in ("previous_attempts", "evidence_handles", "reported_facts", "hypotheses", "verified_observations"):
         while len(packet.model_dump_json()) > max_chars and getattr(packet, field):
             packet = packet.model_copy(update={field: getattr(packet, field)[:-1]})

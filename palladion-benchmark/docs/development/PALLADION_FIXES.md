@@ -224,7 +224,13 @@ Benchmark adapter implementation and sealed-run decisions remain with its contri
 | PF04 | DONE — verified HTTP/tokenizer/span consumer | HTTP default12/max40, optional `token_budget` counts the pinned retrieval tokenizer's whole-passage prefix with disclosed identity/count/separator. Four-tool limit remains12. This is not whitespace/provider billing equivalence; benchmark must choose its equal-budget convention explicitly. |
 | PF05 | DONE — verified provisioning/current ACL consumer | Scoped admins use `POST /v1/admin/principals`, `/v1/admin/cases`, `/v1/admin/cases/{case_id}/memberships`. Submitted principal ID is a tenant-local subject key: store/use returned opaque canonical ID for membership, ACL and operator token mappings. No bearer/admin/tenant minting or restoration of revoked access. |
 | PF06 | DONE within owner-approved safe capability scope | `python scripts/evaluate.py --capabilities` reports11supported isolated arms and explicit unsupported bypasses. Critic exists; B4/B5 omit critic in isolated studies, retaining final gate. Serving gate/preflight/source/parser/time bypasses remain FEATURE_NOT_SUPPORTED; do not relabel those benchmark ablations runnable. |
+| PF07 | DONE — verified P10 consumer and independent review; prior premature DONE retraction retained in E-P10-005 | `POST /v1/admin/cases/{case_id}/graph-links` accepts up to16 closed-type links with current scoped-admin/endpoint/proof access and exact quote/version/UTF8 span. Atomic/idempotent; changed proof conflicts. `GET /v1/cases/{case_id}/graph-links/{edge_id}` rechecks current access. Graph enabled republishes and reconciles before READY; graph off reports NOT_ENABLED. Candidates remain EXTRACTED_UNREVIEWED navigation only; SUPERSEDES cannot alter policy precedence. Real Qdrant/Neo4j HTTP consumer passed in P10 attempt3; subsequent hardening has current source/installed/native PDF proof, exact final package comparison and single full-blueprint end review (E-P10-006/007). Owned services stopped/storage preserved. Frozen benchmark data/pins/results are unchanged; git history records the scoped feature checkpoint. |
 
 Palladion source/evidence authority: `palladion/docs/development/evidence/P09_AUDIT_AND_HANDOFF.md`,
 `EVIDENCE_LOG.md` E-P09-001 onward, MASTER_DEV_PLAN P09 and ADR0087–0095. These fixes do
 not retroactively change frozen benchmark scores or validate a sealed comparison.
+
+PF07 follow-up evidence: `palladion/docs/development/evidence/P10_CLASSIFICATION_AND_FORMATS.md`,
+E-P10-001–007 and ADR0096. Palladion P10 final phase review/checkpoint is tracked there.
+The benchmark contributor still owns R7b link selection, capability reporting, version
+pinning and comparison validity. PF03 remains OPEN; no performance target is waived.

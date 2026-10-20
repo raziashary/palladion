@@ -1,6 +1,6 @@
 # Project map
 
-Current checkpoint 2026-10-20: P09 audit and benchmark-handoff remediation ACTIVE. P00–P08 are historical completed pilot work (98 cards); independent reaudit identified and corrected gate/evaluation proof gaps; P09 remains active for PF03 performance acceptance. See evidence/P09_AUDIT_AND_HANDOFF.md and ADR-0087–0095; PF03 performance remains open after owner-rejected0091 closure; opaque IDs and opt-in5second audit reuse are approved and implemented. Benchmark implementation/editor work, UI and enterprise writes remain excluded; owner authorized a scoped verified main push.
+Current checkpoint 2026-10-20: P10 implementation and consumer validation verified; final scoped checkpoint P10-T06.01 remains OPEN until stage/secret review, commit and approved main publication. 12 of 13 P10 cards are verified (124 of 126 overall); P09/PF03 remains separately OPEN. Source 458 PASS/32 explicit SKIP, installed 91 PASS/2 explicit SKIP, native PDF 1 PASS; later parser controls pass in overlapping 11-test source/installed runs. Final 70-file package comparison, static/docs gates and owned cleanup pass. Full-blueprint and current P10 documentation/source review complete; no full historical-document audit is claimed.
 
 Updated2026-10-20; published P07 proof is E-P07-002; P08 engineering pilot completed at E-P08-001–003; current P09 proof is E-P09-001–004, with PF03 acceptance open. **Actual documentation is distinct from planned runtime components.**
 Source: blueprint “Concrete prototype repository,” “Directory responsibilities,” and “System
@@ -284,3 +284,22 @@ sidecar lookup → fresh Qdrant readback on miss → current canonical recheck �
 mode/time/status. Exact backend/representation/scope/manifest keys, original audit-start
 age≤5seconds. Domain tools and default serving stay fresh; cache has no source/gate
 authority. PF03 scaling acceptance is a separate open P09-T02.07 outcome.
+
+## P10 implemented producer and consumer paths
+
+- `/sources` -> explicit UTF8 text/structured/code allowlist -> immutable draft ->
+  independent approval -> exact-span parsing -> canonical generation / Qdrant readback.
+- `/sources/import-pdf` -> scoped uploader -> two-slot owned parser worker -> immutable
+  original PDF + derived UTF8 draft + SQLitev7 source_extractions -> independent
+  approval/indexing -> EvidenceResolver page/extracted-offset provenance and original readback.
+- `/v1/admin/cases/{case_id}/graph-links` -> existing GraphRegistry atomic16link writer ->
+  exact GRAPH_LINK_REGISTERED case-event proof -> current graph projection publication ->
+  actual expansion paths -> current endpoint/proof/citation readers. No fifth tool.
+- REQUEST/TOOL_RESULT/RELEASE -> CaseStore -> lexical-2 deterministic weighted classifier ->
+  promotion-2 decision/profile/provenance -> private USER memory. Optional PathB remains
+  an explicit local embedding job, never automatic authority or sharing.
+- Next request -> preflight -> bounded own-session packet/conversation projection ->
+  AgentRuntime explicit untrusted_case_context -> actual Groq main/critic -> gate/release.
+  Prior document claims reauthorize; old live/policy claim text omitted for fresh reads.
+
+Actual paths and remaining proof: evidence/P10_CLASSIFICATION_AND_FORMATS.md.

@@ -26,6 +26,7 @@ from .test_pipeline import MemoryIndex
 
 
 def remove_v6(connection):
+    connection.execute("DROP TABLE IF EXISTS source_extractions")
     for table in (
         "memory_promotion_links",
         "memory_promotion_decisions",
@@ -34,7 +35,7 @@ def remove_v6(connection):
         "memory_sessions",
     ):
         connection.execute(f"DROP TABLE {table}")
-    connection.execute("DELETE FROM schema_versions WHERE version=6")
+    connection.execute("DELETE FROM schema_versions WHERE version>=6")
     connection.execute("PRAGMA user_version=5")
 
 
@@ -62,7 +63,7 @@ def test_v6_upgrade_backup_rollback_preserves_graph_and_legacy_memory_tables(tmp
             )
     else:
         with owner:
-            assert owner.connection.execute("PRAGMA user_version").fetchone()[0] == 6
+            assert owner.connection.execute("PRAGMA user_version").fetchone()[0] == Database.SCHEMA_VERSION
             assert (
                 owner.connection.execute(
                     "SELECT count(*) FROM graph_entity_attestations"

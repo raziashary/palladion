@@ -1,6 +1,6 @@
 # Palladion master development plan
 
-Current checkpoint 2026-10-20: P09 audit and benchmark-handoff remediation ACTIVE. P00–P08 are historical completed pilot work (98 cards); independent reaudit identified and corrected gate/evaluation proof gaps; P09 remains active for PF03 performance acceptance. See evidence/P09_AUDIT_AND_HANDOFF.md and ADR-0087–0095; PF03 performance remains open after rejected0091 closure; opaque IDs and explicit5second audit reuse are approved and implemented. Benchmark implementation/editor work, UI and enterprise writes remain excluded; owner authorized a scoped verified main push.
+Current checkpoint 2026-10-20: P10 implementation and consumer validation verified; final scoped checkpoint P10-T06.01 remains OPEN until stage/secret review, commit and approved main publication. 12 of 13 P10 cards are verified (124 of 126 overall); P09/PF03 remains separately OPEN. Source 458 PASS/32 explicit SKIP, installed 91 PASS/2 explicit SKIP, native PDF 1 PASS; later parser controls pass in overlapping 11-test source/installed runs. Final 70-file package comparison, static/docs gates and owned cleanup pass. Full-blueprint and current P10 documentation/source review complete; no full historical-document audit is claimed.
 
 Version 13, 2026-10-20. Scope anchor: [blueprint v0.2](../vision/palladion-blueprint-v2.md),
 especially “Locked decisions,” “Build plan,” “System invariants,” and the full walkthrough.
@@ -1408,6 +1408,123 @@ Pre-adversary receipt: evidence/P09_AUDIT_AND_HANDOFF.md. P09 parent exit requir
   - **Depends:** P09-T02.02, P09-T02.03, P09-T02.04, P09-T02.05, P09-T02.06, P09-T03.01, P09-T03.02, P09-T04.01, P09-T04.02, P09-T04.03.
   - **Change:** Stack checks, actual HTTP/CLI, applicable service gates, reused reviewer resolution, no-stale docs, owned-port cleanup and verified commit.
   - **Proof:** SMOKE; G-E2E, G-DOC; source/installed/gates/review/docs and scoped staged/secret proof; owner-authorized push to established main upstream.
+
+## P10 — Owner-requested ingestion, graph setup and memory continuity extensions
+
+Current owner GO2026-10-20; ADR0096–0098 explicitly accepted. P09/PF03 acceptance stays open, not waived by this phase. UI, enterprise adapters/writes and benchmark implementation remain excluded. Each new capability preserves the blueprint authority/ACL/four-tool invariants. The full-blueprint start adversary and sole end reviewer are complete (E-P10-001/007); current consumer gates and cleanup pass. 12of13P10cards are verified; P10-T06.01 stays open until the scoped checkpoint is published. Across the whole register124of126cards are checked; P09-T02.07 is the separate performance obligation, not a system-readiness percentage.
+
+| Task | Outcome | Exit |
+|---|---|---|
+| P10-T01 | PF07 provenance-backed graph HTTP setup | G-GRAPH, G-SOURCE, G-SECURITY |
+| P10-T02 | Source-preserving structured/code/PDF formats | G-SOURCE, G-CONTRACT, G-E2E |
+| P10-T03 | Deterministic lexical classification and measured limits | G-MEMORY, G-RESEARCH |
+| P10-T04 | Automatic bounded conversation continuity | G-MEMORY, G-SECURITY, G-BUDGET |
+| P10-T05 | Clear fixture validation and public terminology | G-CONTRACT, G-DOC |
+| P10-T06 | Verified checkpoint and independent review | G-E2E, G-DOC |
+
+<a id="p10-t01-01"></a>
+
+- [x] **P10-T01.01 — Own typed graph link provenance**
+  - **Files:** `palladion/src/evidence_agent/graph/registry.py`, `palladion/src/evidence_agent/graph/relations.py`, `palladion/src/evidence_agent/ingest/graph_extract.py`, `palladion/tests/test_graph_identity.py`.
+  - **Depends:** P09-T05.01.
+  - **Change:** Bounded idempotent source-chunk/proof-span producer under current scoped-admin authority, preserving typed navigation and immutable proof; project only current accepted records.
+  - **Proof:** INTEGRATION; G-SOURCE, G-SECURITY, G-MEMORY, G-E2E; owning positive/negative controls and reopened production consumer; no skipped check reported as PASS.
+
+<a id="p10-t01-02"></a>
+
+- [x] **P10-T01.02 — Expose graph link creation/readback**
+  - **Files:** `palladion/src/evidence_agent/api/schemas.py`, `palladion/src/evidence_agent/api/routes.py`, `palladion/tests/test_graph_api.py`.
+  - **Depends:** P10-T01.01.
+  - **Change:** Upload/approve links through HTTP and reindex/reconcile actual projection; denied/unproven/stale/cross-case/revoked links cannot expose content; no fifth tool.
+  - **Proof:** INTEGRATION; G-SOURCE, G-SECURITY, G-MEMORY, G-E2E; owning positive/negative controls and reopened production consumer; no skipped check reported as PASS.
+
+<a id="p10-t02-01"></a>
+
+- [x] **P10-T02.01 — Preserve UTF8 structured and code sources**
+  - **Files:** `palladion/src/evidence_agent/ingest/parsing.py`, `palladion/src/evidence_agent/ingest/pipeline.py`, `palladion/src/evidence_agent/api/schemas.py`, `palladion/tests/test_ingest.py`, `palladion/tests/test_pipeline.py`.
+  - **Depends:** P09-T05.01.
+  - **Change:** Explicit extension/MIME allowlist for JSON/JSONL/CSV/code/config; parse as source text with exact original bytes and no execution or instruction authority.
+  - **Proof:** INTEGRATION; G-SOURCE, G-SECURITY, G-MEMORY, G-E2E; owning positive/negative controls and reopened production consumer; no skipped check reported as PASS.
+
+<a id="p10-t02-02"></a>
+
+- [x] **P10-T02.02 — Persist additive extraction provenance**
+  - **Files:** `palladion/src/evidence_agent/storage/schema.sql`, `palladion/src/evidence_agent/storage/sqlite.py`, `palladion/src/evidence_agent/storage/extraction_schema.sql`, `palladion/src/evidence_agent/storage/registry.py`, `palladion/tests/test_storage.py`, `palladion/tests/test_ingest.py`, `palladion/tests/test_memory_promotion.py`.
+  - **Depends:** P10-T02.01.
+  - **Change:** v7 links original PDF digest to derived UTF8 revision/page spans/parser; existing rows preserved, new/fresh and populated upgrades/backups/rollback proven.
+  - **Proof:** INTEGRATION; G-SOURCE, G-SECURITY, G-MEMORY, G-E2E; owning positive/negative controls and reopened production consumer; no skipped check reported as PASS.
+
+<a id="p10-t02-03"></a>
+
+- [x] **P10-T02.03 — Bound digital PDF extraction**
+  - **Files:** `palladion/src/evidence_agent/ingest/extraction.py`, `palladion/src/evidence_agent/ingest/pdf_worker.py`, `palladion/src/evidence_agent/evaluation/process_owner.py`, `palladion/tests/test_extraction.py`.
+  - **Depends:** P10-T02.02.
+  - **Change:** Pinned parser in owned process with hard deadline/memory/input/page/output bounds; encrypted/image-only/malformed/decompression limits fail explicitly; immutable original and exact derived spans.
+  - **Proof:** INTEGRATION; G-SOURCE, G-SECURITY, G-MEMORY, G-E2E; owning positive/negative controls and reopened production consumer; no skipped check reported as PASS.
+
+<a id="p10-t02-04"></a>
+
+- [x] **P10-T02.04 — Wire PDF upload and citation consumers**
+  - **Files:** `palladion/src/evidence_agent/api/routes.py`, `palladion/src/evidence_agent/api/schemas.py`, `palladion/src/evidence_agent/main.py`, `palladion/src/evidence_agent/retrieval/evidence.py`, `palladion/src/evidence_agent/storage/registry.py`, `palladion/tests/test_formats_api.py`.
+  - **Depends:** P10-T02.03.
+  - **Change:** Dedicated bounded import, current uploader/approver/source ACL and authorized original/provenance readback; source search/citation exposes PDF extraction/page lineage.
+  - **Proof:** INTEGRATION; G-SOURCE, G-SECURITY, G-MEMORY, G-E2E; owning positive/negative controls and reopened production consumer; no skipped check reported as PASS.
+
+<a id="p10-t03-01"></a>
+
+- [x] **P10-T03.01 — Expand deterministic lexical classifier**
+  - **Files:** `palladion/src/evidence_agent/memory/classification.py`, `palladion/src/evidence_agent/memory/promotion.py`, `palladion/tests/test_memory_promotion.py`, `palladion/tests/test_classification.py`.
+  - **Depends:** P09-T05.01.
+  - **Change:** Versioned lexical scoring, phrases/short forms, safe unapproved procedural patterns and episodic abstention; hard attribution/privacy/scope exclusions dominate; profile binds actual rules.
+  - **Proof:** INTEGRATION; G-SOURCE, G-SECURITY, G-MEMORY, G-E2E; owning positive/negative controls and reopened production consumer; no skipped check reported as PASS.
+
+<a id="p10-t03-02"></a>
+
+- [x] **P10-T03.02 — Measure classifier tradeoffs**
+  - **Files:** `palladion/src/evidence_agent/core/evaluation.py`, `palladion/data/demo/p10_classification_controls.json`, `palladion/tests/test_classification.py`.
+  - **Depends:** P10-T03.01.
+  - **Change:** Frozen synthetic positive/near-miss controls with per-category FP/FN/precision/recall/abstention; explain bag-of-words/cosine/Euclidean/entropy limits without training/generalization claims.
+  - **Proof:** INTEGRATION; G-SOURCE, G-SECURITY, G-MEMORY, G-E2E; owning positive/negative controls and reopened production consumer; no skipped check reported as PASS.
+
+<a id="p10-t04-01"></a>
+
+- [x] **P10-T04.01 — Own bounded conversation context**
+  - **Files:** `palladion/src/evidence_agent/core/models.py`, `palladion/src/evidence_agent/memory/store.py`, `palladion/src/evidence_agent/memory/packet.py`, `palladion/tests/test_memory.py`, `palladion/tests/test_memory_promotion.py`.
+  - **Depends:** P10-T03.01.
+  - **Change:** Optional typed own-actor/session turns, stable event IDs/ordering and current goal; safe released answer/claims only, revalidate citations, no reasoning/rejected draft or corrected/revoked text resurrection.
+  - **Proof:** INTEGRATION; G-SOURCE, G-SECURITY, G-MEMORY, G-E2E; owning positive/negative controls and reopened production consumer; no skipped check reported as PASS.
+
+<a id="p10-t04-02"></a>
+
+- [x] **P10-T04.02 — Prove automatic next-turn consumption**
+  - **Files:** `palladion/src/evidence_agent/agent/preflight.py`, `palladion/src/evidence_agent/agent/loop.py`, `palladion/tests/test_runtime_api.py`, `palladion/tests/test_end_to_end.py`.
+  - **Depends:** P10-T04.01.
+  - **Change:** Persist first request/release, reopen build packet automatically, follow-up reaches actual model prompt; session/actor isolation, budget/omission and revocation negatives; actual Groq proof if generative integration changed.
+  - **Proof:** INTEGRATION; G-SOURCE, G-SECURITY, G-MEMORY, G-E2E; owning positive/negative controls and reopened production consumer; no skipped check reported as PASS.
+
+<a id="p10-t05-01"></a>
+
+- [x] **P10-T05.01 — Simplify only evidenced fixture duplication**
+  - **Files:** `palladion/src/evidence_agent/core/fixtures.py`, `palladion/tests/test_goldens.py`.
+  - **Depends:** P09-T05.01.
+  - **Change:** Inspect validation bodies; consolidate demonstrably repeated time-source lookup while preserving rejection/error meaning. Keep clear guards, avoid ternary/while obfuscation.
+  - **Proof:** INTEGRATION; G-SOURCE, G-SECURITY, G-MEMORY, G-E2E; owning positive/negative controls and reopened production consumer; no skipped check reported as PASS.
+
+<a id="p10-t05-02"></a>
+
+- [x] **P10-T05.02 — Explain terminology and automatic versus explicit operations**
+  - **Files:** `README.md`, `palladion/README.md`, `palladion/docs/README.md`, `palladion/docs/development/evidence/P10_CLASSIFICATION_AND_FORMATS.md`.
+  - **Depends:** P10-T01.02, P10-T02.04, P10-T04.02, P10-T05.01.
+  - **Change:** Source-grounded glossary, live mock tool flow, ingestion/memory distinction and automatic packet versus optional recall; supported formats and classifier research limits.
+  - **Proof:** SMOKE; G-E2E, G-DOC; actual entrypoints and immutable source/provenance readback, review receipt, no stale claims or unverified completion.
+
+<a id="p10-t06-01"></a>
+
+- [ ] **P10-T06.01 — Verify end to end and resolve final review**
+  - **Files:** `AGENTS.md`, `palladion/docs/development/MASTER_DEV_PLAN.md`, `palladion/docs/development/GOAL.md`, `palladion/docs/development/PROGRESS.md`, `palladion/docs/development/PROJECT_MEMORY.md`, `palladion/docs/development/PROJECT_MAP.md`, `palladion/docs/development/PROJECT_LEARNING.md`, `palladion/docs/development/ADR_LOG.md`, `palladion/docs/development/EVIDENCE_LOG.md`, `palladion/docs/development/TESTING_GATES.md`, `palladion/docs/development/REQUIREMENTS_TRACEABILITY.md`, `palladion/docs/development/RESEARCH_PROTOCOL.md`, `palladion/docs/development/RISKS_AND_OPEN_QUESTIONS.md`, `palladion/docs/development/check_docs.py`, `palladion/pyproject.toml`, `palladion/uv.lock`, `palladion/scripts/validate_p10.py`, `palladion-benchmark/docs/development/PALLADION_FIXES.md`.
+  - **Depends:** P10-T05.02, P10-T03.02.
+  - **Change:** Stack/source/installed/actual service gates, one LunaMedium end reviewer/resolution, current docs/handoff completion, backup/own-port cleanup and scoped descriptive checkpoint; preserve PF03 and foreign work.
+  - **Proof:** SMOKE; G-E2E, G-DOC; actual entrypoints and immutable source/provenance readback, review receipt, no stale claims or unverified completion.
 
 ## Definition of done
 

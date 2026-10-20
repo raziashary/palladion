@@ -1,10 +1,19 @@
 # Project goal
 
-Current checkpoint 2026-10-20: P09 audit and benchmark-handoff remediation ACTIVE. P00–P08 are historical completed pilot work (98 cards); independent reaudit identified and corrected gate/evaluation proof gaps; P09 remains active for PF03 performance acceptance. See evidence/P09_AUDIT_AND_HANDOFF.md and ADR-0087–0095; PF03 performance remains open after owner-rejected0091 closure; opaque IDs and opt-in5second audit reuse are approved and implemented. Benchmark implementation/editor work, UI and enterprise writes remain excluded; owner authorized a scoped verified main push.
+Current checkpoint 2026-10-20: P10 implementation and consumer validation verified; final scoped checkpoint P10-T06.01 remains OPEN until stage/secret review, commit and approved main publication. 12 of 13 P10 cards are verified (124 of 126 overall); P09/PF03 remains separately OPEN. Source 458 PASS/32 explicit SKIP, installed 91 PASS/2 explicit SKIP, native PDF 1 PASS; later parser controls pass in overlapping 11-test source/installed runs. Final 70-file package comparison, static/docs gates and owned cleanup pass. Full-blueprint and current P10 documentation/source review complete; no full historical-document audit is claimed.
 
 As of2026-10-20 (Asia/Bangkok). Owner: user; coordinator maintains evidence.
 
 ## Development-suite outcomes
+
+P10 owner-approved outcomes: provenance-backed graph links reach actual search;
+verbatim new text formats and bounded PDF originals/extractions reach current citation
+readers; deterministic weighted categories preserve hard boundaries; bounded own-session
+conversation context reaches the next model request; README terminology/live/automatic
+ownership is clear. Source and actual-service receipts are in
+[P10 evidence](evidence/P10_CLASSIFICATION_AND_FORMATS.md). Current worker hardening, installed-package verification, the single final review
+and cleanup are verified at E-P10-006/007; P10-T06.01 remains open until scoped commit/publication.
+P09/PF03 performance acceptance is a separate open outcome, not waived by P10.
 
 Create a source-grounded, internally navigable suite that lets a future session implement
 and test Palladion without reconstructing the vision or mistaking planned code for built code.

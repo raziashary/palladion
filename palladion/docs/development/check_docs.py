@@ -93,8 +93,8 @@ def validate_atomic_register(plan: str, vision: str, parents: set[str]) -> list[
             errors.append(f"{ident}: no exact owning file paths")
         for path in files:
             root_doc = (ident.startswith("P00-") and path in {"README.md", ".gitignore"}) or (
-                ident == "P09-T05.01" and path == "README.md")
-            handoff_doc = ident == "P09-T05.01" and path == "palladion-benchmark/docs/development/PALLADION_FIXES.md"
+                ident in {"P09-T05.01", "P10-T05.02"} and path == "README.md")
+            handoff_doc = ident in {"P09-T05.01", "P10-T06.01"} and path == "palladion-benchmark/docs/development/PALLADION_FIXES.md"
             if ".." in Path(path).parts or not (path.startswith("palladion/") or path == "AGENTS.md" or root_doc or handoff_doc):
                 errors.append(f"{ident}: owning file outside planned project scope: {path}")
             owned_files.add(path)

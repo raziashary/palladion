@@ -38,6 +38,7 @@ def _registry(tmp_path: Path) -> tuple[Database, Registry]:
 
 
 def _remove_v4_fixture(connection: sqlite3.Connection) -> None:
+    connection.execute("DROP TABLE IF EXISTS source_extractions")
     # Only isolated test DBs; reconstruct old schemas to exercise real forward upgrades.
     for table in ("memory_promotion_links","memory_promotion_decisions","memory_event_chunks","memory_event_sessions","memory_sessions"):
         connection.execute(f"DROP TABLE IF EXISTS {table}")

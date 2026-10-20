@@ -6,7 +6,9 @@ import hashlib
 import json
 import sqlite3
 import uuid
+from contextlib import nullcontext
 from datetime import datetime, timezone
+from typing import Any
 
 from evidence_agent.core.errors import PermissionDenied, ResourceConflict, ValidationFailure
 from evidence_agent.core.ids import digest_bytes, revision_id
@@ -349,6 +351,7 @@ class Registry:
         allowed_principal_ids: tuple[str, ...] = (),
         valid_from: str | None = None,
         valid_to: str | None = None,
+        _connection: sqlite3.Connection | None = None,
     ) -> str:
         """Store and register a new immutable source revision in STORED state."""
         self.access.authorize(
@@ -383,7 +386,7 @@ class Registry:
         # is persisted as descriptive provenance and never opened or resolved.
         self.originals.put(content)
 
-        with self.database.transaction() as connection:
+        with (nullcontext(_connection) if _connection is not None else self.database.transaction()) as connection:
             self.access.authorize(
                 principal,
                 tenant_id=tenant_id,
@@ -477,6 +480,45 @@ class Registry:
                     {"revision_id": revision, "family_id": family_id, "content_sha256": content_hash},
                 )
         return revision
+
+    def register_extraction(self, principal: Principal, *, original: bytes,
+                            filename: str, extraction: dict[str, Any],
+                            **metadata: Any) -> str:
+        """Bind a derived draft and immutable PDF provenance in the same transaction."""
+        self.access.authorize(principal, tenant_id=metadata["tenant_id"],
+                              case_id=metadata["case_id"], grant="document:upload")
+        text = extraction["text"].encode("utf-8")
+        original_hash = self.originals.put(original)
+        # OriginalStore.put returns its hash; callers never choose a storage path.
+        values = (original_hash, filename, digest_bytes(text), extraction["parser_version"],
+                  json.dumps(extraction["pages"], sort_keys=True))
+        with self.database.transaction() as connection:
+            revision = self.register_source(principal, content=text, source_path=filename + ".txt",
+                                            _connection=connection, **metadata)
+            existing = connection.execute("SELECT original_sha256,original_filename,extracted_sha256,"
+                "parser_version,pages_json FROM source_extractions WHERE tenant_id=? AND revision_id=?",
+                (principal.tenant_id, revision)).fetchone()
+            if existing and tuple(existing) != values:
+                raise ResourceConflict
+            connection.execute("INSERT OR IGNORE INTO source_extractions VALUES(?,?,?,?,?,?,?,?)",
+                (principal.tenant_id, revision, *values, utc_now()))
+        return revision
+
+    def extraction_provenance(self, principal: Principal, revision_id: str) -> dict[str, Any] | None:
+        """Current source authorization owns both original PDF and extracted revision."""
+        source = self.source_metadata(principal, revision_id)
+        if source["approval_status"] != "APPROVED" or source["approval_record_status"] != "APPROVED":
+            raise PermissionDenied
+        row = self.database.connection.execute("SELECT * FROM source_extractions "
+            "WHERE tenant_id=? AND revision_id=?", (principal.tenant_id, revision_id)).fetchone()
+        if row is None:
+            return None
+        if row["extracted_sha256"] != source["content_sha256"]:
+            raise ResourceConflict
+        self.originals.read(row["original_sha256"])
+        return {"original_sha256": row["original_sha256"], "original_filename": row["original_filename"],
+                "extracted_sha256": row["extracted_sha256"], "parser_version": row["parser_version"],
+                "pages": json.loads(row["pages_json"]), "offset_basis": "EXTRACTED_UTF8"}
 
     def approve_source(
         self,

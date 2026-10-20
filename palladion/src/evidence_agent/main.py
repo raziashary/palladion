@@ -43,10 +43,11 @@ def create_app(runtime_root: Path, index: SearchIndex, tokens: Mapping[str, str]
     async def bounded_body(request: Request, call_next: RequestResponseEndpoint) -> Response:
         # Require truthful framing and cap bytes before JSON parsing; streaming is bounded too.
         if request.method in {"POST", "PUT", "PATCH"}:
+            limit = 3 * 1024 * 1024 if request.url.path == "/sources/import-pdf" else 128 * 1024
             content = bytearray()
             async for piece in request.stream():
                 content.extend(piece)
-                if len(content) > 128 * 1024:
+                if len(content) > limit:
                     return JSONResponse({"detail": "Request too large"}, status_code=413)
             request._body = bytes(content)
         return await call_next(request)

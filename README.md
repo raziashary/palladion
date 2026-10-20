@@ -27,6 +27,56 @@ Retrieval uses real dense/BM25 Qdrant; the Docker-free WSL launcher is documente
 [application README](palladion/README.md). Generative commands explicitly enable Groq
 Qwen3.8-27B, GPT-OSS120B or GPT-OSS20B; retrieval-only checks need no provider call.
 
+## Core terms
+
+| Term | Meaning in Palladion |
+|---|---|
+| **Tenant / principal** | A tenant is an isolation boundary; a principal is a persisted authenticated user with current roles and grants. A principal ID in request text grants no access. |
+| **Case** | An authorized investigation workspace connecting approved sources, operational targets, policy decisions and audit history. Membership is checked again when data is read. |
+| **Session** | One user's explicit conversation within a case, with start/end lifecycle. A case can outlive many sessions; episodic memory is session-bound. |
+| **Document / revision** | Supplied source material and its immutable content-addressed version. Upload produces a draft; a separate authorized actor approves it. Wording such as “approved” inside the source has no authority. |
+| **Chunk / citation** | A bounded exact text span and a reference that can read that span back under current access, approval, applicability and generation checks. A citation establishes provenance, not semantic entailment by itself. |
+| **Generation** | A particular parsed/embedded index publication. It becomes ready only after expected IDs, hashes and representation identities match physical readback. |
+| **Policy** | An externally approved, source-linked deterministic rule table with applicability and trusted time/input requirements. The model cannot invent a policy winner. |
+| **Live observation** | The timestamped result of an allowlisted operational read. This prototype uses fictional mock systems; “live” describes the tool boundary, not a production database connection. |
+| **Memory** | Persisted unverified context with provenance, scope and validity controls. Semantic memory holds private user preferences across sessions; episodic memory belongs to one session; procedural memory records unapproved tool/workflow experience. None becomes company policy automatically. |
+| **Continuity packet** | Backend-built bounded context for the next request: current goal, gaps, rechecked handles, memory and own-session conversation turns. It is untrusted context, not new evidence authority. |
+| **Critic / gate** | The critic challenges a draft in a separate model context. The deterministic gate decides which claims may be released under canonical checks. Model agreement is not independent truth. |
+| **Graph** | Optional source-proven navigation between chunks/entities. Relations help discover sources; they cannot authorize an answer or override policy precedence. |
+
+## From a question to an answer
+
+The backend authenticates the caller and case, builds continuity without a model call,
+and persists the current request. The model may request one of four read tools:
+`search_knowledge`, `lookup_live_data`, `evaluate_policy` or `recall_memory`. Backend
+handlers validate each request, enforce scope and budgets, and return typed results.
+The independent-context critic challenges the draft before finalization. The gate
+then rechecks canonical evidence and releases qualified claims or an honest lack of
+verification. The backend persists the released response and automatically classifies
+eligible event chunks for future memory.
+
+```mermaid
+flowchart LR
+    A[Authenticated case request] --> B[Backend continuity + request event]
+    B --> C[Bounded model + four read handlers]
+    C --> D[Independent-context critic]
+    D --> E[Finalization + deterministic gate]
+    E --> F[Released response + citations]
+    F --> G[Persist events + automatic memory promotion]
+    G --> B
+```
+
+Document ingestion is a separate flow: upload → independent approval → parsing and
+index publication → current authorized search/citation reads. It does not turn every
+document into a user preference. Runtime memory promotion and continuity construction
+are automatic in ordinary serving; the additional `recall_memory` tool is selected by
+the model when useful. Explicit administrative corrections, wider sharing and optional
+Path B embedding jobs remain controlled operations.
+
+P10 adds weighted deterministic classification, bounded conversation context, typed
+graph-link administration and extra text/PDF formats. Its current verification and
+limitations are tracked in [P10 evidence](palladion/docs/development/evidence/P10_CLASSIFICATION_AND_FORMATS.md).
+
 ## What works today
 
 - Typed contracts, persisted identities, tenant/case membership and source ACLs.

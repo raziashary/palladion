@@ -14,6 +14,25 @@ from pathlib import Path
 from typing import Any
 
 
+def score_categories(expected: Sequence[str], predicted: Sequence[str]) -> dict[str, Any]:
+    """Exact category counts; episodic retention is abstention from durable promotion."""
+    categories = ("EPISODIC", "SEMANTIC", "PROCEDURAL")
+    if not expected or len(expected) != len(predicted) or any(
+        item not in categories for item in (*expected, *predicted)
+    ):
+        raise ValueError("Nonempty aligned category labels required")
+    result: dict[str, Any] = {"count": len(expected),
+                              "episodic_retention": predicted.count("EPISODIC") / len(predicted)}
+    for category in categories:
+        tp = sum(a == b == category for a, b in zip(expected, predicted, strict=True))
+        fp = sum(a != category and b == category for a, b in zip(expected, predicted, strict=True))
+        fn = sum(a == category and b != category for a, b in zip(expected, predicted, strict=True))
+        result[category] = {"tp": tp, "fp": fp, "fn": fn,
+                            "precision": tp / (tp + fp) if tp + fp else None,
+                            "recall": tp / (tp + fn) if tp + fn else None}
+    return result
+
+
 def score_ranked_references(
     expected: Iterable[str],
     ranked: Iterable[str],

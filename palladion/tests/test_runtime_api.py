@@ -1,5 +1,6 @@
 """Isolated HTTP guard/consumer checks; not live-provider transport proof."""
 import asyncio
+import json
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -40,6 +41,32 @@ def test_authenticated_message_to_persisted_timeline(api):
     assert timeline.status_code == 200
     assert any(e["status"] == "NOT_ESTABLISHED" for e in timeline.json())
     assert "hello" not in timeline.text and "proposal_sha256" not in timeline.text
+
+
+def test_next_http_turn_consumes_persisted_conversation(api, monkeypatch):
+    client, app = api
+    headers = {"Authorization": "Bearer reader-test"}
+    first = client.post("/v1/cases/case-42/messages", headers=headers,
+                        json={"query": "I prefer concise answers."})
+    assert first.status_code == 200
+    captured = []
+    model = app.state.agent_services.model
+    original = model.complete
+
+    async def capture(messages, tools, **kwargs):
+        captured.append(json.loads(json.dumps(messages)))
+        return await original(messages, tools, **kwargs)
+
+    monkeypatch.setattr(model, "complete", capture)
+    second = client.post("/v1/cases/case-42/messages", headers=headers,
+        json={"query": "What did I ask before?", "session_id": first.json()["session_id"]})
+    assert second.status_code == 200
+    contexts = [json.loads(message[1]["content"]) for message in captured
+                if len(message) > 1 and "untrusted_case_context" in message[1].get("content", "")]
+    assert contexts
+    turn = contexts[0]["untrusted_case_context"]["conversation_turns"][0]
+    assert turn["user_query"] == "I prefer concise answers."
+    assert turn["release_event_id"].startswith("evt_") and turn["authority"] == "NONE"
 
 
 def test_private_session_lifecycle_denies_foreign_and_closed_ids(api,p03):

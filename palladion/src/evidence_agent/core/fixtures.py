@@ -12,6 +12,10 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 
 from evidence_agent.core.models import Principal
 
+_TIME_SOURCES = {
+    "TRANSACTION_OCCURRED_AT": "verified_live.transaction_occurred_at",
+    "EVALUATION_AT": "server_clock.evaluation_time",
+}
 
 class FixtureValidationError(ValueError):
     """Raised when a synthetic fixture is malformed or internally inconsistent."""
@@ -367,11 +371,7 @@ def _validate_policy(
             raise FixtureValidationError(f"{version_id} has unknown time basis: {basis}")
         if timestamp_source not in policy.allowed_timestamp_sources:
             raise FixtureValidationError(f"{version_id} has unknown time source: {timestamp_source}")
-        expected_time_sources = {
-            "TRANSACTION_OCCURRED_AT": "verified_live.transaction_occurred_at",
-            "EVALUATION_AT": "server_clock.evaluation_time",
-        }
-        if basis in expected_time_sources and timestamp_source != expected_time_sources[basis]:
+        if basis in _TIME_SOURCES and timestamp_source != _TIME_SOURCES[basis]:
             raise FixtureValidationError(f"{version_id} timestamp source does not match its declared time basis")
         for time_field in ("valid_from", "valid_to"):
             value = applicability.get(time_field)
@@ -480,9 +480,7 @@ def _validate_policy(
             raise FixtureValidationError("conflict candidates must share tenant, product, transaction class, time basis, and timestamp source")
         if applicability["time_basis"] not in policy.allowed_time_bases or applicability["timestamp_source"] not in policy.allowed_timestamp_sources:
             raise FixtureValidationError(f"conflict candidate {candidate_id} has an unknown time basis or source")
-        if applicability["time_basis"] == "TRANSACTION_OCCURRED_AT" and applicability["timestamp_source"] != "verified_live.transaction_occurred_at":
-            raise FixtureValidationError(f"conflict candidate {candidate_id} has a mismatched timestamp source")
-        if applicability["time_basis"] == "EVALUATION_AT" and applicability["timestamp_source"] != "server_clock.evaluation_time":
+        if applicability["time_basis"] in _TIME_SOURCES and applicability["timestamp_source"] != _TIME_SOURCES[applicability["time_basis"]]:
             raise FixtureValidationError(f"conflict candidate {candidate_id} has a mismatched timestamp source")
         if applicability["supersedes"] or applicability["precedence"] is not None:
             raise FixtureValidationError("conflict candidates cannot have a supersession or precedence relationship")

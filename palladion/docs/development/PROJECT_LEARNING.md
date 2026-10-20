@@ -1,6 +1,6 @@
 # Project learning and corrections
 
-Current checkpoint 2026-10-20: P09 audit and benchmark-handoff remediation ACTIVE. P00–P08 are historical completed pilot work (98 cards); independent reaudit identified and corrected gate/evaluation proof gaps; P09 remains active for PF03 performance acceptance. See evidence/P09_AUDIT_AND_HANDOFF.md and ADR-0087–0095; PF03 performance remains open after owner-rejected0091 closure; opaque IDs and opt-in5second audit reuse are approved and implemented. Benchmark implementation/editor work, UI and enterprise writes remain excluded; owner authorized a scoped verified main push.
+Current checkpoint 2026-10-20: P10 implementation and consumer validation verified; final scoped checkpoint P10-T06.01 remains OPEN until stage/secret review, commit and approved main publication. 12 of 13 P10 cards are verified (124 of 126 overall); P09/PF03 remains separately OPEN. Source 458 PASS/32 explicit SKIP, installed 91 PASS/2 explicit SKIP, native PDF 1 PASS; later parser controls pass in overlapping 11-test source/installed runs. Final 70-file package comparison, static/docs gates and owned cleanup pass. Full-blueprint and current P10 documentation/source review complete; no full historical-document audit is claimed.
 
 This records engineering/research learning, not runtime agent memory or company policy.
 An observation needs evidence; a conjecture is labeled. Never convert an untested idea
@@ -537,3 +537,40 @@ The cache pre-adversary's initial Get-Content-Raw result truncated. On explicit 
 verification the reviewer acknowledged incomplete coverage and reread all1784lines in
 six contiguous chunks, finding no additional premise change. Preserve the chronological
 lapse; never convert command intent into a claim that every section was actually read.
+
+## P10 learning — test input identity and consumer wiring
+
+2026-10-20: a2MiB bytes parametrization let pytest embed the whole payload in its test
+ID. Windows rejected PYTEST_CURRENT_TEST longer than32767characters, so two outcomes
+were setup/teardown errors rather than importer guard proof. Explicit short IDs fixed
+the harness; current PDF/HTTP controls pass. Retain initial failed log; do not label
+an environmental setup failure as an intended rejection.
+
+Packet fields did not automatically reach the model: AgentRuntime constructs an
+explicit context subset. Added fields required an owning consumer change and an
+actual second-turn Groq input proof. The prior-turn reference records chronology
+(previous_request_id), not an invented semantic assertion that every turn is a follow-up.
+
+Initial actual-service run hit Neo4j's10second transaction deadline; the next run found
+an omitted graph_enabled setting in our new smoke script. Corrected script wiring,
+retained both reports, and actual attempt3 passed all six graph/PDF/Groq/reopen checks.
+9invocations/8responses include an unreceived attempt whose exact cause the original
+observer did not preserve. Report UNKNOWN, not last_failure=null as an all-clear.
+The observer now retains per-invocation received/error/cancel outcomes for future runs.
+
+Windows1450 exhausted resources during hardlink installation while own services were
+running. Stopped our recorded services and used uv's supported copy mode; dependency
+installation then passed. This is an environment/setup observation, not a Palladion
+latency or capacity result. No foreign process was stopped.
+
+## P10 closeout — resource recovery and exact evidence
+
+Owner asked to retry after freeing available RAM while other work continued. Sequential
+canonical commands recovered without reinstalling Python or changing runtime deadlines.
+Preserve previous failures; distinguish host exhaustion from missing stdlib and avoid
+touching foreign processes. Direct base-interpreter PDF startup closes the Windows venv
+redirector/job-assignment race. Check memory, timeout, page and output bounds through
+actual owned children; test-input-size and extracted-output-size are distinct controls.
+Additional tests after a broad suite need their own dated evidence; overlapping counts
+must not be summed. A rebuilt70-file source/wheel/installed comparison closes package
+freshness after a docstring correction without inventing a second broad-suite run.

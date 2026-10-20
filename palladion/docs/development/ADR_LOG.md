@@ -1716,3 +1716,42 @@ ADR0095 bounded opt-in cache guards and actual HTTP/real-Qdrant consumer proof p
 large-case benefit and small-case overhead are both retained. ADR0091 original PF03
 acceptance remains OPEN in P09-T02.07, with no owner waiver. These dated updates
 supersede earlier pending verification prose without deleting the original chronology.
+
+
+## ADR-0096 — PF07 scoped published-text graph links
+
+**Status:** ACCEPTED by owner,2026-10-20; implementation and phase-local verification complete (E-P10-006/007).
+**Authority:** Current owner request and explicit Rule4 contract/dependency/schema approval.
+**Question:** Add an admin-only bounded graph-link producer and HTTP readback using existing typed GraphRegistry records.
+**Why:** Pinned benchmark graph setup lacks a public writer; current graph_relations already supports six types.
+**Options:** Keep operator-only setup; or approved scoped API using canonical source-span proof.
+**Recommendation:** Current case-member tenant admin with document:approve and access to every endpoint/proof source; exact quote/version/UTF8 span; bounded idempotent batch, current transaction authorization, immutable proof event, projection/reconcile readback and typed unavailable status. Models gain no write tool. Graph relations are navigation, never policy precedence.
+**What affects what:** graph/registry.py, relations.py, ingest/graph_extract.py, API schemas/routes, owning HTTP/Neo4j tests and handoff. No context_links relation-check widening or name-based merge.
+**My answer (editable):** Owner explicitly approved scoped provenance-backed graph API via async answer,2026-10-20.
+**Verification:** Verified P10 cards and owning positive/negative/reopened consumers; source/installed/native smoke, final package comparison and independent end review at E-P10-006/007. Synthetic scope limits remain; no production or semantic guarantee.
+
+
+## ADR-0097 — Bounded additional formats and PDF provenance
+
+**Status:** ACCEPTED by owner,2026-10-20; implementation and phase-local verification complete (E-P10-006/007).
+**Authority:** Current owner request and explicit Rule4 contract/dependency/schema approval.
+**Question:** Add UTF8 JSON/JSONL/CSV/code/config ingestion and pinned pypdf6.21.0 text-PDF import with additiveSQLitev7 provenance.
+**Why:** Current parser/API accept Markdown/TXT; PDF text cannot honestly use originalPDF byte offsets.
+**Options:** Text/code only; or approved originalPDF plus linked extracted-text revision.
+**Recommendation:** Preserve UTF8 files verbatim, never execute code. PDF worker bounded by time/memory/page/input/output budgets; preserve immutable original and deterministic extracted text/page map/parser hash, scope via canonical revision. Add v7 provenance table/fresh+populated+backup/rollback controls. Dedicated bounded binary-import request and authorized original/provenance readback; citations clearly identify extraction/page. Reject scanned/encrypted/unsupported input, do not silently OCR.
+**What affects what:** ingest parsing/extraction/worker/pipeline, storage schema/migration/registry, evidence/API readers, process owner resource cap, pyproject/uv.lock and format/storage/HTTP tests.
+**My answer (editable):** Owner explicitly approved text/code formats and bounded PDF provenance via async answer,2026-10-20.
+**Verification:** Verified P10 cards and owning positive/negative/reopened consumers; source/installed/native smoke, final package comparison and independent end review at E-P10-006/007. Synthetic scope limits remain; no production or semantic guarantee.
+
+
+## ADR-0098 — Versioned deterministic scoring and scoped conversation continuity
+
+**Status:** ACCEPTED by owner,2026-10-20; implementation and phase-local verification complete (E-P10-006/007).
+**Authority:** Current owner request and explicit Rule4 contract/dependency/schema approval.
+**Question:** Expand PathA short preferences/workflow coverage with weighted lexical cues and bounded own-session turns in ContinuityPacket.
+**Why:** Current pattern set is narrow; packet strips request/answer text and retains primarily facts/handles/status.
+**Options:** Expand exact regex alone; or approved deterministic word/phrase scoring plus hard exclusions and abstention.
+**Recommendation:** Pure deterministic weighted lexical features and conservative thresholds, not probabilities; original event provenance/USER scope and unapproved procedural authorityNONE preserved. PathB stays explicit lower-influence cosine supplement. Version/hash actual rules in promotion profile; no implicit old-memory backfill. Optional typed own-session user/assistant turn context with IDs, current query/followups, omission counts; revalidate released claims and suppress corrected/revoked memory content. No chain-of-thought or rejected draft.
+**What affects what:** memory/classification.py, promotion.py, packet.py, store.py, core/models.py, preflight/model consumer and source/HTTP/privacy tests, frozen synthetic controls and classifier research receipt.
+**My answer (editable):** Owner explicitly approved deterministic scoring and bounded turn context via async answer,2026-10-20.
+**Verification:** Verified P10 cards and owning positive/negative/reopened consumers; source/installed/native smoke, final package comparison and independent end review at E-P10-006/007. Synthetic scope limits remain; no production or semantic guarantee.

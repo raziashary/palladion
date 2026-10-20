@@ -12,7 +12,14 @@ from typing import Any, Literal
 from pydantic import Field, model_validator
 
 from evidence_agent.core.errors import EvidenceAgentError, PermissionDenied
-from evidence_agent.core.models import Principal, ReportedFact, SourceRef, VersionedModel
+from evidence_agent.core.models import (
+    ConversationClaim,
+    ConversationTurn,
+    Principal,
+    ReportedFact,
+    SourceRef,
+    VersionedModel,
+)
 from evidence_agent.storage.registry import Registry
 from evidence_agent.storage.sqlite import utc_now
 
@@ -172,6 +179,75 @@ class CaseStore:
                     source="authenticated_operator", validity_policy_id="UNSPECIFIED",
                     provenance=(row[0],)))
         return tuple(reports)
+
+    def conversation(self, *, suppress_queries: bool = False) -> tuple[tuple[ConversationTurn, ...], int, bool]:
+        """Bounded own-session request/release projection, never drafts or reasoning.
+
+        Only freshly authorized document-backed released claims are replayed. Live and
+        policy statements need new tool reads; their old text is omitted. Counts are a
+        lower bound when the13-row sentinel indicates more requests exist.
+        """
+        self.authorize()
+        rows = self.registry.database.connection.execute(
+            "SELECT e.* FROM case_events e JOIN memory_event_sessions s USING(event_id) "
+            "WHERE e.tenant_id=? AND e.case_id=? AND e.actor_id=? AND s.session_id=? "
+            "AND e.event_kind='RUNTIME_REQUEST' ORDER BY e.occurred_at DESC,e.event_id DESC LIMIT 13",
+            (self.principal.tenant_id, self.case_id, self.principal.principal_id, self.session_id)).fetchall()
+        turns: list[ConversationTurn] = []
+        for row in reversed(rows[:4]):
+            request = json.loads(row["payload_json"])
+            query = request.get("query")
+            if suppress_queries or not isinstance(query, str) or len(query) > 512:
+                query = None
+            else:
+                # Every promoted chunk must still resolve to the unchanged current memory.
+                links = self.registry.database.connection.execute(
+                    "SELECT c.*,l.memory_id FROM memory_event_chunks c LEFT JOIN "
+                    "memory_promotion_links l USING(chunk_id) WHERE c.event_id=? LIMIT 9",
+                    (row["event_id"],)).fetchall()
+                try:
+                    if not links or len(links) > 8:
+                        query = None
+                    else:
+                        for link in links:
+                            current = self.memory().read(link["memory_id"])
+                            raw = request["query"].encode()[link["start_byte"]:link["end_byte"]].decode()
+                            if current["content"] != raw:
+                                query = None
+                                break
+                except (EvidenceAgentError, ValueError, TypeError):
+                    query = None
+            release = self.registry.database.connection.execute(
+                "SELECT e.* FROM case_events e JOIN memory_event_sessions s USING(event_id) "
+                "WHERE e.tenant_id=? AND e.case_id=? AND e.actor_id=? AND s.session_id=? "
+                "AND e.event_kind='RUNTIME_RELEASE' AND json_extract(e.payload_json,'$.trace_id')=? "
+                "ORDER BY e.occurred_at DESC,e.event_id DESC LIMIT 1",
+                (self.principal.tenant_id, self.case_id, self.principal.principal_id,
+                 self.session_id, request["trace_id"])).fetchone()
+            claims: list[ConversationClaim] = []
+            answer = None
+            omitted = 0
+            if release:
+                payload = json.loads(release["payload_json"])
+                citations = {c.get("evidence_id"): c for c in payload.get("citations", [])[:12]
+                             if c.get("kind") == "DOCUMENT"}
+                for claim in payload.get("verified_claims", [])[:12]:
+                    identifiers = claim.get("evidence_ids", [])
+                    proofs = [citations[i] for i in identifiers if i in citations]
+                    valid = (identifiers and len(identifiers) == len(proofs)
+                             and len(self._handles(proofs)) == len(proofs))
+                    if valid and len(claim["text"]) <= 512 and len(claims) < 3:
+                        claims.append(ConversationClaim(text=claim["text"], evidence_ids=tuple(identifiers)))
+                    else:
+                        omitted += 1
+                # The gate owns this generic introduction, not a model's rejected draft.
+                answer = str(payload.get("answer", ""))[:512] if omitted == 0 else None
+            turns.append(ConversationTurn(request_event_id=row["event_id"],
+                release_event_id=release["event_id"] if release else None,
+                trace_id=request["trace_id"], at=row["occurred_at"], user_query=query,
+                assistant_response=answer, released_claims=tuple(claims), omitted_claims=omitted,
+                previous_request_id=turns[-1].request_event_id if turns else None))
+        return tuple(turns), max(0, len(rows) - len(turns)), len(rows) == 13
 
     def _handles(self, citations: list[dict[str, Any]]) -> list[dict[str, Any]]:
         from evidence_agent.core.errors import EvidenceAgentError

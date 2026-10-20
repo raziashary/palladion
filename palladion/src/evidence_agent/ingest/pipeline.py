@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import hashlib
-from pathlib import PurePath
 from typing import TYPE_CHECKING
 
 from evidence_agent.core.errors import PermissionDenied, ResourceConflict
@@ -12,7 +11,7 @@ from evidence_agent.core.retrieval import SearchIndex
 from evidence_agent.storage.catalog import Catalog
 
 from .chunking import chunk_blocks
-from .parsing import PARSER_VERSION, parse_document
+from .parsing import parse_document, parser_version, source_mime
 
 if TYPE_CHECKING:
     from evidence_agent.storage.neo4j import Neo4jIndex
@@ -37,8 +36,7 @@ class IngestPipeline:
         if source_hash != source["content_sha256"]:
             raise ResourceConflict
         filename = str(source["source_path"])
-        suffix = PurePath(filename.replace("\\", "/")).suffix.lower()
-        content_type = "text/markdown" if suffix in {".md", ".markdown"} else "text/plain"
+        content_type = source_mime(filename)
         blocks = parse_document(content, filename=filename, content_type=content_type)
         chunks = chunk_blocks(
             blocks,
@@ -60,7 +58,7 @@ class IngestPipeline:
             chunks,
             source_bytes=content,
             fingerprint=self._index.fingerprint,
-            parser_version=PARSER_VERSION,
+            parser_version=parser_version(filename),
             graph_enabled=self.graph is not None,
             graph_manifest=projection.manifest if projection else None,
         )

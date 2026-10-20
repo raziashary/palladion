@@ -18,13 +18,16 @@ def study_entry(worker: Callable[[Connection, dict[str, Any]], None], pipe: Conn
 
 
 class ProcessOwner:
-    """Windows kill-on-close job; POSIX private process group.
+    """Windows kill-on-close job with optional hard memory cap; POSIX process group.
 
     The child waits on a parent-controlled start event until assignment succeeds.
     This prevents a search grandchild escaping before the owner establishes its scope.
+    POSIX callers requiring memory limits must set RLIMIT_AS inside their child.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, *, memory_bytes: int | None = None) -> None:
+        if memory_bytes is not None and memory_bytes < 64 * 1024 * 1024:
+            raise ValueError("Worker memory cap must be at least64MiB")
         self.closed = False
         self.job: Any = None
         self.kernel: Any = None
@@ -63,6 +66,9 @@ class ProcessOwner:
             raise ctypes.WinError(ctypes.get_last_error())
         information = Extended()
         information.basic.flags = 0x2000  # JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
+        if memory_bytes is not None:
+            information.basic.flags |= 0x200  # JOB_OBJECT_LIMIT_JOB_MEMORY
+            information.job_memory = memory_bytes
         if not kernel.SetInformationJobObject(self.job, 9, ctypes.byref(information), ctypes.sizeof(information)):
             error = ctypes.WinError(ctypes.get_last_error())
             self.close()

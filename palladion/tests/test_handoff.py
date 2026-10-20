@@ -262,6 +262,7 @@ def test_coverage_rechecks_authority_after_physical_readback(tmp_path, change):
     from evidence_agent.core.errors import PermissionDenied
     from evidence_agent.ingest.pipeline import IngestPipeline
     from evidence_agent.retrieval.coverage import source_coverage
+
     from .test_pipeline import _setup
 
     database, registry, catalog, uploader, revision, _ = _setup(tmp_path)
@@ -308,6 +309,7 @@ def _index_reader_sources(handoff):
 
 def test_http_explicit_audit_cache_reopens_and_discloses_window(handoff, monkeypatch):
     import time
+
     from evidence_agent.retrieval import audit_cache
     upload_approved(handoff)
     _index_reader_sources(handoff)
@@ -373,6 +375,7 @@ def test_audit_cache_storage_bounds_clocks_and_concurrency(tmp_path):
     import sqlite3
     import time
     from concurrent.futures import ThreadPoolExecutor
+
     from evidence_agent.retrieval.audit_cache import MAX_BYTES, read_audit, write_audit
     path = tmp_path/"audit.sqlite"
     def write(number):
@@ -411,6 +414,7 @@ def test_coverage_aggregate_chunk_limit_degrades(tmp_path, monkeypatch, boundary
     from evidence_agent.ingest.pipeline import IngestPipeline
     from evidence_agent.retrieval import coverage
     from evidence_agent.storage import catalog as catalog_module
+
     from .test_pipeline import _setup
     database, registry, catalog, uploader, revision, _ = _setup(tmp_path)
     try:
@@ -431,6 +435,7 @@ def test_warm_cache_rechecks_canonical_state_after_lookup(tmp_path, monkeypatch,
     from evidence_agent.core.errors import PermissionDenied
     from evidence_agent.ingest.pipeline import IngestPipeline
     from evidence_agent.retrieval import coverage
+
     from .test_pipeline import _setup
     database, registry, catalog, uploader, revision, _ = _setup(tmp_path)
     try:

@@ -1,6 +1,6 @@
 # Testing gates
 
-Current checkpoint 2026-10-20: P09 audit and benchmark-handoff remediation ACTIVE. P00–P08 are historical completed pilot work (98 cards); independent reaudit identified and corrected gate/evaluation proof gaps; P09 remains active for PF03 performance acceptance. See evidence/P09_AUDIT_AND_HANDOFF.md and ADR-0087–0095; PF03 performance remains open after owner-rejected0091 closure; opaque IDs and opt-in5second audit reuse are approved and implemented. Benchmark implementation/editor work, UI and enterprise writes remain excluded; owner authorized a scoped verified main push.
+Current checkpoint 2026-10-20: P10 implementation and consumer validation verified; final scoped checkpoint P10-T06.01 remains OPEN until stage/secret review, commit and approved main publication. 12 of 13 P10 cards are verified (124 of 126 overall); P09/PF03 remains separately OPEN. Source 458 PASS/32 explicit SKIP, installed 91 PASS/2 explicit SKIP, native PDF 1 PASS; later parser controls pass in overlapping 11-test source/installed runs. Final 70-file package comparison, static/docs gates and owned cleanup pass. Full-blueprint and current P10 documentation/source review complete; no full historical-document audit is claimed.
 
 P01/P02 foundations and retrieval plus P03 policy/temporal/live domain checks are runnable. Real-server
 checks require explicit local-server enablement. P04–P06 agent/memory/critic consumers are verified; P07 graph and automatic-memory mechanisms have current evidence below, with historical phase review complete. Confirmatory semantic research remains outside the completed P08 pilot. Gate catalog rows
@@ -388,3 +388,12 @@ case/approval/grant/generation checks, disclosed corruption window, failed-fresh
 cachebusy/foreign/oversized fallback,32entry/1MiB storage bound and100000aggregate chunk
 bound. Experimental cache performance cannot close PF03 when overhead or expiry costs
 leave original acceptance unproven. P09-T02.07 remains OPEN; mechanism checks are separate.
+
+
+## P10 owner-approved extension gates
+
+- P10-T01/G-GRAPH/G-SECURITY: actual HTTP upload/approval → exact quoted span link write → canonical reopened readback → enabled physical Neo4j projection/search/citation; current all-source ACL/admin/membership and idempotence, mismatch/revocation/graph-off controls. Relation semantics remain unadjudicated navigation, no policy supersession or model write.
+- P10-T02/G-SOURCE/G-CONTRACT: UTF8 original equality for JSON/JSONL/CSV/code/config; immutable PDF plus extracted-text hash/page provenance, v7 fresh/populated backup/rollback, bounded parser subprocess memory/time/pages/input/output and rejected scan/encryption/malformed inputs; actual approved search/citation/original readback and revoked-source denial.
+- P10-T03/G-MEMORY/G-RESEARCH: actual versioned rule/profile hash, lexical weights subordinate to hard boundaries; frozen synthetic per-category FP/FN/precision/recall/abstention, reported failures and no probability/generalization claim; current promotion/idempotence/manual-correction controls.
+- P10-T04/G-MEMORY/G-BUDGET: persisted/reopened own-session turns automatically consumed by preflight/model prompt, current-query/followup association, bounded omission accounting, actor/session isolation and no corrected/revoked/rejected-draft/citation leakage. Actual selected Groq message proof remains required for the changed generative context path; deterministic fixtures are guard proof only.
+- P10-T05/06/G-DOC/G-E2E: preserved fixture rejection meanings; public glossary/live-mock/automatic-vs-explicit explanation, source/installed/static/docs checks, single full-blueprint LunaMedium end audit/resolution, own-service cleanup and scoped checkpoint. P09/PF03 remains open.

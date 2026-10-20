@@ -180,7 +180,10 @@ class AgentRuntime:
                 **({"unapproved_experience": e["payload"]["content"], "authority":"NONE"}
                    if e.get("kind")=="UNAPPROVED_PROCEDURAL_EXPERIENCE" else {})}
                                   for e in packet["previous_attempts"]],
-            "last_disposition": packet["last_disposition"]}
+            "last_disposition": packet["last_disposition"],
+            "conversation_turns": packet["conversation_turns"],
+            "conversation_omitted": packet["conversation_omitted"],
+            "conversation_truncated": packet["conversation_truncated"]}
         if self.experiment is not None and self.experiment.planner:
             context["nonexclusive_read_suggestions"] = hints["suggestions"]
         messages: list[dict[str, Any]] = [
@@ -285,7 +288,10 @@ class AgentRuntime:
                 "open_question_count": len(packet["open_questions"]),
                 "observation_count": len(packet["verified_observations"]),
                 "reported_count": len(packet["reported_facts"]),
-                "handle_count": len(packet["evidence_handles"])}})
+                "handle_count": len(packet["evidence_handles"]),
+                "conversation_turn_count": len(packet["conversation_turns"]),
+                "conversation_omitted": packet["conversation_omitted"],
+                "conversation_truncated": packet["conversation_truncated"]}})
         try:
             async with asyncio.timeout(self.settings.request_timeout_seconds):
                 draft = await self._investigate(query, hints)

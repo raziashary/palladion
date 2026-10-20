@@ -1,6 +1,6 @@
 # Research and later comparison protocol
 
-Current checkpoint 2026-10-20: P09 audit and benchmark-handoff remediation ACTIVE. P00–P08 are historical completed pilot work (98 cards); independent reaudit identified and corrected gate/evaluation proof gaps; P09 remains active for PF03 performance acceptance. See evidence/P09_AUDIT_AND_HANDOFF.md and ADR-0087–0095; PF03 performance remains open after owner-rejected0091 closure; opaque IDs and opt-in5second audit reuse are approved and implemented. Benchmark implementation/editor work, UI and enterprise writes remain excluded; owner authorized a scoped verified main push.
+Current checkpoint 2026-10-20: P10 implementation and consumer validation verified; final scoped checkpoint P10-T06.01 remains OPEN until stage/secret review, commit and approved main publication. 12 of 13 P10 cards are verified (124 of 126 overall); P09/PF03 remains separately OPEN. Source 458 PASS/32 explicit SKIP, installed 91 PASS/2 explicit SKIP, native PDF 1 PASS; later parser controls pass in overlapping 11-test source/installed runs. Final 70-file package comparison, static/docs gates and owned cleanup pass. Full-blueprint and current P10 documentation/source review complete; no full historical-document audit is claimed.
 
 Status: **P02 retrieval-only pilot recorded; P05 continuity and P06 critic pilots recorded with failures; no confirmatory answer-system experiment executed**. Governing source: blueprint “Research
 evaluation,” “Questions deliberately left to experiments,” “Prototype environment.”
@@ -446,3 +446,11 @@ reuse window; record cold misses, expiry, mode, original verification timestamp 
 small-case overhead alongside warm hits. Paired HTTP measurements retain every observed
 miss/failure, with host contention and concurrent regression work disclosed. No retuning
 or held-out provider run occurs in this follow-up.
+
+## P10 research boundary
+
+The30frozen synthetic lexical controls are development mechanics/near-miss checks,
+not independent labels, a trained classifier evaluation or confirmatory P08 evidence.
+Weighted scores are not probabilities. ZeroFP/FN on these controls cannot establish
+unseen-language/phrasing performance. No original P08 protocol/result is rewritten.
+See evidence/P10_CLASSIFICATION_AND_FORMATS.md for frozen identities and primary sources.

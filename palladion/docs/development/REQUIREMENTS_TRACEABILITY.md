@@ -1,6 +1,6 @@
 # Requirements traceability
 
-Current checkpoint 2026-10-20: P09 audit and benchmark-handoff remediation ACTIVE. P00–P08 are historical completed pilot work (98 cards); independent reaudit identified and corrected gate/evaluation proof gaps; P09 remains active for PF03 performance acceptance. See evidence/P09_AUDIT_AND_HANDOFF.md and ADR-0087–0095; PF03 performance remains open after owner-rejected0091 closure; opaque IDs and opt-in5second audit reuse are approved and implemented. Benchmark implementation/editor work, UI and enterprise writes remain excluded; owner authorized a scoped verified main push.
+Current checkpoint 2026-10-20: P10 implementation and consumer validation verified; final scoped checkpoint P10-T06.01 remains OPEN until stage/secret review, commit and approved main publication. 12 of 13 P10 cards are verified (124 of 126 overall); P09/PF03 remains separately OPEN. Source 458 PASS/32 explicit SKIP, installed 91 PASS/2 explicit SKIP, native PDF 1 PASS; later parser controls pass in overlapping 11-test source/installed runs. Final 70-file package comparison, static/docs gates and owned cleanup pass. Full-blueprint and current P10 documentation/source review complete; no full historical-document audit is claimed.
 
 Scope: blueprint v0.2 and user's 2026-10-17 suite request. All system coverage below
 records verified P01–P08engineering consumers, with unmeasured research obligations explicit; PROGRESS and the
@@ -157,3 +157,14 @@ integration reconciliation is24PASS, with exact JUnit hashes in the supplemental
 This is mechanical control coverage, not semantic certification.
 Human-adjudicated efficacy, external baselines and production generalization remain
 unestablished. Sole phase end audit and same-reviewer resolution are verified at E-P08-003.
+
+
+## P10 extension traceability
+
+| Owner outcome | Blueprint constraints | Atomic owners | Required consumer proof |
+|---|---|---|---|
+| PF07 published-text graph setup | §6, I01/I02/I05/I06 | P10-T01.01/02 | Admin HTTP → durable exact proof → canonical graph → actual projection/search → source revalidation |
+| Additional text/code/PDF formats | §4.1–4.4/4.6, I01/I02 | P10-T02.01–04 | Original bytes + derived extraction/page proof → approval → search/citation + original readback |
+| Broader deterministic memory | §9/§14, owner privateUSER overrideADR0066/0098, I09/I10/I15 | P10-T03.01/02 | Event → versioned classifier → persisted decision/link → scoped recall; synthetic error counts |
+| Conversation continuity | §3/§9.2/§16, I06/I08/I09/I10 | P10-T04.01/02 | Own-session original events → bounded revalidated turn projection → automatic packet → actual next-turn model consumer |
+| Clear fixtures/public terms | §12/§14/§18 | P10-T05.01/02, P10-T06.01 | Preserved negative controls, source-backed README glossary, single audit and documented limitations |

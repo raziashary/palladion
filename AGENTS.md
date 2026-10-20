@@ -17,13 +17,16 @@ repository from the blueprint's illustrative tree.
 
 ## Scope and integrity
 
-- Current mandate (2026-10-20): P09 independent reaudit and approved Part B PF01–PF06
+- Current mandate (2026-10-20): owner GO for P10 PF07 graph administration, extra
+  UTF8/code/PDF ingestion, deterministic classification/continuity and public documentation,
+  with explicit ADR0096–0098 approvals. P09/PF03 performance remains OPEN. The prior
+  mandate below is retained as context: P09 independent reaudit and approved Part B PF01–PF06
   Palladion-side remediation (ADR-0087–0095), including approved opaque principal IDs
   and explicitly opted-in5second physical audit reuse. PF03/P09-T02.07 performance
   acceptance remains OPEN; a verified mechanism checkpoint is not P09 completion. P00–P08 remain historical engineering
   pilot work; newly found gate/evaluation proof gaps must be resolved before closure.
-  The owner authorized five Luna Medium auditors for this run only; reuse them for
-  resolution. Subsequent work retains the standing start/end-only delegation rule.
+  P09's five-auditor exception was historical. P10 and subsequent work retain the
+  standing start/end-only Luna Medium delegation rule; reuse the end reviewer for resolution.
   Owner also authorized completion notes in palladion-benchmark/docs/development/
   PALLADION_FIXES.md and a scoped verified main push. Other benchmark/editor work,
   UI, real enterprise writes and X01 remain excluded. Graph stays defaultoff.
@@ -143,8 +146,10 @@ For P04, exercise real Groq messages, four domain tools, final gate and citation
 multi-phase source/security gates remain PARTIAL until later runtime/graph obligations pass. A checkpoint never expands the user's current mandate.
 The mandatory pre-phase adversary precedes this sequence. The P00 full-suite review is
 historical. Every future pre-adversary and post-auditor still reads the complete blueprint
-and applies the canonical review contract. P07 is published atf97471e; P08 now has
-explicit owner GO. P07 push approval is fulfilled; P08 GO does not authorize another main push.
+and applies the canonical review contract. P00–P08 are historical engineering pilot
+checkpoints; P09/PF03 performance acceptance remains open. P10 has explicit owner GO
+and ADR0096–0098 approvals. The owner separately authorized a scoped verified main push;
+this does not authorize publication of the benchmark contributor's unreviewed work.
 
 ## Close every task
 

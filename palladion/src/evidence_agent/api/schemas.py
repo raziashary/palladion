@@ -3,6 +3,8 @@ from typing import Any, Literal
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
 
+from evidence_agent.graph.relations import RelationType
+
 
 class RequestModel(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
@@ -12,7 +14,8 @@ class Upload(RequestModel):
     case_id: str = Field(min_length=1, max_length=100)
     family_id: str = Field(min_length=1, max_length=200)
     filename: str = Field(min_length=1, max_length=200)
-    mime_type: Literal["text/markdown", "text/plain"]
+    mime_type: Literal["text/markdown", "text/plain", "application/json", "application/x-ndjson",
+                       "text/csv", "text/tab-separated-values"]
     content: str = Field(min_length=1, max_length=65536)
     owner_id: str = Field(min_length=1, max_length=100)
     allowed_principal_ids: list[str] = Field(default_factory=list, max_length=100)
@@ -32,8 +35,28 @@ class Search(RequestModel):
     reuse_physical_audit: bool = False
 
 
+class PdfUpload(Upload):
+    mime_type: Literal["application/pdf"]  # type: ignore[assignment]
+    content: str = Field(min_length=1, max_length=2796204)
+
+
 class Approval(RequestModel):
     supersedes_revision_id: str | None = Field(default=None, max_length=100)
+
+
+class GraphLink(RequestModel):
+    from_chunk_id: str = Field(min_length=1, max_length=100)
+    to_chunk_id: str = Field(min_length=1, max_length=100)
+    relation_type: RelationType
+    evidence_chunk_id: str = Field(min_length=1, max_length=100)
+    revision_id: str = Field(min_length=1, max_length=100)
+    start_byte: int = Field(ge=0)
+    end_byte: int = Field(gt=0)
+    quote: str = Field(min_length=1, max_length=4096)
+
+
+class GraphLinks(RequestModel):
+    links: list[GraphLink] = Field(min_length=1, max_length=16)
 
 
 class PrincipalProvision(RequestModel):

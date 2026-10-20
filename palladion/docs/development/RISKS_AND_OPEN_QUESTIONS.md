@@ -1,6 +1,22 @@
 # Risks, accepted answers and verification obligations
 
-Current checkpoint 2026-10-20: P09 audit and benchmark-handoff remediation ACTIVE. P00–P08 are historical completed pilot work (98 cards); independent reaudit identified and corrected gate/evaluation proof gaps; P09 remains active for PF03 performance acceptance. See evidence/P09_AUDIT_AND_HANDOFF.md and ADR-0087–0095; PF03 performance remains open after owner-rejected0091 closure; opaque IDs and opt-in5second audit reuse are approved and implemented. Benchmark implementation/editor work, UI and enterprise writes remain excluded; owner authorized a scoped verified main push.
+P10 historical host caution: Windows reported98–99% memory use (9–156MiB available)
+and CoreCLR failed with0x800705AA. Current parser launch was hardened against the
+Windows venv-redirector/job-assignment race; three focused actual-process controls
+passed5.41s via a lightweight base interpreter. A subsequent full collection was
+interrupted by the coordinator under host exhaustion, not marked PASS. Current
+source458PASS, installed91PASS and native PDF1PASS now supersede that hold (E-P10-006).
+The single full-blueprint end review found no material defect; E-P10-007 resolves its final evidence-freshness gap. No foreign process is authorized for termination.
+The owner asked to retry with other work running; owned Qdrant is stopped with storage
+preserved and recorded PID absent; Windows and WSL report no16333/16334/17687listeners.
+
+ADR0096–0098 have explicit answers; no new architecture choice is awaiting approval.
+PDF extraction has resource bounds but is not an OS security sandbox or an OCR/layout
+guarantee. Lexical controls are developer-authored and do not establish generalization.
+Memory history omits old operational/policy claim text and suppressed corrected/revoked
+queries; missing context is preferable to resurrecting invalid authority. PF03 remains open.
+
+Current checkpoint 2026-10-20: P10 OPEN under owner GO/ADR0096–0098. Earlier448source and later86focused tests passed in their recorded snapshots; latest hardening still needs current-byte verification. Actual graph/PDF/Groq/reopen attempt3 passed (9invocations/8responses; one cause UNKNOWN). Windows resource exhaustion blocks installed/native/final-review/cleanup closeout. No commit or push; standing main-push approval persists. P09/PF03 remains OPEN. Preserve foreign benchmark/editor work.
 
 Current authority amendment: P05 published f0507e4; user explicitly authorized P06 end-to-end; ADR-0030 separately approves the additive PolicyDecision extension. Earlier implementation hold below is historical; P04 explicit enabled provider commands are authorized.
 
@@ -166,8 +182,10 @@ unknown; synthetic demo_auth file-permission/bounds hardening is a separately ow
 shared-host deployment suggestion, not a confirmed remote vulnerability.
 
 
-New concurrent handoff PF07 (graph-link HTTP administration) appeared during P09
+Historical P09 scope note: new concurrent handoff PF07 (graph-link HTTP administration) appeared during P09
 closeout in foreign uncommitted edits. It is not covered by approved PF01–06 contracts.
 Owner: project owner plus benchmark contributor; destination: separately scoped task,
 pre-adversary and Rule4 graph/schema/API authorization if requested. Preserve its text,
-do not implement or label it done under this mechanism checkpoint.
+do not implement or label it done under that P09 mechanism checkpoint. The later owner
+GO and accepted ADR0096 explicitly authorize P10's separate graph API implementation;
+E-P10-006 records its current source/installed gates and earlier actual graph consumer.

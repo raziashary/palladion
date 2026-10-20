@@ -7,6 +7,13 @@ slices. Its proposed 74-file tree is not the current repository.
 All development working documents live in **[development/](development/MASTER_DEV_PLAN.md)**.
 Begin with the master plan's reading protocol and the current progress record.
 
+P10's owner-approved extensions cover typed graph administration, additional UTF8/PDF
+sources, deterministic memory scoring and bounded conversation continuity. See
+[P10 evidence and limits](development/evidence/P10_CLASSIFICATION_AND_FORMATS.md).
+P10 source/installed/native PDF validation, current-phase review and cleanup pass; final scoped checkpoint publication is pending;
+P09/PF03 performance remains open. Only the owner-approved benchmark handoff status
+appendix is edited outside the system project; benchmark implementation remains separate.
+
 | Document | Owns |
 |---|---|
 | [MASTER_DEV_PLAN.md](development/MASTER_DEV_PLAN.md) | Per-task rules, work packages, atomic file-specific checkbox cards, dependencies, proof, phase exits |

@@ -6,6 +6,7 @@ import hashlib
 import json
 import re
 import uuid
+from contextlib import nullcontext
 from typing import Any
 
 from evidence_agent.core.errors import PermissionDenied, ResourceConflict
@@ -73,6 +74,7 @@ class GraphRegistry:
         display_name: str,
         external_id: str | None = None,
         source_system: str = "source_registry",
+        _connection: Any = None,
     ) -> str:
         self.authorize(write=True)
         chunk = self.chunk(chunk_id)
@@ -96,7 +98,7 @@ class GraphRegistry:
                 )
             )
         )
-        with self.registry.database.transaction() as db:
+        with (nullcontext(_connection) if _connection is not None else self.registry.database.transaction()) as db:
             self.authorize(write=True)
             self.chunk(chunk_id)
             cursor = db.execute(
@@ -133,7 +135,7 @@ class GraphRegistry:
             self.chunk(row["evidence_chunk_id"])
         return tuple(dict(row) for row in rows)
 
-    def relation(self, candidate: RelationCandidate) -> str:
+    def relation(self, candidate: RelationCandidate, *, _connection: Any = None) -> str:
         self.authorize(write=True)
         self.entity(candidate.from_key)
         self.entity(candidate.to_key)
@@ -147,7 +149,7 @@ class GraphRegistry:
                 ).encode()
             ).hexdigest()
         )
-        with self.registry.database.transaction() as db:
+        with (nullcontext(_connection) if _connection is not None else self.registry.database.transaction()) as db:
             self.authorize(write=True)
             self.entity(candidate.from_key)
             self.entity(candidate.to_key)
@@ -170,6 +172,65 @@ class GraphRegistry:
             if cursor.rowcount:
                 self._invalidate_projection(db, (candidate.evidence_chunk_id,))
         return edge_id
+
+    def register_links(self, links: list[dict[str, Any]]) -> tuple[str, ...]:
+        """Atomically register navigation candidates and immutable exact-span provenance."""
+        self.authorize(write=True)
+        if not 1 <= len(links) <= 16:
+            raise ValueError("Graph link batch bound")
+        identifiers = []
+        with self.registry.database.transaction() as db:
+            self.authorize(write=True)
+            for link in links:
+                left, right, proof = (self.chunk(link[name]) for name in
+                                      ("from_chunk_id", "to_chunk_id", "evidence_chunk_id"))
+                if left.chunk_id == right.chunk_id:
+                    raise ValueError("Distinct graph endpoints required")
+                start, end = link["start_byte"], link["end_byte"]
+                quote = link["quote"]
+                if (link["revision_id"] != proof.revision_id or
+                        not proof.start_byte <= start < end <= proof.end_byte or
+                        not isinstance(quote, str) or not 1 <= len(quote.encode()) <= 4096 or
+                        self.registry.originals.read(proof.source_sha256)[start:end] != quote.encode()):
+                    raise ValueError("Exact source-version proof required")
+                keys = [self.attest(chunk.chunk_id, kind="source_span",
+                                    display_name=chunk.chunk_id, _connection=db)
+                        for chunk in (left, right)]
+                candidate = RelationCandidate(from_key=keys[0], to_key=keys[1],
+                    relation_type=link["relation_type"], evidence_chunk_id=proof.chunk_id)
+                edge = self.relation(candidate, _connection=db)
+                payload = {**link, "edge_id": edge, "source_sha256": proof.source_sha256,
+                           "quote_sha256": hashlib.sha256(quote.encode()).hexdigest()}
+                encoded = json.dumps(payload, sort_keys=True)
+                event_id = "graph_link_" + edge
+                existing = db.execute("SELECT payload_json FROM case_events WHERE event_id=?",
+                                      (event_id,)).fetchone()
+                if existing and existing[0] != encoded:
+                    raise ResourceConflict
+                db.execute("INSERT OR IGNORE INTO case_events VALUES(?,?,?,?,?,?,?)",
+                    (event_id, self.principal.tenant_id, self.case_id,
+                     self.principal.principal_id, "GRAPH_LINK_REGISTERED", encoded, utc_now()))
+                identifiers.append(edge)
+        return tuple(identifiers)
+
+    def link_provenance(self, edge_id: str) -> dict[str, Any]:
+        """Re-read current endpoint/proof authority before exposing original quoted text."""
+        edge = self.edge(edge_id)
+        row = self.registry.database.connection.execute(
+            "SELECT payload_json FROM case_events WHERE event_id=? AND tenant_id=? AND case_id=? "
+            "AND event_kind='GRAPH_LINK_REGISTERED'",
+            ("graph_link_" + edge_id, self.principal.tenant_id, self.case_id)).fetchone()
+        if row is None:
+            raise PermissionDenied
+        payload: dict[str, Any] = json.loads(row[0])
+        for name in ("from_chunk_id", "to_chunk_id", "evidence_chunk_id"):
+            self.chunk(payload[name])
+        proof = self.chunk(payload["evidence_chunk_id"])
+        original = self.registry.originals.read(proof.source_sha256)
+        if (proof.source_sha256 != payload["source_sha256"] or
+                original[payload["start_byte"]:payload["end_byte"]] != payload["quote"].encode()):
+            raise ResourceConflict
+        return {**payload, "navigation_only": True, "evidence_kind": edge["evidence_kind"]}
 
     def keys_for_chunk(self, identifier: str) -> tuple[str, ...]:
         self.chunk(identifier)

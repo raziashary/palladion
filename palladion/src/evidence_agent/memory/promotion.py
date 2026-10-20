@@ -8,7 +8,12 @@ from typing import Any
 
 from evidence_agent.core.errors import PermissionDenied
 from evidence_agent.core.ids import digest_bytes
-from evidence_agent.memory.classification import Classification, SimilaritySupplement, deterministic
+from evidence_agent.memory.classification import (
+    Classification,
+    SimilaritySupplement,
+    deterministic,
+    deterministic_profile,
+)
 from evidence_agent.memory.store import CaseStore, MemorySpec
 from evidence_agent.storage.sqlite import utc_now
 
@@ -116,7 +121,8 @@ class PromotionEngine:
                 (chunk, self.supplement.classify(chunk, primary) if self.supplement else primary)
             )
         profile = {
-            "version": "promotion-1",
+            "version": "promotion-2",
+            "deterministic": deterministic_profile(),
             "chunk_chars": 512,
             "max_chunks": 8,
             "supplement": self.supplement.profile

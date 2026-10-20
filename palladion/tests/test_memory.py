@@ -314,6 +314,60 @@ def test_reopen_packet_preserves_reported_and_attempt_status(p03):
 def test_packet_cannot_widen_case_or_promote(p03):
     with pytest.raises(PermissionDenied):
         build_packet(CaseStore(p03.registry, p03.reader, "foreign-case"), "question")
+
+
+def test_conversation_is_own_session_bounded_and_correction_safe(p03):
+    store = CaseStore(p03.registry, p03.reader, "case-42")
+    request = store.append("REQUEST", "history-one", {"query": "I prefer short answers."})
+    release = store.append("RELEASE", "history-one", {"disposition": "NOT_ESTABLISHED",
+        "answer": "The request does not establish the requested conclusion.",
+        "verified_claims": [], "citations": []})
+    store.append("REQUEST", "history-two", {"query": "Please explain more."})
+    packet = build_packet(store, "And what follows?")
+    assert packet.current_goal == "And what follows?"
+    assert len(packet.conversation_turns) == 2
+    turn = packet.conversation_turns[0]
+    assert turn.request_event_id == request and turn.release_event_id == release
+    assert turn.user_query == "I prefer short answers."
+    assert turn.assistant_response and turn.authority == "NONE"
+    assert packet.conversation_turns[1].previous_request_id == request
+    original = store.memory().recall(category="SEMANTIC")[0]
+    store.memory().revoke(original["memory_id"])
+    refreshed = build_packet(store, "follow up").model_dump_json()
+    assert "I prefer short answers." not in refreshed
+    foreign = CaseStore(p03.registry, p03.admin, "case-42")
+    assert foreign.conversation()[0] == ()
+    for i in range(15):
+        store.append("REQUEST", f"chatter-{i}", {"query": f"Question {i}"})
+    packet = build_packet(store, "follow up", max_chars=1500)
+    assert packet.conversation_truncated and packet.conversation_omitted > 0
+    assert len(packet.model_dump_json()) <= 1500
+
+
+def test_conversation_drops_released_document_text_after_source_revocation(p03):
+    from evidence_agent.ingest.pipeline import IngestPipeline
+    from evidence_agent.storage.catalog import Catalog
+
+    from .test_pipeline import MemoryIndex
+
+    catalog = Catalog(p03.registry)
+    revision = p03.revisions["SOP-2026-B"]
+    generation = IngestPipeline(catalog, MemoryIndex()).index(p03.admin, revision)
+    chunk = catalog.chunks_for_revision(p03.reader, revision)[0]
+    store = CaseStore(p03.registry, p03.reader, "case-42")
+    store.append("REQUEST", "document-history", {"query": "Please explain the source."})
+    store.append("RELEASE", "document-history", {"disposition": "SUPPORTED", "answer": "Attributed source.",
+        "verified_claims": [{"text": chunk.text, "evidence_ids": [chunk.chunk_id]}],
+        "citations": [{"kind": "DOCUMENT", "evidence_id": chunk.chunk_id,
+            "revision_id": revision, "generation": generation,
+            "start_byte": chunk.start_byte, "end_byte": chunk.end_byte}]})
+    assert store.conversation()[0][0].released_claims[0].text == chunk.text
+    p03.registry.revoke_source(p03.admin, revision)
+    packet = build_packet(store, "follow up")
+    assert chunk.text not in packet.model_dump_json()
+    assert packet.conversation_turns[0].released_claims == ()
+    assert packet.conversation_turns[0].assistant_response is None
+    assert packet.conversation_turns[0].omitted_claims == 1
     with pytest.raises(ValueError):
         CaseStore(p03.registry, p03.reader, "case-42").append(
             "ORG_POLICY", "t", {"policy": "approve"}

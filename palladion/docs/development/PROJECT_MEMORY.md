@@ -1,10 +1,44 @@
 # Palladion working memory
 
-Current checkpoint 2026-10-20: P09 audit and benchmark-handoff remediation ACTIVE. P00–P08 are historical completed pilot work (98 cards); independent reaudit identified and corrected gate/evaluation proof gaps; P09 remains active for PF03 performance acceptance. See evidence/P09_AUDIT_AND_HANDOFF.md and ADR-0087–0095; PF03 performance remains open after owner-rejected0091 closure; opaque IDs and opt-in5second audit reuse are approved and implemented. Benchmark implementation/editor work, UI and enterprise writes remain excluded; owner authorized a scoped verified main push.
+Current checkpoint 2026-10-20: P10 implementation and consumer validation verified; final scoped checkpoint P10-T06.01 remains OPEN until stage/secret review, commit and approved main publication. 12 of 13 P10 cards are verified (124 of 126 overall); P09/PF03 remains separately OPEN. Source 458 PASS/32 explicit SKIP, installed 91 PASS/2 explicit SKIP, native PDF 1 PASS; later parser controls pass in overlapping 11-test source/installed runs. Final 70-file package comparison, static/docs gates and owned cleanup pass. Full-blueprint and current P10 documentation/source review complete; no full historical-document audit is claimed.
 
 Updated 2026-10-20. Navigation aid only; user/vision/source/ADRs retain authority.
 
-## Current P09 recovery pointers
+## Current P10 verified checkpoint
+
+P10 has12of13cards verified; P10-T06.01 and P09-T02.07/PF03 remain open (124/126checked, not readiness).
+ADR0096–0098 are accepted and verified: exact-proof scoped-admin graph HTTP; verbatim
+UTF8/code and bounded pypdf6.21.0/SQLitev7 original/extracted/page provenance; lexical-2
+weighted PathA and bounded own-session turn context consumed automatically. Four read
+tools, canonical authority/ACL, graph default-off and opt-in local PathB are retained.
+
+E-P10-006/007 and evidence/p10-consumer-observations.json own current measurements:
+source458PASS32SKIP109.65s; installed91PASS2SKIP44.62s; actual installed Qdrant PDF1PASS
+22.62s. Two later page/output controls pass within overlapping11-test source14.95s and
+installed14.65s runs. Finalwheel70source/package/schema files match installed bytes;
+wheel/sdist, ruff, mypy80files, dependency110files+4controls, docs126cards+21controls,
+installed foundation/policy CLIs pass. Current classifier profile hash and30frozen/5
+additional synthetic controls are in the receipt; these are not generalization proof.
+
+Single LunaMedium start adversary and end reviewer read the complete blueprint; no
+confirmed material source defect remained. Final parser evidence freshness resolved by
+focused checks/rebuilt wheel. Owned Qdrant stopped and recorded PID absent; storage
+preserved, Windows/WSL16333/16334/17687listeners absent. Neo4j not restarted on recovery.
+Scoped main push has owner approval; verify git/upstream for actual publication. Preserve
+all foreign benchmark/editor changes; only our PALLADION_FIXES.md appendix is scoped.
+
+Historical failures remain in E-P10-003–005/raw runtime logs: Windows98–99%RAM/uv1450/
+CoreCLR/WSL failures; owner asked to retry, then host recovered. Do not infer a missing
+Python installation from failed encodings startup under exhaustion. Earlier full suite
+interrupted, not PASS. Actual service attempt1 Neo4j timeout, attempt2 smoke-setting
+mistake; attempt3 all6graph/PDF/Groq/reopen checks passed9invocations8responses, one
+causeUNKNOWN. Future observer records all outcomes. No frozen P08 reports are rewritten.
+
+Next substantive unresolved outcome is PF03 performance, requiring separate bounded
+planning/measurement before architectural changes. No new owner ADR answer is pending
+for the completed P10 work; UI, enterprise writes and benchmark implementation excluded.
+
+## Historical P09 recovery pointers
 
 Read PROGRESS Active P09 checkpoint, all P09 cards, ADR0087–0095 and E-P09-001–004.
 Owner rejected0091 closure: keep PF03 open. Owner approved0092 tenant-bound opaque IDs;
