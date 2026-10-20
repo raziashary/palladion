@@ -636,3 +636,23 @@ Dispositions that change or narrow the wording above (E-B05-004): **item 7**: a 
 **My answer (editable):** Deferred as above.
 
 **Verification:** `check_docs.py` lists B08-T03.01 on OQ10 and OQ13 and B08-T07.01 on OQ09.
+
+## BADR-0031 — Scope of B06 after the pre-phase adversary (2026-10-20)
+
+**Status:** ACCEPTED; 2026-10-20.
+
+**Authority:** Owner answers in chat, 2026-10-20: "build offline, run on a subset"; R7b "FEATURE_NOT_SUPPORTED + request PF07"; shared contracts "Yes, additive only"; isolation "Yes, worker plus proxy"; subagents "Yes, implementers for B06 only".
+
+**Question:** How is B06 scoped given E-B06-001 (the S tier needs about 4 million tokens and about 8 hours per comparator at the measured 8,000 tokens a minute, the machine has 7.4 GB and no GPU, and R7b has no graph over HTTP at the pin)?
+
+**Why:** Running R4 to R6 over all 1,200 documents on the free tier is not feasible, and an HTTP-only R7b has zero edges. The protocol asks for the official pipelines, cold-state cost accounting and no hidden spend.
+
+**Options:** (a) build everything offline and run live extraction on a matched subset (chosen); (b) build offline only; (c) defer the comparators. For R7b: declare it unsupported and request PF07 (chosen) or only declare it. For contracts: additive extension (chosen) or side files. For isolation: worker plus counting proxy (chosen) or in-process.
+
+**Recommendation:** as chosen.
+
+**What affects what:** (1) B06 gains three foundation cards (B06-T00.01 contracts, B06-T00.02 worker and proxy, B06-T00.03 pins and approved downloads) and loses GraphRAG Global and DRIFT, which are exploratory and not built here. (2) R7b is FEATURE_NOT_SUPPORTED at 6444345 and PF07 is added to PALLADION_FIXES.md; Neo4j (OQ12) is not needed until PF07 lands. (3) The Track A manifest, arm list, offline cost record and candidate record gain optional fields and new arm ids only; every existing run and test stays valid. (4) This reverses BADR-0025 item 8 (subprocess isolation deferred to B08): isolation is built in B06, in this order. (5) The cold-state run is a pilot on a matched subset of about 100 documents with R0 to R3 and R7a re-run on the same subset; no ranking claim. (6) **Delegation for B06 only** (supersedes BADR-0003 for this phase, owner-requested): after the coordinator builds and tests the shared contracts, worker and proxy, up to three Haiku 5.5 (medium effort) implementer agents may each write one adapter (R4, R5, R6) with its own test file in disjoint paths, offline only, with no credentials, no network and no git; the coordinator reviews every diff, runs every test and owns integration, task state and records. The adversary at the start and the auditor at the end stay. The rule reverts to the start-and-end-only limit when B06 closes. (7) No download and no live call happens until OQ14 is answered for that artifact or run.
+
+**My answer (editable):** Accepted as above.
+
+**Verification:** E-B06-001 holds the adversary receipt and dispositions; the plan, gates and checker reflect the new cards; each later B06 card closes only with its own proof.

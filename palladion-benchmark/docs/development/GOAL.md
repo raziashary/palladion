@@ -24,7 +24,7 @@ its status is read from its own documents and source, never assumed.
 | O03: Scorers distinguish perfect, empty and shuffled systems and implement the protocol's statistics | B03; BG-METRIC, BG-STATS, BG-REPORT; E-B03-002 to E-B03-004 | DONE |
 | O04: Track A pilot for R0, R1, R2, R3 and R7a | B04; BG-ADAPTER, BG-FAIR, BG-TRACKA; E-B04-001 to E-B04-005 (pilot, no ranking claim) | DONE |
 | O05: Answer-level scorers and Track B pilot with the recorded generator pool | B05; BG-METRIC, BG-TRACKB; E-B05-001 to E-B05-005 (first live pass, descriptive) | DONE |
-| O06: Graph and research comparators R4–R7b measured with full cost, or recorded NOT_RUN reasons | B06; BG-ADAPTER, BG-TRACKA | PLANNED |
+| O06: Graph and research comparators R4–R7b measured with full cost, or recorded NOT_RUN reasons | B06; BG-ADAPTER, BG-TRACKA; E-B06-001, BADR-0031 (matched subset, R7b unsupported) | IN_PROGRESS |
 | O07: Native end-to-end systems E0–E4, memory, critic and tool metrics, 19 mutations and 7 invariants | B07; BG-TRACKC, BG-FIXTURE, BG-SECURITY | PLANNED |
 | O08: Sealed confirmatory run and ablations with intervals, failures and bounded claims | B08; BG-PREREG, BG-ABLATION, BG-REPORT | PLANNED |
 | O09: Replication and stress, labeled as replication | B09 (conditional on owner authorization of budget); BG-TRACKA, BG-TRACKB | DEFERRED |

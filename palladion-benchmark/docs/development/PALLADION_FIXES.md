@@ -20,6 +20,7 @@ does afterwards. **Part C** records what the owner decided. A row here is not an
 | BR22 | No clock, so as-of strata are unscorable for R7a | No | PF01 (small) |
 | BR26 | Coverage check on every search: DEGRADED at scale and slow | No (report only) | PF03 |
 | BR12 | K above 12 refused, no token budget | Harness enforces both (A5) | PF04 (optional) |
+| BR34 | No HTTP route creates graph links, so R7b has an empty graph | No (R7b is FEATURE_NOT_SUPPORTED) | PF07 (needed only for R7b) |
 | OQ11 | No switches for critic, gate, preflight, authority check, parser, temporal resolver | No | PF06 (needed for B07) |
 
 ---
@@ -174,6 +175,26 @@ Each fix is the smallest change that removes the limit. Priority: **P1** blocks 
 - **Proof.** A run with the switch off shows the component absent from the trace.
 - **Benchmark follow-up.** The affected ablations move from FEATURE_NOT_SUPPORTED to runnable at B07-T04.01.
 
+### PF07 — A route to register typed links from published text (P2, needed only for R7b)
+
+- **What.** At the pinned commit the only link relation the store accepts is `EXCEPTION_TO` (a SQL check on the links
+  table) and links are created only by in-process helpers used by Palladion's own demo seed. No HTTP route creates a link,
+  so a corpus loaded over HTTP has an empty graph and R7b has nothing to expand.
+- **Where.** `storage/sqlite.py` (the relation check), `storage/catalog.py` (the link writer), `ingest/graph_extract.py`
+  (the extraction that projects relations), `api/routes.py` and `api/schemas.py` (no route). Line numbers are from
+  `E-B06-001` and can drift; the working tree of the contributor is moving.
+- **Why.** The graph arm and ablation A05 cannot be measured over the benchmark corpus. Meanwhile R7b is recorded as
+  FEATURE_NOT_SUPPORTED with this reason, never as zero.
+- **How.** An administrative route, behind the same admin authorization as PF05, that registers a bounded set of typed
+  links between chunks or sources the caller already administers, each with its evidence span and its source version;
+  idempotent; no link without provenance; link types from a closed list.
+- **Proof.** Upload, approve, register a link, search with expansion and read back the link in the citation trace; a link
+  to a source the caller may not read is refused; a link without evidence is refused.
+- **Constraint from the benchmark.** The benchmark supplies links derived from published text only. It must not supply a
+  world relation or a supersession edge (BR37), or R7b's relation precision would match the gold by construction.
+- **Benchmark follow-up.** A later card runs R7b at a pin that differs from R7a only by the graph code (the pin is chosen
+  then; today's working tree also changes retrieval, so it would be a confound).
+
 ---
 
 ## Part C — Decisions and open items
@@ -187,3 +208,23 @@ Each fix is the smallest change that removes the limit. Priority: **P1** blocks 
 
 Open for the owner: whether to send Part B to the Palladion contributor now or after the sealed run, and whether PF01
 (a few lines) should be asked for first because it alone unlocks the as-of strata.
+
+
+## Palladion contributor response — 2026-10-20
+
+Owner approved Palladion-side Part B changes (ADR0087–0089/0092/0095) and this status
+appendix. Original requests and benchmark observations above are retained as history.
+Benchmark adapter implementation and sealed-run decisions remain with its contributor.
+
+| Item | Palladion status | Current contract / retained limit |
+|---|---|---|
+| PF01 | DONE — verified HTTP consumer | Optional aware `as_of` on `/search`; same cutoff on `/evidence/{chunk_id}`. Current ACL/approval/revocation still apply; not trusted operational event time. |
+| PF02 | DONE — verified upload/approval/search/citation | Approval-owned bounded family/revision/code aliases. Unknown structured IDs still return no substitute plus warning, per locked vision. Search exact candidates capped100 with visible truncation and ACL before cut. |
+| PF03 | OPEN — mechanisms implemented, performance acceptance unresolved | Up to10000authorized sources, explicit count truncation beyond that, bounded physical batches and canonical/physical aggregate100000chunks. Opt-in `reuse_physical_audit` on `/search` and `/index-health` reuses complete healthy physical audits for≤5seconds from original start; current canonical checks still run. Default fresh. Visible mode/time/cache status; out-of-band physical corruption may remain undetected inside that window. Large-case benefit and small-case overhead/expiry misses retained; owner instructed leave open if worse. No `coverage=false` bypass. |
+| PF04 | DONE — verified HTTP/tokenizer/span consumer | HTTP default12/max40, optional `token_budget` counts the pinned retrieval tokenizer's whole-passage prefix with disclosed identity/count/separator. Four-tool limit remains12. This is not whitespace/provider billing equivalence; benchmark must choose its equal-budget convention explicitly. |
+| PF05 | DONE — verified provisioning/current ACL consumer | Scoped admins use `POST /v1/admin/principals`, `/v1/admin/cases`, `/v1/admin/cases/{case_id}/memberships`. Submitted principal ID is a tenant-local subject key: store/use returned opaque canonical ID for membership, ACL and operator token mappings. No bearer/admin/tenant minting or restoration of revoked access. |
+| PF06 | DONE within owner-approved safe capability scope | `python scripts/evaluate.py --capabilities` reports11supported isolated arms and explicit unsupported bypasses. Critic exists; B4/B5 omit critic in isolated studies, retaining final gate. Serving gate/preflight/source/parser/time bypasses remain FEATURE_NOT_SUPPORTED; do not relabel those benchmark ablations runnable. |
+
+Palladion source/evidence authority: `palladion/docs/development/evidence/P09_AUDIT_AND_HANDOFF.md`,
+`EVIDENCE_LOG.md` E-P09-001 onward, MASTER_DEV_PLAN P09 and ADR0087–0095. These fixes do
+not retroactively change frozen benchmark scores or validate a sealed comparison.
