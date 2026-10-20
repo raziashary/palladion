@@ -24,18 +24,9 @@ from benchmark.eval.retrieval import RETRIEVAL_METRICS
 from benchmark.eval.score_run import ScoreRunError, score_run
 from benchmark.fixtures.manifest import Layout, Namespace, read_identity
 from benchmark.runner import RunnerError
-from benchmark.track_a import RUNNABLE_SPLITS
+from benchmark.track_a import RUNNABLE_SPLITS, WITHDRAWN, read_withdrawn
 
 PROJECT = Path(__file__).resolve().parents[1]
-WITHDRAWN = PROJECT / "configs" / "withdrawn_questions.json"
-
-
-def read_withdrawn(path: Path) -> dict[str, str]:
-    """Question ids the label audit found defective, with the reason (BADR-0026); empty when the file is absent."""
-    if not path.exists():
-        return {}
-    questions = json.loads(path.read_text(encoding="utf-8"))["questions"]
-    return {str(q): str(reason) for q, reason in questions.items()}
 
 
 def withdrawn_note(withdrawn: Mapping[str, str]) -> str:

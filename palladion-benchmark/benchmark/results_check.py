@@ -1,4 +1,4 @@
-"""Validate a Track A run directory (B04-T04.03).
+"""Validate a Track A or Track B run directory (B04-T04.03, B05-T08.01).
 
 A run directory is accepted only if it is complete, internally consistent and clean:
 
@@ -13,6 +13,11 @@ A run directory is accepted only if it is complete, internally consistent and cl
 * **Secrets**: no artifact matches a credential pattern or any value supplied by the caller (a ``.env``, bearer tokens).
 * **Run states**: every non-OK final record carries a code, so an arm that did not run appears with a reason.
 
+A Track B run (``track`` is ``controlled_qa`` in its configuration) is checked against the questions asked, not all
+of them: answers must parse, each needs a successful generation record, every prompt is screened for gold markers and
+kept within the evidence budget, and gold text is searched for outside the answers themselves (an answer may say
+what the gold says).
+
 ``validate_run`` returns findings; an empty list means the directory is clean. A finding names the rule and the file or
 record, never the matched text.
 """
@@ -26,13 +31,14 @@ from pathlib import Path
 from typing import Any
 
 from benchmark.adapters.common import count_words
-from benchmark.contracts import ContractError, RunStatus, gold_like_key
+from benchmark.contracts import CaseResponse, ContractError, RunStatus, gold_like_key, screen_arm_visible
 from benchmark.fixtures.manifest import Layout, Namespace, manifest_digest
 from benchmark.fixtures.questions import GoldRecord
 from benchmark.run_manifest import ManifestError, read_verified
 from benchmark.runner import RunLedger, RunnerError
 from benchmark.secret_scan import scan_text
 from benchmark.track_a import RUNNABLE_SPLITS, TrackAError, read_annotations
+from benchmark.track_b import CONTROLLED_QA, eligible_records, prompt_passages, read_prompt_ids
 
 MIN_GOLD_TEXT = 12
 # A manifest is an evaluator-side record: it holds the gold file's digest by design (never the arm-visible view).
@@ -65,7 +71,7 @@ def gold_texts(records: Iterable[GoldRecord]) -> list[str]:
     for record in records:
         texts.update(record.required_claims)
         texts.update(record.forbidden_claims)
-        for extra in (record.abstention_note, record.policy_outcome):
+        for extra in (record.abstention_note, record.policy_outcome, record.preferred_action):
             if extra:
                 texts.add(extra)
     long = [t for t in texts if len(t) >= MIN_GOLD_TEXT]
@@ -97,6 +103,7 @@ def validate_run(
         return findings
     findings += _check_reads(read_log, root)
     split = str(config.get("split"))
+    answer_run = config.get("track") == CONTROLLED_QA
     if split not in RUNNABLE_SPLITS:
         return [*findings, Finding("the split is not runnable by Track A", "run_config.json")]
     try:
@@ -105,8 +112,13 @@ def validate_run(
         return [*findings, Finding(f"the annotation file cannot be read: {exc}", "read_log.json")]
     arms = [str(a) for a in config.get("arms", [])]
     findings += _check_manifests(run_dir, config, arms, log.annotation_sha256, log.published_manifest_sha256)
-    findings += _check_ledger(run_dir, config, arms, records)
-    findings += _check_leakage(run_dir, records, secret_values)
+    if answer_run:
+        asked = eligible_records(records, dict.fromkeys(config.get("withdrawn", []), ""))
+        findings += _check_answer_ledger(run_dir, arms, asked)
+        findings += _check_generation(run_dir, config, arms)
+    else:
+        findings += _check_ledger(run_dir, config, arms, records)
+    findings += _check_leakage(run_dir, records, secret_values, answer_run=answer_run)
     return findings
 
 
@@ -188,12 +200,127 @@ def _check_ledger(
     return findings
 
 
-def _check_leakage(run_dir: Path, records: Sequence[GoldRecord], secret_values: Sequence[str]) -> list[Finding]:
+def _answer_free(path: Path, raw: str) -> str:
+    """What to search for gold text in a Track B artifact. An answer may say what the gold says (that is its job), so
+    the ledger is searched without its payloads; a prompt is searched without its fixed system message, whose
+    wording is the template named by the manifest's digest."""
+    if path.name not in ("ledger.jsonl", "prompts.jsonl"):
+        return raw
+    kept = []
+    for line in raw.splitlines():
+        try:
+            entry = json.loads(line)
+        except ValueError:
+            kept.append(line)
+            continue
+        if path.name == "ledger.jsonl":
+            entry.pop("payload", None)
+        else:
+            entry["messages"] = [m for m in entry.get("messages", []) if m.get("role") != "system"]
+        kept.append(json.dumps(entry, sort_keys=True))
+    return "\n".join(kept)
+
+
+def _check_answer_ledger(run_dir: Path, arms: Sequence[str], asked: Sequence[GoldRecord]) -> list[Finding]:
+    """A Track B ledger is complete for the questions asked, matches its manifests and holds valid answers."""
+    findings: list[Finding] = []
+    try:
+        ledger = RunLedger(run_dir / "ledger.jsonl")
+        ledger.verify_complete([(arm, r.question_id) for arm in arms for r in asked])
+    except RunnerError as exc:
+        return [Finding(f"the ledger is not a complete record of the run: {str(exc)[:120]}", "ledger.jsonl")]
+    digests = {}
+    for arm in arms:
+        try:
+            digests[arm] = read_verified(run_dir / f"manifest-{arm}.json").digest()
+        except (ManifestError, ContractError, OSError, ValueError):
+            continue  # already reported by the manifest check
+    shown_ids = read_prompt_ids(run_dir / "prompts.jsonl")
+    for record in ledger.records:
+        where = f"ledger.jsonl {record.arm}/{record.question_id}"
+        if record.arm in digests and record.manifest_sha256 != digests[record.arm]:
+            findings.append(Finding("the record does not match its arm's manifest", where))
+        if not record.is_final:
+            continue
+        if record.status is not RunStatus.OK:
+            if not record.code:
+                findings.append(Finding("a run state without a reason code", where))
+            continue
+        try:
+            response = CaseResponse.from_payload(record.payload)
+            if response.question_id != record.question_id:
+                raise ContractError("another question")
+        except (ContractError, KeyError, TypeError, ValueError):
+            findings.append(Finding("an OK record whose payload is not a valid answer", where))
+            continue
+        shown = shown_ids.get((record.question_id, record.arm))
+        if shown is None or list(response.used_evidence_ids) != shown:
+            findings.append(Finding("the answer's delivered ids differ from the passages its prompt carried", where))
+    return findings
+
+
+def _evidence_words(user_message: str) -> int:
+    """Words of the passages in a prompt, without the citation ids that head each one."""
+    return sum(count_words(body) for _, body in prompt_passages(user_message))
+
+
+def _check_generation(run_dir: Path, config: Mapping[str, Any], arms: Sequence[str]) -> list[Finding]:
+    """Generation records and prompts agree with the ledger, the models named and the evidence budget."""
+    findings: list[Finding] = []
+    budget = int(config.get("budget_words", 0))
+    try:
+        models: set[str] = set()
+        for arm in arms:
+            generator = read_verified(run_dir / f"manifest-{arm}.json").retrieval_config.get("generator", {})
+            models |= {str(m) for m in generator.get("models", [])}
+        ledger = RunLedger(run_dir / "ledger.jsonl")
+    except (ManifestError, ContractError, OSError, ValueError, RunnerError):
+        return findings  # reported elsewhere
+    answered = {(r.arm, r.question_id) for r in ledger.records if r.is_final and r.status is RunStatus.OK}
+    records_path, prompts_path = run_dir / "generation_records.jsonl", run_dir / "prompts.jsonl"
+    if answered and not (records_path.is_file() and prompts_path.is_file()):
+        return [Finding("answers exist but the generation records or prompts are missing", "generation_records.jsonl")]
+    generated: set[tuple[str, str]] = set()
+    digests: set[str] = set()
+    if records_path.is_file():
+        for line in records_path.read_text(encoding="utf-8").splitlines():
+            row = json.loads(line)
+            if row.get("requested_model") not in models:
+                findings.append(Finding("a generation record names a model outside the pool", records_path.name))
+            if row.get("status") == "OK":
+                generated.add((str(row.get("arm_id")), str(row.get("question_id"))))
+            digests.add(str(row.get("prompt_sha256")))
+    for arm, question in sorted(answered - generated):
+        findings.append(Finding("an answer has no successful generation record", f"{arm}/{question}"))
+    seen: set[str] = set()
+    if prompts_path.is_file():
+        for line in prompts_path.read_text(encoding="utf-8").splitlines():
+            entry = json.loads(line)
+            seen.add(str(entry.get("prompt_sha256")))
+            for message in entry.get("messages", []):
+                try:
+                    screen_arm_visible("prompt", message.get("content", ""))
+                except ContractError:
+                    findings.append(Finding("a prompt carries a gold marker", prompts_path.name))
+            users = [m.get("content", "") for m in entry.get("messages", []) if m.get("role") == "user"]
+            if any(_evidence_words(u) > budget for u in users):
+                findings.append(Finding("a prompt's evidence exceeds the evidence budget", prompts_path.name))
+    if seen != digests:
+        findings.append(
+            Finding("the prompts and the generation records do not describe the same calls", prompts_path.name)
+        )
+    return findings
+
+
+def _check_leakage(
+    run_dir: Path, records: Sequence[GoldRecord], secret_values: Sequence[str], *, answer_run: bool = False
+) -> list[Finding]:
     findings: list[Finding] = []
     texts = gold_texts(records)
     values = tuple(v for v in secret_values if v)
     for path in sorted(p for p in run_dir.rglob("*") if p.is_file()):
         raw = path.read_text(encoding="utf-8", errors="replace")
+        searched = _answer_free(path, raw) if answer_run else raw
         if path.suffix in (".json", ".jsonl"):
             documents = raw.splitlines() if path.suffix == ".jsonl" else [raw]
             for document in documents:
@@ -206,7 +333,7 @@ def _check_leakage(run_dir: Path, records: Sequence[GoldRecord], secret_values: 
                 if any(gold_like_key(key) for key in keys):
                     findings.append(Finding("a JSON key names gold", path.name))
                     break
-        if any(text in raw for text in texts):
+        if any(text in searched for text in texts):
             findings.append(Finding("gold text appears in an artifact", path.name))
         findings += [
             Finding(f"secret scan: {f.rule}", f"{path.name}:{f.line}")

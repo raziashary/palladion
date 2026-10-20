@@ -455,6 +455,7 @@ class EvaluationConfig:
     quantile_method: str
     slot_kinds: Mapping[str, str]
     loss_matrix: Mapping[str, float]
+    loss_sweep_scales: tuple[float, ...]
     provisional_gates: Mapping[str, str]
     sealed: bool
 
@@ -489,12 +490,17 @@ class EvaluationConfig:
         loss_r = r.sub("loss_matrix")
         loss = {name: loss_r.number(name) for name in sorted(loss_r.data)}
         loss_r.finish()
+        sweep_r = r.sub("loss_sweep")
+        scales = tuple(float(x) for x in sweep_r.items("scales"))
+        if not scales or any(s <= 0 or s == 1.0 for s in scales):
+            raise ConfigError("evaluation.loss_sweep.scales must be positive and differ from 1")
+        sweep_r.finish()
         gates_r = r.sub("provisional_gates")
         gates = {name: gates_r.text(name) for name in sorted(gates_r.data)}
         gates_r.finish()
         sealed = r.boolean("sealed")
         r.finish()
-        return cls(version, strata, groups, statistics, quantile_method, slot_kinds, loss, gates, sealed)
+        return cls(version, strata, groups, statistics, quantile_method, slot_kinds, loss, scales, gates, sealed)
 
 
 # --------------------------------------------------------------------------- fixtures.yaml

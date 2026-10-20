@@ -227,8 +227,9 @@ class EchoTransport:
 
 def pool_for(items: list[AuditItem], transport: EchoTransport, budget: int = MAX_LLM_CALLS) -> GeneratorPool:
     return GeneratorPool(
-        SETTINGS, transport, enabled=True, assignment=assignment_for(items, SETTINGS, SEED), call_budget=budget
-    )
+        SETTINGS, transport, enabled=True, assignment=assignment_for(items, SETTINGS, SEED), call_budget=budget,
+        screen_prompts=False,
+    )  # fmt: skip
 
 
 def test_assignment_spreads_items_evenly_over_the_approved_models(packet: Packet) -> None:

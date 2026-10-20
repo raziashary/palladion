@@ -11,11 +11,11 @@ from __future__ import annotations
 import math
 import re
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass, fields
+from dataclasses import dataclass, field, fields
 from datetime import UTC, datetime
 from enum import Enum, StrEnum
 from types import MappingProxyType
-from typing import Any, Protocol, TypeVar, runtime_checkable
+from typing import Any, Protocol, TypeVar, cast, runtime_checkable
 
 E = TypeVar("E", bound=Enum)
 
@@ -112,6 +112,8 @@ _GOLD_KEY_FRAGMENTS = (
     "outcome_label",
     "harm_severity",
     "missing_reason",
+    "allowed_action",
+    "required_policy_input",
 )
 # Substring-based for the multi-word markers; 'gold' must stand alone so gold_answer is caught but Goldman is not.
 _GOLD_VALUE_MARKERS = re.compile(
@@ -457,9 +459,13 @@ class CaseRequest:
 
 @dataclass(frozen=True)
 class Claim:
+    """One atomic claim. ``kind`` and ``params`` are the optional closed-vocabulary form a scorer compares with gold."""
+
     id: str
     text: str
     citations: tuple[str, ...]
+    kind: str | None = None
+    params: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         set_ = object.__setattr__
@@ -469,6 +475,12 @@ class Claim:
         if not all(isinstance(item, str) and item for item in citations):
             raise ContractError("Claim.citations must hold non-empty strings")
         set_(self, "citations", citations)
+        if self.kind is not None:
+            set_(self, "kind", require_ident("Claim.kind", self.kind))
+        params = freeze("Claim.params", dict(self.params))
+        if not all(isinstance(v, str | int) and not isinstance(v, bool) for v in params.values()):
+            raise ContractError("Claim.params must hold strings or integers")
+        set_(self, "params", params)
 
 
 @dataclass(frozen=True)
@@ -528,6 +540,9 @@ class CaseResponse:
     latency_ms: float | None
     cost_usd: float | None
     abstention_reason: AbstentionReason | None
+    action: str | None = None
+    policy_outcome: str | None = None
+    version_ids: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         o = "CaseResponse"
@@ -556,6 +571,13 @@ class CaseResponse:
             )
             if self.evidence_status is EvidenceStatus.SUPPORTED:
                 raise ContractError(f"{o}: a SUPPORTED answer cannot carry an abstention reason")
+        for name in ("action", "policy_outcome"):
+            if getattr(self, name) is not None:
+                set_(self, name, require_ident(_name(o, name), getattr(self, name)))
+        versions = freeze(_name(o, "version_ids"), list(self.version_ids))
+        if not all(isinstance(item, str) and item for item in versions):
+            raise ContractError(f"{o}.version_ids must hold non-empty strings")
+        set_(self, "version_ids", versions)
         if self.critic is not None and not isinstance(self.critic, CriticReport):
             raise ContractError(f"{o}.critic must be a CriticReport")
         if self.model_invocations is not None and not isinstance(self.model_invocations, ModelInvocations):
@@ -567,11 +589,58 @@ class CaseResponse:
                 return value.value
             if hasattr(value, "__dataclass_fields__"):
                 return {name: convert(getattr(value, name)) for name in field_names(type(value))}
+            if isinstance(value, Mapping):
+                return {key: convert(item) for key, item in value.items()}
             if isinstance(value, tuple | list):
                 return [convert(item) for item in value]
             return value
 
         return {name: convert(getattr(self, name)) for name in field_names(type(self))}
+
+    @classmethod
+    def from_payload(cls, payload: object) -> CaseResponse:
+        """A response from a ledger payload, which may carry the runner's own ``budget_check`` note."""
+        if not isinstance(payload, Mapping):
+            raise ContractError("an answer payload is an object")
+        return cls.from_dict({k: v for k, v in payload.items() if k != "budget_check"})
+
+    @classmethod
+    def from_dict(cls, data: Mapping[str, Any]) -> CaseResponse:
+        """Rebuild a response from its serialised form. Unknown or missing fields are refused."""
+        optional = ("action", "policy_outcome", "version_ids")
+        reject_unknown(cls.__name__, data, field_names(cls))
+        missing = [n for n in field_names(cls) if n not in data and n not in optional]
+        if missing:
+            raise ContractError(f"{cls.__name__} is missing field(s): {', '.join(missing)}")
+        values = dict(data)
+        values["evidence_status"] = enum_member(EvidenceStatus, "CaseResponse.evidence_status", data["evidence_status"])
+        reason = data["abstention_reason"]
+        values["abstention_reason"] = (
+            None if reason is None else enum_member(AbstentionReason, "CaseResponse.abstention_reason", reason)
+        )
+        claims = data["claims"]
+        if not isinstance(claims, list):
+            raise ContractError("CaseResponse.claims must be a list")
+        values["claims"] = tuple(
+            Claim(c["id"], c["text"], tuple(c["citations"]), kind=c.get("kind"), params=c.get("params") or {})
+            for c in claims
+        )
+        values["tool_calls"] = tuple(ToolCall(t["name"], t["status"]) for t in data["tool_calls"])
+        critic = data["critic"]
+        values["critic"] = (
+            None if critic is None else CriticReport(critic["enabled"], critic["calls"], tuple(critic["objections"]))
+        )
+        invocations = data["model_invocations"]
+        values["model_invocations"] = (
+            None if invocations is None else ModelInvocations(invocations["main"], invocations["critic"])
+        )
+        values["used_evidence_ids"] = tuple(data["used_evidence_ids"])
+        if "version_ids" in data:
+            values["version_ids"] = tuple(data["version_ids"])
+        try:
+            return cls(**values)
+        except (KeyError, TypeError) as exc:
+            raise ContractError(f"CaseResponse is malformed: {type(exc).__name__}") from exc
 
 
 @dataclass(frozen=True)
@@ -612,6 +681,9 @@ def classify_exception(exc: BaseException) -> tuple[RunStatus, ErrorOrigin, str]
 
     The code is a fixed label (never exception text) so provider or arm prose cannot leak into records.
     """
+    tagged = getattr(exc, "classification", None)
+    if tagged is not None:  # an exception that knows its own state and origin, such as a generator fault
+        return cast("tuple[RunStatus, ErrorOrigin, str]", tagged)
     if isinstance(exc, ArmUnavailable):
         return RunStatus.NOT_RUN, ErrorOrigin.ARM, "ARM_UNAVAILABLE"
     if isinstance(exc, CapabilityUnsupported):

@@ -93,6 +93,21 @@ def test_the_pilot_annotations_are_smoke_only_and_kept_out_of_the_published_tree
     assert scan_published(out / "published", forbidden=[r["question_id"] for r in records]) == []
 
 
+def test_the_answer_gold_is_written_beside_the_questions_and_matches_them(
+    generated: tuple[Path, dict[str, object]],
+) -> None:
+    from benchmark.fixtures.answer_gold import answer_gold_path, check_matches_questions, read_answer_gold
+    from benchmark.fixtures.manifest import Split
+    from benchmark.fixtures.questions import read_gold
+
+    out, summary = generated
+    questions = read_gold(out / "annotations_dev" / "questions_smoke.jsonl")
+    golds = read_answer_gold(answer_gold_path(out, Split.SMOKE))
+    check_matches_questions(golds, questions)
+    assert len(golds) == 100 and summary["digests"]["questions_sha256"]  # type: ignore[index]
+    assert not list((out / "published").rglob("answers_*")), "the answer-gold never enters the published tree"
+
+
 def test_the_report_carries_the_figures_the_card_needs(generated: tuple[Path, dict[str, object]]) -> None:
     out, summary = generated
     report = json.loads((out / "generator" / "report.json").read_text(encoding="utf-8"))

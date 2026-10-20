@@ -5,7 +5,7 @@ command observations and review receipts live in the [evidence log](EVIDENCE_LOG
 
 ## Current checkpoint
 
-B04 (Track A arms and pilot) is DONE: all fourteen cards are done and proven (E-B04-002 to E-B04-005; the pre-phase adversary is E-B04-001). The pilot ran R0 to R3 and R7a on the smoke split under C2 and C1 (500 of 500 pairs each, 97 questions scored after withdrawing three defective synthesis questions); the observations are in E-B04-005 and support no ranking claim. The shared harness, a Docker-free Qdrant launcher, R0 to R3 with Palladion's pinned models, an isolated Palladion runtime with the HTTP-only R7a adapter, the build, run, score and validate commands all exist; `uv run pytest` passes 981 tests with ruff and strict mypy clean, every planted defect is killed, and two real smokes (R0 to R3 and R7a over the full corpus) pass the validator. They are not the pilot and support no ranking claim.
+B05 (answer-level evaluation and Track B) is BUILT with one blocked card: ten of eleven cards are done and proven (E-B05-002 to E-B05-004; the pre-phase adversary is E-B05-001). The answer-gold, the citation, claim, policy and abstention scorers, the loss sweep, the label store and judge audit, the Track B runner, scorer and validator exist and were run end to end on the real corpus with an offline stand-in generator (261 of 261 pairs). No provider was called and no model result exists: B05-T06.01 (the live pilot) waits for your authorization (calls, tokens, models, quota). B04 (Track A arms and pilot) is DONE: all fourteen cards are done and proven (E-B04-002 to E-B04-005; the pre-phase adversary is E-B04-001). The pilot ran R0 to R3 and R7a on the smoke split under C2 and C1 (500 of 500 pairs each, 97 questions scored after withdrawing three defective synthesis questions); the observations are in E-B04-005 and support no ranking claim. The shared harness, a Docker-free Qdrant launcher, R0 to R3 with Palladion's pinned models, an isolated Palladion runtime with the HTTP-only R7a adapter, the build, run, score and validate commands all exist; `uv run pytest` passes 981 tests with ruff and strict mypy clean, every planted defect is killed, and two real smokes (R0 to R3 and R7a over the full corpus) pass the validator. They are not the pilot and support no ranking claim.
 
 B03 (evaluation core) is BUILT and audited: all eight cards are done and proven (E-B03-002 to E-B03-004), with the pre-phase adversary in E-B03-001. The scorers cover identity and text alignment, SlotCoverage and CompleteSet, ranking and provenance metrics, paired statistics, latency and cost, scorecards and a score-run driver, and the perfect, empty and shuffled controls run through the real Runner with an injected registry. `uv run pytest` passes 790 tests with ruff and strict mypy clean; every planted defect is killed. B02 is built; its last card, the pilot label audit, was done under delegation (E-B02-006); the S-tier fixture has 1,200 fictional documents and 100 pilot questions.
 
@@ -30,7 +30,7 @@ Still open and tracked: OQ03 (read Palladion's interface at B04), OQ09 (license,
 | B02 | DONE | E-B02-001 to E-B02-006; the label audit was made by the coordinator under the owner's delegation (BADR-0026), so BG-GOLD stays PARTIAL |
 | B03 | DONE | E-B03-001 to E-B03-004; the metrics are proven against the controls, not yet against any real arm |
 | B04 | DONE | E-B04-001 to E-B04-005; the pilot is exploratory, smoke split only |
-| B05 | PLANNED | Depends on B04 and B01-T05 |
+| B05 | IN_PROGRESS | Built, E-B05-001 to E-B05-004; B05-T06.01 (live pilot) is blocked on the owner's authorization |
 | B06 | PLANNED | Depends on B04; quota question OQ06 |
 | B07 | PLANNED | Depends on B04, B05, B02 |
 | B08 | PLANNED | Depends on B04–B07 exits |
@@ -44,12 +44,12 @@ Still open and tracked: OQ03 (read Palladion's interface at B04), OQ09 (license,
 | BG-HARNESS | PASS | E-B01-002 to E-B01-006: contracts, budgets, generator, ITT runner, CLI and the live entry-point proof (3 of 3 models), audited. Covers the B01 contract only; it does not test any system under test |
 | BG-FIXTURE | PARTIAL | E-B02-002, E-B02-003: determinism across processes, referential, contradiction, merge identity, temporal, leakage and realism checks with planted-defect controls on the S tier. The 19 mutations and the M tier remain (B07-T07, B08-T01) |
 | BG-GOLD | PARTIAL | E-B02-002, E-B02-005: schema, mapping, slots, family-grouped partitions and gold-support checks pass; the label audit is done but by one non-independent reader (29 of 30 agree with the gold, E-B02-006); the owner's relabel or acceptance is due before the seal |
-| BG-METRIC | PARTIAL | E-B03-002, E-B03-003: retrieval, evidence-set, cost and latency metrics with hand-computed cases and controls; answer-level metrics (B05), graph and system metrics (B06, B07) remain |
+| BG-METRIC | PARTIAL | E-B03-002, E-B03-003: retrieval, evidence-set, cost and latency metrics with hand-computed cases and controls; answer-level metrics have hand-computed cases and controls (E-B05-002, E-B05-003); graph and system metrics (B06, B07) remain |
 | BG-STATS | PARTIAL | E-B03-002, E-B03-003: known effect, simulated coverage, clustering, exact tests and bounds; power sizing and preregistered pairings remain (B08) |
 | BG-ADAPTER | PARTIAL | Registry and contract tests (E-B01-003); five real adapters with capabilities proven in tests and two real smokes (E-B04-002); B06 and B07 arms remain |
 | BG-FAIR | PARTIAL | E-B04-002: one chunker, filter, budget and tie rule for R0 to R3, C1 and C2 differ only in the filter, R7a's differences declared (BR22, BR24, BR27, BR28); equal-budget claims need the pilot |
 | BG-TRACKA | PARTIAL | E-B04-002: runner, scorer and validator work on real runs; the pilot ran (E-B04-005); the sealed confirmatory run is B08-T04.01 |
-| BG-TRACKB | NOT_RUN | B05 |
+| BG-TRACKB | PARTIAL | E-B05-002: the runner, scorer and validator work on a real-corpus run with the offline stand-in; no live generator run |
 | BG-TRACKC | NOT_RUN | B07 |
 | BG-SECURITY | PARTIAL | Secret scan, key handling and the arm-visible allowlist (E-B01-002, E-B01-003); tenant and role visibility in the manifest, the barrier scan of the published tree, existence-hiding live reads and inert injection documents (E-B02-002); retriever-side enforcement remains for B04 onward |
 | BG-PREREG | NOT_RUN | B08 |

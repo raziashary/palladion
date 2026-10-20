@@ -22,6 +22,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from benchmark.config import FixturesConfig, load_all
 from benchmark.fixtures import FICTIONAL_NOTICE, canonical_json, digest_of, to_plain
+from benchmark.fixtures.answer_gold import derive_all, write_answer_gold
 from benchmark.fixtures.artifacts import build_corpus, plan_from_config
 from benchmark.fixtures.audit import build_packet, write_packet
 from benchmark.fixtures.documents import measure_corpus
@@ -87,6 +88,7 @@ def generate(
         raise GenerationError(f"fixture validation failed ({len(validation.findings)} findings): {detail}")
     digests = write_namespaces(out, world, corpus, world_seed, overwrite=overwrite)
     write_annotations(out, Split.SMOKE, [q.to_dict() | {"split": Split.SMOKE.value} for q in questions])
+    write_answer_gold(out, Split.SMOKE, derive_all(questions))
     published = out / Namespace.PUBLISHED.value
     written_problems = verify_published(published) + scan_published(
         published, forbidden=[q.question_id for q in questions]

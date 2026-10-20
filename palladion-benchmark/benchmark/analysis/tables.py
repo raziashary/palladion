@@ -17,6 +17,8 @@ from dataclasses import dataclass
 
 from benchmark.config import StatisticsSettings
 from benchmark.contracts import RunStatus
+from benchmark.eval.abstention import Sweep
+from benchmark.eval.score_answers import AnswerRunScore, ArmAnswerSummary
 from benchmark.eval.score_run import HARM_METRICS, PairScore, RunScore
 from benchmark.eval.statistics import Interval, StatisticsError, cluster_bootstrap_mean, paired_cluster_difference
 
@@ -228,4 +230,110 @@ def render_markdown(card: Scorecard) -> str:
             f"| {s.stratum} | {s.arm} | {s.completed} | {shown} | {s.severe['forbidden_source']} |"
             f" {s.severe['authority_confusion']} | {s.severe['wrong_vintage']} |"
         )
+    return "\n".join(lines) + "\n"
+
+
+# --------------------------------------------------------------------------- Track B scorecard (B05-T08.01)
+
+
+def _num(value: float | None) -> str:
+    return "n/a" if value is None else f"{value:.3f}"
+
+
+def _ratio(value: float | None, numerator: int, denominator: int) -> str:
+    return "n/a" if value is None else f"{value:.3f} ({numerator}/{denominator})"
+
+
+def _of(value: float | None, denominator: int) -> str:
+    """A rate with the number of items it is over, for a figure whose numerator is not kept."""
+    return "n/a" if value is None else f"{value:.3f} (of {denominator})"
+
+
+def render_answer_scorecard(score: AnswerRunScore, summaries: Sequence[ArmAnswerSummary], sweep: Sweep) -> str:
+    """The Track B scorecard: both accountings of the co-primary endpoints, citations, policy, abstention and loss."""
+    lines = [f"# Track B scorecard for run {score.run_id} at K={score.k}", ""]
+    generator = "an OFFLINE STAND-IN, not a model" if not score.live else f"live ({score.generator_pool})"
+    lines += [
+        f"Generator: {generator}. Descriptive pilot; no ranking claim.",
+        "Every question ran on one generator model (no token budget split the pool)."
+        if score.single_model
+        else "Questions were spread over more than one generator model.",
+        f"Mixed-model questions (arms ran on different generator models): {len(score.mixed_model_questions)}.",
+        f"Questions no model budget covered (not run for every arm): {len(score.unassigned)}.",
+    ]
+    if score.withdrawn:
+        lines += ["", f"Withdrawn before scoring ({len(score.withdrawn)}; BADR-0026): every denominator excludes them."]
+        lines += [f"- {q}: {reason}" for q, reason in sorted(score.withdrawn.items())]
+    lines += ["", "## Run states", "", "| arm | pairs | states |", "|---|---|---|"]
+    for s in summaries:
+        shown = ", ".join(f"{k}={v}" for k, v in s.states.items()) or "none"
+        lines.append(f"| {s.arm} | {s.pairs} | {shown} |")
+    lines += ["", "## Co-primary endpoints (both accountings)", ""]
+    lines += [
+        "| arm | coverage (intention to treat) | coverage (conditional) | directive rate (conditional) |"
+        " directive rate (worst case) | zero-failure bound |",
+        "|---|---|---|---|---|---|",
+    ]
+    for s in summaries:
+        e = s.endpoints
+        bound = "n/a" if e.directive_zero_bound is None else f"{e.directive_zero_bound:.3f}"
+        lines.append(
+            f"| {s.arm} | {_ratio(e.coverage_itt, e.correct_answers, e.answerable)}"
+            f" | {_ratio(e.coverage_conditional, e.correct_answers, e.answerable_completed)}"
+            f" | {_ratio(e.directive_rate_conditional, e.unsupported_directives, e.completed)}"
+            f" | {_ratio(e.directive_rate_worst_case, e.unsupported_directives + e.not_completed, e.pairs)} | {bound} |"
+        )
+    lines += ["", "## Citations", ""]
+    lines += [
+        "| arm | citations | valid | fabricated | outside bundle | inaccessible | cannot govern | wrong version |"
+        " precision | recall | uncited claims | entailment (yes/no/unlabelled) |",
+        "|---|---|---|---|---|---|---|---|---|---|---|---|",
+    ]
+    for s in summaries:
+        c = s.citations
+        lines.append(
+            f"| {s.arm} | {c.citations} | {c.valid} | {c.fabricated} | {c.outside_bundle} | {c.inaccessible}"
+            f" | {c.unauthoritative} | {c.inapplicable} | {_num(c.precision)}"
+            f" | {_ratio(c.recall, c.supported_claims, c.source_requiring_claims)} | {c.uncited_claims}"
+            f" | {c.entailed}/{c.not_entailed}/{c.unlabelled} |"
+        )
+    lines += ["", "## Policy and time", ""]
+    lines += [
+        "| arm | version accuracy | wrong vintage | future leaks | basis accuracy | outcome accuracy |"
+        " missing-input recall | wrong-vintage directives | override successes |",
+        "|---|---|---|---|---|---|---|---|---|",
+    ]
+    for s in summaries:
+        p = s.policy
+        lines.append(
+            f"| {s.arm} | {_of(p.version_accuracy, p.versions_asked)} | {p.wrong_vintage} | {p.future_leaks}"
+            f" | {_of(p.basis_accuracy, p.basis_asked)} | {_of(p.outcome_accuracy, p.outcome_asked)}"
+            f" | {_of(p.missing_input_recall, p.missing_input_asked)} | {p.wrong_vintage_directives}"
+            f" | {p.override_successes} |"
+        )
+    lines += ["", "## Abstention and loss", ""]
+    lines += [
+        "| arm | false answers | false abstentions | selective coverage | selective risk | reason accuracy |"
+        " partial utility | expected loss per 100 |",
+        "|---|---|---|---|---|---|---|---|",
+    ]
+    for s in summaries:
+        a = s.abstention
+        loss = "n/a" if s.loss_per_100 is None else f"{s.loss_per_100:.1f}"
+        lines.append(
+            f"| {s.arm} | {_ratio(a.false_answer_rate, a.false_answers, a.needs_qualified)}"
+            f" | {_ratio(a.false_abstention_rate, a.false_abstentions, a.answerable)}"
+            f" | {_num(a.selective_coverage)}"
+            f" | {_of(a.selective_risk, a.accepted)} | {_num(a.reason_accuracy)}"
+            f" | {_num(a.partial_utility)} | {loss} |"
+        )
+    lines += ["", "Event counts per arm:", ""]
+    lines += [f"- {s.arm}: {dict(s.abstention.events)}" for s in summaries]
+    verdict = "CONDITIONAL on the weights" if sweep.conditional else "stable under the sweep"
+    lines += ["", f"## Loss weight sweep: the best arm is {sweep.base_winner or 'undecided'} and is {verdict}", ""]
+    arms = [s.arm for s in summaries]
+    lines += ["| setting | winner | " + " | ".join(arms) + " |", "|---|---|" + "---|" * len(arms)]
+    for row in sweep.rows:
+        cells = ["n/a" if row.losses.get(a) is None else f"{row.losses[a]:.1f}" for a in arms]
+        lines.append(f"| {row.label} | {row.winner or 'tie'} | " + " | ".join(cells) + " |")
     return "\n".join(lines) + "\n"

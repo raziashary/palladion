@@ -20,6 +20,10 @@ metric_groups:
   provenance: [valid_source_recall, wrong_vintage_intrusion, forbidden_source_exposure, authority_confusion, exception_recall, conflicting_pair_recall, citation_locator_resolution]
   efficiency: [evidence_density, evidence_token_efficiency]
   answer: [unsupported_directive_rate, correct_substantive_coverage, citation_validity, false_answer_rate, false_abstention_rate, selective_risk]
+  citation: [citation_precision, citation_recall, citation_granularity, citation_diversity, citation_fabrication_rate, citation_set_complete]
+  claims: [claim_correctness, claim_completeness, self_contradiction_rate, action_correctness, answer_usefulness]
+  policy: [version_selection_accuracy, basis_accuracy, retroactivity_accuracy, future_policy_leakage, wrong_vintage_action_rate, exact_outcome_accuracy, missing_input_recall, override_success]
+  abstention: [selective_coverage, reason_accuracy, partial_utility, expected_weighted_loss_per_100]
   operations: [latency_p50, latency_p90, latency_p95, latency_p99, cost_per_query, indexing_cost]
 
 statistics:
@@ -59,6 +63,9 @@ loss_matrix:                        # protocol 10.3 illustrative weights; sensit
   inapplicable_sop_interpretation: 5.0
   unauthorized_disclosure: 20.0
   unsupported_operational_directive: 25.0
+
+loss_sweep:                         # BADR-0028 item 7: each weight, then the severe group, scaled by each factor
+  scales: [0.5, 2.0]
 
 provisional_gates:
   cross_tenant_leakage: "0 observed in the locked test plus the dedicated security suite, reported with its upper bound"

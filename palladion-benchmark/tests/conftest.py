@@ -11,6 +11,7 @@ import pytest
 
 from benchmark.config import FixturesConfig, load_fixtures_config
 from benchmark.eval.normalize import PublishedCorpus
+from benchmark.fixtures.answer_gold import AnswerGold, derive_all, write_answer_gold
 from benchmark.fixtures.artifacts import build_corpus, plan_from_config
 from benchmark.fixtures.documents import Document
 from benchmark.fixtures.knowledge import DocumentState
@@ -50,6 +51,17 @@ def s_questions(s_world: World, s_corpus: tuple[Document, ...], s_snapshot: str)
 
 
 @pytest.fixture(scope="session")
+def s_golds(s_questions: tuple[GoldRecord, ...]) -> tuple[AnswerGold, ...]:
+    return derive_all(s_questions)
+
+
+@pytest.fixture(scope="session")
+def s_roles(s_world: World) -> dict[str, str]:
+    """Principal id to role id, the way the scorers receive it."""
+    return {p.principal_id: p.role_id for p in s_world.entities.principals}
+
+
+@pytest.fixture(scope="session")
 def s_published(tmp_path_factory: pytest.TempPathFactory, s_world: World, s_corpus: tuple[Document, ...]) -> Path:
     """The S-tier published namespace written once to disk, the way a scorer finds it."""
     root = tmp_path_factory.mktemp("published") / "S"
@@ -58,10 +70,11 @@ def s_published(tmp_path_factory: pytest.TempPathFactory, s_world: World, s_corp
 
 
 @pytest.fixture(scope="session")
-def s_root(s_published: Path, s_questions: tuple[GoldRecord, ...]) -> Path:
-    """The snapshot root of the S-tier fixture with the smoke annotation file written, as a runner finds it."""
+def s_root(s_published: Path, s_questions: tuple[GoldRecord, ...], s_golds: tuple[AnswerGold, ...]) -> Path:
+    """The snapshot root of the S-tier fixture with the smoke annotation and answer-gold files written."""
     root = s_published.parent
     write_annotations(root, Split.SMOKE, [q.to_dict() for q in s_questions])
+    write_answer_gold(root, Split.SMOKE, s_golds)
     return root
 
 

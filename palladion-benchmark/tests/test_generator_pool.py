@@ -595,3 +595,144 @@ def test_zero_limits_are_refused_not_crashed(
 ) -> None:
     code = generator.main(["--prove", "--enable-live", "--env-file", str(tmp_path / ".env"), *extra])
     assert code == 2 and "REFUSED" in capsys.readouterr().err
+
+
+# ------------------------------------------------------------- fault mapping, deadline, barrier (B05-T09.01)
+
+
+@pytest.mark.parametrize(
+    ("code", "expected"),
+    [
+        ("RATE_LIMITED", ("INVALID_RUN", "PROVIDER")),
+        ("MALFORMED_RESPONSE", ("INVALID_RUN", "PROVIDER")),
+        ("PROVIDER_HTTP_403", ("INVALID_RUN", "PROVIDER")),
+        ("GENERATION_DEADLINE", ("TIMEOUT", "PROVIDER")),
+        ("BUDGET_EXHAUSTED", ("NOT_RUN", "HARNESS")),
+        ("DISABLED", ("NOT_RUN", "HARNESS")),
+        ("NO_CREDENTIAL", ("NOT_RUN", "HARNESS")),
+        ("ASSIGNMENT_MISSING", ("NOT_RUN", "HARNESS")),
+        ("REQUEST_TOO_LARGE", ("INVALID_RUN", "HARNESS")),
+        ("MODEL_NOT_APPROVED", ("INVALID_RUN", "ARM")),
+    ],
+)
+def test_each_generation_failure_is_classified_by_who_caused_it(code: str, expected: tuple[str, str]) -> None:
+    from benchmark.contracts import classify_exception
+
+    status, origin, label = classify_exception(GenerationError(code))
+    assert (status.value, origin.value) == expected and label in (code, "CONTRACT_VIOLATION")
+
+
+def test_a_rate_limit_after_retries_is_a_provider_fault_not_an_arm_contract_violation() -> None:
+    from benchmark.contracts import classify_exception
+
+    instance, _ = pool([limited("1")] * 3)
+    with pytest.raises(GenerationError) as caught:
+        instance.complete(Q1, MESSAGES)
+    status, origin, label = classify_exception(caught.value)
+    assert (status.value, origin.value, label) == ("INVALID_RUN", "PROVIDER", "RATE_LIMITED")
+
+
+def test_a_call_that_cannot_finish_before_its_deadline_is_never_dispatched() -> None:
+    instance, transport = pool([ok(QWEN)])
+    with pytest.raises(GenerationError) as caught:
+        instance.complete(Q1, MESSAGES, deadline=1.0)  # the clock starts near 0 and a call needs 60 s
+    assert caught.value.code == "GENERATION_DEADLINE" and transport.payloads == [] and instance.records == ()
+
+
+def test_a_wait_that_would_overrun_the_deadline_is_not_slept() -> None:
+    sleeps: list[float] = []
+    instance, transport = pool([limited("5"), ok(QWEN)], sleeps=sleeps)
+    with pytest.raises(GenerationError) as caught:
+        instance.complete(Q1, MESSAGES, deadline=64.0)  # 5 s wait + 60 s call does not fit after the first attempt
+    assert caught.value.code == "RATE_LIMITED" and sleeps == [] and len(transport.payloads) == 1
+    again, _ = pool([limited("5"), ok(QWEN)], sleeps=sleeps)
+    again.complete(Q1, MESSAGES, deadline=500.0)
+    assert sleeps == [5.0]
+
+
+def test_an_abandoned_call_dispatches_nothing_and_writes_no_record(tmp_path: Path) -> None:
+    cancel = threading.Event()
+    cancel.set()
+    path = tmp_path / "records.jsonl"
+    instance, transport = pool([ok(QWEN)], record_path=path)
+    with pytest.raises(GenerationError) as caught:
+        instance.complete(Q1, MESSAGES, cancel=cancel)
+    assert caught.value.code == "GENERATION_DEADLINE" and transport.payloads == [] and not path.exists()
+
+
+def test_a_call_abandoned_while_in_flight_leaves_no_record_and_no_retry(tmp_path: Path) -> None:
+    cancel = threading.Event()
+
+    class AbandonedMidCall(FakeTransport):
+        def post(self, payload: Any) -> TransportResponse:
+            cancel.set()  # the caller gave up while the request was out
+            return super().post(payload)
+
+    path = tmp_path / "records.jsonl"
+    transport = AbandonedMidCall([limited("1"), ok(QWEN)])
+    instance = GeneratorPool(
+        SETTINGS, transport, enabled=True, assignment={Q1: QWEN}, call_budget=5, record_path=path,
+        sleep=lambda _s: None, monotonic=Clock(), wall_clock=lambda: datetime(2026, 10, 18, 3, 0, tzinfo=UTC),
+    )  # fmt: skip
+    with pytest.raises(GenerationError) as caught:
+        instance.complete(Q1, MESSAGES, cancel=cancel)
+    assert caught.value.code == "GENERATION_DEADLINE"
+    assert len(transport.payloads) == 1 and instance.records == () and not path.exists()
+
+
+@pytest.mark.parametrize(
+    "text", ["the expected answer is 168", "gold says so", "required evidence: POL-1", "answerability: x"]
+)
+def test_a_prompt_carrying_a_gold_marker_is_refused_before_any_request(text: str) -> None:
+    instance, transport = pool([ok(QWEN)])
+    with pytest.raises(ContractError):
+        instance.complete(Q1, [{"role": "user", "content": text}])
+    assert transport.payloads == [] and instance.records == ()
+
+
+def test_the_full_prompt_of_each_call_is_kept_once_even_when_the_call_retries(tmp_path: Path) -> None:
+    path = tmp_path / "prompts.jsonl"
+    transport = FakeTransport([limited("1"), ok(QWEN)])
+    instance = GeneratorPool(
+        SETTINGS, transport, enabled=True, assignment={Q1: QWEN}, call_budget=5, prompt_path=path,
+        sleep=lambda _s: None, monotonic=Clock(), wall_clock=lambda: datetime(2026, 10, 18, 3, 0, tzinfo=UTC),
+    )  # fmt: skip
+    result = instance.complete(Q1, MESSAGES, arm_id="R2")
+    entries = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
+    assert len(entries) == 1 and entries[0]["messages"] == MESSAGES and entries[0]["arm_id"] == "R2"
+    assert entries[0]["prompt_sha256"] == result.record.prompt_sha256
+
+
+def test_a_model_response_that_is_too_large_is_a_provider_fault() -> None:
+    from benchmark.contracts import classify_exception
+
+    status, origin, label = classify_exception(GenerationError("MODEL_RESPONSE_TOO_LARGE"))
+    assert (status.value, origin.value, label) == ("INVALID_RUN", "PROVIDER", "MODEL_RESPONSE_TOO_LARGE")
+
+
+def test_a_call_refused_before_dispatch_leaves_no_prompt_behind(tmp_path: Path) -> None:
+    path = tmp_path / "prompts.jsonl"
+    transport = FakeTransport([ok(QWEN)])
+    instance = GeneratorPool(
+        SETTINGS, transport, enabled=True, assignment={Q1: QWEN}, call_budget=5, prompt_path=path,
+        sleep=lambda _s: None, monotonic=Clock(), wall_clock=lambda: datetime(2026, 10, 18, 3, 0, tzinfo=UTC),
+    )  # fmt: skip
+    with pytest.raises(GenerationError):
+        instance.complete(Q1, MESSAGES, deadline=1.0)
+    assert not path.exists(), "a call refused for time keeps no prompt"
+    spent = GeneratorPool(
+        SETTINGS, FakeTransport([ok(QWEN), ok(QWEN)]), enabled=True, assignment={Q1: QWEN}, call_budget=1,
+        prompt_path=path, sleep=lambda _s: None, monotonic=Clock(),
+        wall_clock=lambda: datetime(2026, 10, 18, 3, 0, tzinfo=UTC),
+    )  # fmt: skip
+    spent.complete(Q1, MESSAGES)
+    with pytest.raises(GenerationError, match="BUDGET_EXHAUSTED"):
+        spent.complete(Q1, MESSAGES)
+    assert len(path.read_text(encoding="utf-8").splitlines()) == 1, "only a call that is really made keeps its prompt"
+
+
+def test_record_ids_do_not_repeat_when_the_same_question_is_asked_twice() -> None:
+    instance, _ = pool([ok(QWEN), ok(QWEN)])
+    first = instance.complete(Q1, MESSAGES).record.record_id
+    second = instance.complete(Q1, MESSAGES).record.record_id
+    assert first != second and first.startswith(f"{Q1}:{QWEN}:1:")

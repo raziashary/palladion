@@ -32,6 +32,12 @@ Accepted: BADR-0001 to BADR-0025 (all; BADR-0018 to BADR-0023 are the B02 decisi
 - The live generator proof (3 calls, 3 of 3 approved models answered) is the only provider use so far; the key lives in the gitignored `palladion-benchmark/.env` and has never been printed.
 - Free-tier limits seen: 8,000 tokens per minute on each approved model. Pre-assignment budgets stay null until daily limits are stated (BADR-0015).
 
+## What exists in code (B05)
+
+- `benchmark/fixtures/answer_gold.py` (evaluator-only answer targets in `answers_<split>.jsonl`, own digest, bound to the question file by digest); optional `Claim.kind/params` and `CaseResponse.action/policy_outcome/version_ids/from_payload`; `benchmark/generator.py` (fault classification, `deadline`, `cancel`, prompt screen and record, `screen_prompts=False` only for the evaluator-side label audit); `benchmark/eval/{answer_case,citations,claims,policy,abstention,score_answers,judge_audit}.py`; `benchmark/track_b.py`, `scripts/run_track_b.py`, `scripts/score_track_b.py`; the Track B branch of `results_check.py`; `render_answer_scorecard` in `analysis/tables.py`; `docs/scoring_rubric.md`, `docs/annotation_guide.md`.
+- Key facts: Track B reuses the Runner (a retriever plus the shared generator is a system arm); the prompt, schema, budget and gate are identical for every arm; what the generator was shown is read from `prompts.jsonl`; labels are keyed by question, arm, claim and citation; a judge label never stands over a human or deterministic one; no provider call has been made (the stand-in is `ExtractiveStubTransport`); the Track B split list is smoke only until dev gold exists.
+- Evidence: E-B05-001 to E-B05-004. Open: B05-T06.01 needs the owner's authorization for live use.
+
 ## What exists in code (B04)
 
 - `benchmark/adapters/`: `common.py` (published-namespace view, chunker, whitespace-word counts, neutral ACL filter C1/C2, budget enforcer, harness-attributed candidates, ledger flags), `models.py` (pinned model fetch and verify), `bm25.py` (R0), `dense.py` (R1, Qdrant HNSW, recorded ANN recall), `hybrid.py` (R2 fusion, R3 rerank), `palladion.py` (R7a over HTTP only). `benchmark/track_a.py` builds the local arms and runs Track A through the real Runner; `benchmark/results_check.py` validates a run directory. Scripts: `qdrant_server.py` (checksum-pinned, WSL, port 17333), `palladion_runtime.py` (detached worktree at 6444345, own root, collection and port 18081), `build_indices.py`, `run_track_a.py`, `score_track_a.py`, `validate_results.py`.

@@ -41,7 +41,7 @@ flowchart LR
 | Analysis | `benchmark/analysis/tables.py` (B03, built); `plots.py`, `reports.py` (B08) |
 | Scripts | `generate_data.py` (B02), `qdrant_server.py`, `palladion_runtime.py`, `build_indices.py`, `run_track_a.py`, `score_track_a.py`, `validate_results.py` (B04, built); `benchmark/track_a.py` and `benchmark/results_check.py` hold their logic; `run_track_b.py` (B05), `run_track_c.py` (B07) |
 | Tests | the eight protocol test files plus `test_generator_pool.py`, owned by the same cards as their modules |
-| Docs | `scoring_rubric.md`, `annotation_guide.md` (B05); `reproducibility.md` (B01, final B08); `dataset_card.md` (B02) |
+| Docs | `scoring_rubric.md`, `annotation_guide.md` (B05, built); `reproducibility.md` (B01, final B08); `dataset_card.md` (B02) |
 
 Generated data stays outside git under `artifacts/` (corpora, fixtures with evaluator-only gold, runs, reports), referred to by manifest IDs.
 

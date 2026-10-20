@@ -472,8 +472,8 @@ class Runner:
         )
         if check.violations:  # flagged, never clamped: the reported counts stay as reported
             payload["budget_check"] = {"verified": False, "violations": [v.to_dict() for v in check.violations]}
-            return payload, ("BUDGET_VIOLATION_UNVERIFIED",)
-        return payload, ()
+            return payload, ("BUDGET_VIOLATION_UNVERIFIED", *_arm_flags(adapter))
+        return payload, _arm_flags(adapter)
 
     def _attempt(self, binding: ArmBinding, case: RunnerCase) -> _Outcome:
         holder = _Holder()

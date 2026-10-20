@@ -7,8 +7,10 @@ import math
 import re
 from collections.abc import Sequence
 
-from benchmark.contracts import EvidenceCandidate
+from benchmark.contracts import CaseResponse, Claim, EvidenceCandidate, RunStatus
+from benchmark.eval.answer_case import AnswerCase
 from benchmark.eval.normalize import PublishedCorpus
+from benchmark.fixtures.answer_gold import AnswerGold
 from benchmark.fixtures.questions import LIVE_PREFIX, Citation, GoldRecord, SlotState
 
 
@@ -66,3 +68,58 @@ class HashingEncoder:
 
     def embed_query(self, text: str) -> list[float]:
         return self._vector(text)
+
+
+# --------------------------------------------------------------------------- answers (B05)
+
+
+def citation_text(citation: Citation) -> str:
+    return citation.doc_id if citation.clause_id == "doc" else f"{citation.doc_id}#{citation.clause_id}"
+
+
+def gold_delivered(record: GoldRecord) -> frozenset[tuple[str, str]]:
+    """Every unit the gold names, plus each document's whole-document unit: what a perfect retriever delivers."""
+    return frozenset(
+        {c.key for c in record.citation_gold_spans} | {(c.doc_id, "doc") for c in record.citation_gold_spans}
+    )
+
+
+def perfect_response(record: GoldRecord, gold: AnswerGold, **overrides: object) -> CaseResponse:
+    """The answer the gold asks for: its claims, citing the gold spans, its action, outcome and versions."""
+    cites = tuple(citation_text(c) for c in record.citation_gold_spans if not c.doc_id.startswith(LIVE_PREFIX))
+    claims = tuple(
+        Claim(f"c{i}", f"{u.kind.value} {dict(u.params)}", cites, kind=u.kind.value, params=dict(u.params))
+        for i, u in enumerate(gold.units, start=1)
+    )
+    fields: dict[str, object] = {
+        "question_id": record.question_id,
+        "run_id": "run-test",
+        "answer_text": "see claims",
+        "evidence_status": record.allowed_statuses[0],
+        "claims": claims,
+        "used_evidence_ids": cites,
+        "tool_calls": (),
+        "critic": None,
+        "model_invocations": None,
+        "latency_ms": None,
+        "cost_usd": None,
+        "abstention_reason": record.missing_reasons[0] if record.missing_reasons else None,
+        "action": gold.action.value,
+        "policy_outcome": gold.policy_outcome,
+        "version_ids": gold.version_ids,
+    }
+    return CaseResponse(**{**fields, **overrides})  # type: ignore[arg-type]
+
+
+def make_case(
+    record: GoldRecord,
+    gold: AnswerGold,
+    response: CaseResponse | None,
+    *,
+    delivered: frozenset[tuple[str, str]] | None = None,
+    role_id: str = "support_l2",
+    status: RunStatus = RunStatus.OK,
+) -> AnswerCase:
+    return AnswerCase(
+        record, gold, status, response, gold_delivered(record) if delivered is None else delivered, role_id
+    )

@@ -32,10 +32,13 @@ import httpx
 from benchmark.config import APPROVED_MODELS, GeneratorSettings, load_benchmark_config
 from benchmark.contracts import (
     ContractError,
+    ErrorOrigin,
+    RunStatus,
     TransientInfrastructureError,
     require_ident,
     require_question_id,
     require_text,
+    screen_arm_visible,
 )
 from benchmark.runner import derived_rng
 from benchmark.tracing import BudgetExceededError, CallBudget
@@ -55,12 +58,37 @@ _SECONDS = re.compile(r"[0-9]{1,6}(?:\.[0-9]{1,3})?")
 _REQUEST_ID = re.compile(r"[A-Za-z0-9_-]{1,100}")
 
 
+# Where a generation failure belongs in the run ledger. A provider fault is the provider's, a refusal to start is the
+# harness's; neither is a contract violation by the arm. Codes not listed keep the default classification.
+_CLASSIFICATION: Mapping[str, tuple[RunStatus, ErrorOrigin]] = {
+    "RATE_LIMITED": (RunStatus.INVALID_RUN, ErrorOrigin.PROVIDER),
+    "MALFORMED_RESPONSE": (RunStatus.INVALID_RUN, ErrorOrigin.PROVIDER),
+    "GENERATION_DEADLINE": (RunStatus.TIMEOUT, ErrorOrigin.PROVIDER),
+    "BUDGET_EXHAUSTED": (RunStatus.NOT_RUN, ErrorOrigin.HARNESS),
+    "DISABLED": (RunStatus.NOT_RUN, ErrorOrigin.HARNESS),
+    "NO_CREDENTIAL": (RunStatus.NOT_RUN, ErrorOrigin.HARNESS),
+    "ASSIGNMENT_MISSING": (RunStatus.NOT_RUN, ErrorOrigin.HARNESS),
+    "REQUEST_TOO_LARGE": (RunStatus.INVALID_RUN, ErrorOrigin.HARNESS),
+    "MODEL_RESPONSE_TOO_LARGE": (RunStatus.INVALID_RUN, ErrorOrigin.PROVIDER),
+}
+
+
+def _classify(code: str) -> tuple[RunStatus, ErrorOrigin, str] | None:
+    if code.startswith("PROVIDER_HTTP_"):
+        return RunStatus.INVALID_RUN, ErrorOrigin.PROVIDER, code
+    found = _CLASSIFICATION.get(code)
+    return None if found is None else (found[0], found[1], code)
+
+
 class GenerationError(ContractError):
     """A generation call failed. ``code`` is a fixed label; provider prose is never kept."""
 
     def __init__(self, code: str) -> None:
         super().__init__(code)
         self.code = code
+        classification = _classify(code)
+        if classification is not None:
+            self.classification = classification
 
 
 class GenerationTransientError(TransientInfrastructureError):
@@ -292,6 +320,8 @@ class GeneratorPool:
         assignment: Mapping[str, str],
         call_budget: int,
         record_path: Path | None = None,
+        prompt_path: Path | None = None,
+        screen_prompts: bool = True,
         sleep: Callable[[float], None] = time.sleep,
         monotonic: Callable[[], float] = time.monotonic,
         wall_clock: Callable[[], datetime] | None = None,
@@ -309,6 +339,9 @@ class GeneratorPool:
         self._assignment = dict(assignment)
         self._budget = CallBudget({"generator": call_budget})
         self._record_path = record_path
+        self._prompt_path = prompt_path
+        self._screen_prompts = screen_prompts
+        self._calls = 0
         self._sleep, self._monotonic = sleep, monotonic
         self._wall_clock = wall_clock or (lambda: datetime.now(UTC))
         self._records: list[GenerationRecord] = []
@@ -325,12 +358,25 @@ class GeneratorPool:
         assignment: Mapping[str, str],
         call_budget: int,
         record_path: Path | None = None,
+        prompt_path: Path | None = None,
+        screen_prompts: bool = True,
     ) -> GeneratorPool:
         """Build a pool with the real transport. Refuses before touching the env file unless enabled."""
         key = read_api_key(env_file, enabled=enabled)
         transport = HttpxTransport(key, timeout_seconds=settings.request_timeout_seconds)
         return cls(settings, transport, enabled=enabled, assignment=assignment, call_budget=call_budget,
-                   record_path=record_path)  # fmt: skip
+                   record_path=record_path, prompt_path=prompt_path,
+                   screen_prompts=screen_prompts)  # fmt: skip
+
+    def _sequence(self) -> int:
+        """A running call number, so a retry by the runner does not repeat a record id."""
+        with self._lock:
+            self._calls += 1
+            return self._calls
+
+    def now(self) -> float:
+        """The pool's monotonic clock, the one ``deadline`` is measured on."""
+        return self._monotonic()
 
     @property
     def records(self) -> tuple[GenerationRecord, ...]:
@@ -356,7 +402,11 @@ class GeneratorPool:
         arm_id: str | None = None,
         json_output: bool = False,
         max_completion_tokens: int | None = None,
+        deadline: float | None = None,
+        cancel: threading.Event | None = None,
     ) -> GenerationResult:
+        """One generation. ``deadline`` is a point on the pool's monotonic clock by which the call must be finished;
+        ``cancel`` stops a call the caller has abandoned. Neither lets a late worker dispatch or record anything."""
         if not self.enabled or self._transport is None:
             raise GenerationError("DISABLED")
         question_id = require_question_id("question_id", question_id)
@@ -378,13 +428,18 @@ class GeneratorPool:
             payload = self._payload(model, prompt, cap, json_output)
             if len(json.dumps(payload, ensure_ascii=False).encode()) > MAX_REQUEST_BYTES:
                 raise GenerationError("REQUEST_TOO_LARGE")
+            self._check_time(deadline, cancel, needs=self.settings.request_timeout_seconds)
             try:
                 self._budget.charge("generator")
             except BudgetExceededError:
                 raise GenerationError("BUDGET_EXHAUSTED") from None
+            if attempt == 1:
+                self._keep_prompt(question_id, arm_id, prompt_sha, prompt)  # only a call that is really made
             outcome = self._dispatch(question_id, arm_id, model, attempt, payload, cap, json_output, prompt_sha,
                                      failover_from)  # fmt: skip
             record, text, error = outcome
+            if cancel is not None and cancel.is_set():  # abandoned while the call was in flight: write nothing
+                raise GenerationError("GENERATION_DEADLINE")
             self._remember(record)
             if error is None:
                 return GenerationResult(text, record)
@@ -395,6 +450,7 @@ class GeneratorPool:
                 wait is not None
                 and wait <= self.settings.rate_limit_max_wait_seconds
                 and waits < MAX_RATE_LIMIT_RETRIES
+                and self._fits(deadline, wait + self.settings.request_timeout_seconds)
             ):
                 waits += 1
                 self._sleep(wait)
@@ -408,20 +464,38 @@ class GeneratorPool:
                     continue
             raise error
 
+    def _fits(self, deadline: float | None, seconds: float) -> bool:
+        return deadline is None or self._monotonic() + seconds <= deadline
+
+    def _check_time(self, deadline: float | None, cancel: threading.Event | None, *, needs: float) -> None:
+        """Refuse to dispatch when the caller has given up or the call could not finish before its deadline."""
+        if (cancel is not None and cancel.is_set()) or not self._fits(deadline, needs):
+            raise GenerationError("GENERATION_DEADLINE")
+
+    def _keep_prompt(self, question_id: str, arm_id: str | None, digest: str, prompt: list[dict[str, str]]) -> None:
+        """The full prompt of each call, so a validator can scan what the generator was actually given."""
+        if self._prompt_path is None:
+            return
+        entry = {"question_id": question_id, "arm_id": arm_id, "prompt_sha256": digest, "messages": prompt}
+        with self._lock, self._prompt_path.open("a", encoding="utf-8", newline="\n") as handle:
+            handle.write(json.dumps(entry, sort_keys=True) + "\n")
+
     def _next_model(self, current: str) -> str | None:
         models = self.settings.models
         position = models.index(current)
         return models[position + 1] if position + 1 < len(models) else None
 
-    @staticmethod
-    def _validated(messages: Sequence[Mapping[str, str]]) -> list[dict[str, str]]:
+    def _validated(self, messages: Sequence[Mapping[str, str]]) -> list[dict[str, str]]:
         if not messages:
             raise ContractError("messages must not be empty")
         checked = []
         for message in messages:
             if set(message) != {"role", "content"} or message["role"] not in ROLES:
                 raise ContractError("each message needs exactly a valid role and content")
-            checked.append({"role": message["role"], "content": require_text("message content", message["content"])})
+            content = require_text("message content", message["content"])
+            if self._screen_prompts:
+                screen_arm_visible("message content", content)
+            checked.append({"role": message["role"], "content": content})
         return checked
 
     def _payload(self, model: str, prompt: list[dict[str, str]], cap: int, json_output: bool) -> dict[str, Any]:
@@ -463,7 +537,8 @@ class GeneratorPool:
             raised = GenerationTransientError("PROVIDER_UNAVAILABLE")
         latency_ms = (self._monotonic() - begin) * 1000.0
         base: dict[str, Any] = {
-            "record_id": f"{question_id}:{model}:{attempt}", "question_id": question_id, "arm_id": arm_id,
+            "record_id": f"{question_id}:{model}:{attempt}:{self._sequence()}",
+            "question_id": question_id, "arm_id": arm_id,
             "requested_model": model, "attempt": attempt, "started_at_utc": started, "latency_ms": latency_ms,
             "temperature": self.settings.temperature, "max_completion_tokens": cap,
             "reasoning_effort": self.settings.reasoning_effort[model],

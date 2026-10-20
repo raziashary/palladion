@@ -464,6 +464,7 @@ def _llm_command(root: Path, env_file: Path, seed: int) -> int:
             assignment=assignment_for(items, settings, seed),
             call_budget=allowed,
             record_path=folder / "llm_calls.jsonl",
+            screen_prompts=False,  # an evaluator-side pass: its prompt names the labels, which are gold-like words
         )
     except GenerationError as exc:
         print(f"REFUSED: {exc.code}", file=sys.stderr)

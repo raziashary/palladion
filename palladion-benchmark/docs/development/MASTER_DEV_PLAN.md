@@ -746,93 +746,93 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
 
 <a id="b05-t07-01"></a>
 
-- [ ] **B05-T07.01 — Answer-gold sidecar and structured answer contract**
+- [x] **B05-T07.01 — Answer-gold sidecar and structured answer contract**
   - **Files:** `palladion-benchmark/benchmark/fixtures/answer_gold.py`, `palladion-benchmark/benchmark/fixtures/manifest.py`, `palladion-benchmark/benchmark/contracts.py`, `palladion-benchmark/scripts/generate_data.py`, `palladion-benchmark/tests/test_answer_gold.py`.
   - **Depends:** B02-T04.01, B02-T07.01, B03-T01.01, BADR-0028.
   - **Change:** Derive from the hidden world an evaluator-only answer-gold file per split (own digest, in the annotation namespace; the question file and the label-audit digests are untouched): claim units with an id, a closed kind, required or forbidden and the evidence slot they rest on; a closed action; the policy outcome; the applicable version ids and the as-of basis. Add optional structured fields to CaseResponse (action, policy outcome, version ids, claim kinds) with defaults so every existing arm and test is unchanged, define the answer citation syntax (document@version#clause, mapped to the published clause or character locator) and the generator's JSON answer schema.
   - **Proof:** INTEGRATION; BG-GOLD, BG-SECURITY; every answerable question has a required claim unit and every question with a policy outcome has a closed outcome; the question file digest and the audit's gold digests do not change; the answer-gold is refused by the published-view reader and a planted copy in a run directory is rejected by the validator.
-  - **Evidence:** Not yet executed.
+  - **Evidence:** E-B05-002, E-B05-003; the answer-gold derives for all 100 questions, its digest binds the questions, the question file and audit digests are unchanged.
 
 <a id="b05-t09-01"></a>
 
-- [ ] **B05-T09.01 — Generator fault mapping, prompt barrier and cancellation**
+- [x] **B05-T09.01 — Generator fault mapping, prompt barrier and cancellation**
   - **Files:** `palladion-benchmark/benchmark/generator.py`, `palladion-benchmark/benchmark/contracts.py`, `palladion-benchmark/tests/test_generator_pool.py`, `palladion-benchmark/tests/test_runner.py`.
   - **Depends:** B01-T05.01, B01-T05.02, B01-T04.01, B05-T07.01, BADR-0028.
   - **Change:** Map each generator failure code to a run state and origin (rate limit after retries and provider HTTP faults: INVALID_RUN from the provider; budget exhausted and disabled: NOT_RUN from the harness) instead of an arm contract violation; keep the total rate-limit wait below the case deadline; check a cancel flag before every dispatch and every record write so a timed-out worker makes no further call and writes nothing; screen every prompt message with the arm-visible screen; keep the full prompt text of each call so the validator can scan it.
   - **Proof:** UNIT; BG-FAIR, BG-SECURITY; a stub transport that sleeps past the deadline is followed by no call and no record; a prompt carrying a gold-marked string is refused; each code maps to its state and origin.
-  - **Evidence:** Not yet executed.
+  - **Evidence:** E-B05-002, E-B05-003; faults are classified by who caused them, a refused call writes nothing, every prompt is screened and kept.
 
 <a id="b05-t01-01"></a>
 
-- [ ] **B05-T01.01 — Citation metrics**
+- [x] **B05-T01.01 — Citation metrics**
   - **Files:** `palladion-benchmark/benchmark/eval/citations.py`, `palladion-benchmark/tests/test_citations.py`.
   - **Depends:** B03-T01.01, B02-T04.01, B05-T07.01.
   - **Change:** Validity, accessibility, temporal applicability, completeness, granularity, diversity and fabrication, computed against the delivered evidence bundle and the published registry (a citation outside the bundle is a fabrication, and the answer's own status field is recorded, never trusted); an entailment hook that reads labels from the label store and counts unlabelled pairs; stability is NOT_RUN in B05 (it needs two index generations); precision and recall with visible denominators; granularity reported per arm because arms return different locator kinds.
   - **Proof:** UNIT; BG-METRIC; a fabricated locator is detected; a citation to a document that was not delivered is a fabrication; uncited false claims are counted separately; unlabelled entailment pairs are counted, not scored.
-  - **Evidence:** Not yet executed.
+  - **Evidence:** E-B05-002, E-B05-003; fabrication, bundle, access, authority, version, granularity and entailment counts with denominators.
 
 <a id="b05-t01-02"></a>
 
-- [ ] **B05-T01.02 — Claim-level scoring and unsupported-directive rate**
+- [x] **B05-T01.02 — Claim-level scoring and unsupported-directive rate**
   - **Files:** `palladion-benchmark/benchmark/eval/claims.py`, `palladion-benchmark/tests/test_claims.py`.
   - **Depends:** B05-T01.01, B05-T07.01.
   - **Change:** Score the answer's claim units against the answer-gold (closed kinds, required and forbidden): correctness at the as-of time, support, completeness, contradiction, action correctness and usefulness, all deterministic; compute the unsupported operational directive rate and correct substantive-answer coverage, the co-primary Track B endpoints, each both intention-to-treat (non-completion counts against coverage, and as unknown in a worst-case directive bound) and conditional on completion, with the zero-failure upper bound and the denominators stated; no judge is used for an action.
   - **Proof:** UNIT; BG-METRIC; a planted unsupported refund directive is counted and a correct supported answer is not; a timed-out pair lowers intention-to-treat coverage and widens the worst-case directive bound; coverage and directive rate are reported together.
-  - **Evidence:** Not yet executed.
+  - **Evidence:** E-B05-002, E-B05-003; both accountings of the two endpoints; a planted unsupported directive is counted.
 
 <a id="b05-t02-01"></a>
 
-- [ ] **B05-T02.01 — Temporal and policy scoring**
+- [x] **B05-T02.01 — Temporal and policy scoring**
   - **Files:** `palladion-benchmark/benchmark/eval/policy.py`, `palladion-benchmark/tests/test_policy.py`.
   - **Depends:** B05-T07.01, B02-T01.02.
   - **Change:** Version-selection accuracy, as-of completeness, retroactivity, future-policy leakage, wrong-vintage action rate, exact outcome accuracy, missing-input recall and override attempts, by comparing the answer's declared version ids and outcome with the stored answer-gold; the scorer never calls the generator's own resolver. The oracle-tool condition belongs to Track C (B07-T08.01) because Track B arms have no policy tool.
   - **Proof:** UNIT; BG-METRIC, BG-GOLD; every as-of basis is scored from the declared basis, not recency; a planted change to the resolver leaves the scores unchanged.
-  - **Evidence:** Not yet executed.
+  - **Evidence:** E-B05-002, E-B05-003; scored from the declared basis and the stored gold; the resolver is never called.
 
 <a id="b05-t03-01"></a>
 
-- [ ] **B05-T03.01 — Abstention, selective prediction and loss**
+- [x] **B05-T03.01 — Abstention, selective prediction and loss**
   - **Files:** `palladion-benchmark/benchmark/eval/abstention.py`, `palladion-benchmark/configs/evaluation.yaml`, `palladion-benchmark/tests/test_abstention.py`.
   - **Depends:** B03-T04.01, B05-T01.02, B05-T02.01, BADR-0028.
   - **Change:** False-answer and false-abstention rates, selective risk and coverage at the decision point, reason accuracy, partial utility and the weighted loss matrix with an event classifier and a fixed sweep grid (both in the ADR, before any measurement); AURC is not computed in B05 because no harness-observed confidence score is defined; the metric groups for citation, policy, abstention and track metrics are added to evaluation.yaml.
   - **Proof:** UNIT; BG-METRIC; an always-abstain system scores poorly on coverage and partial utility; the winner is reported as conditional when the sweep flips it; every metric of the cards sits in exactly one group.
-  - **Evidence:** Not yet executed.
+  - **Evidence:** E-B05-002, E-B05-003; false answer and abstention, selective figures, events and the weight sweep.
 
 <a id="b05-t04-01"></a>
 
-- [ ] **B05-T04.01 — Scoring rubric and annotation guide**
+- [x] **B05-T04.01 — Scoring rubric and annotation guide**
   - **Files:** `palladion-benchmark/docs/scoring_rubric.md`, `palladion-benchmark/docs/annotation_guide.md`.
   - **Depends:** B05-T01.01, B05-T02.01, B05-T03.01.
   - **Change:** Exact labeler rubrics with examples, the blinded fields (arm identity, generator model, judge output), a sampling seed, who labels and how many (the owner or the coordinator under delegation; agreement is never reported as human against human), adjudication and agreement procedures.
   - **Proof:** DOC; BG-GOLD; each metric has a rubric entry; a labeler who knows only the blinded packet can apply it to the pilot.
-  - **Evidence:** Not yet executed.
+  - **Evidence:** E-B05-002; scoring_rubric.md and annotation_guide.md cover every metric.
 
 <a id="b05-t04-02"></a>
 
-- [ ] **B05-T04.02 — Blinded labeling workflow and judge audit**
+- [x] **B05-T04.02 — Blinded labeling workflow and judge audit**
   - **Files:** `palladion-benchmark/benchmark/eval/judge_audit.py`, `palladion-benchmark/tests/test_judge_audit.py`.
   - **Depends:** B05-T04.01, B01-T05.01.
   - **Change:** A label store with fixed source precedence (deterministic, then human, then judge) that refuses a lower source overwriting a higher one; blinded sampling for human labels; an LLM judge as a secondary check with exposed prompts kept outside run directories, at least two judges with distinct model ids and family overlap disclosed (the approved pool has only two families), judge agreement against human labels reported with denominators before judge output counts; human-judge disagreement reporting. Judge calls need the owner's authorization; tests use injected transports.
   - **Proof:** UNIT; BG-METRIC; a judge write cannot replace a deterministic or human label; disagreement is reported with denominators; judge prompts never appear in a run directory.
-  - **Evidence:** Not yet executed.
+  - **Evidence:** E-B05-002, E-B05-003; precedence, blinded sampling, judges as injected callables; no live judge call.
 
 <a id="b05-t05-01"></a>
 
-- [ ] **B05-T05.01 — Track B runner**
+- [x] **B05-T05.01 — Track B runner**
   - **Files:** `palladion-benchmark/benchmark/track_b.py`, `palladion-benchmark/scripts/run_track_b.py`, `palladion-benchmark/tests/test_track_b.py`.
   - **Depends:** B04-T04.02, B05-T07.01, B05-T09.01, B01-T05.02.
   - **Change:** Compose a retriever arm and the shared generator into a system arm the Runner already dispatches: the same generator, prompt template, JSON answer schema, evidence budget (whitespace words) and runtime gate for every retriever (every cited or used id must come from the delivered bundle, truncation is flagged); condition C2 for all arms with C1 as a sensitivity run, one named R7a variant per run; per-call model recorded and a pair whose arms ran on different models flagged; questions that assign_models leaves unassigned are NOT_RUN for every arm; with null token budgets the pilot is single-model and says so; prompts and generation records are written to the run directory; a live call needs the explicit enable flag and the owner's authorization.
   - **Proof:** SMOKE; BG-TRACKB, BG-FAIR; a stub-transport run over R2, R3 and R7a-shaped arms completes for every question; a pair whose arms ran on different models is flagged; a gold-marked prompt is refused; no hidden gold at generation time; no live call is made without the flag.
-  - **Evidence:** Not yet executed.
+  - **Evidence:** E-B05-002, E-B05-003; one prompt, generator and gate for every arm through the real Runner; 261 of 261 on the real corpus with the offline stand-in.
 
 <a id="b05-t08-01"></a>
 
-- [ ] **B05-T08.01 — Track B scoring entry point and validator branch**
+- [x] **B05-T08.01 — Track B scoring entry point and validator branch**
   - **Files:** `palladion-benchmark/scripts/score_track_b.py`, `palladion-benchmark/benchmark/eval/score_answers.py`, `palladion-benchmark/benchmark/results_check.py`, `palladion-benchmark/benchmark/analysis/tables.py`, `palladion-benchmark/tests/test_score_answers.py`.
   - **Depends:** B05-T01.02, B05-T02.01, B05-T03.01, B05-T05.01, B03-T06.01, B04-T04.03.
   - **Change:** A scorer that reads a Track B run directory (answers, ledger, generation records, prompts, manifests), recomputes citation and status fields from the delivered bundle, applies the withdrawn-question list and writes a scorecard with intention-to-treat and conditional tables side by side; a controlled_qa branch of the validator that checks answer schema, per-call model records, budget counts, prompts for gold, and that every cited id was delivered.
-  - **Proof:** INTEGRATION; BG-TRACKB, BG-REPRO; a clean stub run passes and is scored; planted defects (gold in a prompt, a citation outside the bundle, a missing generation record, a dropped pair) are each rejected for their own reason.
-  - **Evidence:** Not yet executed.
+  - **Proof:** INTEGRATION; BG-TRACKB, BG-REPRO; a clean stub run passes and is scored; planted defects (gold in a prompt, a prompt marker, an over-budget prompt, delivered ids that differ from the prompt, a missing generation record, a model outside the pool, a dropped pair) are each rejected for their own reason; a citation outside the bundle is a valid run and is counted as a fabrication by the scorer.
+  - **Evidence:** E-B05-002, E-B05-003; clean runs pass and are scored; planted defects are each rejected.
 
 <a id="b05-t06-01"></a>
 

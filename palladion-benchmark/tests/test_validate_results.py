@@ -104,6 +104,20 @@ def test_a_gold_key_inside_a_candidates_metadata_is_rejected(clean_run: Path, s_
     assert "a JSON key names gold" in rules(validate_run(planted(clean_run, tmp_path, plant), root=s_root))
 
 
+def test_a_planted_answer_gold_key_is_rejected(clean_run: Path, s_root: Path, tmp_path: Path) -> None:
+    def plant(run: Path) -> None:
+        edit_json(run / "run_config.json", lambda data: data.update({"allowed_actions": ["ANSWER"]}))
+
+    assert "a JSON key names gold" in rules(validate_run(planted(clean_run, tmp_path, plant), root=s_root))
+
+    def plant_inputs(run: Path) -> None:
+        edit_json(run / "run_config.json", lambda data: data.update({"required_policy_inputs": ["amount"]}))
+
+    other = tmp_path / "second"
+    other.mkdir()
+    assert "a JSON key names gold" in rules(validate_run(planted(clean_run, other, plant_inputs), root=s_root))
+
+
 def test_a_recorded_read_of_the_locked_test_namespace_is_rejected(
     clean_run: Path, s_root: Path, tmp_path: Path
 ) -> None:

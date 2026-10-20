@@ -80,6 +80,17 @@ GOLD_KEYS = (
 )
 
 
+WITHDRAWN = Path(__file__).resolve().parents[1] / "configs" / "withdrawn_questions.json"
+
+
+def read_withdrawn(path: Path) -> dict[str, str]:
+    """Question ids the label audit found defective, with the reason (BADR-0026); empty when the file is absent."""
+    if not path.exists():
+        return {}
+    questions = json.loads(path.read_text(encoding="utf-8"))["questions"]
+    return {str(q): str(reason) for q, reason in questions.items()}
+
+
 class TrackAError(ValueError):
     """A Track A run was set up in a way the benchmark refuses. The message holds no secrets."""
 
