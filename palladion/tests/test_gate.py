@@ -119,6 +119,37 @@ def test_no_evidence_and_outage_are_distinct(p03):
     assert not result["inventory_attested"]
 
 
+@pytest.mark.parametrize("review_state", ["absent", "unavailable", "stale", "pass"])
+def test_complete_policy_requirement_requires_current_review(p03, monkeypatch, review_state):
+    from datetime import datetime, timezone
+
+    from evidence_agent.agent.critic import ReviewResult, evidence_digest
+    from evidence_agent.core.models import CriticReview, GateDisposition
+
+    from .test_policy_engine import engine, observations
+    p03.now = datetime.now(timezone.utc)
+    fixture = make_runtime(p03)
+    decision = engine(p03).evaluate(p03.reader, "case-42", "DEMO.REVERSAL.CHECK",
+        tuple(item.lookup_id for item in observations(p03)))
+    assert decision.status.value == "DETERMINED" and not decision.missing_fields
+    fixture.ledger.add(decision.audit_id)
+    draft = Draft(claims=(Claim(id="requirement", type="RULE_REQUIREMENT",
+        text="settlement is required", evidence_ids=(decision.audit_id,), field="settlement_state"),))
+    review = None
+    if review_state == "unavailable":
+        review = ReviewResult()
+    elif review_state in {"stale", "pass"}:
+        review = ReviewResult("PASS", CriticReview(review_id="review-complete", verdict="PASS",
+            proposed_disposition=GateDisposition.SUPPORTED),
+            evidence_digest(draft.model_dump(mode="json")),
+            evidence_digest(fixture.ledger.records) if review_state == "pass" else "stale")
+    result = release(draft, fixture.ledger, review=review)
+    assert len(result["verified_claims"]) == 1  # Known facts survive unavailable review.
+    assert "settlement_state" in result["verified_claims"][0]["text"]
+    assert result["disposition"] == ("SUPPORTED" if review_state == "pass" else "PARTIALLY_SUPPORTED")
+    assert ("mandatory_critic_review" in result["missing_requirements"]) == (review_state != "pass")
+
+
 def test_conflict_keeps_exact_invocation_and_candidate_sources_then_revalidates(p03):
     from evidence_agent.policy.engine import PolicyEngine
     from evidence_agent.policy.registry import PolicyRegistry, PolicySpec

@@ -37,3 +37,5 @@ Both phase reviewers directly read the full blueprint. No UI, real payment actio
 production certification or comparator superiority is implied. External comparator work
 is separately owned/deferred here; this task does not modify palladion-benchmark/.
 A further push to main requires explicit approval.
+
+P09 independent reaudit and approved benchmark handoff: [scope and findings](development/evidence/P09_AUDIT_AND_HANDOFF.md), [atomic plan](development/MASTER_DEV_PLAN.md#p09--post-completion-audit-and-benchmark-handoff). Historical pilot completion and new remediation evidence are distinct.

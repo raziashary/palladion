@@ -1,9 +1,9 @@
 # Testing gates
 
-Current checkpoint2026-10-20: P00–P08engineering work complete within the approved synthetic pilot boundary;98/98atomic cards and sole end-review resolution verified. P07 publishedf97471e; graph stays defaultoff. P08 outcomes are negative/inconclusive, semantic accuracy and unobserved candidate-stage metrics unknown. UI/enterprise writes/X01/benchmark-editor edits and a further main push remain excluded. Older dated snapshots are historical.
+Current checkpoint 2026-10-20: P09 audit and benchmark-handoff remediation ACTIVE. P00–P08 are historical completed pilot work (98 cards); independent reaudit identified and corrected gate/evaluation proof gaps; P09 remains active for PF03 performance acceptance. See evidence/P09_AUDIT_AND_HANDOFF.md and ADR-0087–0095; PF03 performance remains open after owner-rejected0091 closure; opaque IDs and opt-in5second audit reuse are approved and implemented. Benchmark implementation/editor work, UI and enterprise writes remain excluded; owner authorized a scoped verified main push.
 
 P01/P02 foundations and retrieval plus P03 policy/temporal/live domain checks are runnable. Real-server
-checks require explicit local-server enablement. P04–P06 agent/memory/critic consumers are verified; P07 graph and automatic-memory mechanisms have current evidence below, with phase audit pending. Full semantic research remains P08. Gate catalog rows
+checks require explicit local-server enablement. P04–P06 agent/memory/critic consumers are verified; P07 graph and automatic-memory mechanisms have current evidence below, with historical phase review complete. Confirmatory semantic research remains outside the completed P08 pilot. Gate catalog rows
 describe full obligations; current phase-local results never imply full runtime proof. Gate states
 and evidence are recorded in [PROGRESS](PROGRESS.md) and [EVIDENCE_LOG](EVIDENCE_LOG.md).
 Read source and test fixtures before running anything with stateful-resource access.
@@ -360,3 +360,31 @@ stopped and ports16333/16334/17687/18108 exclusivebindPASS. Sole end review and 
 checkpoint containing these records closes the engineering pilot; unadjudicated semantic
 and unobserved full-stage metrics stay outside any PASS claim. Other workloads kept
 running; production deadlines/query code stayed unchanged.
+
+## P09 owning verification obligations
+
+G-GATE: complete canonical requirement with absent/unavailable/stale critic qualifies;
+current PASS remains supported and known facts survive. G-RETRIEVAL/G-SOURCE: actual
+HTTP upload→approval aliases→historical/current search→same-cutoff citation→revocation;
+HTTP20/tool12 separation and whole-passage tokenizer budgets. More than100sources must
+not imply truncation; physical gap/hash/vector/outage/repeated-page bounds remain visible.
+G-SECURITY: admin issuer/tenant/current case membership and source ACL tested independently;
+provisioning cannot mint tokens/admins or restore revoked grants/membership.
+G-BUDGET/G-RESEARCH: whole-process-tree deadline, interrupted append/unknown attempt,
+valid-worker positive; copied consumed config/fixtures through actual readers and replay
+hash validation. Legacy config and constant inventory-field limitations stay explicit.
+G-E2E: T01 real lexical old-SOP candidate→canonical exclusion→trusted event-time policy→
+missing settlement→qualified gate, plus missing timestamp negative; T12 authenticated
+message consumer drops invented completeness canary and retains exact scoped quote.
+These are mechanical controls, not semantic completeness adjudication. No fresh provider
+result or semantic model claim is asserted by these checks. Historical real Groq receipts
+remain distinct; any future generative integration still requires its actual provider proof.
+
+
+ADR0095 cache controls: defaultfresh/no sidecar creation; explicitly enabled HTTP search
+and index-health reopen/readback; complete healthy audit-only publication, exact manifest/
+backend/principal scope separation, dual-clock expiry without age renewal, current source/
+case/approval/grant/generation checks, disclosed corruption window, failed-fresh invalidation,
+cachebusy/foreign/oversized fallback,32entry/1MiB storage bound and100000aggregate chunk
+bound. Experimental cache performance cannot close PF03 when overhead or expiry costs
+leave original acceptance unproven. P09-T02.07 remains OPEN; mechanism checks are separate.

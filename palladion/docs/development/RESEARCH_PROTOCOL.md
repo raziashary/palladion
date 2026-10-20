@@ -1,6 +1,6 @@
 # Research and later comparison protocol
 
-Current checkpoint2026-10-20: P00–P08engineering work complete within the approved synthetic pilot boundary;98/98atomic cards and sole end-review resolution verified. P07 publishedf97471e; graph stays defaultoff. P08 outcomes are negative/inconclusive, semantic accuracy and unobserved candidate-stage metrics unknown. UI/enterprise writes/X01/benchmark-editor edits and a further main push remain excluded. Older dated snapshots are historical.
+Current checkpoint 2026-10-20: P09 audit and benchmark-handoff remediation ACTIVE. P00–P08 are historical completed pilot work (98 cards); independent reaudit identified and corrected gate/evaluation proof gaps; P09 remains active for PF03 performance acceptance. See evidence/P09_AUDIT_AND_HANDOFF.md and ADR-0087–0095; PF03 performance remains open after owner-rejected0091 closure; opaque IDs and opt-in5second audit reuse are approved and implemented. Benchmark implementation/editor work, UI and enterprise writes remain excluded; owner authorized a scoped verified main push.
 
 Status: **P02 retrieval-only pilot recorded; P05 continuity and P06 critic pilots recorded with failures; no confirmatory answer-system experiment executed**. Governing source: blueprint “Research
 evaluation,” “Questions deliberately left to experiments,” “Prototype environment.”
@@ -428,3 +428,21 @@ Future code reports observed packet @4/packet-MRR with candidate metrics unavail
 This is a reporting defect correction, not a smaller acceptance target or a fresh
 candidate-quality result. A new separately frozen full-stage run is needed for claims
 about ranks5–20. Quote/citation/call/cost outcomes remain independently scoreable.
+
+## P09 reaudit corrections
+
+P08 raw artifacts remain immutable. Replay now discloses that legacy snapshots omit
+consumed adapters.yaml; future runs snapshot and consume bound configuration/fixture
+bytes. A local process-tree owner enforces future study lifecycle deadlines, retaining
+unfinished attempts and unknown usage. The old call-only check cannot establish a
+historical whole-run hardcap. inventory_attested=false is telemetry-contract evidence,
+not a semantic completeness-assertion metric; that semantic score stays unknown.
+New T01/T12 consumer tests establish only their mechanically specified scenarios.
+PF03 measurements compare actual physical batch versus single-source readback on the
+same canonical10/1000source snapshots. They do not measure LLM/encoder capacity or
+latency distributions, and the original small-multiple scaling target remains a named
+ADR0091 owner-rejected closure. ADR0095 explicitly opts into a5second physical-audit
+reuse window; record cold misses, expiry, mode, original verification timestamp and
+small-case overhead alongside warm hits. Paired HTTP measurements retain every observed
+miss/failure, with host contention and concurrent regression work disclosed. No retuning
+or held-out provider run occurs in this follow-up.

@@ -16,7 +16,9 @@ P08's engineering pilot is complete: isolated B0–B9/vector controls, bounded o
 planner/adaptive review, sqlite-vec derived memory and saved-output scoring are verified.
 Ordinary serving retains mandatory review, four read tools and canonical authorization.
 The owner-approved grid recorded 44 observations, including 16 row-level errors.
-All 24 declared integrity controls pass; the sole independent end review is resolved.
+The historical24mapped integrity checks passed; P09 reaudit found missing complete
+T01/T12 consumer scenarios and added them separately. Historical review receipts remain evidence,
+not a guarantee that subsequent audits find no defects.
 Failures, omissions, unknown semantic accuracy and unavailable higher-stage retrieval
 metrics remain explicit. See the [pilot report](docs/development/evidence/P08_RESULTS.md).
 
@@ -366,3 +368,68 @@ calls, and records cosine scores plus margin loss. Rules retain weight0.8 and ha
 boundaries cannot be overridden. Uncertain scores abstain. Defaults are frozen pilot
 settings, not trained or calibrated accuracy. Models still have only four read tools;
 procedural experience never becomes approved policy or executable instructions.
+
+## Search and administrative contracts
+
+`POST /search` accepts case_id, query, mode, limit (default12, maximum40), optional
+`as_of` and optional `token_budget`. The model's search tool remains capped12.
+`as_of` must include a timezone and selects document applicability only; it cannot
+supply trusted transaction time or restore revoked approval, membership or source ACL.
+Use the same cutoff with `GET /evidence/{chunk_id}?case_id=...&as_of=...` for historical
+original-byte readback. Defaults continue to select current applicable sources.
+
+`token_budget` keeps a ranked prefix of complete passages. It never truncates canonical
+text or changes spans/hashes. Response evidence_budget records requested/returned counts,
+used/limit tokens, separator and pinned retrieval-tokenizer identity. These counts are
+not Groq tokens or billing estimates. Without a budget, this tokenizer path is not loaded.
+Token-budget requests use local files only; provision the pinned cache through the
+explicit seed/probe setup first. A missing or malformed local tokenizer returns503.
+Approval automatically registers bounded family/revision/identifier aliases for HTTP
+uploads. The exact discovery lane reads at most100candidates plus a sentinel and
+reports EXACT_CANDIDATES_TRUNCATED when bounded; current ACLs filter before that cap.
+An unknown structured identifier still cannot silently return a near identifier.
+
+Physical coverage checks use batches of at most64generations, with full vector/hash/
+fingerprint reconciliation by default. They inspect up to10000authorized source
+rows; source_counts_complete=false explicitly marks a larger truncated scope. The adapter
+bounds each physical batch and the aggregate coverage result at100000points; canonical
+manifest loading also streams at most100000rows. Overflow yields explicit
+COVERAGE_POINT_LIMIT or CANONICAL_MANIFEST_UNAVAILABLE degradation. It rejects repeated
+pagination offsets. A
+healthy larger corpus is not degraded merely for exceeding100sources. Coverage remains
+linear work and does not attest an external source inventory.
+
+Current tenant admins with document:approve may use `POST /v1/admin/principals`,
+`POST /v1/admin/cases`, and `POST /v1/admin/cases/{case_id}/memberships`. Principals
+receive only the non-admin reader role and approved grants bounded by the issuer's.
+The submitted `principal_id` is a tenant-local subject key. Store the returned opaque
+canonical `principal_id` and use it for memberships, source ACLs and operator token
+mappings; the same key in another tenant yields a different canonical identity.
+Membership writes require current admin membership in the case; current source ACLs
+remain independent. Repeated create requests never restore revoked access. These APIs
+create no tenants, admin roles or bearer tokens; opaque authentication mappings remain
+operator-provisioned. They are synthetic research administration, not enterprise IAM.
+
+`python scripts/evaluate.py --capabilities` inspects the supported isolated study arms
+without credentials, services or generation. Unsupported integrity-bypass ablations are
+explicitly FEATURE_NOT_SUPPORTED. Ordinary serving retains deterministic preflight,
+canonical authorization/time/parser boundaries and the final gate. Future study execution
+is owned by a cancellable process tree; partial attempts and unknown usage survive a
+whole-run deadline. Consumed config/fixture bytes are copied into and read from the bound
+run inputs. Legacy P08 configuration and completeness-metric limits are recorded in the
+[pilot report](docs/development/evidence/P08_RESULTS.md), without rewriting its raw run.
+
+
+Physical audit reuse is experimental and explicitly enabled per request with
+`reuse_physical_audit: true` on `POST /search`, or the same query parameter on
+`GET /index-health`. Default requests and the four domain tools remain fresh. Only a
+complete healthy physical audit may be reused, for at most five seconds from its
+original start; hits do not renew that age. Current principal/case/source ACL, approval,
+validity, generation and exact canonical manifests are rechecked on every request.
+Responses expose `physical_audit_mode`, `physical_verified_at` and
+`physical_cache_status`. A cached physical success can miss out-of-band index corruption
+within that disclosed window; a failed fresh audit attempts to invalidate prior cached
+successes. The bounded derived sidecar stores only keys/timestamps (32 entries, 1 MiB),
+not evidence text. Cache errors fall back to fresh checks. Small workloads and cold
+misses may pay extra overhead; PF03 performance acceptance remains open pending the
+retained comparison. This status does not weaken citation or final-gate validation.

@@ -1,6 +1,6 @@
 # Project goal
 
-Current checkpoint2026-10-20: P00–P08engineering work complete within the approved synthetic pilot boundary;98/98atomic cards and sole end-review resolution verified. P07 publishedf97471e; graph stays defaultoff. P08 outcomes are negative/inconclusive, semantic accuracy and unobserved candidate-stage metrics unknown. UI/enterprise writes/X01/benchmark-editor edits and a further main push remain excluded. Older dated snapshots are historical.
+Current checkpoint 2026-10-20: P09 audit and benchmark-handoff remediation ACTIVE. P00–P08 are historical completed pilot work (98 cards); independent reaudit identified and corrected gate/evaluation proof gaps; P09 remains active for PF03 performance acceptance. See evidence/P09_AUDIT_AND_HANDOFF.md and ADR-0087–0095; PF03 performance remains open after owner-rejected0091 closure; opaque IDs and opt-in5second audit reuse are approved and implemented. Benchmark implementation/editor work, UI and enterprise writes remain excluded; owner authorized a scoped verified main push.
 
 As of2026-10-20 (Asia/Bangkok). Owner: user; coordinator maintains evidence.
 
@@ -96,3 +96,17 @@ ADR0054 strengthens pre/post critic discovery attribution and safe attempt diagn
 ## P07 owner-added automatic memory outcome
 
 O09: backend event persistence automatically produces bounded, attributable memory decisions. PathA deterministic rules is primary; local cosine/loss PathB is fallback/additional evidence with lower influence and cannot override eligibility/ACL/authority. Explicit user preferences persist USER-wide across sessions, with original case/source permissions retained. Procedural tool/workflow experience is unapproved context; remaining chunks are session-local episodic. Explicit backend session start/end and compatible old message clients are implemented. P07-T04.01–05 are verified, including sole end-review resolution. E-P07-002 records v6 preservation/backup/rollback, idempotent chunk links, writer→reopened reader, session/user/revocation negatives, the bounded category/cost/abstention pilot and actual Groq next-turn consumption. No new LLM classifier/tool or organization policy promotion. Semantic accuracy remains unadjudicated.
+
+## O10 — Post-completion audit and approved benchmark handoff
+
+Resolve the confirmed normative gate, study deadline/configuration and T01/T12 proof
+findings; implement approved PF01–PF06 with measured limitations. Proof lives in P09's
+atomic cards and E-P09 receipts. Current status ACTIVE; no broad quality/production
+claim follows. Owner permits a scoped verified main push and completion notes only in
+the benchmark handoff document; unrelated benchmark/editor work stays outside ownership.
+
+
+O10 mechanism checkpoint: PF01/02/04/05/06 consumers and confirmed audit defects have
+current source/installed proof. Explicit5second cache implementation does not close
+PF03: balanced observations show small-case overhead and expiry/cold costs. Owner's
+conditional leave-open direction is preserved in P09-T02.07; broader P09 stays ACTIVE.

@@ -116,7 +116,7 @@ These commands validate the documentation's structure and references, not system
 
 ## Verification and research limits
 
-The latest P02 suite passed 117 real-server-enabled tests, strict typing, lint, build and an
+The historical P02 checkpoint passed 117 real-server-enabled tests, strict typing, lint, build and an
 isolated installed-wheel HTTP smoke. The dependency/completion audit and its
 results are recorded in the [evidence log](palladion/docs/development/EVIDENCE_LOG.md).
 Tests without explicit real-server enablement skip integration cases.
@@ -125,4 +125,13 @@ The current pilot has eight synthetic queries over a tiny corpus and lacks indep
 adjudicated labels. English/Indonesian query coverage does not establish general multilingual
 quality. Retrieval metrics do not establish answer correctness, production readiness or
 superiority. External comparator implementations and full answer-system experiments remain
-future work. P01–P07 are complete within their recorded engineering boundaries. Check the progress record for current evidence and unresolved gates.
+future work. P00–P08 are complete within their recorded engineering-pilot boundaries; P09 audit remediation is ongoing and PF03 performance acceptance remains open. Check the progress record for current evidence and unresolved gates.
+
+The post-completion P09 reaudit and benchmark handoff follow-up is recorded in the
+[master plan](palladion/docs/development/MASTER_DEV_PLAN.md#p09--post-completion-audit-and-benchmark-handoff).
+It covers historical document search, approval-owned exact identifiers, batched physical
+coverage, optional HTTP evidence budgets and scoped synthetic administration. The
+[application guide](palladion/README.md#search-and-administrative-contracts) describes
+these contracts and their limits. P09 also closes a missing-review gate conjunction and
+corrects evaluation deadline/reproducibility/completeness claims; immutable pilot failures
+and unknown semantic metrics remain visible.

@@ -8,8 +8,18 @@ from pathlib import Path
 from typing import Iterator
 
 from fastapi import APIRouter, Header, HTTPException, Request
+from pydantic import AwareDatetime
 
-from evidence_agent.api.schemas import Approval, Message, MessageResponse, Search, Upload
+from evidence_agent.api.schemas import (
+    Approval,
+    CaseProvision,
+    MembershipProvision,
+    Message,
+    MessageResponse,
+    PrincipalProvision,
+    Search,
+    Upload,
+)
 from evidence_agent.core.errors import PermissionDenied, ResourceConflict
 from evidence_agent.core.models import Principal
 from evidence_agent.ingest.metadata import validate_supersession_scope, validate_upload_metadata
@@ -100,6 +110,46 @@ def upload(body: Upload, request: Request, authorization: str | None = Header(de
         return {"revision_id": revision, "state": "STORED"}
 
 
+@router.post("/v1/admin/principals")
+def provision_principal(body: PrincipalProvision, request: Request,
+                        authorization: str | None = Header(default=None)) -> object:
+    """Current tenant admin maps a tenant-local subject key to a non-admin profile.
+
+    The submitted principal_id is a local subject key; use the returned tenant-bound
+    opaque principal_id in memberships, source ACLs and operator token mappings.
+    No token is issued. Grants cannot exceed the issuer's. Conflicting creation returns409; repeats return
+    current access without restoring revoked grants. Opaque tokens remain operator-owned.
+    """
+    with services(request, authorization) as (registry, _, principal):
+        return registry.provision_principal(principal, body.principal_id, tuple(body.grants))
+
+
+@router.post("/v1/admin/cases")
+def provision_case(body: CaseProvision, request: Request,
+                   authorization: str | None = Header(default=None)) -> object:
+    """Current tenant admin creates a case and its own initial membership atomically.
+
+    Repeats require current case membership and never restore a revoked membership.
+    This does not create operational scope, policy, source access or credentials.
+    """
+    with services(request, authorization) as (registry, _, principal):
+        registry.provision_case(principal, body.case_id)
+        return {"case_id": body.case_id}
+
+
+@router.post("/v1/admin/cases/{case_id}/memberships")
+def provision_membership(case_id: str, body: MembershipProvision, request: Request,
+                         authorization: str | None = Header(default=None)) -> object:
+    """Current case-member tenant admin adds an existing same-tenant principal.
+
+    A revoked membership remains revoked on repeat (active=false); source ACLs and
+    grants remain independent. Models have no provisioning capability.
+    """
+    with services(request, authorization) as (registry, _, principal):
+        active = registry.provision_membership(principal, case_id, body.principal_id)
+        return {"case_id": case_id, "principal_id": body.principal_id, "active": active}
+
+
 @router.post("/sources/{revision_id}/approve")
 def approve(revision_id: str, request: Request,
             body: Approval | None = None,
@@ -132,6 +182,8 @@ def approve(revision_id: str, request: Request,
         graph = request.app.state.graph
         generation = IngestPipeline(catalog, request.app.state.index,
             graph.backend if graph is not None else None).index(principal, revision_id)
+        from evidence_agent.storage.exact import ExactIndex
+        ExactIndex(catalog).register_approved(principal, revision_id)
         return {"revision_id": revision_id, "generation": generation, "state": "READY"}
 
 
@@ -153,15 +205,23 @@ def search(body: Search, request: Request, authorization: str | None = Header(de
 
     Returns ranked canonical passages, coverage and degradation diagnostics. No LLM is
     invoked; ranking/no hits establish neither truth nor organization-wide absence.
+    Optional as_of selects document applicability, never trusted operational event
+    time; current ACL/approval/revocation still apply. Optional token_budget counts
+    whole returned passages with the disclosed retrieval tokenizer, not provider tokens.
+    Explicit reuse_physical_audit may reuse a healthy audit for at most5seconds from
+    its original start, with mode/time disclosed; current canonical checks still run.
     """
     with services(request, authorization) as (_, catalog, principal):
         return HybridSearch(catalog, request.app.state.index, request.app.state.ranker,
             request.app.state.graph).search(principal, body.case_id, body.query, mode=body.mode,
-            limit=body.limit,require_graph=body.require_graph or request.app.state.graph_required)
+            limit=body.limit, as_of=body.as_of, token_budget=body.token_budget,
+            reuse_physical_audit=body.reuse_physical_audit,
+            require_graph=body.require_graph or request.app.state.graph_required)
 
 
 @router.get("/evidence/{chunk_id}")
 def evidence(chunk_id: str, case_id: str, request: Request,
+             as_of: AwareDatetime | None = None,
              authorization: str | None = Header(default=None)) -> object:
     """Resolve a P02 document citation to exact approved immutable bytes and metadata.
 
@@ -169,20 +229,25 @@ def evidence(chunk_id: str, case_id: str, request: Request,
     cannot expose source text. Other evidence kinds use the versioned reader below.
     """
     with services(request, authorization) as (_, catalog, principal):
-        return HybridSearch(catalog, request.app.state.index).resolver.resolve(principal, case_id, chunk_id)
+        return HybridSearch(catalog, request.app.state.index).resolver.resolve(
+            principal, case_id, chunk_id, as_of=as_of)
 
 
 @router.get("/index-health")
 def index_health(case_id: str, request: Request,
+                 reuse_physical_audit: bool = False,
                  authorization: str | None = Header(default=None)) -> object:
     """Return supplied-source index coverage to an authorized current case reader.
 
     Coverage describes registered supplied material, not completeness of all real knowledge.
+    Default fresh; explicit reuse_physical_audit enables at most5second physical reuse
+    with timestamp/status disclosure, without reusing current canonical authorization.
     """
     from evidence_agent.retrieval.coverage import source_coverage
 
     with services(request, authorization) as (registry, _, principal):
-        return source_coverage(registry, principal, case_id, request.app.state.index)
+        return source_coverage(registry, principal, case_id, request.app.state.index,
+                               reuse_physical_audit=reuse_physical_audit)
 
 
 @router.post("/v1/cases/{case_id}/messages", response_model=MessageResponse)

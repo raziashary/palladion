@@ -33,6 +33,101 @@ TOKENS = {"test-admin-a": "admin-a", "test-upload-a": "uploader-a",
           "test-reader-b": "reader-b"}
 
 
+@pytest.mark.parametrize("trusted_time", [True, False])
+def test_p09_old_lexical_sop_cannot_outrank_event_time_policy_at_gate(runtime, trusted_time):
+    from evidence_agent.agent.draft import Claim, Draft
+    from evidence_agent.agent.gate import release
+    from evidence_agent.agent.tools import Tools
+    from evidence_agent.live.contracts import Snapshot
+    from evidence_agent.live.gateway import LiveGateway, load_config
+    from evidence_agent.live.mock import MockAdapter
+    from evidence_agent.memory.store import CaseStore
+    from evidence_agent.policy.bootstrap import seed_policy_fixture
+    from evidence_agent.retrieval.evidence import RequestLedger
+    from evidence_agent.retrieval.hybrid import HybridSearch
+    root, index, revisions = runtime
+    with Database(root/"registry.sqlite") as database:
+        registry = Registry(database, OriginalStore(root/"originals"))
+        seed_policy_fixture(registry, APP)
+        reader = registry.access.authenticate("reader-a")
+        catalog = Catalog(registry)
+        old_text = registry.read_source(reader,revisions["SOP-2025-A"]).decode()
+        query = old_text[old_text.index("For a QR_DEMO"):old_text.index("## 4.")].strip()
+        physical = index.query(query,reader,"case-42",mode="lexical",limit=40)
+        assert catalog.get_chunk(reader,physical[0].chunk_id).revision_id == revisions["SOP-2025-A"]
+        search = HybridSearch(catalog,index)
+        found = search.search(reader,"case-42",query,mode="lexical")
+        assert found.passages and all(p.revision_id != revisions["SOP-2025-A"] for p in found.passages)
+        config = load_config(APP/"config/adapters.yaml")
+        ledger = RequestLedger(search,reader,"case-42","p09-temporal",{k:v.max_age_seconds for k,v in config.operations.items()})
+        for passage in found.passages:
+            ledger.add(passage.citation_id)
+        data = {"transaction_id":"TX-DEMO-102", "state":"FAILED"}
+        if trusted_time:
+            data["transaction_occurred_at"] = "2026-08-15T10:20:00Z"
+        gateway = LiveGateway(registry,MockAdapter({("get_transaction_status","TX-DEMO-102"):
+            (Snapshot(status="OK",data=data),)}),config)
+        tools = Tools(ledger,gateway,CaseStore(registry,reader,"case-42"))
+        async def investigate():
+            observed = await tools.execute("lookup_live_data",json.dumps({"operation":"get_transaction_status","target_id":"TX-DEMO-102"}))
+            return await tools.execute("evaluate_policy",json.dumps({"family_id":"DEMO.REVERSAL.CHECK",
+                "evidence_ids":[observed["data"]["evidence_id"]]}))
+        decision = asyncio.run(investigate())["data"]
+        if trusted_time:
+            assert decision["status"] == "INCOMPLETE_INPUT"
+            canonical = ledger.read(decision["evidence_id"])
+            assert canonical["version_id"] == "demo-reversal-2026-b"
+            requirement = Claim(id="requirement",type="RULE_REQUIREMENT",text="settlement required",
+                field="settlement_state",evidence_ids=(decision["evidence_id"],))
+            result = release(Draft(claims=(requirement,)),ledger)
+            assert result["disposition"] == "PARTIALLY_SUPPORTED"
+            assert "settlement_state" in result["missing_requirements"]
+        else:
+            assert decision["status"] in {"INCOMPLETE_INPUT","UNVERIFIED_INPUT"}
+            assert ledger.read(decision["evidence_id"])["version_id"] is None
+            result = release(Draft(),ledger)
+            assert result["disposition"] != "SUPPORTED"
+        assert "reverse immediately" not in json.dumps(result).lower()
+
+
+def test_p09_withheld_appendix_completeness_canary_blocked_at_message_consumer(runtime):
+    from evidence_agent.agent.draft import Claim, Draft
+    from evidence_agent.agent.services import configure_agent
+    from evidence_agent.live.gateway import load_config
+    from evidence_agent.live.mock import MockAdapter
+    from evidence_agent.policy.bootstrap import seed_policy_fixture
+    from evidence_agent.settings import Settings
+
+    from .test_agent_budget import ScriptedModel
+    root,index,revisions = runtime
+    with Database(root/"registry.sqlite") as database:
+        registry = Registry(database,OriginalStore(root/"originals"))
+        seed_policy_fixture(registry, APP)
+        admin = registry.access.authenticate("admin-a")
+        registry.revoke_source(admin,revisions["EX-2026-04"])
+        chunk = Catalog(registry).chunks_for_revision(admin,revisions["SOP-2026-B"])[0]
+        quote = "Fictional training material."
+        assert quote in chunk.text
+    canary = "COMPLETENESS_CANARY all company exceptions were found."
+    draft = Draft(claims=(Claim(id="scoped",type="SOURCE_QUOTE",text=quote,evidence_ids=(chunk.chunk_id,)),
+        Claim(id="invented",type="SOURCE_QUOTE",text=canary,evidence_ids=(chunk.chunk_id,))))
+    model = ScriptedModel([{"tool_calls":[{"id":"search","type":"function","function":{
+        "name":"search_knowledge","arguments":json.dumps({"query":"SOP-2026-B","limit":2})}}]},
+        {"content":draft.model_dump_json()},{"content":draft.model_dump_json()}])
+    app = create_app(root,index,TOKENS)
+    configure_agent(app,model=model,adapter=MockAdapter({}),config=load_config(APP/"config/adapters.yaml"),settings=Settings())
+    with TestClient(app) as client:
+        response = client.post("/v1/cases/case-42/messages",headers=auth("test-reader-a"),
+            json={"query":"Have we found every applicable exception? Search SOP-2026-B first."})
+        assert response.status_code == 200,response.text
+        output = response.json()
+        assert output["disposition"] == "PARTIALLY_SUPPORTED"
+        assert canary not in response.text and "COMPLETENESS_CANARY" not in response.text
+        assert any(quote in c["text"] for c in output["verified_claims"])
+        assert output["inventory_attested"] is False
+        assert "not attested" in output["searched_scope"]
+
+
 @pytest.mark.skipif(os.environ.get("PALLADION_TEST_NEO4J")!="1",reason="Explicit actual graph integration")
 def test_actual_graph_tool_and_api_never_expose_restricted_appendix(runtime):
     from evidence_agent.agent.services import configure_agent

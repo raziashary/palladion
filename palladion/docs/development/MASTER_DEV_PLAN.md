@@ -1,6 +1,6 @@
 # Palladion master development plan
 
-Current checkpoint2026-10-20: P00–P08engineering work complete within the approved synthetic pilot boundary;98/98atomic cards and sole end-review resolution verified. P07 publishedf97471e; graph stays defaultoff. P08 outcomes are negative/inconclusive, semantic accuracy and unobserved candidate-stage metrics unknown. UI/enterprise writes/X01/benchmark-editor edits and a further main push remain excluded. Older dated snapshots are historical.
+Current checkpoint 2026-10-20: P09 audit and benchmark-handoff remediation ACTIVE. P00–P08 are historical completed pilot work (98 cards); independent reaudit identified and corrected gate/evaluation proof gaps; P09 remains active for PF03 performance acceptance. See evidence/P09_AUDIT_AND_HANDOFF.md and ADR-0087–0095; PF03 performance remains open after rejected0091 closure; opaque IDs and explicit5second audit reuse are approved and implemented. Benchmark implementation/editor work, UI and enterprise writes remain excluded; owner authorized a scoped verified main push.
 
 Version 13, 2026-10-20. Scope anchor: [blueprint v0.2](../vision/palladion-blueprint-v2.md),
 especially “Locked decisions,” “Build plan,” “System invariants,” and the full walkthrough.
@@ -1274,6 +1274,140 @@ order. Shared-file tasks are sequential. Each proof names the observation that c
   - **Depends:** P08-T03.03.
   - **Change:** Export pinned manifests, scored outputs/failures and redacted summary with artifact hashes; report null/adverse findings and prototype limits.
   - **Proof:** SMOKE; [G-RESEARCH](TESTING_GATES.md#g-research-task-coverage); independent reader reconstructs metrics/cost from retained artifacts; missing/failed runs visible, no unsupported production/superiority claim.
+
+## P09 — Post-completion audit and benchmark handoff
+
+Parent: accepted ADR-0087–0090 and ADR-0092–0095; ADR-0091 closure rejected, PF03 remains open. Preserve blueprint locked decisions and immutable raw research. Blueprint: Locked decisions, §3/§5/§6/§7/§9/§11/§14/§16/§17/§18.
+
+| Task | Bounded outcome | Exit |
+|---|---|---|
+| P09-T01 | Audit and gate correction | G-GATE, G-DOC |
+| P09-T02 | Approved retrieval handoff | G-RETRIEVAL, G-SOURCE |
+| P09-T03 | Provisioning and safe evaluator controls | G-SECURITY, G-RESEARCH |
+| P09-T04 | Deadline, reproducibility and proof corrections | G-BUDGET, G-RESEARCH, G-E2E |
+| P09-T05 | Verified consumer closeout | G-E2E, G-DOC |
+
+Pre-adversary receipt: evidence/P09_AUDIT_AND_HANDOFF.md. P09 parent exit requires every child proven, including original PF03 performance acceptance, and independent review resolved. A verified mechanism checkpoint/T05 may close after its own dependencies, tests, review and cleanup while P09/PF03/T02.07 remain OPEN. This does not close the parent exit or waive its target.
+
+<a id="p09-t01-01"></a>
+
+- [x] **P09-T01.01 — Record audit and approvals**
+  - **Files:** `palladion/docs/development/ADR_LOG.md`, `palladion/docs/development/evidence/P09_AUDIT_AND_HANDOFF.md`.
+  - **Depends:** P08-T04.01.
+  - **Change:** Record full-blueprint receipts, source-verified findings and owner contracts.
+  - **Proof:** UNIT; G-E2E, G-DOC; doc checker and source verification.
+
+<a id="p09-t01-02"></a>
+
+- [x] **P09-T01.02 — Close mandatory-review requirement bypass**
+  - **Files:** `palladion/src/evidence_agent/agent/gate.py`, `palladion/tests/test_gate.py`.
+  - **Depends:** P09-T01.01.
+  - **Change:** Retain known canonical facts but qualify requirements without current review.
+  - **Proof:** UNIT; G-E2E, G-DOC; complete policy absent/stale/unavailable review versus current PASS.
+
+<a id="p09-t02-01"></a>
+
+- [x] **P09-T02.01 — Expose document cutoff and citation readback**
+  - **Files:** `palladion/src/evidence_agent/api/schemas.py`, `palladion/src/evidence_agent/api/routes.py`, `palladion/src/evidence_agent/retrieval/hybrid.py`, `palladion/tests/test_retrieval.py`, `palladion/tests/test_handoff.py`.
+  - **Depends:** P09-T01.01.
+  - **Change:** Optional aware document as_of preserves current source ACL/approval/revocation.
+  - **Proof:** INTEGRATION; G-E2E, G-DOC; historical/current/naive/revocation HTTP and citation controls.
+
+<a id="p09-t02-02"></a>
+
+- [x] **P09-T02.02 — Register approval-owned identifiers**
+  - **Files:** `palladion/src/evidence_agent/storage/catalog.py`, `palladion/src/evidence_agent/storage/exact.py`, `palladion/src/evidence_agent/api/routes.py`, `palladion/tests/test_pipeline.py`, `palladion/tests/test_handoff.py`.
+  - **Depends:** P09-T01.01.
+  - **Change:** Bound family/revision/identifier aliases after approval without breaking uploader consumers.
+  - **Proof:** INTEGRATION; G-E2E, G-DOC; upload approve exact lookup and unknown-code negative.
+
+<a id="p09-t02-03"></a>
+
+- [x] **P09-T02.03 — Batch physical coverage**
+  - **Files:** `palladion/src/evidence_agent/core/retrieval.py`, `palladion/src/evidence_agent/storage/qdrant.py`, `palladion/src/evidence_agent/retrieval/coverage.py`, `palladion/tests/test_retrieval.py`, `palladion/tests/test_handoff.py`.
+  - **Depends:** P09-T02.01.
+  - **Change:** Bound batch readback and expose complete authorized counts/truncation without stale caching.
+  - **Proof:** INTEGRATION; G-E2E, G-DOC; more than100sources, physical drift/outage and measured backend work.
+
+<a id="p09-t02-05"></a>
+
+- [x] **P09-T02.05 — Remove repeated canonical coverage reads**
+  - **Files:** `palladion/src/evidence_agent/storage/catalog.py`, `palladion/src/evidence_agent/retrieval/coverage.py`, `palladion/tests/test_handoff.py`, `palladion/docs/development/ADR_LOG.md`, `palladion/docs/development/evidence/P09_AUDIT_AND_HANDOFF.md`.
+  - **Depends:** P09-T02.03.
+  - **Change:** Batch canonical manifests after physical reads, preserving current principal/case/source ACL and generation checks. Measure gzip and transport without changing defaults or adding caching/dependencies.
+  - **Proof:** INTEGRATION; G-SOURCE, G-RETRIEVAL; SQL count, physical drift and mid-read revocation controls; paired10/1000-source measurements. Original PF03 small-multiple target remains open if unmet; no inferred waiver.
+
+<a id="p09-t02-04"></a>
+
+- [x] **P09-T02.04 — Bound optional HTTP evidence budgets**
+  - **Files:** `palladion/src/evidence_agent/api/schemas.py`, `palladion/src/evidence_agent/api/routes.py`, `palladion/src/evidence_agent/retrieval/hybrid.py`, `palladion/src/evidence_agent/retrieval/embeddings.py`, `palladion/pyproject.toml`, `palladion/uv.lock`, `palladion/tests/test_retrieval.py`, `palladion/tests/test_handoff.py`.
+  - **Depends:** P09-T02.01.
+  - **Change:** HTTP default12/max40; tool12. Optional pinned-tokenizer whole-passage budget preserves spans.
+  - **Proof:** INTEGRATION; G-E2E, G-DOC; default/40/budget/tokenizer/span and dependency controls.
+
+<a id="p09-t02-06"></a>
+
+- [x] **P09-T02.06 — Implement approved explicit five-second physical audit cache**
+  - **Files:** `palladion/src/evidence_agent/retrieval/audit_cache.py`, `palladion/src/evidence_agent/retrieval/coverage.py`, `palladion/src/evidence_agent/retrieval/hybrid.py`, `palladion/src/evidence_agent/storage/qdrant.py`, `palladion/src/evidence_agent/api/schemas.py`, `palladion/src/evidence_agent/api/routes.py`, `palladion/tests/test_handoff.py`, `palladion/docs/development/ADR_LOG.md`.
+  - **Depends:** P09-T02.05.
+  - **Change:** Explicit opt-in only, strict default; bounded sidecar stores healthy physical-audit keys/timestamps for at most5seconds. Recheck current canonical authorization and manifests every request, disclose cache mode/time and detection window.
+  - **Proof:** INTEGRATION; G-SOURCE, G-SECURITY, G-RETRIEVAL; actual HTTP/reopen hit, expiry, revocation/generation/backend separation, corruption detection window, cache failure/bounds/concurrency and paired scale/latency controls. Keep PF03 open if benefit/target unproven.
+
+<a id="p09-t02-07"></a>
+
+- [ ] **P09-T02.07 — Resolve original PF03 performance acceptance**
+  - **Files:** `palladion/docs/development/evidence/P09_AUDIT_AND_HANDOFF.md`, `palladion/docs/development/EVIDENCE_LOG.md`, `palladion/docs/development/RISKS_AND_OPEN_QUESTIONS.md`.
+  - **Depends:** P09-T02.06.
+  - **Change:** Retain fresh/cold-miss/warm-hit10/1000-source HTTP and coverage observations; resolve the original small-multiple target without waiving integrity or hiding overhead/expiry.
+  - **Proof:** INTEGRATION; G-RETRIEVAL, G-RESEARCH; disclosed mode and healthy positive controls, repeated timings, misses/failures included. Owner directed leavePF03open if cache worsens work; a mechanism or isolated warm hit does not close this acceptance.
+
+<a id="p09-t03-01"></a>
+
+- [x] **P09-T03.01 — Add scoped admin provisioning**
+  - **Files:** `palladion/src/evidence_agent/storage/registry.py`, `palladion/src/evidence_agent/api/schemas.py`, `palladion/src/evidence_agent/api/routes.py`, `palladion/tests/test_api.py`.
+  - **Depends:** P09-T01.01.
+  - **Change:** Non-admin profiles, cases and memberships; no tokens/escalation/revocation restoration.
+  - **Proof:** INTEGRATION; G-E2E, G-DOC; reopen/readback and cross-tenant/stale/non-admin/overgrant/idempotence controls.
+
+<a id="p09-t03-02"></a>
+
+- [x] **P09-T03.02 — Expose safe evaluator capabilities**
+  - **Files:** `palladion/src/evidence_agent/agent/experiments.py`, `palladion/src/evidence_agent/evaluation/study.py`, `palladion/tests/test_evaluation.py`.
+  - **Depends:** P09-T01.01.
+  - **Change:** Disclose supported isolated controls, reject unsupported serving bypasses.
+  - **Proof:** UNIT; G-E2E, G-DOC; actual control consumers and default invariant regressions.
+
+<a id="p09-t04-01"></a>
+
+- [x] **P09-T04.01 — Enforce whole-study deadline**
+  - **Files:** `palladion/src/evidence_agent/evaluation/study.py`, `palladion/src/evidence_agent/evaluation/process_owner.py`, `palladion/scripts/evaluate.py`, `palladion/tests/test_evaluation.py`.
+  - **Depends:** P09-T01.01.
+  - **Change:** Cancellable local lifecycle bounds setup through scoring; retain partial attempts.
+  - **Proof:** INTEGRATION; G-E2E, G-DOC; blocked setup/final stage terminate and join with truthful accounting.
+
+<a id="p09-t04-02"></a>
+
+- [x] **P09-T04.02 — Bind config and correct legacy claims**
+  - **Files:** `palladion/src/evidence_agent/evaluation/study.py`, `palladion/src/evidence_agent/core/evaluation.py`, `palladion/tests/test_evaluation.py`, `palladion/docs/development/evidence/P08_RESULTS.md`.
+  - **Depends:** P09-T01.01.
+  - **Change:** Bind consumed config bytes; preserve frozen artifacts and withdraw constant-flag semantic inference.
+  - **Proof:** UNIT; G-E2E, G-DOC; tamper rejection and explicit legacy limitations.
+
+<a id="p09-t04-03"></a>
+
+- [x] **P09-T04.03 — Prove temporal and completeness consumers**
+  - **Files:** `palladion/tests/test_gate.py`, `palladion/tests/test_end_to_end.py`, `palladion/data/demo/p08_integrity_controls.json`.
+  - **Depends:** P09-T01.02.
+  - **Change:** Old lexical SOP versus current policy/missing settlement at final gate; invented completeness canary rejected, scoped facts retained.
+  - **Proof:** INTEGRATION; G-E2E, G-DOC; T01/T12 positive and negative controls.
+
+<a id="p09-t05-01"></a>
+
+- [x] **P09-T05.01 — Validate and resolve independent review**
+  - **Files:** `palladion/docs/development/EVIDENCE_LOG.md`, `palladion/docs/development/PROGRESS.md`, `palladion/docs/development/GOAL.md`, `palladion/docs/development/PROJECT_MEMORY.md`, `palladion/docs/development/PROJECT_MAP.md`, `palladion/docs/development/PROJECT_LEARNING.md`, `README.md`, `palladion/README.md`, `palladion/docs/README.md`, `AGENTS.md`, `palladion-benchmark/docs/development/PALLADION_FIXES.md`.
+  - **Depends:** P09-T02.02, P09-T02.03, P09-T02.04, P09-T02.05, P09-T02.06, P09-T03.01, P09-T03.02, P09-T04.01, P09-T04.02, P09-T04.03.
+  - **Change:** Stack checks, actual HTTP/CLI, applicable service gates, reused reviewer resolution, no-stale docs, owned-port cleanup and verified commit.
+  - **Proof:** SMOKE; G-E2E, G-DOC; source/installed/gates/review/docs and scoped staged/secret proof; owner-authorized push to established main upstream.
 
 ## Definition of done
 

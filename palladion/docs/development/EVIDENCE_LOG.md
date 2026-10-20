@@ -1710,7 +1710,7 @@ with no critic objection to it: retention loss, not demonstrated causal veto. No
 known-control false objections in valid parsed reviews; semantic/causal false-veto
 rate remains unknown. Full-exception-delay-clause exact matches0/4. Counter-search
 and blind exception arms retrieve new appendix and release exact boundary excerpts;
-this is narrower than full-clause correction. No inventory attestation in any arm.
+this is narrower than full-clause correction. ~~No inventory attestation in any arm~~: this was the constant telemetry flag only; semantic completeness-assertion behavior was not measured (P09/ADR0090).
 Separate120Bfullmessage stillHTTP400/no counter-search. Actual20B targeted smoke
 exit1 retained at runtime/p06-critic-message-20b.log and extracted JSON:3main/2critic/
 1tool/0countersearch, two schema failures and final429(8000TPM,used6445,requested1961,
@@ -2164,3 +2164,208 @@ now says confirmatory evaluation remains deferred beyond P08pilot. No source cha
 Final staged scope44explicitfiles only; no benchmark/editor/env/runtime/build artifacts;
 secret-prefix/private-key scan0hits. Final checkpoint proof docs19MD98cards20controls,
 whitespace/receipt/hash/port and index-scope checks pass before the scoped commit.
+
+## E-P09-001 — Independent reaudit, approved scope and baseline
+
+2026-10-20. Owner authorizes end-to-end reaudit plus Part B PF01–PF06; five read-only
+GPT6LunaMedium auditors directly read full blueprint§1–18 and their owning consumers.
+Full scope/findings/retraction receipt: evidence/P09_AUDIT_AND_HANDOFF.md. ADR0087–89
+recommendations explicitly approved by owner; ADR0090 corrects existing promises.
+Historical P00–P08 completion is retained, but the named findings are new open work.
+No benchmark implementation touched. Owner subsequently authorizes handoff-doc
+completion notes and scoped verified main push; no unrelated commits included.
+
+Baseline command from application: .venv/Scripts/python.exe -m pytest -q --basetemp
+runtime/pf-baseline-20261020 --junitxml runtime/pf-baseline.xml; 362PASS/28explicitSKIP,
+63.59seconds, one existing Starlette warning; full runtime/pf-baseline.log. Credentials
+and integration/provider flags absent. Negative regression p09-gate-before.log:
+3FAIL/1PASS,27.84s: actual complete policy requirement wronglySUPPORTED for absent,
+unavailable and stale review; valid currentPASS already succeeds. Initial fixture
+attempt failed before gate due to deliberately stale clock, not counted as reproduction.
+After owning gate correction:15PASS8.48s (p09-gate-after.log), known requirement retained.
+
+Fresh Qdrant backup before unique-test collection cleanup:
+runtime/backups/p09-full-snapshot-2026-10-20-03-29-17.snapshot,
+SHA2569f84bf9413049f790e40df0988f32c785cda7bbf87d890586556b627e6910c85.
+Launcher owns WSL QdrantPID2737, loopback16333/16334, existing storage preserved.
+Only fresh UUID collections may be deleted by selected tests. No Neo4j/provider run enabled.
+
+## E-P09-002 — Current mechanism and consumer checks
+
+Source expanded sweep380PASS/31explicitSKIP108.19s (p09-source-tests.log/XML), before
+final interrupted-append/cache hardening. Current installed wheel focused50PASS43.67s
+(p09-installed-final.log/XML) covers all handoff/admin/gate/evaluation tests including
+nested child termination, interrupted UTF8/JSON accounting and valid-worker positive.
+Earlier installed47PASS/2FAIL76.84s came from pytest.main invoked via python stdin:
+Windows spawn tried to import <stdin>; invalid harness, preserved, corrected to python
+-m pytest. New tokenizer consumer now reuses the index-configured model cache rather
+than implicitly downloading into installed package storage. No credential/provider call.
+
+Initial new actual-server run3FAIL/1PASS79.95s: domain fixture not seeded before tools/
+message consumers, so failures occurred before intended guards. Corrected production
+fixture seed→T01 real BM25 old-SOP top candidate→canonical old exclusion→event-time policy
+and missing settlement qualified release, plus missing timestamp typed negative; T12
+real search worker→scripted adversarial proposal→independent guard review→message gate
+blocks invented completeness canary, preserves scoped quote. Three defining scenarios
+PASS30.36s (p09-real-consumers-r2.log). This is actual HTTP/Qdrant/canonical/runtime
+mechanical proof with injected proposal, not real-provider semantic quality evidence.
+The original actual HTTP upload/approval/citation/revocation test also passed in run1.
+Current hard-case map adds those exact T01/T12 consumers; constant false inventory field
+is labeled TELEMETRY_CONTRACT_ONLY and unadjudicated completeness accuracy stays unknown.
+
+Real physical coverage paired probe: single/batch10sources0.160861/0.0130005s and10/1
+readback requests;1000sources10.511018/0.556804s and1000/16requests. All sources indexed,
+coverage true, no warnings/truncation. One local observation per condition, synthetic3D
+encoder, real Qdrant vectors/BM25 transport; other work kept running. Full current
+reconciliation work compared, not legacy's truncated first100 scan. Linear work remains;
+42.8times small-corpus latency does not pass the original small-multiple target. ADR0091
+awaits owner disposition. Fresh p09_measure_UUID collection deleted, no old data reset.
+Full raw log/JSON: runtime/p09-coverage-measure.log/.json. No capacity/distribution claim.
+
+Ruff/type/dependency/build/foundation/policy/document checks run with current logs.
+Strict mypy76source/script files passes; dependency102files+4negative controls passes;
+docs20Markdown/110atomic cards+20in-memory negative controls passes. A checker prototype
+allowed runtime root README ownership too broadly and its negative test failed; narrowed
+to the explicit P09-T05.01 owner, retaining all prior negative controls. Owner's separate
+handoff-document exception and final no-stale checks will be recorded at closeout.
+
+
+## E-P09-003 — Owner answers and further performance investigation
+
+Owner rejected ADR0091 closure: original PF03 scaling target stays open. ADR0092
+opaque identities explicitly approved and implemented; HTTP returned-ID membership/
+source ACL and same-subject different-tenant controls pass in20checks25.10s
+(runtime/p09-identity-alias.log). Alias transaction revocation guard reproduced old
+incorrect insert, then passed with all authority checks inside the write transaction.
+Sole end reviewer confirmed those corrections and no remaining material security issue;
+case-ID namespace existence is within approved admin-create semantics, no contents/grants.
+
+Credential-free full source390PASS31explicitSKIP101.94s, runtime/p09-current-source.log
+and XML, after lightweight process entry/opaqueID/alias fix/bulkSQL initial controls.
+No provider/real-server flags enabled. Subsequent aggregate-bound/cache changes still
+need current checks. Earlier378PASS3FAIL31SKIP134.72s deadline-helper cold-start failures
+remain retained; lightweight owner entry fixed the actual test import burden.
+
+PF03 profiling/transport/SQL/batch experiments and exact limits are recorded in
+P09_AUDIT_AND_HANDOFF performance section and ignored rawruntime artifacts. Default
+gzip verified; no compression/default change. SQL7006→29 is a measured statement-count
+improvement, not a proven elapsed speedup. Larger batch256 remains31times small-case
+latency, experiment not shipped. Owner subsequently approved explicit opt-in5second
+physical-audit cache (ADR0095) if beneficial; keepPF03open if worse. No presumed waiver.
+
+Sole end reviewer caught an aggregate canonical manifest-row allocation gap in new
+bulk reader. Corrected with streaming100000row bound and aggregate physical100000point
+limit (one bounded backend batch can coexist transiently). Overflow degrades coverage,
+not healthy success. Defining bound checks and current cache/gate tests still pending.
+Reused initial memory/evaluation auditor performs changed-premise start review for0095;
+sole storage/security end reviewer remains independent and will inspect final work.
+
+
+## E-P09-004 — Approved cache mechanism and honest performance checkpoint
+
+Owner explicitly approved ADR0095 before dependent implementation. Reused initial
+memory/evaluation adversary read blueprint/current consumers and flagged stable backend
+identity, complete healthy aggregate, explicit flags and current source scope. No tests/
+service calls delegated. Coordinator implemented exact public SDK endpoint identity
+(no credential-bearing URLs/custom/local fallback), scope/manifest keys, five-second
+audit-start wall+monotonic expiry, no renewal, current canonical pre/post checks and
+32entry/1MiB separate derived sidecar. Four tools and default HTTP stay fresh.
+
+Cache HTTP tests initially18PASS2FAIL33.99s because p03 fixture's other approved sources
+were not indexed; this correctly failed healthy coverage before caching. Index all
+reader-authorized fixture sources through IngestPipeline, then20PASS36.47s. Final
+23PASS22.72s (p09-cache-final-guards.log) includes source/grant/generation changes AFTER
+warm cache lookup, immediate existing-cache invalidation after failed strict physical
+audit, scope/backend/failure/expiry/corruption-window and storage/bound controls.
+Credential-free broad395PASS31explicitSKIP151.45s (p09-cache-source.log/XML) before the
+last3additional cache guards; all current behavior verified with overlapping focused
+checks, not a fabricated combined pytest exit. No new model calls.
+
+Installed wheel63PASS95.38s (p09-cache-installed.log/XML), after import-location proof
+from runtime/p09-installed/Lib/site-packages. Final import-only Ruff formatting change
+and3extra guards require final wheel-byte/installed/real consumer checks below. Source
+Ruff initially found only that import grouping; fixed. Strictmypy77files PASS, direct
+dependencies103files+4negativecontrols PASS; docs20MD113cards21negativecontrols PASS.
+
+Performance: see P09_AUDIT_AND_HANDOFF complete tables and rawpaths. Large enabled median
+0.88834s vsstrict2.15143s; small enabled0.31547 vsstrict0.26603, retaining3expiryMISS
+primary observations across sizes. Cold misses and failed always-HIT driver retained.
+PF03 stays OPEN per owner; do not infer universal speedup, target waiver or production
+capacity. P09-T02.07 owns acceptance; mechanism checkpoint can be published separately.
+
+Current Qdrant full snapshot before freshUUID real integration cleanup:
+runtime/backups/full-snapshot-2026-10-20-04-29-28.snapshot,9123840bytes,
+SHA256bd4c8c32e615008359af1da1ef1ab8159e58ebd5c4a46ede54fa8c9336316a99.
+Initial backup helper tried unsupported QdrantClient context management and failed before
+snapshot mutation; corrected explicit closing, source JSON receipt p09-cache-backup.json.
+Main preserves all storage, foreign benchmark implementation/editor work and historical
+raw experiments. Only handoff response appendix is our benchmark edit.
+
+
+Pre-adversary receipt correction: initial full-file blueprint command returned truncated
+output, so that earlier cache-start receipt cannot establish direct whole-document
+coverage. On follow-up the same adversary read all1784lines in six contiguous chunks,
+§1–18/I01–I15, and confirmed no additional premise changes; custom-client identity and
+complete-aggregate guardrails already adopted. Do not retroactively call the truncated
+read complete or erase the chronology. Complete direct coverage is now established
+before final consumer verification/end audit. Coordinator preserves this method lapse.
+
+
+Final installed checkpoint: current wheel build/reinstall succeeded.67source/package
+files exactly match source, wheel and isolated installed bytes; SHA256
+33e0a18ac0dd95f9564163f08202e9fe192a1b798616fba906a95fe378802fa7
+(runtime/p09-final-package.json). Current installed handoff23PASS36.12s
+(p09-final-installed-guards.log/XML), plus actual installed Qdrant/HTTP T01twocases,
+T12 and upload→approval→search→citation→revocation4PASS50.63s
+(p09-final-installed-real.log/XML). Only freshUUIDcollections were cleaned, snapshot
+preserved. Installed evaluator capabilities/foundation/policy CLIs exit0; no credentials
+or provider use enabled. These overlap earlier installed63PASS95.38s, not additive counts.
+Source broad395PASS plus23focused (3newcontrols beyond the broad run) remain distinct
+receipts, not a claimed combined exit0. Current Ruff/mypy/dependency/docs gates pass.
+
+Foreign contributor advanced shared main to fdd1320 and added an uncommitted PF07
+request in the same handoff document during this closeout. Preserve that prefix and
+other benchmark/editor dirt; stage ONLY our response appendix from that document.
+PF07/new graph-write API is outside approved PF01–06 interaction scope and remains a
+separate owner decision; no schema/API/graph change inferred from another contributor.
+Final sole-review/docs resolution, owned listener cleanup and scoped commit/push follow.
+
+
+Final no-stale sweep by sole reviewer identified stale AGENTS approved-ADR range,
+master-header range and PROJECT_MAP activeP08 wording; all corrected to accepted
+ADR0087–0095 and currentP09. Clarified that T05 verified mechanism checkpoint may
+close while parentP09/PF03/T02.07 stay open. Historical parent acceptance not waived.
+
+Shared-branch update: foreign contributor's914df24 committed/published its benchmark
+changes and the response appendix already in the shared handoff file. Preserve that
+published history; no partial staging is now needed for the handoff file, and our next
+commit contains only Palladion plus rootAGENTS/README. Earlier staging plan above is a
+historical observation, superseded by this verified current state.
+
+Cleanup: own recordedWSLQdrantPID2737 termination requested, storage preserved. Initial
+immediate Windows bind raced shutdown and returned10048; after process exit both
+16333/16334exclusive bindsPASS, no WSLlisteners/PID, storage directorystillpresent.
+No HTTPserver outside TestClient was started. Other contributors' processes untouched.
+
+
+Final single-reviewer resolution: code_audit_storage_security (GPT6LunaMedium), read-only,
+complete blueprint§1–18/I01–I15 from prior direct read with fresh affected-section pass,
+all12developmentdocs, current source/tests/decisions/evidence and public consumers.
+No material issue blocks the verified mechanism checkpoint. All named source/cache/doc
+findings corrected and rereviewed; reviewer did not run tests or independently certify
+reported timings. P09parent/PF03/T02.07 remain OPEN; this is not research/production signoff.
+
+Route explanation check: AST inspected all18decorated handler functions in routes.py;
+all18 have explanatory docstrings (aliases share handlers). No runnable handler omitted.
+Final explicit scope44files rootAGENTS/README +Palladion only; foreign benchmark/editor
+paths excluded. Final staged/secret/doc proof and descriptive commit complete T05 in
+the checkpoint containing these records. Main push expressly authorized by owner.
+
+
+Verified mechanism checkpoint closeout:112of113atomic cards checked, P09=14of15;
+sole remaining cardP09-T02.07/PF03 performance and P09parent remain OPEN. This is a
+card register, not system readiness. Final44file staged scope/whitespace/credential-
+prefix scanPASS (0matches), current static/doc gatesPASS. T05 closes in the descriptive
+verified commit containing these records; owner-approved push targets established
+origin/main only. No benchmark implementation/editor/environment/runtime/build file
+staged, and no published history rewritten. Handoff appendix alreadypublished914df24.

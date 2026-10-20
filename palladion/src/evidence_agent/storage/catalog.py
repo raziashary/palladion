@@ -14,6 +14,8 @@ from evidence_agent.core.retrieval import Chunk
 from evidence_agent.storage.registry import Registry
 from evidence_agent.storage.sqlite import utc_now
 
+MAX_COVERAGE_CHUNKS = 100000
+
 
 class Catalog:
     """Persist canonical chunks and publish only exact, acknowledged generations."""
@@ -335,6 +337,56 @@ class Catalog:
             raise ResourceConflict
         return {row["chunk_id"]: row["content_sha256"] for row in rows}
 
+    def coverage_manifests(
+        self, principal: Principal, case_id: str, revisions: Mapping[str, str]
+    ) -> dict[tuple[str, str], dict[str, str]]:
+        """Revalidate current coverage scope and load bounded canonical manifests.
+
+        Called after physical readback: no network work occurs under this transaction.
+        Missing, revoked, private or replaced generations cannot become healthy coverage.
+        """
+        if len(revisions) > 10000 or any(not r or not g for r, g in revisions.items()):
+            raise ValidationFailure
+        result: dict[tuple[str, str], dict[str, str]] = {}
+        count = 0
+        with self.database.transaction() as connection:
+            self.registry.access.authorize(principal, tenant_id=principal.tenant_id,
+                                           case_id=case_id, grant="source:read")
+            items = list(revisions.items())
+            for start in range(0, len(items), 64):
+                batch = dict(items[start:start + 64])
+                placeholders = ",".join("?" for _ in batch)
+                rows = connection.execute(
+                    "SELECT d.revision_id,d.index_generation,d.acl_json,d.approval_status,"
+                    "a.status AS approval_record_status,m.chunk_id,m.content_sha256 "
+                    "FROM document_revisions d LEFT JOIN approval_records a "
+                    "ON a.approval_record_id=d.approval_record_id AND a.tenant_id=d.tenant_id "
+                    "AND a.revision_id=d.revision_id LEFT JOIN index_generation_chunks m "
+                    "ON m.tenant_id=d.tenant_id AND m.revision_id=d.revision_id "
+                    "AND m.generation=d.index_generation WHERE d.tenant_id=? AND d.case_id=? "
+                    f"AND d.index_state='READY' AND d.revision_id IN ({placeholders})",
+                    (principal.tenant_id, case_id, *batch),
+                )
+                found: set[str] = set()
+                for row in rows:
+                    count += 1
+                    if count > MAX_COVERAGE_CHUNKS:
+                        raise ResourceConflict
+                    allowed = json.loads(row["acl_json"]).get("allowed_principal_ids", [])
+                    if (row["approval_status"] != "APPROVED"
+                            or row["approval_record_status"] != "APPROVED"
+                            or allowed and principal.principal_id not in allowed
+                            or batch[row["revision_id"]] != row["index_generation"]):
+                        raise PermissionDenied
+                    if row["chunk_id"] is None:
+                        raise ResourceConflict
+                    found.add(row["revision_id"])
+                    result.setdefault((row["revision_id"], row["index_generation"]), {})[
+                        row["chunk_id"]] = row["content_sha256"]
+                if found != set(batch):
+                    raise PermissionDenied
+        return result
+
     def eligible_generation_metadata(
         self, principal: Principal, revision_id: str
     ) -> dict[str, object] | None:
@@ -364,22 +416,22 @@ class Catalog:
     ) -> None:
         """Register an explicit exact alias for a canonical authorized chunk."""
         normalized = _normalize_alias(alias)
-        source = self.registry.source_metadata(principal, revision_id)
-        self._require_approved(source)
-        self.registry.access.authorize(
-            principal,
-            tenant_id=principal.tenant_id,
-            case_id=str(source["case_id"]),
-            grant="document:approve",
-            role="admin",
-        )
-        chunk = self.database.connection.execute(
-            "SELECT case_id FROM p02_chunks WHERE tenant_id = ? AND revision_id = ? AND chunk_id = ?",
-            (principal.tenant_id, revision_id, chunk_id),
-        ).fetchone()
-        if chunk is None:
-            raise ValidationFailure
         with self.database.transaction() as connection:
+            source = self.registry.source_metadata(principal, revision_id)
+            self._require_approved(source)
+            self.registry.access.authorize(
+                principal,
+                tenant_id=principal.tenant_id,
+                case_id=str(source["case_id"]),
+                grant="document:approve",
+                role="admin",
+            )
+            chunk = self.database.connection.execute(
+                "SELECT case_id FROM p02_chunks WHERE tenant_id = ? AND revision_id = ? AND chunk_id = ?",
+                (principal.tenant_id, revision_id, chunk_id),
+            ).fetchone()
+            if chunk is None:
+                raise ValidationFailure
             connection.execute(
                 "INSERT OR IGNORE INTO exact_aliases "
                 "(tenant_id, case_id, normalized_alias, alias, revision_id, chunk_id) "
@@ -387,7 +439,7 @@ class Catalog:
                 (principal.tenant_id, source["case_id"], normalized, alias, revision_id, chunk_id),
             )
 
-    def lookup_alias(self, principal: Principal, case_id: str, alias: str) -> tuple[str, ...]:
+    def lookup_alias(self, principal: Principal, case_id: str, alias: str, *, limit: int | None = None) -> tuple[str, ...]:
         """Resolve only exact normalized aliases within the caller's case scope."""
         self.registry.access.authorize(
             principal,
@@ -395,14 +447,19 @@ class Catalog:
             case_id=case_id,
             grant="source:read",
         )
+        if limit is not None and not 1 <= limit <= 101:
+            raise ValidationFailure
         rows = self.database.connection.execute(
             "SELECT DISTINCT aliases.chunk_id, aliases.revision_id "
             "FROM exact_aliases AS aliases JOIN document_revisions AS revisions "
             "ON revisions.tenant_id = aliases.tenant_id AND revisions.revision_id = aliases.revision_id "
             "WHERE aliases.tenant_id = ? AND aliases.case_id = ? AND aliases.normalized_alias = ? "
             "AND revisions.approval_status = 'APPROVED' AND revisions.index_state = 'READY' "
-            "ORDER BY aliases.revision_id, aliases.chunk_id",
-            (principal.tenant_id, case_id, _normalize_alias(alias)),
+            "AND (json_array_length(json_extract(revisions.acl_json,'$.allowed_principal_ids'))=0 "
+            "OR EXISTS(SELECT 1 FROM json_each(revisions.acl_json,'$.allowed_principal_ids') WHERE value=?)) "
+            "ORDER BY aliases.revision_id, aliases.chunk_id LIMIT ?",
+            (principal.tenant_id, case_id, _normalize_alias(alias), principal.principal_id,
+                -1 if limit is None else limit),
         ).fetchall()
         result: list[str] = []
         for row in rows:

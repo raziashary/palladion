@@ -94,7 +94,11 @@ The public receipt is a bounded measurement record, not the raw source authority
 
 Separate current-artifact20B run p06-57815987982f4322997fc434305ebe83 completed
 all16conditions across exception/correct-fact/missing-input/withheld-appendix cases.
-Known fact retention16/16; full exception-quote corrections0/4; inventory attestations0.
+Known fact retention16/16; full exception-quote corrections0/4.
+~~Inventory attestations0 as behavioral completeness evidence~~ withdrawn in P09:
+this counted the constant inventory_attested=false telemetry field, not assertions
+in final claims or review text. Semantic completeness-assertion accuracy is unknown;
+raw artifacts remain unchanged (ADR-0090).
 Retention includes deterministic qualified fallbacks after provider failures; it does
 not mean16successful generative reviews or answers.
 Thirty model invocations were started across the controlled conditions; canonical
@@ -175,3 +179,14 @@ records; all material findings are resolved, including the R4 measurement withdr
 The verified scoped checkpoint containing this report preserves the engineering pilot. Owned process/port cleanup is
 verified: Qdrant/Neo4j/HTTP stopped, storage preserved, exclusive binds pass on
 16333/16334/17687/18108. Foreign workloads remain untouched.
+
+## P09 reaudit limitations (2026-10-20)
+
+The original source snapshot omitted consumed adapter configuration. Its hash binds
+the retained source, not missing configuration; original configuration reproducibility
+is incomplete. The declared7200second ceiling was checked before model calls rather
+than enforced over setup/indexing/scoring. No historical hard-deadline compliance is
+inferred from that check. P09 fixes future execution and adds whole-lifecycle controls.
+The historical24passed mapped controls remain actual test outcomes, but T01/T12 mapping
+did not prove their complete defining consumer scenarios. P09 adds those controls and
+reports their evidence separately; no frozen input/output/score artifact is rewritten.

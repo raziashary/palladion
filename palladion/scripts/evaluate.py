@@ -891,6 +891,7 @@ def run_critic(url: str, model_name: str, call_interval_seconds: float = 0) -> d
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--url", default="http://127.0.0.1:16333")
+    parser.add_argument("--capabilities", action="store_true", help="Read-only isolated evaluator capability matrix")
     parser.add_argument("--critic", action="store_true", help="Explicit P06 real-Groq frozen critic pilot")
     parser.add_argument("--memory", action="store_true", help="Explicit P05 actual-Groq continuity pilot")
     parser.add_argument("--enable-live-llm", action="store_true")
@@ -902,6 +903,12 @@ def main(argv: list[str] | None = None) -> int:
                         help="explicitly seed/query/delete only unique p02_eval_* collections")
     parser.add_argument("--model-call-interval", type=float, default=0, help="Opt-in live Groq dispatch interval within unchanged deadlines")
     args = parser.parse_args(argv)
+    if args.capabilities:
+        if args.run or args.enable_live_llm or args.study or args.critic or args.memory or args.replay_study:
+            parser.error("Capability inspection cannot combine with execution or replay")
+        from evidence_agent.agent.experiments import evaluator_capabilities
+        print(json.dumps(evaluator_capabilities(), indent=2))
+        return 0
     if args.replay_study:
         if args.run or args.enable_live_llm or args.study or args.critic or args.memory:
             parser.error("Replay is read-only and cannot combine with execution flags")

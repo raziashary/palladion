@@ -936,6 +936,7 @@ dependencies = [
     { name = "qdrant-client" },
     { name = "sqlite-vec" },
     { name = "starlette" },
+    { name = "tokenizers" },
     { name = "uvicorn" },
 ]
 
@@ -961,6 +962,7 @@ requires-dist = [
     { name = "qdrant-client", specifier = "==1.19.1" },
     { name = "sqlite-vec", specifier = "==0.1.9" },
     { name = "starlette", specifier = "==1.8.0" },
+    { name = "tokenizers", specifier = "==0.23.3" },
     { name = "uvicorn", specifier = "==0.54.0" },
 ]
 

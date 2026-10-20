@@ -1,8 +1,8 @@
 # Project map
 
-Current checkpoint2026-10-20: P00–P08engineering work complete within the approved synthetic pilot boundary;98/98atomic cards and sole end-review resolution verified. P07 publishedf97471e; graph stays defaultoff. P08 outcomes are negative/inconclusive, semantic accuracy and unobserved candidate-stage metrics unknown. UI/enterprise writes/X01/benchmark-editor edits and a further main push remain excluded. Older dated snapshots are historical.
+Current checkpoint 2026-10-20: P09 audit and benchmark-handoff remediation ACTIVE. P00–P08 are historical completed pilot work (98 cards); independent reaudit identified and corrected gate/evaluation proof gaps; P09 remains active for PF03 performance acceptance. See evidence/P09_AUDIT_AND_HANDOFF.md and ADR-0087–0095; PF03 performance remains open after owner-rejected0091 closure; opaque IDs and opt-in5second audit reuse are approved and implemented. Benchmark implementation/editor work, UI and enterprise writes remain excluded; owner authorized a scoped verified main push.
 
-Updated2026-10-20; published P07 proof is E-P07-002; active P08 proof is E-P08-002 (closeout pending). **Actual documentation is distinct from planned runtime components.**
+Updated2026-10-20; published P07 proof is E-P07-002; P08 engineering pilot completed at E-P08-001–003; current P09 proof is E-P09-001–004, with PF03 acceptance open. **Actual documentation is distinct from planned runtime components.**
 Source: blueprint “Concrete prototype repository,” “Directory responsibilities,” and “System
 architecture.” No diagram node below implies shipped code.
 
@@ -264,3 +264,23 @@ Current readers: installed CLI44row replay, installed HTTP search/citation/ACL s
 reconciliation preserves failures and skips; current graph positives pass and sole end audit/resolution is complete. Map arrows establish ownership, not semantic efficacy or production capacity.
 
 R4 metric boundary: model packet remains top4; observed packet @4/packet-MRR are separate from unmeasured candidate/stage @5/10/20/full-MRR. Legacy larger-cutoff labels are withdrawn in replay/report, with frozen raw artifacts unchanged.
+
+## P09 audited consumer additions
+
+| Producer/owner | Consumer | Proof destination |
+|---|---|---|
+| api Search aware cutoff/optional budget | HybridSearch→EvidenceResolver/current ACL→same-cutoff evidence route | P09-T02.01/.04; test_handoff and actual server checks |
+| Independent approval route→ExactIndex.register_approved | Existing scoped aliases→canonical search/citation | P09-T02.02 |
+| QdrantIndex.readback_many | source_coverage authorized-source batches and exact manifests | P09-T02.03; real10/1000 measurement |
+| Registry scoped provisioning transaction | Authenticated admin routes and reopened principal/membership readers | P09-T03.01 |
+| evaluator_capabilities | Read-only evaluate CLI and new study manifests | P09-T03.02 |
+| Bound config/fixture snapshot | load_fixtures/load_config in new study observation setup | P09-T04.02 |
+| evaluation.process_owner.ProcessOwner | Whole study local worker and its descendants, joined on every exit | P09-T04.01 |
+
+
+P09 optional HTTP audit reuse: Search.reuse_physical_audit / index-health query flag →
+HybridSearch/source_coverage → current canonical Catalog manifests + bounded audit_cache
+sidecar lookup → fresh Qdrant readback on miss → current canonical recheck → coverage
+mode/time/status. Exact backend/representation/scope/manifest keys, original audit-start
+age≤5seconds. Domain tools and default serving stay fresh; cache has no source/gate
+authority. PF03 scaling acceptance is a separate open P09-T02.07 outcome.

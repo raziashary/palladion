@@ -1,9 +1,38 @@
 # Current progress
 
-Current checkpoint2026-10-20: P00–P08engineering work complete within the approved synthetic pilot boundary;98/98atomic cards and sole end-review resolution verified. P07 publishedf97471e; graph stays defaultoff. P08 outcomes are negative/inconclusive, semantic accuracy and unobserved candidate-stage metrics unknown. UI/enterprise writes/X01/benchmark-editor edits and a further main push remain excluded. Older dated snapshots are historical.
+Current checkpoint 2026-10-20: P09 audit and benchmark-handoff remediation ACTIVE. P00–P08 are historical completed pilot work (98 cards); independent reaudit identified and corrected gate/evaluation proof gaps; P09 remains active for PF03 performance acceptance. See evidence/P09_AUDIT_AND_HANDOFF.md and ADR-0087–0095; PF03 performance remains open after owner-rejected0091 closure; opaque IDs and opt-in5second audit reuse are approved and implemented. Benchmark implementation/editor work, UI and enterprise writes remain excluded; owner authorized a scoped verified main push.
 
 Updated2026-10-20 (Asia/Bangkok). Atomic task state lives in MASTER_DEV_PLAN;
 command observations and review receipts live in EVIDENCE_LOG.
+
+## Active P09 checkpoint
+
+Five initial full-blueprint audits and the reused independent end-review resolution
+found and corrected gate, evaluation, alias, identity and coverage-bound defects.
+Owner-approved opaque principal IDs are implemented; callers use returned IDs for
+memberships/ACLs. Source395PASS31explicitSKIP151.45s after current cache mechanisms;
+focused HTTP/cache/bounds20PASS36.47s. Current installed23guards PASS36.12s and actual-Qdrant/HTTP4PASS50.63s;
+prior installed63PASS95.38s overlaps.67package files match current wheel/source/installed
+bytes (E-P09-004). Installed capabilities/foundation/policy CLIs exit0. No provider call enabled; frozen pilot artifacts and failures preserved.
+
+PF03 remains OPEN, as the owner directed if the cache worsens work. Explicit5second
+physical reuse improves measured1000-source HTTP latency, but the balanced run also
+shows small-case overhead and normal expiry misses. The target is not waived and no
+capacity/general latency claim follows. P09-T02.07 owns this remaining acceptance;
+P09-T05.01 may close a verified mechanism checkpoint without claiming P09 complete.
+
+Sole end reviewer found no remaining confirmed cache/source-authority issue after
+aggregate100000chunk bounds and strict-default single-snapshot correction. Fresh default,
+audit-start expiry, backend/manifest keys and current canonical checks stay mandatory.
+Current wheel/consumer proof passes; sole end reviewer resolves all material findings
+after current source/all12docs/full-blueprint review. Owned service cleanup and ports
+verified. Scoped staging/commit/push completes this mechanism checkpoint, not P09. PF07 was newly added by the benchmark
+contributor during closeout and needs separate owner scope/interaction approval.
+
+Qdrant launcher owns WSLPID2737 on16333/16334; stop via the project launcher after real
+checks, preserve storage and current backups. Preserve foreign benchmark/editor changes.
+Owner authorizes our scoped verified main push and completion notes in only the benchmark
+handoff doc. No new agents; reuse the sole end reviewer for final resolution.
 
 ## Verified P08 engineering pilot
 
@@ -195,4 +224,12 @@ obligations despite completed approved P08 pilot; negative quality targets stay 
 
 ## Next-session handoff
 
-P07 is publishedf97471e. P08 engineering pilot, current integrity controls and sole end-review resolution are verified complete; preserve the scoped commit and await explicitly scoped future work. A further main push still needs approval. Do not redo completed phases or infer research success. Preserve foreign benchmark/editor changes and their shared main commits. PROJECT_MEMORY provides current recovery pointers; retained raw failures and unknown semantic labels remain obligations for later research, not blockers disguised as successes.
+P00–P08 remain historical completed engineering pilots. P09 verified mechanism checkpoint
+has source/isolated-wheel/actual-Qdrant HTTP proof and sole end-review resolution;
+PF03/P09-T02.07 and the P09 parent remain OPEN. Preserve the checkpoint containing these
+records and the bounded opt-in cache/default-fresh distinction. Further cache/coverage
+architecture or PF07 graph-write API requires its own concrete owner decision; do not
+infer research success, new dependencies or scope from another contributor's edits.
+Owner authorized our scoped main push. Foreign benchmark/editor work and published
+shared-branch history remain untouched. Owned Qdrant ports are free, storage/backups
+retained; read E-P09-004 for commands, failures, package hash and performance limitations.

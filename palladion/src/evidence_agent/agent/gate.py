@@ -85,6 +85,9 @@ def release(draft: Draft, ledger: RequestLedger, *, review: ReviewResult | None 
                                 f"{claim.field}: {claim.value}; this does not establish current state or another system's state.")
             elif claim.type == "RULE_REQUIREMENT" and item["kind"] == "POLICY_DECISION":
                 if claim.field in item["required_fields"]:
+                    if not reviewed:
+                        gaps.add("mandatory_critic_review")
+                        unavailable = True
                     text = f"Applicable policy requires {claim.field}; a requirement is not an action authorization."
             elif claim.type == "POLICY_RESULT" and item["kind"] == "POLICY_DECISION":
                 if not reviewed:

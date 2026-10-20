@@ -1,6 +1,6 @@
 # Risks, accepted answers and verification obligations
 
-Current checkpoint2026-10-20: P00–P08engineering work complete within the approved synthetic pilot boundary;98/98atomic cards and sole end-review resolution verified. P07 publishedf97471e; graph stays defaultoff. P08 outcomes are negative/inconclusive, semantic accuracy and unobserved candidate-stage metrics unknown. UI/enterprise writes/X01/benchmark-editor edits and a further main push remain excluded. Older dated snapshots are historical.
+Current checkpoint 2026-10-20: P09 audit and benchmark-handoff remediation ACTIVE. P00–P08 are historical completed pilot work (98 cards); independent reaudit identified and corrected gate/evaluation proof gaps; P09 remains active for PF03 performance acceptance. See evidence/P09_AUDIT_AND_HANDOFF.md and ADR-0087–0095; PF03 performance remains open after owner-rejected0091 closure; opaque IDs and opt-in5second audit reuse are approved and implemented. Benchmark implementation/editor work, UI and enterprise writes remain excluded; owner authorized a scoped verified main push.
 
 Current authority amendment: P05 published f0507e4; user explicitly authorized P06 end-to-end; ADR-0030 separately approves the additive PolicyDecision extension. Earlier implementation hold below is historical; P04 explicit enabled provider commands are authorized.
 
@@ -152,3 +152,22 @@ waived. No new architectural ADR is pending; if completion requires a new contra
 record and obtain the owner's direction under Rule4. No further main push is authorized.
 
 End-review R4 identified invalid@5/10/20 labels on a final top4 packet. ADR0086 withdraws those labels, preserves raw artifacts and exposes only observed packet metrics. Candidate/fused/reranked-stage metrics remain unavailable for this pilot; a new separately frozen full-stage run is required for new claims, alongside independent semantic labels. This limitation is explicit rather than inferred zero or a claimed retrieval result.
+
+## P09 current owner decisions and retained limits
+
+ADR0087–89 explicitly approved: scoped retrieval contracts, non-admin provisioning and
+safe evaluator controls. ADR0090 corrects existing guarantees. Owner rejected ADR0091
+closure. ADR0095 opt-in5second audit reuse is implemented, with measured large-case
+benefit but small-case overhead/expiry misses; PF03 scaling acceptance stays open. The
+owner authorizes only handoff completion notes under the benchmark tree and a scoped
+verified main push. Earlier dated push/scope restrictions are historical. Semantic
+completeness/assertion accuracy, human labels and general deployment readiness remain
+unknown; synthetic demo_auth file-permission/bounds hardening is a separately owned
+shared-host deployment suggestion, not a confirmed remote vulnerability.
+
+
+New concurrent handoff PF07 (graph-link HTTP administration) appeared during P09
+closeout in foreign uncommitted edits. It is not covered by approved PF01–06 contracts.
+Owner: project owner plus benchmark contributor; destination: separately scoped task,
+pre-adversary and Rule4 graph/schema/API authorization if requested. Preserve its text,
+do not implement or label it done under this mechanism checkpoint.

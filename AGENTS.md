@@ -17,13 +17,16 @@ repository from the blueprint's illustrative tree.
 
 ## Scope and integrity
 
-- Current mandate completed: P08 scientific evaluation, observability and fault-injection
-  engineering pilot, including all declared B0–B9/vector controls and honest reporting.
-  All98P00–P08atomic cards and sole end-review resolution are verified. Confirmatory
-  semantic/quality claims and unobserved higher-stage retrieval metrics remain unknown.
-  P07 is published atf97471e; explicit P07 main-push approval is fulfilled. Another main
-  push needs approval. P07 graph stays defaultoff after a neutral paired pilot.
-  UI, real enterprise writes, benchmark/editor edits and X01 comparators stay excluded.
+- Current mandate (2026-10-20): P09 independent reaudit and approved Part B PF01–PF06
+  Palladion-side remediation (ADR-0087–0095), including approved opaque principal IDs
+  and explicitly opted-in5second physical audit reuse. PF03/P09-T02.07 performance
+  acceptance remains OPEN; a verified mechanism checkpoint is not P09 completion. P00–P08 remain historical engineering
+  pilot work; newly found gate/evaluation proof gaps must be resolved before closure.
+  The owner authorized five Luna Medium auditors for this run only; reuse them for
+  resolution. Subsequent work retains the standing start/end-only delegation rule.
+  Owner also authorized completion notes in palladion-benchmark/docs/development/
+  PALLADION_FIXES.md and a scoped verified main push. Other benchmark/editor work,
+  UI, real enterprise writes and X01 remain excluded. Graph stays defaultoff.
   Approved explicitly enabled commands may use the three selected Groq models.
   ADR0066 memory boundaries persist: private USER semantic preferences, session-only
   episodic context, unapproved procedural experience, primary PathA/opt-in local PathB.

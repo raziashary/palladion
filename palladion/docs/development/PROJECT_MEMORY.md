@@ -1,8 +1,26 @@
 # Palladion working memory
 
-Current checkpoint2026-10-20: P00–P08engineering work complete within the approved synthetic pilot boundary;98/98atomic cards and sole end-review resolution verified. P07 publishedf97471e; graph stays defaultoff. P08 outcomes are negative/inconclusive, semantic accuracy and unobserved candidate-stage metrics unknown. UI/enterprise writes/X01/benchmark-editor edits and a further main push remain excluded. Older dated snapshots are historical.
+Current checkpoint 2026-10-20: P09 audit and benchmark-handoff remediation ACTIVE. P00–P08 are historical completed pilot work (98 cards); independent reaudit identified and corrected gate/evaluation proof gaps; P09 remains active for PF03 performance acceptance. See evidence/P09_AUDIT_AND_HANDOFF.md and ADR-0087–0095; PF03 performance remains open after owner-rejected0091 closure; opaque IDs and opt-in5second audit reuse are approved and implemented. Benchmark implementation/editor work, UI and enterprise writes remain excluded; owner authorized a scoped verified main push.
 
-Updated 2026-10-19. Navigation aid only; user/vision/source/ADRs retain authority.
+Updated 2026-10-20. Navigation aid only; user/vision/source/ADRs retain authority.
+
+## Current P09 recovery pointers
+
+Read PROGRESS Active P09 checkpoint, all P09 cards, ADR0087–0095 and E-P09-001–004.
+Owner rejected0091 closure: keep PF03 open. Owner approved0092 tenant-bound opaque IDs;
+implemented returned-ID membership/ACL guards pass. ADR0094 batches canonical reads;
+0095 owner-approved opt-in5second physical-audit caching is implemented; benefit is workload-dependent: large-case improvement, small-case overhead, expiry
+misses. PF03/P09-T02.07 stays open. Current installed23guards+4actualQdrantchecks and
+67package-byte proof PASS; sole end review resolved, owned Qdrant stopped/portsfree,
+storage/backups retained. Scoped verified commit/push completes the mechanism checkpoint.
+Current aliases: optional Catalog lookup limit101 with ACL before cap; ExactIndex100 and
+public truncation warning. Budget tokenizer local-only, configured index cache. Current
+study worker owns full process tree and retains partial UTF8/JSON/unknown accounting;
+lightweight entry avoids importing whole study for helper controls. Source395broadPASS
+plus23focusedguards, installed63earlier/23current and4currentrealQdrantchecks are separate
+overlapping receipts. Shared914df24 alreadypublished the handoff response appendix;
+our44-file checkpoint excludes all benchmark implementation/editor dirt. Do not repeat initial
+baseline or spawn extra agents. Preserve foreign benchmark work and frozen P08 raw files.
 
 ## Stable facts
 

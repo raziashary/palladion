@@ -9,6 +9,9 @@ from typing import Iterable, Protocol
 
 from fastembed import TextEmbedding
 from huggingface_hub import snapshot_download
+from tokenizers import Tokenizer
+
+from evidence_agent.core.errors import DependencyUnavailable
 
 MODEL_NAME = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 MODEL_REPOSITORY = "Qdrant/paraphrase-multilingual-MiniLM-L12-v2-onnx-Q"
@@ -21,6 +24,27 @@ MODEL_FILES = (
 )
 EMBEDDING_DIMENSION = 384
 CPU_THREADS = 2
+
+
+class PassageTokenizer:
+    """Untruncated pinned retrieval-tokenizer counts, never provider billing estimates."""
+
+    def __init__(self, cache_dir: Path | None = None) -> None:
+        cache = cache_dir or Path(__file__).resolve().parents[3] / "runtime/model_cache"
+        try:
+            path = Path(snapshot_download(repo_id=MODEL_REPOSITORY, revision=MODEL_REVISION,
+                cache_dir=str(cache / "huggingface"), allow_patterns=["tokenizer.json"],
+                token=False, local_files_only=True)) / "tokenizer.json"
+            self.tokenizer = Tokenizer.from_file(str(path))
+            self.tokenizer.no_truncation()
+            self.tokenizer.no_padding()
+            self.manifest = {"repository": MODEL_REPOSITORY, "revision": MODEL_REVISION,
+                "tokenizer_sha256": _sha256(path), "truncation": False, "padding": False}
+        except Exception as exc:
+            raise DependencyUnavailable("Pinned evidence tokenizer unavailable; provision the local model cache") from exc
+
+    def count(self, text: str) -> int:
+        return len(self.tokenizer.encode(text, add_special_tokens=False).ids)
 
 
 class DenseEncoder(Protocol):

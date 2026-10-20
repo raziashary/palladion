@@ -5,6 +5,7 @@ import asyncio
 import hashlib
 import importlib.metadata
 import json
+import multiprocessing
 import os
 import platform
 import random
@@ -17,11 +18,12 @@ import uuid
 from collections.abc import Callable
 from contextlib import closing
 from datetime import datetime, timezone
+from multiprocessing.connection import Connection
 from pathlib import Path
 from typing import Any, Literal, cast
 
 from evidence_agent.agent.draft import DRAFT_INSTRUCTIONS, Draft
-from evidence_agent.agent.experiments import ExperimentControls
+from evidence_agent.agent.experiments import ExperimentControls, evaluator_capabilities
 from evidence_agent.agent.gate import release
 from evidence_agent.agent.llm import GroqModel, ModelFailure, ModelTurn
 from evidence_agent.agent.loop import AgentRuntime, new_trace
@@ -37,6 +39,7 @@ from evidence_agent.core.evaluation import (
 )
 from evidence_agent.core.fixtures import load_fixtures
 from evidence_agent.core.models import TimeBasis
+from evidence_agent.evaluation.process_owner import ProcessOwner, study_entry
 from evidence_agent.graph.relations import TraversalLimits
 from evidence_agent.ingest.pipeline import IngestPipeline
 from evidence_agent.live.contracts import CaseScope
@@ -89,6 +92,28 @@ def _append(path: Path, value: Any) -> None:
 
 def _sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _bind_study_inputs(app: Path, directory: Path, config_sha256: str) -> tuple[dict[str, str], Path, dict[str, str]]:
+    """Bind the bytes the fixture/config readers consume, without reading credentials."""
+    snapshot = {path.relative_to(app).as_posix():path.read_bytes().decode("utf-8")
+        for folder in (app/"src", app/"scripts") for path in folder.rglob("*.py")}
+    for folder in (app/"config", app/"data"):
+        for path in sorted(folder.rglob("*")):
+            if path.is_file() and path.suffix in {".yaml", ".json", ".jsonl", ".md", ".txt"}:
+                snapshot[path.relative_to(app).as_posix()] = path.read_bytes().decode("utf-8")
+    if canonical_digest(json.loads(snapshot["data/demo/p08_study.json"])) != config_sha256:
+        raise ValueError("Study input changed before binding")
+    _write_new(directory/"source_snapshot.json", snapshot)
+    input_app = directory/"bound_inputs"
+    bound_hashes = {}
+    for name, content in snapshot.items():
+        if name.startswith(("config/", "data/")):
+            target = input_app/name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(content.encode("utf-8"))
+            bound_hashes[name] = _sha(target)
+    return snapshot, input_app, bound_hashes
 
 
 def _clone_inputs(source_root: Path, root: Path) -> None:
@@ -312,6 +337,8 @@ async def _observe(case: dict[str,Any], arm: str, repetition: int, root: Path,
 
 
 def replay_study(directory: Path) -> dict[str,Any]:
+    if (directory/"termination.json").exists():
+        raise ValueError("Terminated study is incomplete; partial artifacts retained")
     manifest = json.loads((directory/"manifest.json").read_text(encoding="utf-8"))
     validate_run_manifest(manifest)
     completed = json.loads((directory/"completion.json").read_text(encoding="utf-8"))
@@ -360,7 +387,14 @@ def replay_study(directory: Path) -> dict[str,Any]:
         if comparisons:
             paired[arm] = {"metric":"elapsed_seconds_all_attempts", "estimate":
                 clustered_difference(comparisons,seed=inputs["config"]["order_seed"])}
+    snapshot = json.loads((directory/"source_snapshot.json").read_text(encoding="utf-8"))
+    for name, digest in manifest.get("consumed_input_sha256", {}).items():
+        if name not in snapshot or hashlib.sha256(snapshot[name].encode("utf-8")).hexdigest() != digest:
+            raise ValueError("Consumed configuration/fixture snapshot mismatch")
     return {"manifest_sha256":canonical_digest(manifest),"rows":len(rows),"metrics":score_study_rows(scored_rows),
+            "configuration_binding": {"adapters_yaml_bound": "config/adapters.yaml" in snapshot,
+                "legacy_limitation": None if "config/adapters.yaml" in snapshot else
+                    "Consumed adapter configuration absent from legacy source snapshot"},
             "retrieval_measurement_limits": {
                 "observed_scope": "FINAL_PACKET_TOP4", "candidate_stage_metrics": None,
                 "legacy_cutoffs_withdrawn": [5, 10, 20],
@@ -371,12 +405,102 @@ def replay_study(directory: Path) -> dict[str,Any]:
             "limitations":inputs["config"]["limitations"]}
 
 
+def _study_worker(pipe: Connection, arguments: dict[str, Any]) -> None:
+    try:
+        pipe.send({"result": _run_study(**arguments)})
+    except BaseException as exc:
+        pipe.send({"error_type": type(exc).__name__})
+    finally:
+        pipe.close()
+
+
+def _bounded_study(arguments: dict[str, Any], directory: Path, seconds: float,
+                   worker: Callable[[Connection, dict[str, Any]], None] = _study_worker) -> dict[str, Any]:
+    """Own a local study process and join it on success, deadline or interruption.
+
+    A killed request may have reached its provider: retain STARTED/FINISHED records
+    unchanged and mark uncompleted attempts unknown, never fabricate response/billing.
+    """
+    context = multiprocessing.get_context("spawn")
+    parent, child = context.Pipe(duplex=False)
+    start = context.Event()
+    owner = ProcessOwner()
+    process = context.Process(target=study_entry, args=(worker, child, arguments, start), daemon=False)
+    started = time.monotonic()
+    try:
+        process.start()
+        assert process.pid is not None
+        owner.assign(process.pid)
+        start.set()
+        child.close()
+        remaining = max(0.0, seconds - (time.monotonic() - started))
+        if not parent.poll(remaining):
+            raise TimeoutError("Whole-study deadline exceeded")
+        try:
+            message = parent.recv()
+        except EOFError as exc:
+            raise RuntimeError("Study worker ended without a result") from exc
+        process.join(max(0.0, seconds - (time.monotonic() - started)))
+        if process.is_alive() or time.monotonic() - started >= seconds:
+            raise TimeoutError("Whole-study deadline exceeded")
+        if "error_type" in message:
+            raise RuntimeError("Study failed: " + str(message["error_type"]))
+        return cast(dict[str, Any], message["result"])
+    except BaseException as exc:
+        owner.close(process.pid)
+        if process.pid is not None:
+            if process.is_alive():
+                process.terminate()
+            process.join(5)
+            if process.is_alive():
+                process.kill()
+                process.join()
+        calls_path = directory / "calls.jsonl"
+        calls = []
+        invalid_lines = 0
+        for line in calls_path.read_bytes().decode("utf-8", errors="replace").splitlines() if calls_path.exists() else []:
+            try:
+                calls.append(json.loads(line))
+            except json.JSONDecodeError:
+                invalid_lines += 1  # Hard termination may interrupt a final append; preserve bytes.
+        started_calls = {c["number"] for c in calls if c.get("event") == "STARTED"}
+        finished_calls = {c["number"] for c in calls if c.get("event") == "FINISHED"}
+        _write_new(directory / "termination.json", {"error_type": type(exc).__name__,
+            "completed": False, "started_attempts": len(started_calls),
+            "unfinished_attempt_numbers": sorted(started_calls - finished_calls),
+            "invalid_partial_lines": invalid_lines, "attempt_accounting_complete": invalid_lines == 0,
+            "unfinished_usage": None, "worker_joined": not process.is_alive()})
+        raise
+    finally:
+        owner.close(process.pid)
+        parent.close()
+        child.close()
+        if process.pid is not None and not process.is_alive():
+            process.close()
+
+
 def run_study(url: str, *, phase: str, enabled: bool, protocol: Path | None = None,
               app: Path = APP) -> dict[str,Any]:
     if not enabled:
         raise PermissionError("Study requires explicit live Groq enablement")
+    config = json.loads((app/"data/demo/p08_study.json").read_text(encoding="utf-8"))
+    seconds = config.get("run_max_seconds")
+    if type(seconds) not in {int, float} or not 1 <= seconds <= 7200:
+        raise ValueError("Bounded study deadline required")
+    directory = app/"runtime/evaluation"/("p08_"+uuid.uuid4().hex)
+    directory.mkdir(parents=True)
+    return _bounded_study({"url":url, "phase":phase, "enabled":enabled, "protocol":protocol,
+        "app":app, "directory":directory, "config_sha256":canonical_digest(config)}, directory, seconds)
+
+
+def _run_study(url: str, *, phase: str, enabled: bool, protocol: Path | None,
+               app: Path, directory: Path, config_sha256: str) -> dict[str,Any]:
+    if not enabled:
+        raise PermissionError("Study requires explicit live Groq enablement")
     study = app/"data/demo/p08_study.json"
     config = json.loads(study.read_text(encoding="utf-8"))
+    if canonical_digest(config) != config_sha256:
+        raise ValueError("Study configuration changed before worker start")
     if (set(config["arms"])!={*(f"B{i}" for i in range(10)),"B5_VECTOR"} or
             not 2<=config["repetitions"]<=10 or not 1<=config["run_max_calls"]<=200 or
             not 1<=config["run_max_estimated_tokens"]<=2000000 or
@@ -393,9 +517,7 @@ def run_study(url: str, *, phase: str, enabled: bool, protocol: Path | None = No
             raise PermissionError("Protocol approval/study hash mismatch")
     else:
         frozen = {"stage":"development_only","study_sha256":_sha(study)}
-    identifier = "p08_"+uuid.uuid4().hex
-    directory = app/"runtime/evaluation"/identifier
-    directory.mkdir(parents=True)
+    identifier = directory.name
     cases = [c for c in config["cases"] if c["split"]==phase]
     arms = ["B0","B1"] if phase=="development" else config["arms"]
     order = [(case,arm,repetition) for case in cases for arm in arms for repetition in range(config["repetitions"])]
@@ -410,10 +532,7 @@ def run_study(url: str, *, phase: str, enabled: bool, protocol: Path | None = No
     rows_path = directory/"rows.jsonl"
     rows_path.touch(exist_ok=False)
     (directory/"calls.jsonl").touch(exist_ok=False)
-    snapshot = {str(path.relative_to(app)):path.read_text(encoding="utf-8")
-        for folder in (app/"src",app/"scripts") for path in folder.rglob("*.py")}
-    snapshot["data/demo/p08_study.json"] = study.read_text(encoding="utf-8")
-    _write_new(directory/"source_snapshot.json",snapshot)
+    snapshot, input_app, bound_hashes = _bind_study_inputs(app, directory, config_sha256)
     try:
         # Independent canonical store per case, retaining originals and all failure state.
         roots: dict[str,Path] = {}
@@ -424,7 +543,7 @@ def run_study(url: str, *, phase: str, enabled: bool, protocol: Path | None = No
             roots[case["case_id"]] = root
             with Database(root/"registry.sqlite") as database:
                 registry = Registry(database,OriginalStore(root/"originals"))
-                revision = _bootstrap(registry,case,index,backend,app)
+                revision = _bootstrap(registry,case,index,backend,input_app)
                 generations[case["case_id"]] = {"revision":revision,
                     "generation":registry.database.connection.execute("SELECT index_generation FROM document_revisions WHERE revision_id=?",(revision,)).fetchone()[0]}
         manifest = {"schema_version":"p08.1","study_id":identifier,"phase":phase,
@@ -452,6 +571,7 @@ def run_study(url: str, *, phase: str, enabled: bool, protocol: Path | None = No
             "randomness":{"order_seed":config["order_seed"],"repetitions":config["repetitions"],
                           "temperature":config["temperature"],"provider_seed":"UNAVAILABLE"},
             "budgets":{k:v for k,v in config.items() if k.startswith("run_max") or k.endswith("seconds")},
+            "evaluator_capabilities":evaluator_capabilities(), "consumed_input_sha256":bound_hashes,
             "treatments":arms,"created_at":datetime.now(timezone.utc).isoformat()}
         validate_run_manifest(manifest)
         _write_new(directory/"manifest.json",manifest)
@@ -465,7 +585,7 @@ def run_study(url: str, *, phase: str, enabled: bool, protocol: Path | None = No
             _clone_inputs(source_root,root)
             with Database(root/"registry.sqlite") as database:
                 registry = Registry(database,OriginalStore(root/"originals"))
-                row = asyncio.run(_observe(case,arm,repetition,root,index,registry,model,ranker,graph,app))
+                row = asyncio.run(_observe(case,arm,repetition,root,index,registry,model,ranker,graph,input_app))
                 _append(rows_path,row)
         _write_new(directory/"completion.json",{"manifest_sha256":canonical_digest(manifest),
             "rows_sha256":_sha(rows_path),"calls_sha256":_sha(directory/"calls.jsonl"),

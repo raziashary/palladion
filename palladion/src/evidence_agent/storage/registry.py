@@ -148,6 +148,71 @@ class Registry:
             is not None
         )
 
+    def provision_principal(self, actor: Principal, principal_id: str, grants: tuple[str, ...]) -> Principal:
+        """Admin maps a tenant-local subject key to an opaque actor; repeats never restore grants."""
+        if (not 1 <= len(principal_id) <= 100 or len(set(grants)) != len(grants)
+                or not set(grants).issubset(_GRANTS)):
+            raise ValidationFailure
+        # Caller supplies a tenant-local subject key, never a global account lookup.
+        principal_id = "usr_" + hashlib.sha256(
+            json.dumps([actor.tenant_id, principal_id], separators=(",", ":"), ensure_ascii=False).encode()
+        ).hexdigest()
+        with self.database.transaction() as connection:
+            self.access.authorize(actor, tenant_id=actor.tenant_id, role="admin", grant="document:approve")
+            if not set(grants).issubset(actor.grants):
+                raise PermissionDenied
+            existing = self.get_principal(principal_id)
+            if existing is not None:
+                # Original profile is an immutable creation request; current grants may
+                # be revoked. A repeat may read current access but cannot restore it.
+                original = connection.execute("SELECT profile_json FROM principals WHERE principal_id=?",
+                    (principal_id,)).fetchone()
+                profile = Principal.model_validate_json(original[0])
+                if (existing.tenant_id != actor.tenant_id or profile.roles != ("reader",)
+                        or set(profile.grants) != set(grants)):
+                    raise ResourceConflict
+                return existing
+            principal = Principal(principal_id=principal_id, tenant_id=actor.tenant_id,
+                roles=("reader",), grants=tuple(sorted(grants)))
+            connection.execute("INSERT INTO principals(principal_id,tenant_id,profile_json,created_at) VALUES (?,?,?,?)",
+                (principal_id, actor.tenant_id, principal.model_dump_json(), utc_now()))
+            connection.execute("INSERT INTO principal_roles(principal_id,role) VALUES (?,?)", (principal_id,"reader"))
+            connection.executemany("INSERT INTO principal_grants(principal_id,grant_name) VALUES (?,?)",
+                ((principal_id, grant) for grant in grants))
+            self._audit(connection, actor, "PRINCIPAL_PROVISIONED", {"principal_id":principal_id,"grants":",".join(grants)})
+        return self.access.authenticate(principal_id)
+
+    def provision_case(self, actor: Principal, case_id: str) -> None:
+        """Create one case with creator membership, never revive a prior membership."""
+        if not 1 <= len(case_id) <= 100:
+            raise ValidationFailure
+        with self.database.transaction() as connection:
+            self.access.authorize(actor, tenant_id=actor.tenant_id, role="admin", grant="document:approve")
+            cursor = connection.execute("INSERT OR IGNORE INTO cases(tenant_id,case_id,created_at) VALUES (?,?,?)",
+                (actor.tenant_id, case_id, utc_now()))
+            if cursor.rowcount:
+                connection.execute("INSERT INTO case_memberships(tenant_id,case_id,principal_id,granted_at) VALUES (?,?,?,?)",
+                    (actor.tenant_id,case_id,actor.principal_id,utc_now()))
+                self._audit(connection, actor, "CASE_PROVISIONED", {"case_id":case_id})
+            else:
+                self.access.authorize(actor, tenant_id=actor.tenant_id, case_id=case_id)
+
+    def provision_membership(self, actor: Principal, case_id: str, principal_id: str) -> bool:
+        """Return current membership; an idempotent create never reverses revocation."""
+        if not 1 <= len(case_id) <= 100 or not 1 <= len(principal_id) <= 100:
+            raise ValidationFailure
+        with self.database.transaction() as connection:
+            self.access.authorize(actor, tenant_id=actor.tenant_id, case_id=case_id,
+                role="admin", grant="document:approve")
+            target = self.get_principal(principal_id)
+            if target is None or target.tenant_id != actor.tenant_id:
+                raise PermissionDenied
+            cursor = connection.execute("INSERT OR IGNORE INTO case_memberships(tenant_id,case_id,principal_id,granted_at) VALUES (?,?,?,?)",
+                (actor.tenant_id,case_id,principal_id,utc_now()))
+            if cursor.rowcount:
+                self._audit(connection, actor, "MEMBERSHIP_PROVISIONED", {"case_id":case_id,"principal_id":principal_id})
+            return self.is_member(actor.tenant_id,case_id,principal_id)
+
     def revoke_grant(self, actor: Principal, principal_id: str, grant_name: str) -> None:
         """Revoke a persisted grant under a current synthetic administrator."""
         if grant_name not in _GRANTS:

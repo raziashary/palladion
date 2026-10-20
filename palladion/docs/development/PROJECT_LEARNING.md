@@ -1,6 +1,6 @@
 # Project learning and corrections
 
-Current checkpoint2026-10-20: P00–P08engineering work complete within the approved synthetic pilot boundary;98/98atomic cards and sole end-review resolution verified. P07 publishedf97471e; graph stays defaultoff. P08 outcomes are negative/inconclusive, semantic accuracy and unobserved candidate-stage metrics unknown. UI/enterprise writes/X01/benchmark-editor edits and a further main push remain excluded. Older dated snapshots are historical.
+Current checkpoint 2026-10-20: P09 audit and benchmark-handoff remediation ACTIVE. P00–P08 are historical completed pilot work (98 cards); independent reaudit identified and corrected gate/evaluation proof gaps; P09 remains active for PF03 performance acceptance. See evidence/P09_AUDIT_AND_HANDOFF.md and ADR-0087–0095; PF03 performance remains open after owner-rejected0091 closure; opaque IDs and opt-in5second audit reuse are approved and implemented. Benchmark implementation/editor work, UI and enterprise writes remain excluded; owner authorized a scoped verified main push.
 
 This records engineering/research learning, not runtime agent memory or company policy.
 An observation needs evidence; a conjecture is labeled. Never convert an untested idea
@@ -474,3 +474,66 @@ is preserved; those candidate-stage labels are withdrawn, not silently recompute
 missing ranks. Observed@4/packetMRR and unknown candidate metrics are explicit. Rank5,
 rank10, overflow and actual canonical four-item consumer guards verify the corrected
 boundary. No provider rerun or new quality claim repairs an invalid historical label.
+
+## L042 — Test the conjunction that can bypass a guard
+
+An incomplete-policy test remained partial because of its missing settlement field,
+masking absent critic review for RULE_REQUIREMENT. A complete real policy and independent
+absent/unavailable/stale/currentPASS cases reproduced3failures/1positive before the fix.
+Keep the known canonical requirement, qualify the release and test both together.
+
+## L043 — A constant status field cannot measure semantic behavior
+
+The gate always emits inventory_attested=false. Counting that value cannot establish
+that a model never asserted completeness. Withdraw the broader metric claim, retain
+raw history and add a defining final-consumer canary without claiming semantic accuracy.
+Likewise, separately green time/alias tests do not prove the complete old-SOP scenario.
+
+## L044 — Deadline ownership includes children and partial accounting
+
+Call-bound checks omit setup/indexing/scoring. Killing only the study process can leave
+its search children alive. Establish ownership before worker start, close the whole tree
+and join it. Interrupted log appends may contain partial UTF8/JSON; retain their bytes,
+mark accounting incomplete and leave unfinished usage unknown. A valid worker must still
+finish. Windows spawn tests must run from an importable file/module: invoking pytest.main
+from python stdin caused two harness failures, not deadline implementation failures.
+
+## L045 — Reuse the configured model cache in the new consumer
+
+Installed token-budget tests revealed the default module-relative tokenizer cache is a
+different directory from the server's configured model cache. Pass the index-owned cache
+to the tokenizer; verify wheel imports and canonical consumers, not just source tests.
+Measurements of batched coverage must disclose continuing linear work and an unmet
+scaling target even when the1000source comparison improves substantially.
+
+
+## L046 — Profile counts, wire bytes and elapsed time separately
+
+Gzip already operated in the default HTTP client. Explicit gzip reduced wire bytes but
+was not a new optimization. Bulk canonical reads reduced7006SQL statements to29, yet
+the five-repeat elapsed median did not improve under continuing host work. Do not turn
+an operation-count reduction into a latency claim. Preserve unchanged PF03 acceptance.
+
+## L047 — A batch-size bound is not an aggregate memory bound
+
+The independent end reviewer caught that64revisions per SQL batch still allowed an
+unbounded number of canonical chunks across10000sources. Stream and count rows, bound
+the aggregate result, and fail/degrade explicitly. Physical batching also needs an
+aggregate bound in addition to each adapter call's own limit.
+
+
+## L048 — Cache benefit is conditional and expiry is an observation
+
+Warm-only timing suggested broad benefit. Balanced HTTP observations retained expiry
+misses and showed small-case overhead even while1000-source requests improved. A driver
+asserting every request after a warmup must HIT failed correctly near expiry; record the
+miss rather than refreshing/retrying it away. Preserve original audit-start age, fresh
+canonical authorization and default-fresh behavior; PF03 remains open under owner direction.
+
+
+## L049 — A full-file read command is not full review when output truncates
+
+The cache pre-adversary's initial Get-Content-Raw result truncated. On explicit receipt
+verification the reviewer acknowledged incomplete coverage and reread all1784lines in
+six contiguous chunks, finding no additional premise change. Preserve the chronological
+lapse; never convert command intent into a claim that every section was actually read.

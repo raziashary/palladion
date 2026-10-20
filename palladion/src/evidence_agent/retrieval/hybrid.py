@@ -4,7 +4,7 @@ from __future__ import annotations
 import time
 import uuid
 from datetime import datetime
-from typing import Literal, Protocol, Sequence
+from typing import Any, Literal, Protocol, Sequence
 
 from evidence_agent.core.errors import DependencyUnavailable, PermissionDenied, ResourceConflict
 from evidence_agent.core.models import Principal, VersionedModel
@@ -35,6 +35,7 @@ class SearchResult(VersionedModel):
     stage_counts: dict[str, int]
     elapsed_ms: float
     graph_paths: tuple[GraphPath, ...] = ()
+    evidence_budget: dict[str, Any] | None = None
 
 
 class HybridSearch:
@@ -52,9 +53,15 @@ class HybridSearch:
                mode: Literal["lexical", "dense", "hybrid", "reranked"] = "hybrid",
                limit: int = 12, as_of: datetime | None = None,
                require_graph: bool = False,
+               token_budget: int | None = None,
+               reuse_physical_audit: bool = False,
                evaluator_candidates: tuple[Candidate, ...] | None = None) -> SearchResult:
-        if not query.strip() or len(query) > 2048 or not 1 <= limit <= 12:
+        if not query.strip() or len(query) > 2048 or not 1 <= limit <= 40:
             raise ValueError("Search bounds exceeded")
+        if as_of is not None and (as_of.tzinfo is None or as_of.utcoffset() is None):
+            raise ValueError("Document cutoff must be timezone-aware")
+        if token_budget is not None and not 1 <= token_budget <= 65536:
+            raise ValueError("Token budget bounds exceeded")
         self.registry.access.authorize(principal, tenant_id=principal.tenant_id,
                                        case_id=case_id, grant="source:read")
         started = time.perf_counter()
@@ -70,6 +77,8 @@ class HybridSearch:
         except DependencyUnavailable:
             warnings.append("INDEX_UNAVAILABLE")
         exact_ids = self.exact.lookup(principal, case_id, query)
+        if self.exact.truncated:
+            warnings.append("EXACT_CANDIDATES_TRUNCATED")
         # A recognized but unknown structured code cannot silently return a near identifier.
         if self.exact.identifiers(query) and not exact_ids:
             warnings.append("EXACT_IDENTIFIER_NOT_FOUND")
@@ -134,7 +143,28 @@ class HybridSearch:
         # Recheck again at release, including references fetched before a mid-request revocation.
         selected = [self.resolver.resolve(principal, case_id, p.citation_id,
                                          generation=p.generation, as_of=as_of) for p in selected]
-        coverage = source_coverage(self.registry, principal, case_id, self.index)
+        budget_info = None
+        if token_budget is not None:
+            from evidence_agent.retrieval.embeddings import PassageTokenizer
+            tokenizer = PassageTokenizer(cache_dir=getattr(self.index, "model_cache_dir", None))
+            kept: list[Passage] = []
+            used = 0
+            for passage in selected:
+                count = tokenizer.count("\n\n".join(p.text for p in (*kept, passage)))
+                if count > token_budget:
+                    break  # Ranked prefix only; never rewrite canonical text/spans.
+                kept.append(passage)
+                used = count
+            budget_info = {"limit_tokens": token_budget, "used_tokens": used,
+                "requested_limit": limit, "available_passages": len(selected),
+                "returned_passages": len(kept), "truncated": len(kept) < len(selected),
+                "tokenizer": tokenizer.manifest, "separator": "\n\n", "special_tokens": False}
+            selected = kept
+            returned = {p.citation_id for p in selected}
+            graph_paths = tuple(p for p in graph_paths if p.target_chunk_id in returned
+                and set(p.evidence_ids).issubset(returned))
+        coverage = source_coverage(self.registry, principal, case_id, self.index, as_of=as_of,
+                                   reuse_physical_audit=reuse_physical_audit)
         warnings.extend(coverage.warnings)
         elapsed = (time.perf_counter() - started) * 1000
         stages = {"discovered": len(candidates), "resolved": resolved_count,
@@ -156,4 +186,5 @@ class HybridSearch:
                                         "GRAPH_REQUIRED_UNAVAILABLE" in warnings) else "DEGRADED"
         return SearchResult(trace_id=trace_id, status=status, mode=mode, passages=tuple(selected),
                             coverage=coverage, warnings=tuple(dict.fromkeys(warnings)),
-                            stage_counts=stages, elapsed_ms=elapsed,graph_paths=graph_paths)
+                            stage_counts=stages, elapsed_ms=elapsed,graph_paths=graph_paths,
+                            evidence_budget=budget_info)

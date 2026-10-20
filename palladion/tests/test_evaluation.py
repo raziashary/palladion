@@ -114,6 +114,7 @@ def test_p08_replay_binds_actual_plan_outputs_calls_and_source_snapshot(tmp_path
     (tmp_path/"completion.json").write_text(json.dumps(completion),encoding="utf-8")
     replay = replay_study(tmp_path)
     assert replay["rows"]==1
+    assert replay["configuration_binding"]["adapters_yaml_bound"] is False
     assert replay["retrieval_measurement_limits"]["candidate_stage_metrics"] is None
     assert replay["retrieval_measurement_limits"]["legacy_cutoffs_withdrawn"] == [5, 10, 20]
     (tmp_path/"source_snapshot.json").write_text('{}',encoding="utf-8")
@@ -154,6 +155,7 @@ def test_p08_actual_observation_keeps_model_evidence_packet_at_four(tmp_path):
     from evidence_agent.evaluation.study import _observe
     from evidence_agent.ingest.pipeline import IngestPipeline
     from evidence_agent.retrieval.rerank import FastEmbedReranker
+
     from .test_pipeline import MemoryIndex, _setup
 
     database, registry, catalog, uploader, _, _ = _setup(tmp_path)
@@ -367,3 +369,102 @@ def test_critic_discovery_smoke_rejects_presupplied_and_unreviewed_sources():
     assert not module.critic_discovered_revision([[source],[source]],"appendix-revision")
     assert not module.critic_discovered_revision([[]],"appendix-revision")
     assert not module.critic_discovered_revision([],"appendix-revision")
+
+
+def _blocking_study_worker(pipe, arguments):
+    import json
+    import subprocess
+    import sys
+    import time
+    from pathlib import Path
+    root = Path(arguments["root"])
+    child = subprocess.Popen([sys.executable, "-c", "import time;time.sleep(120)"])
+    (root/"child_pid").write_text(str(child.pid))
+    (root/"calls.jsonl").write_text(json.dumps({"number":1,"event":"STARTED","usage":None})+"\n")
+    if arguments.get("partial"):
+        with (root/"calls.jsonl").open("ab") as stream:
+            stream.write(b'\xff{"unfinished')
+    time.sleep(120)
+
+
+def _finished_study_worker(pipe, arguments):
+    pipe.send({"result":{"completed":True}})
+    pipe.close()
+
+
+@pytest.mark.parametrize("partial", [False, True])
+def test_whole_study_deadline_joins_tree_and_retains_unknown_attempt(tmp_path, partial):
+    import ctypes
+    import json
+    import os
+    import time
+
+    from evidence_agent.evaluation.study import _bounded_study, replay_study
+    started = time.monotonic()
+    with pytest.raises(TimeoutError):
+        _bounded_study({"root":str(tmp_path), "partial":partial}, tmp_path, 8, _blocking_study_worker)
+    assert time.monotonic()-started < 15
+    report = json.loads((tmp_path/"termination.json").read_text())
+    assert report["worker_joined"] is True and report["unfinished_attempt_numbers"] == [1]
+    assert report["unfinished_usage"] is None and report["completed"] is False
+    assert report["invalid_partial_lines"] == int(partial)
+    assert report["attempt_accounting_complete"] is not partial
+    pid = int((tmp_path/"child_pid").read_text())
+    if os.name == "nt":
+        kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+        kernel.OpenProcess.restype = ctypes.c_void_p
+        kernel.WaitForSingleObject.argtypes = [ctypes.c_void_p, ctypes.c_ulong]
+        kernel.CloseHandle.argtypes = [ctypes.c_void_p]
+        handle = kernel.OpenProcess(0x00100000, False, pid)
+        if handle:
+            try:
+                assert kernel.WaitForSingleObject(handle, 5000) == 0
+            finally:
+                kernel.CloseHandle(handle)
+    with pytest.raises(ValueError, match="Terminated"):
+        replay_study(tmp_path)
+
+
+def test_whole_study_valid_worker_completes_without_termination(tmp_path):
+    from evidence_agent.evaluation.study import _bounded_study
+    assert _bounded_study({}, tmp_path, 15, _finished_study_worker) == {"completed":True}
+    assert not (tmp_path/"termination.json").exists()
+
+
+def test_bound_study_configuration_is_consumed_byte_for_byte(tmp_path):
+    import hashlib
+    import json
+    from pathlib import Path
+
+    from evidence_agent.core.evaluation import canonical_digest
+    from evidence_agent.core.fixtures import load_fixtures
+    from evidence_agent.evaluation.study import _bind_study_inputs
+    from evidence_agent.live.gateway import load_config
+    app = Path(__file__).resolve().parents[1]
+    config = json.loads((app/"data/demo/p08_study.json").read_text(encoding="utf-8"))
+    snapshot, bound, hashes = _bind_study_inputs(app,tmp_path,canonical_digest(config))
+    assert load_fixtures(bound).summary() == load_fixtures(app).summary()
+    assert load_config(bound/"config/adapters.yaml") == load_config(app/"config/adapters.yaml")
+    for name in ("config/adapters.yaml", "config/policies/demo_reversal_v2.json", "data/demo/goldens.jsonl"):
+        assert (bound/name).read_bytes() == (app/name).read_bytes() == snapshot[name].encode("utf-8")
+        assert hashes[name] == hashlib.sha256((bound/name).read_bytes()).hexdigest()
+    assert not any(".env" in name for name in snapshot)
+    assert not (bound/".env").exists()
+
+
+def test_evaluator_capability_cli_is_read_only_and_boundaries_remain_mandatory():
+    import json
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    from evidence_agent.agent.experiments import evaluator_capabilities
+    app = Path(__file__).resolve().parents[1]
+    result = subprocess.run([sys.executable,str(app/"scripts/evaluate.py"),"--capabilities"],
+        capture_output=True,text=True,check=True)
+    actual = json.loads(result.stdout)
+    assert actual == evaluator_capabilities()
+    assert actual["serving_bypass_supported"] is False
+    assert len(actual["arms"]) == 11
+    assert "final gate retained" in actual["arms"]["B5"]
+    assert set(actual["unsupported_controls"].values()) == {"FEATURE_NOT_SUPPORTED"}

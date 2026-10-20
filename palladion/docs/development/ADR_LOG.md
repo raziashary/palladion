@@ -1565,3 +1565,154 @@ reviewer resolution verified at E-P08-003. Acceptance never means positive hypot
 or availability of missing stage/semantic measurements. Initial pending verification
 statements in dated entries describe their decision-time state; this index records
 completed engineering proof and retained research limits.
+
+## ADR-0087 — Scoped retrieval handoff contracts (PF01–PF04)
+
+**Status:** ACCEPTED by owner, 2026-10-20; verification pending.
+**Authority:** Owner requests Part B handoff fixes; Rule4 requires concrete contract approval.
+**Question:** May search expose historical document cutoffs, approval-owned identifiers, batched physical coverage and optional larger/token-budgeted HTTP results?
+**Why:** HTTP loses existing core as_of; normal uploads lack aliases; coverage stops at100 sources and performs one backend read per source; callers cannot request a measured evidence budget.
+**Options:** Keep current limits; add scoped optional contracts; or weaken canonical checks (rejected).
+**Recommendation:** Optional timezone-aware document as_of with matching citation readback, preserving current approval/ACL/revocation checks. Approval owner registers bounded family/revision/identifier aliases. Reconcile coverage in bounded physical batches with explicit truncation/outage status. HTTP default12/max40, tool max12 unchanged. Optional whole-passage budget uses the pinned retrieval tokenizer with truncation disabled, exposes identity/count and preserves exact source spans; declare already-installed tokenizers0.23.3 as direct dependency if used. No provider-token/billing equivalence, schema migration or default tokenizer work.
+**What affects what:** api/schemas.py, api/routes.py, storage/catalog.py, storage/exact.py, storage/qdrant.py, retrieval/coverage.py, retrieval/hybrid.py, retrieval/embeddings.py, ingestion approval consumer, pyproject.toml/uv.lock and owning API/ingest/retrieval tests. Four tools and trusted policy event-time selection unchanged.
+**My answer (editable):** Owner explicitly approved the recommendation, 2026-10-20.
+**Verification:** Before closure: HTTP historical/current/naive/revocation controls, upload→approve→exact-search→citation proof, physical missing/hash/outage/truncation controls beyond100sources, measured batch comparison, default/40/budget/tokenizer/span controls. Not verified yet.
+
+## ADR-0088 — Admin-owned synthetic provisioning (PF05)
+
+**Status:** ACCEPTED by owner, 2026-10-20; verification pending.
+**Authority:** Rule4 new authorization and API contracts.
+**Question:** May existing tenant admins create non-admin principals, cases and case memberships through authenticated APIs?
+**Why:** Trusted seed helpers are not a public provisioning contract; benchmark needs isolated nonprivileged actors without direct SQLite mutation.
+**Options:** Continue operator-only fixture provisioning; add bounded scoped admin operations; expose bootstrap helpers directly (rejected).
+**Recommendation:** Existing current tenant admins only, current authorization rechecked in the write transaction. New principals non-admin, grants allowlisted and bounded by issuer grants. Case membership writes require current admin membership in the case. No tenant creation, bearer-token minting or role escalation. Existing conflicting identity returns409; idempotent repeats never restore revoked grants/memberships. Original source ACL remains independently required.
+**What affects what:** storage/registry.py, api/schemas.py, api/routes.py and authorization/API tests; existing storage tables, no migration or credential dispatch.
+**My answer (editable):** Owner explicitly approved the recommendation, 2026-10-20.
+**Verification:** Positive scoped creation and reopen/readback; cross-tenant/non-admin/stale actor/overgrant/collision/revocation-negative controls; no token values in response/audit. Not verified yet.
+
+## ADR-0089 — Preserve serving invariants in ablation handoff (PF06)
+
+**Status:** ACCEPTED by owner, 2026-10-20; verification pending.
+**Authority:** Blueprint locked decisions, four tools and deterministic canonical authority.
+**Question:** Should PF06 expose only safe existing evaluator controls, rather than serving flags that remove integrity boundaries?
+**Why:** The handoff predates the implemented critic. B4/B5 already omit critic in isolated experiments but retain the final gate. Generic switches disabling gate/parser/source/time/preflight would contradict the vision.
+**Options:** Document supported isolated controls and explicit unsupported ablations; or separately design a raw non-serving research harness after further approval.
+**Recommendation:** First option. Publish capability matrix and configuration/status evidence for actual evaluator switches; no general serving bypasses. Mark unsupported dangerous ablations FEATURE_NOT_SUPPORTED, never pretend they ran. Main/critic/model/attempt accounting remains explicit.
+**What affects what:** agent/experiments.py, evaluation/study.py, evaluator tests and Palladion documentation. No benchmark edits, new tool or serving default change.
+**My answer (editable):** Owner explicitly approved the recommendation, 2026-10-20.
+**Verification:** Default gate/authority/preflight behavior unchanged, supported controls consumed by actual isolated runner, unsupported controls explicitly rejected. Not verified yet.
+
+## ADR-0090 — Correct gate and evaluation proof gaps from independent reaudit
+
+**Status:** ACCEPTED owning defect corrections, 2026-10-20; implementation/proof pending.
+**Authority:** Existing mandatory critic, hard deadline, reproducibility and honest-measurement contracts; Rule5.
+**Question:** Can existing guarantees be marked complete with missing conjunction tests, a constant completeness flag and call-only deadline checks?
+**Why:** Five-agent reaudit identified a normative requirement bypass, whole-run deadline gap, missing consumed configuration snapshot and incomplete T01/T12 consumer proof.
+**Options:** Preserve historical artifacts while fixing owning producers/readers and adding defining controls; or overclaim from the old green suite (rejected).
+**Recommendation:** Requirements remain visible canonical facts, but absent/stale/unavailable critic forces qualified release. Add whole-lifecycle cancellation/accounting and exact consumed configuration binding for future studies. Keep frozen artifacts unchanged with explicit legacy limitations. Add old-SOP/current-policy/final-gate and final completeness-canary controls. Withdraw semantic completeness inference from inventory_attested=false; semantic accuracy stays unknown.
+**What affects what:** agent/gate.py, evaluation/study.py, core/evaluation.py, evaluation runner, test_gate.py/test_evaluation.py/test_end_to_end.py, p08_integrity_controls.json and derived public evidence/docs. No new model call or source authority.
+**My answer (editable):** Coordinator fixes violations of existing documented promises; any necessary new shipped interaction contract is escalated before implementation.
+**Verification:** Baseline362PASS/28SKIP does not cover these conjunctions. Defining negative controls must fail before fixes and pass after; valid reviewed policy and scoped uncertainty stay valid. Pending.
+
+P09 implementation detail for ADR0090: evaluation/process_owner.py owns a Windows
+kill-on-close Job Object (POSIX private process group on other systems). A start event
+prevents the study worker spawning descendants before assignment. Parent closes the
+owned tree and joins on deadline/interruption; STARTED rows without FINISHED remain
+unknown in a separate termination.json, not fabricated provider responses. Windows
+nested-child termination and successful-worker positive controls pass. New study readers
+consume copied bound_inputs config/fixtures; source_snapshot retains their exactUTF8bytes
+and hashes. No credentials enter that snapshot, no raw legacy artifact is rewritten.
+
+## ADR-0091 — Report measured coverage scaling without hiding physical drift
+
+**Status:** OWNER REJECTS CLOSURE, 2026-10-20; further performance work authorized.
+**Authority:** PF03 proof target and Rule4 prohibition on silently narrowing acceptance.
+**Question:** May PF03 close with measured bounded linear reconciliation, retaining its unmet small-multiple scaling target as a disclosed limitation?
+**Why:** Current real local Qdrant measurements:10sources single0.160861s/10requests versus batch0.0130005s/1request;1000sources single10.511018s/1000requests versus batch0.556804s/16requests. Full physical coverage passes without truncation/degradation. Batch1000 is18.9times faster than single1000, but42.8times batch10, so the proposed small-multiple scaling target is not met. One observation per condition with other local work running is not a latency distribution or capacity result.
+**Options:** Accept this measured linear-cost contract now; or design further freshness/caching/async reconciliation semantics and their stale-drift risks before PF03 closure.
+**Recommendation:** Accept bounded linear verification with explicit measurements and retained limitation. Avoid inventing constant-cost coverage, disabling integrity checks or claiming the original latency target passed. Further architecture needs a separate approved task.
+**What affects what:** PF03 handoff status, P09-T02.03 acceptance/evidence and performance claims only; current authorized batch implementation, physical drift checks and defaults unchanged.
+**My answer (editable):** Owner: keep PF03 open, explore faster processing, including lossless gzip or other evidenced options. Original closure proposal rejected; do not waive the target.
+**Verification:** runtime/p09-coverage-measure.json and full log; synthetic deterministic3D encoder, real Qdrant transport, identical canonical sources, fresh UUID collection removed in finally. Await owner disposition; no target silently waived.
+
+## ADR-0092 — Close the provisioning identity-existence oracle
+
+**Status:** ACCEPTED by explicit owner answer, 2026-10-20; implementation/proof pending.
+**Authority:** P09 reviewer confirms cross-tenant identifier existence disclosure; Rule4 identity/API contract.
+**Question:** May PF05 treat the submitted principal_id as a tenant-local subject key and return a deterministic tenant-bound opaque canonical principal_id?
+**Why:** The approved prototype accepts globally keyed caller IDs. A tenant admin distinguishes another tenant's existing ID (409) from an unused ID (successful create). The error body cannot remove that oracle; this reveals identifier existence, not target data or grants.
+**Options:** Accept that limited synthetic-pilot disclosure; or derive a new non-admin canonical ID from SHA256(tenant_id plus unambiguous delimiter plus submitted local key), returning it for memberships/source ACLs/operator token mapping. Existing bootstrap IDs and authentication stay unchanged.
+**Recommendation:** Derive tenant-bound opaque IDs. The same tenant/key remains idempotent, another tenant gets a different ID, and callers use the returned canonical ID for subsequent operations. Preserve grant/role/issuer/current-case/revocation controls and conflicting same-subject grant-request409. No schema migration, stored alias map, token minting or admin creation.
+**What affects what:** New PF05 provision_principal request semantics/returned ID, registry handler, API/provisioning/ACL tests and documentation; existing principal IDs, readers and bearer mapping contract unchanged.
+**My answer (editable):** Owner approves tenant-bound opaque IDs, 2026-10-20.
+**Verification:** Reviewer traced global get_principal to409 versus creation200. Add same-local-key/different-tenant separation, existing foreign-ID string as local key, returned-ID memberships/ACL and revocation/idempotence controls. Do not claim fixed before approval and execution.
+
+P09 owning correction under ADR0087: newly automatic family aliases expose the existing
+unbounded exact-discovery reader at scale. Keep direct Catalog.lookup_alias compatibility,
+but give the search lane an explicit100candidate window plus sentinel, current ACL before
+cut and EXACT_CANDIDATES_TRUNCATED disclosure. This reuses the existing100candidate
+investigation boundary rather than claiming exhaustive discovery. Canonical source/time
+resolution remains mandatory. Defining101alias and authorized-after-private controls
+are required before closure; no unknown-code fuzzy substitution.
+
+## ADR-0093 — Recheck exact-alias write authority inside its transaction
+
+**Status:** ACCEPTED owning authorization-race correction, 2026-10-20.
+**Authority:** Existing current-admin document:approve alias contract; Rule5 in-scope defect.
+**Question:** Can alias insertion use an authorization check completed before its write transaction starts?
+**Why:** Catalog.add_alias previously checked source/approval/role/grants before BEGIN; revocation between that check and the write could persist a discovery alias under stale authority. Canonical readers still prevent source-content disclosure, but the metadata writer violates its current-authority promise.
+**Options:** Keep the race (rejected); move existing checks into the owning SQLite transaction.
+**Recommendation:** Recheck current actor, case, source approval/ACL and chunk existence within the write transaction. Automatic registration validates all bounded alias plans before its first write, so a later deterministic chunk/identifier bound cannot leave a partial alias set. Transient write failures remain idempotently retryable.
+**What affects what:** storage/catalog.py add_alias, storage/exact.py approval planner and focused test_pipeline guard. No new authorization rule, API/default/schema/dependency or authority bypass.
+**My answer (editable):** Coordinator corrects existing promised current authorization at its owning writer.
+**Verification:** Add a deterministic revocation at transaction entry; prior writer must insert incorrectly, corrected writer must deny with zero alias rows; valid approval/readback continues to pass. Pending.
+
+
+## ADR-0094 — Remove repeated canonical coverage authorization queries
+
+**Status:** ACCEPTED bounded owning optimization, 2026-10-20; target still open.
+**Authority:** Owner request to keep PF03 open and explore faster lossless processing; approved bounded batching ADR0087.
+**Question:** Which measured cost can be reduced while retaining physical drift detection and current canonical authorization?
+**Why:** Profiled1000-source REST identity/gzip samples execute7006 SQLite statements. Gzip reduces wire bytes from5438862 to1698216, but does not eliminate per-source manifest authorization queries. Three-repeat REST/gRPC medians1000 are0.6165/0.5763s, insufficient evidence for changing transport defaults.
+**Options:** Batch existing canonical manifest reads; change transport; add stale caches or omit physical vectors (not authorized).
+**Recommendation:** Batch canonical manifests in their Catalog owner, with current principal/case/source ACL revalidation after physical readback and exact generation matching. Use existing short SQLite transaction and bounded64-source SQL batches; no network under the transaction. Keep physical batch/page bounds, compression negotiation and serving defaults unchanged. Measure paired10/1000 sources before judging the unchanged target.
+**What affects what:** Catalog and source_coverage internal reader, focused SQL-count/drift/revocation tests, P09-T02.05 and retained measurement evidence. No schema, dependency, public API, permission rule, transport setting or cache.
+**My answer (editable):** Coordinator implements an internal optimization of the approved batch reader; any new architecture or acceptance change still needs owner direction.
+**Verification:** Pending defining controls and repeated real-Qdrant measurements. PF03 stays open until its original performance obligation is resolved.
+
+
+## ADR-0095 — Optional bounded physical-audit reuse, pending owner direction
+
+**Status:** ACCEPTED by owner, 2026-10-20; implementation and benefit proof pending.
+**Authority:** Rule4 interaction/freshness contract; owner rejected ADR0091 closure.
+**Question:** May an explicitly opted-in mode reuse a physical audit for up to5seconds while strict fresh readback remains default?
+**Why:** Lossless gzip already operates by default. SQL batching removes repeated authorization queries but full vector transfer/validation still scales with physical contents. Larger batches and gRPC do not prove the original small-multiple target.
+**Options:** Keep strict fresh validation and PF03 open; or approve bounded explicitly enabled reuse with a disclosed5second physical-corruption detection window.
+**Recommendation:** Preserve strict default. If reuse is chosen, first specify bounded derived storage, exact tenant/case/generation/representation/canonical-manifest keys, current per-request ACL/approval/validity checks, expiry/invalidation and visible physical verification timestamps/cache status. Benchmark must name the opted-in mode. No cache implementation or target success follows from this proposal alone.
+**What affects what:** Potential coverage reader and response metadata, derived storage lifecycle, concurrent readers and benchmark interpretation; no source or gate authority bypass. Exact implementation cards/proof must precede dependent work after approval.
+**My answer (editable):** Owner: do the5second audit cache, but if it worsens things leave PF03 open. Explicit approval received before implementation.
+**Verification:** Future implementation must prove cache hit/expiry/changed generation/revocation/corruption window/bounds and consumer disclosure, then repeated paired scale measurements. Current PF03 remains open.
+
+
+ADR0095 concrete implementation contract: HTTP reuse_physical_audit defaultsfalse;
+HybridSearch and source_coverage pass the explicit flag; four domain tools have no
+cache flag. Separate .coverage-cache.sqlite sidecar contains only SHA256keys and
+wall/monotonic timestamps, at most32records and1MiB database (SQLite journal separately
+bounded by database size). Key binds tenant/principal/case/backend endpoint/collection/
+representation plus exact current canonical manifests. Current canonical checks run
+before lookup and after physical/cache read; mismatch fails healthy coverage. Only
+complete healthy physical audits finishing within5seconds of their start are reused;
+hits never extend expiry. Both wall and monotonic ages must be0..5seconds. Busy,
+malformed, oversized or unsupported caches fall back to fresh validation with visible
+UNAVAILABLE. Responses expose physical_audit_mode, physical_verified_at and cache status.
+No source text/vectors/secrets stored; no registry migration. Canonical/physical aggregate
+100000chunk bounds apply. Timing improvement must be measured, not presumed.
+
+
+P09 verification update (E-P09-003/004): ADR0087/0088/0089 approved mechanisms and
+ADR0090/0092/0093 owning corrections have current source and isolated installed/HTTP
+proof. ADR0094 SQL count improvement is measured, elapsed improvement not established.
+ADR0095 bounded opt-in cache guards and actual HTTP/real-Qdrant consumer proof pass;
+large-case benefit and small-case overhead are both retained. ADR0091 original PF03
+acceptance remains OPEN in P09-T02.07, with no owner waiver. These dated updates
+supersede earlier pending verification prose without deleting the original chronology.

@@ -249,3 +249,25 @@ def test_delayed_generation_cannot_publish_over_newer_staged_generation(tmp_path
     assert catalog.reconcile(uploader, revision, newer, readback)
     assert catalog.eligible_generation_metadata(uploader, revision)["generation"] == newer
     database.close()
+
+
+def test_exact_alias_write_rechecks_revocation_inside_transaction(tmp_path, monkeypatch):
+    from contextlib import contextmanager
+    database, registry, catalog, uploader, revision, _ = _setup(tmp_path)
+    try:
+        IngestPipeline(catalog,MemoryIndex()).index(uploader,revision)
+        actor = registry.access.authenticate("approver")
+        chunk = catalog.chunks_for_revision(actor,revision)[0]
+        original = database.transaction
+        @contextmanager
+        def revoke_before_begin():
+            monkeypatch.setattr(database,"transaction",original)
+            registry.revoke_grant(actor,"approver","document:approve")
+            with original() as connection:
+                yield connection
+        monkeypatch.setattr(database,"transaction",revoke_before_begin)
+        with pytest.raises(PermissionDenied):
+            catalog.add_alias(actor,"RACE-GUARD",revision,chunk.chunk_id)
+        assert not database.connection.execute("SELECT 1 FROM exact_aliases WHERE alias='RACE-GUARD'").fetchall()
+    finally:
+        database.close()

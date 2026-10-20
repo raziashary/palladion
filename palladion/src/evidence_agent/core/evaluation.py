@@ -138,6 +138,8 @@ def score_critic_output(output: Mapping[str, object], *, frozen_hash: str,
         "mechanical_invalid_associations_detected": sorted({str(f["claim_id"]) for f in objections
             if f.get("claim_id") in known_invalid_claim_ids}),
         "inventory_attested": output.get("inventory_attested"),
+        "inventory_attested_measurement": "TELEMETRY_CONTRACT_ONLY",
+        "unadjudicated_completeness_assertion_accuracy": None,
         "unadjudicated_semantic_correction": None, "unadjudicated_semantic_false_veto": None,
         "verification_failure_count": len(failures) if isinstance(failures, list) else None}
 

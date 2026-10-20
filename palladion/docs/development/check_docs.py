@@ -92,8 +92,10 @@ def validate_atomic_register(plan: str, vision: str, parents: set[str]) -> list[
         if not files:
             errors.append(f"{ident}: no exact owning file paths")
         for path in files:
-            root_doc = ident.startswith("P00-") and path in {"README.md", ".gitignore"}
-            if ".." in Path(path).parts or not (path.startswith("palladion/") or path == "AGENTS.md" or root_doc):
+            root_doc = (ident.startswith("P00-") and path in {"README.md", ".gitignore"}) or (
+                ident == "P09-T05.01" and path == "README.md")
+            handoff_doc = ident == "P09-T05.01" and path == "palladion-benchmark/docs/development/PALLADION_FIXES.md"
+            if ".." in Path(path).parts or not (path.startswith("palladion/") or path == "AGENTS.md" or root_doc or handoff_doc):
                 errors.append(f"{ident}: owning file outside planned project scope: {path}")
             owned_files.add(path)
         if not re.match(r"(?:DOC|UNIT|INTEGRATION|SMOKE|MEASUREMENT);", fields["Proof"]):
@@ -290,6 +292,9 @@ def self_test(documents: dict[str, str]) -> int:
         "runtime task owning root navigation": (plan_key, plan.replace(
             "`palladion/.gitignore`, `palladion/.gitattributes`, `palladion/pyproject.toml`",
             "`README.md`, `palladion/.gitattributes`, `palladion/pyproject.toml`", 1)),
+        "handoff exception cannot own benchmark code": (plan_key, plan.replace(
+            "`palladion-benchmark/docs/development/PALLADION_FIXES.md`",
+            "`palladion-benchmark/benchmark/track_b.py`", 1)),
     }
     for label, (path, replacement) in mutations.items():
         altered = dict(documents)

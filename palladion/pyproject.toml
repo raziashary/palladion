@@ -19,6 +19,7 @@ dependencies = [
     "qdrant-client==1.19.1",
     "sqlite-vec==0.1.9",
     "starlette==1.8.0",
+    "tokenizers==0.23.3",
     "uvicorn==0.54.0",
 ]
 

@@ -10,6 +10,7 @@ import uuid
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Any, Callable, Literal, TypeVar
+from urllib.parse import urlsplit
 
 from qdrant_client import QdrantClient, models
 from qdrant_client.http.exceptions import ResponseHandlingException, UnexpectedResponse
@@ -77,6 +78,7 @@ class QdrantIndex:
         if not collection_name:
             raise ValueError("collection_name must not be empty")
         self.collection_name = collection_name
+        self.model_cache_dir = None if model_cache_dir is None else Path(model_cache_dir)
         # Non-secret reconstruction parameters for the approved runtime search worker.
         self.worker_configuration = None if client is not None or encoder is not None else {
             "url": url, "collection_name": collection_name,
@@ -107,6 +109,27 @@ class QdrantIndex:
             if error.status_code is not None and (error.status_code in {408,429} or error.status_code >= 500):
                 raise DependencyUnavailable() from error
             raise
+
+    @property
+    def audit_cache_identity(self) -> str | None:
+        """Identify a validated remote SDK endpoint without credentials or reprs.
+
+        Custom clients and local/in-memory backends cannot share physical-audit rows.
+        A supplied encoder remains bound through the exact representation fingerprint.
+        """
+        if type(self._client) is not QdrantClient:
+            return None
+        options = self._client.init_options
+        url = options.get("url")
+        if not isinstance(url, str):
+            return None
+        parsed = urlsplit(url)
+        if (parsed.scheme not in {"http", "https"} or not parsed.hostname
+                or parsed.username or parsed.password or parsed.query or parsed.fragment):
+            return None
+        return _hash_json({"endpoint": [parsed.scheme, parsed.hostname, parsed.port,
+            parsed.path, options.get("port"), options.get("grpc_port"), options.get("prefix")],
+            "collection": self.collection_name, "representation": self.fingerprint})
 
     @property
     def fingerprint(self) -> str:
@@ -268,18 +291,30 @@ class QdrantIndex:
     def readback(self, tenant_id: str, revision_id: str, generation: str) -> dict[str, str]:
         if not tenant_id or not revision_id or not generation:
             raise ValueError("tenant_id, revision_id and generation are required")
-        query_filter = models.Filter(
-            must=[
-                models.FieldCondition(key="tenant_id", match=models.MatchValue(value=tenant_id)),
-                models.FieldCondition(key="revision_id", match=models.MatchValue(value=revision_id)),
-                models.FieldCondition(
-                    key="index_generation", match=models.MatchValue(value=generation)
-                ),
-            ]
-        )
+        groups = self.readback_many(tenant_id, {revision_id: generation})
+        return groups.get((revision_id, generation), {})
+
+    def readback_many(self, tenant_id: str, revisions: dict[str, str]) -> dict[tuple[str, str], dict[str, str]]:
+        """Read up to64 requested generations in one bounded physical scroll.
+
+        Validates the same vectors/fingerprints/hashes as single-generation readback.
+        Caller owns batching; no cache hides physical drift after publication.
+        """
+        if not tenant_id or not revisions or len(revisions) > 64 or any(
+                not revision or not generation for revision, generation in revisions.items()):
+            raise ValueError("Physical readback batch bounds exceeded")
+        query_filter = models.Filter(must=[
+            models.FieldCondition(key="tenant_id", match=models.MatchValue(value=tenant_id)),
+            models.Filter(should=[models.Filter(must=[
+                models.FieldCondition(key="revision_id", match=models.MatchValue(value=revision)),
+                models.FieldCondition(key="index_generation", match=models.MatchValue(value=generation)),
+            ]) for revision, generation in revisions.items()]),
+        ])
         expected_fingerprint = self.fingerprint
-        result: dict[str, str] = {}
+        result: dict[tuple[str, str], dict[str, str]] = {}
         offset: Any = None
+        seen_offsets: set[str] = set()
+        scanned = 0
         while True:
             records, offset = self._call_qdrant(
                 self._client.scroll,
@@ -292,11 +327,13 @@ class QdrantIndex:
             )
             for point in records:
                 payload = point.payload or {}
-                if (
-                    payload.get("tenant_id") != tenant_id
-                    or payload.get("revision_id") != revision_id
-                    or payload.get("index_generation") != generation
-                ):
+                scanned += 1
+                if scanned > 100000:
+                    raise IndexConsistencyError("physical readback point bound exceeded")
+                revision_id = payload.get("revision_id")
+                generation = payload.get("index_generation")
+                if (payload.get("tenant_id") != tenant_id or not isinstance(revision_id, str)
+                        or revisions.get(revision_id) != generation):
                     raise IndexConsistencyError("readback returned a point outside its requested scope")
                 vectors = point.vector
                 if not isinstance(vectors, dict) or not all(
@@ -321,11 +358,16 @@ class QdrantIndex:
                     raise IndexConsistencyError("indexed point has an invalid source hash")
                 if payload.get("representation_fingerprint") != expected_fingerprint:
                     raise IndexConsistencyError("indexed point uses a different representation")
-                if chunk_id in result:
+                group = result.setdefault((revision_id, str(generation)), {})
+                if chunk_id in group:
                     raise IndexConsistencyError("duplicate chunk ID in tenant/revision/generation")
-                result[chunk_id] = content_hash
+                group[chunk_id] = content_hash
             if offset is None:
                 break
+            key = str(offset)
+            if key in seen_offsets:
+                raise IndexConsistencyError("physical readback repeated page offset")
+            seen_offsets.add(key)
         return result
 
     def query(
