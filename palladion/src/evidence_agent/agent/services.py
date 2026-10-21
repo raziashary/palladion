@@ -5,9 +5,12 @@ from pathlib import Path
 
 from fastapi import FastAPI
 
+from evidence_agent.agent.evaluator_log import EvaluatorLog
+from evidence_agent.agent.experiments import ExperimentControls
 from evidence_agent.agent.llm import LanguageModel
 from evidence_agent.agent.loop import AgentRuntime, new_trace
 from evidence_agent.agent.tools import Tools
+from evidence_agent.core.clock import Clock, utc_clock
 from evidence_agent.core.fixtures import load_fixtures
 from evidence_agent.core.retrieval import SearchIndex
 from evidence_agent.live.contracts import AdapterConfig, Snapshot
@@ -28,8 +31,11 @@ from evidence_agent.storage.sqlite import Database
 class AgentServices:
     def __init__(self, root: Path, index: SearchIndex, model: LanguageModel | None,
                  adapter: ReadAdapter, config: AdapterConfig, settings: Settings,
-                 ranker: Ranker | None = None, graph: GraphExpansion | None = None) -> None:
+                 ranker: Ranker | None = None, graph: GraphExpansion | None = None,
+                 experiment: ExperimentControls | None = None, clock: Clock = utc_clock) -> None:
         self.root, self.index, self.model = root, index, model
+        self.clock = clock  # the registry's evaluation clock (ADR-0101); wall time unless an evaluator run fixes it
+        self.experiment = experiment  # evaluator mode only: fixed at launch, never chosen by a request (ADR-0100)
         self.adapter, self.config, self.settings, self.ranker = adapter, config, settings, ranker
         self.hotcache = HotCache()
         self.graph = graph
@@ -41,7 +47,7 @@ class AgentServices:
         if self.database is None:
             # Created on the serving event loop; never share a sqlite connection across threads.
             self.database = Database(self.root / "registry.sqlite").open()
-            self.registry = Registry(self.database, OriginalStore(self.root / "originals"))
+            self.registry = Registry(self.database, OriginalStore(self.root / "originals"), self.clock)
             self.gateway = LiveGateway(self.registry, self.adapter, self.config)
         assert self.registry is not None and self.gateway is not None
         principal = self.registry.access.authenticate(principal_id)
@@ -51,9 +57,10 @@ class AgentServices:
         store.authorize()
         ledger = RequestLedger(HybridSearch(Catalog(self.registry), self.index, self.ranker, self.graph),
             principal, case_id, new_trace(), {k: v.max_age_seconds for k, v in self.config.operations.items()}, hotcache=self.hotcache)
-        tools = Tools(ledger,self.gateway,store)
+        log = EvaluatorLog(self.experiment.arm) if self.experiment is not None else None
+        tools = Tools(ledger,self.gateway,store,log)
         tools.graph_required = self.settings.graph_required
-        return AgentRuntime(self.model, tools, store, self.settings)
+        return AgentRuntime(self.model, tools, store, self.settings, experiment=self.experiment)
 
     def close(self) -> None:
         self.hotcache.clear()
@@ -64,13 +71,14 @@ class AgentServices:
 
 
 def configure_agent(app: FastAPI, *, model: LanguageModel | None, adapter: ReadAdapter,
-                    config: AdapterConfig, settings: Settings) -> None:
+                    config: AdapterConfig, settings: Settings,
+                    experiment: ExperimentControls | None = None, clock: Clock = utc_clock) -> None:
     """Explicit wiring; model credentials merely existing never enable runtime calls."""
     if settings.graph_enabled != (app.state.graph is not None):
         raise ValueError("Graph treatment and explicit application wiring disagree")
     app.state.graph_required = settings.graph_required
     app.state.agent_services = AgentServices(app.state.runtime_root, app.state.index,
-        model, adapter, config, settings, app.state.ranker, app.state.graph)
+        model, adapter, config, settings, app.state.ranker, app.state.graph, experiment, clock)
 
 
 def fixture_adapter(app_root: Path) -> MockAdapter:

@@ -177,7 +177,7 @@ def test_correction_revoke_and_validity_history_survive_reopen(p03):
     import sqlite3
     from datetime import timedelta
 
-    from evidence_agent.live.gateway import utc_clock
+    from evidence_agent.core.clock import utc_clock
     user = CaseStore(p03.registry, p03.reader, "case-42").memory()
     first = user.write(MemorySpec(scope_id="reader-a", content="debit reported"))
     assert user.read(first)["validity_policy_id"] == "UNSPECIFIED"
@@ -389,7 +389,7 @@ def test_prior_live_result_becomes_pointer_not_verified_fact(p03):
 def test_owner_can_correct_expired_validity_and_closed_case_rejects_writes(p03):
     from datetime import timedelta
 
-    from evidence_agent.live.gateway import utc_clock
+    from evidence_agent.core.clock import utc_clock
     memory = CaseStore(p03.registry, p03.reader, "case-42").memory()
     old = memory.write(MemorySpec(scope_id="reader-a", content="old report",
         valid_from=utc_clock()-timedelta(days=2), valid_until=utc_clock()-timedelta(days=1),

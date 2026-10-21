@@ -10,6 +10,7 @@ from contextlib import nullcontext
 from datetime import datetime, timezone
 from typing import Any
 
+from evidence_agent.core.clock import Clock, utc_clock
 from evidence_agent.core.errors import PermissionDenied, ResourceConflict, ValidationFailure
 from evidence_agent.core.ids import digest_bytes, revision_id
 from evidence_agent.core.models import Principal
@@ -29,9 +30,10 @@ class Registry:
     original bytes only after current authorization and approval checks.
     """
 
-    def __init__(self, database: Database, originals: OriginalStore) -> None:
+    def __init__(self, database: Database, originals: OriginalStore, clock: Clock = utc_clock) -> None:
         self.database = database
         self.originals = originals
+        self.clock = clock  # evaluation instant for validity, freshness and policy time (ADR-0101); wall time by default
         self.access = AccessController(self.get_principal, self.is_member, self.is_team_member)
 
     def is_team_member(self, tenant_id: str, team_id: str, principal_id: str) -> bool:

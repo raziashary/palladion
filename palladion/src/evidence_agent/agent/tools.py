@@ -23,6 +23,7 @@ from evidence_agent.policy.registry import PolicyRegistry
 from evidence_agent.retrieval.evidence import RequestLedger, model_view
 
 if TYPE_CHECKING:
+    from evidence_agent.agent.evaluator_log import EvaluatorLog
     from evidence_agent.memory.vector import VectorMemory
 
 
@@ -72,8 +73,10 @@ def definitions() -> list[dict[str, Any]]:
 
 
 class Tools:
-    def __init__(self, ledger: RequestLedger, gateway: LiveGateway, store: CaseStore) -> None:
+    def __init__(self, ledger: RequestLedger, gateway: LiveGateway, store: CaseStore,
+                 log: EvaluatorLog | None = None) -> None:
         self.ledger, self.gateway, self.store = ledger, gateway, store
+        self.log = log  # evaluator mode only (ADR-0100); never read by the runtime
         self.memory_enabled = True
         self.graph_required = False
         self.memory_vector: VectorMemory | None = None

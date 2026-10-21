@@ -6,9 +6,10 @@ import json
 import tempfile
 from pathlib import Path
 
+from evidence_agent.core.clock import utc_clock
 from evidence_agent.core.models import PolicyDecision, PolicyDecisionStatus
 from evidence_agent.live.contracts import LookupRequest, Snapshot
-from evidence_agent.live.gateway import LiveGateway, load_config, utc_clock
+from evidence_agent.live.gateway import LiveGateway, load_config
 from evidence_agent.live.mock import MockAdapter
 from evidence_agent.policy.bootstrap import seed_policy_fixture
 from evidence_agent.policy.engine import PolicyEngine

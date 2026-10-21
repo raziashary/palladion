@@ -6,10 +6,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from evidence_agent.core.clock import utc_clock
 from evidence_agent.core.fixtures import load_fixtures
 from evidence_agent.core.models import TimeBasis
 from evidence_agent.live.contracts import CaseScope
-from evidence_agent.live.gateway import register_scope, utc_clock
+from evidence_agent.live.gateway import register_scope
 from evidence_agent.policy.registry import Clause, PolicyRegistry, PolicySpec, RequiredFact, Rule
 from evidence_agent.storage.registry import Registry
 

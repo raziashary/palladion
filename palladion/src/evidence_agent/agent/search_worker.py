@@ -5,6 +5,7 @@ import asyncio
 import json
 import os
 import sys
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -66,8 +67,9 @@ async def _run(command: tuple[str, ...], payload: bytes) -> bytes:
             raise
 
 
-async def search(owner: HybridSearch, principal_id: str, case_id: str,
-                 query: str, mode: str, limit: int, *, require_graph: bool = False) -> SearchResult:
+def worker_payload(owner: HybridSearch, principal_id: str, case_id: str, query: str, mode: str, limit: int,
+                   require_graph: bool) -> dict[str, Any]:
+    """What the search subprocess is told, including the instant the registry's clock gives (ADR-0101)."""
     from evidence_agent.retrieval.rerank import FastEmbedReranker
     from evidence_agent.storage.qdrant import QdrantIndex
     if not isinstance(owner.index, QdrantIndex) or owner.index.worker_configuration is None:
@@ -75,14 +77,19 @@ async def search(owner: HybridSearch, principal_id: str, case_id: str,
     ranker = owner.ranker
     if ranker is not None and not isinstance(ranker, FastEmbedReranker):
         raise DependencyUnavailable("Runtime requires reconstructible reranker")
-    payload = {"database": owner.registry.database.path,
+    return {"database": owner.registry.database.path,
         "originals": str(owner.registry.originals.root), "principal_id": principal_id,
         "case_id": case_id, "query": query, "mode": mode, "limit": limit,
         "index": owner.index.worker_configuration,
         "reranker": ranker.worker_configuration if ranker else {"enabled": False},
         "graph": {"backend":owner.graph.backend.worker_configuration,
             "limits":owner.graph.limits.model_dump(mode="json")} if owner.graph else None,
-        "require_graph":require_graph}
+        "require_graph":require_graph, "as_of": owner.registry.clock().isoformat()}
+
+
+async def search(owner: HybridSearch, principal_id: str, case_id: str,
+                 query: str, mode: str, limit: int, *, require_graph: bool = False) -> SearchResult:
+    payload = worker_payload(owner, principal_id, case_id, query, mode, limit, require_graph)
     try:
         result = await _run((sys.executable, "-X", "utf8", "-m",
             "evidence_agent.agent.search_worker"), json.dumps(payload).encode())
@@ -120,7 +127,8 @@ def main() -> None:
                                       TraversalLimits.model_validate(payload["graph"]["limits"]))
             result = HybridSearch(Catalog(registry), index, ranker, graph).search(principal,
                 payload["case_id"], payload["query"], mode=payload["mode"], limit=payload["limit"],
-                require_graph=payload.get("require_graph",False))
+                require_graph=payload.get("require_graph",False),
+                as_of=datetime.fromisoformat(payload["as_of"]))
             sys.stdout.buffer.write(result.model_dump_json().encode())
     finally:
         index.close()

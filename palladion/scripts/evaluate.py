@@ -645,10 +645,11 @@ def run_critic(url: str, model_name: str, call_interval_seconds: float = 0) -> d
     from evidence_agent.agent.gate import release
     from evidence_agent.agent.llm import GroqModel
     from evidence_agent.agent.services import AgentServices, configure_agent
+    from evidence_agent.core.clock import utc_clock
     from evidence_agent.core.evaluation import score_critic_output
     from evidence_agent.ingest.pipeline import IngestPipeline
     from evidence_agent.live.contracts import CaseScope, Snapshot
-    from evidence_agent.live.gateway import load_config, register_scope, utc_clock
+    from evidence_agent.live.gateway import load_config, register_scope
     from evidence_agent.live.mock import MockAdapter
     from evidence_agent.main import create_app
     from evidence_agent.policy.bootstrap import seed_policy_fixture

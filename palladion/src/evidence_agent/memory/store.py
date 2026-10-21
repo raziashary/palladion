@@ -6,7 +6,7 @@ import re
 import sqlite3
 import uuid
 from contextlib import nullcontext
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any, Literal
 
 from pydantic import Field, model_validator
@@ -423,7 +423,7 @@ class MemoryStore:
                 scope_id=spec.scope_id, owner_id=owner)
         self._source(spec.source_ref, origin)
         now = utc_now()
-        start = spec.valid_from or datetime.now(timezone.utc)
+        start = spec.valid_from or self.registry.clock()
         if spec.valid_until and spec.valid_until <= start:
             raise ValueError("Invalid memory validity interval")
         identifier = "mem_" + uuid.uuid4().hex
@@ -479,7 +479,7 @@ class MemoryStore:
         if not for_control and db.execute("SELECT 1 FROM case_events WHERE tenant_id=? AND event_kind='MEMORY_REVOKED' "
                       "AND json_extract(payload_json,'$.memory_id')=?", (row["tenant_id"], identifier)).fetchone():
             raise PermissionDenied
-        now = datetime.now(timezone.utc)
+        now = self.registry.clock()
         if not for_control and (now < datetime.fromisoformat(row["valid_from"]) or (
                 row["user_valid_until"] and now >= datetime.fromisoformat(row["user_valid_until"]))):
             raise PermissionDenied

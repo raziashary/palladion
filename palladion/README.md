@@ -239,6 +239,13 @@ Use `python scripts/seed.py --policies` to explicitly seed trusted synthetic cas
 fixtures. After setup, `python scripts/serve.py --enable-live-llm` explicitly enables
 root .env credential loading and real model calls; omitting the flag disables messages.
 Actual-provider smoke: `python scripts/validate_agent.py --enable-live-llm --scenario supported`.
+Counted evaluation runs (benchmark, ADR-0099 to ADR-0101): with `--enable-live-llm`, `--model-base-url
+http://127.0.0.1:PORT/v1` (loopback only) sends model calls to a counting proxy, `--key-env NAME` reads the key from
+that environment variable, and `--completion-cap`, `--model-timeout` and `--request-timeout` set the per-call and
+per-message limits (defaults unchanged). `--settings FILE` names the settings file. `--evaluator-arm B4|B5|B6`
+with `--acknowledge-not-serving` starts a measurement server whose control arm is fixed for every request (B5 omits
+the critic; the final gate stays) and whose message responses add an `evaluator` block; `--evaluation-time` fixes
+the instant every layer sees. None of these is a serving mode and no request can select an arm.
 Other scenarios are document/partial/conflict/no_evidence/unavailable; engineering checks
 are distinct from model-quality research. See E-P04-001 for passing and failed probes.
 

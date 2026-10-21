@@ -9,7 +9,7 @@ from datetime import datetime
 
 from evidence_agent.core.errors import PermissionDenied
 from evidence_agent.core.models import LiveOperationStatus, Principal, SourceRef, TimeBasis
-from evidence_agent.live.gateway import iso, read_observation, read_scope, utc_clock
+from evidence_agent.live.gateway import iso, read_observation, read_scope
 from evidence_agent.policy.registry import PolicyRegistry, PolicySpec
 
 
@@ -23,8 +23,8 @@ class Selection:
 
 
 class TemporalResolver:
-    def __init__(self, policies: PolicyRegistry, *, clock: Callable[[], datetime] = utc_clock) -> None:
-        self.policies, self.registry, self.clock = policies, policies.registry, clock
+    def __init__(self, policies: PolicyRegistry, *, clock: Callable[[], datetime] | None = None) -> None:
+        self.policies, self.registry, self.clock = policies, policies.registry, clock or policies.clock
 
     def resolve(self, principal: Principal, case_id: str, family_id: str,
                  evidence_ids: Sequence[str] = (), *, knowledge_cutoff: datetime | None = None,

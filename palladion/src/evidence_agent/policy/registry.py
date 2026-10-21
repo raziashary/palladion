@@ -12,7 +12,7 @@ from pydantic import Field, field_validator, model_validator
 
 from evidence_agent.core.errors import PermissionDenied, ResourceConflict
 from evidence_agent.core.models import Principal, SourceKind, SourceRef, TimeBasis, VersionedModel
-from evidence_agent.live.gateway import iso, utc_clock
+from evidence_agent.live.gateway import iso
 from evidence_agent.storage.registry import Registry
 
 
@@ -90,8 +90,8 @@ class PolicySpec(VersionedModel):
 
 
 class PolicyRegistry:
-    def __init__(self, registry: Registry, *, clock: Callable[[], datetime] = utc_clock) -> None:
-        self.registry, self.clock = registry, clock
+    def __init__(self, registry: Registry, *, clock: Callable[[], datetime] | None = None) -> None:
+        self.registry, self.clock = registry, clock or registry.clock
 
     def _event(self, actor: Principal, version: str, kind: str,
                 extra: dict[str, Any] | None = None) -> None:

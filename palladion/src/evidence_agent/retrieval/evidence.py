@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any
 
 from evidence_agent.core.errors import PermissionDenied, ResourceConflict
@@ -38,7 +38,7 @@ class EvidenceResolver:
         chunk = self.catalog.get_chunk(principal, chunk_id)
         if chunk.case_id != case_id:
             raise PermissionDenied
-        instant = as_of or datetime.now(timezone.utc)
+        instant = as_of or self.registry.clock()
         if instant.tzinfo is None or instant.utcoffset() is None:
             raise ValueError("Source applicability requires an aware instant")
         # One SQLite transaction holds source/ACL/version metadata stable through byte read.
@@ -152,7 +152,7 @@ class RequestLedger:
         extra = ({"revision_id": data["revision_id"], "chunk_id": identifier,
                   "span_start": data["start_byte"], "span_end": data["end_byte"]}
                  if kind is EvidenceKind.DOCUMENT else {})
-        now = datetime.now(timezone.utc)
+        now = self.search.registry.clock()
         self.envelopes[identifier] = EvidenceRecord(evidence_id=identifier, kind=kind,
             source_identity=str(data.get("revision_id") or identifier),
             content_hash=data.get("content_sha256") or hashlib.sha256(json.dumps(data, sort_keys=True).encode()).hexdigest(),
@@ -194,7 +194,7 @@ def read_runtime_evidence(search: object, principal: Principal, case_id: str,
                           identifier: str, *, freshness_seconds: dict[str, int] | None = None) -> dict[str, Any]:
     """Canonical citation reader for all P04 kinds; no caller-supplied payloads."""
     from evidence_agent.core.models import LiveOperationStatus, PolicyDecisionStatus
-    from evidence_agent.live.gateway import read_observation, read_scope, utc_clock
+    from evidence_agent.live.gateway import read_observation, read_scope
     from evidence_agent.policy.engine import PolicyEngine
     from evidence_agent.policy.registry import PolicyRegistry, PolicySpec
     from evidence_agent.policy.temporal import TemporalResolver
@@ -226,7 +226,7 @@ def read_runtime_evidence(search: object, principal: Principal, case_id: str,
         observation = read_observation(registry, principal, case_id, identifier)
         # The operation owner controls freshness; a prior successful read is not current forever.
         maximum = (freshness_seconds or {}).get(observation.operation_id)
-        current = utc_clock()
+        current = registry.clock()
         fresh = maximum is not None and 0 <= (current-observation.observed_at).total_seconds() <= maximum
         if observation.data_as_of is not None and maximum is not None:
             fresh &= 0 <= (current-observation.data_as_of).total_seconds() <= maximum
@@ -267,7 +267,7 @@ def read_runtime_evidence(search: object, principal: Principal, case_id: str,
                     if observation.operation_id != field.operation:
                         continue
                     instant = observation.data_as_of or observation.observed_at
-                    if not 0 <= (utc_clock()-instant).total_seconds() <= field.max_age_seconds:
+                    if not 0 <= (registry.clock()-instant).total_seconds() <= field.max_age_seconds:
                         raise PermissionDenied
         elif decision.status is PolicyDecisionStatus.POLICY_CONFLICT:
             scope = read_scope(registry, principal, case_id)

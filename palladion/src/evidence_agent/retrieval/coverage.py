@@ -97,7 +97,7 @@ def source_coverage(registry: Registry, principal: Principal, case_id: str,
     registry.access.authorize(principal, tenant_id=principal.tenant_id,
                               case_id=case_id, grant="source:read")
     accepted = indexed = 0
-    now = as_of or datetime.now(timezone.utc)
+    now = as_of or registry.clock()
     if now.tzinfo is None or now.utcoffset() is None:
         raise ValueError("Document cutoff must be timezone-aware")
     warnings: list[str] = []

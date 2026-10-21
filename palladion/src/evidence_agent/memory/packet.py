@@ -13,7 +13,7 @@ from evidence_agent.core.models import (
     SourceRef,
     VerifiedObservation,
 )
-from evidence_agent.live.gateway import read_observation, utc_clock
+from evidence_agent.live.gateway import read_observation
 from evidence_agent.memory.store import CaseStore
 
 
@@ -24,7 +24,7 @@ def build_packet(store: CaseStore, query: str, *, max_chars: int = 6000) -> Cont
     memory = store.memory()
     if memory.closed():
         return ContinuityPacket(case_id=store.case_id, tenant_id=store.principal.tenant_id,
-            agent_role="investigator", current_goal=query[:512], generated_at=utc_clock())
+            agent_role="investigator", current_goal=query[:512], generated_at=store.registry.clock())
     events = store.recent(limit=20)
     release = store.registry.database.connection.execute(
         "SELECT payload_json FROM case_events WHERE tenant_id=? AND case_id=? "
@@ -83,7 +83,7 @@ def build_packet(store: CaseStore, query: str, *, max_chars: int = 6000) -> Cont
             "at":m["set_at"], "payload":{"status":"UNAPPROVED_CONTEXT", "memory_id":m["memory_id"],
             "content":m["content"],"original_event_id":m["original_event_id"]}}
             for m in procedures)+tuple(e for e in events if e["kind"] in {"RUNTIME_ATTEMPT", "RUNTIME_TOOL_RESULT"})[-2:],
-        generated_at=utc_clock())
+        generated_at=store.registry.clock())
     # Keep critical unresolved slots first; omit lower-priority context explicitly in metrics.
     while len(packet.model_dump_json()) > max_chars and packet.conversation_turns:
         packet = packet.model_copy(update={"conversation_turns": packet.conversation_turns[1:],

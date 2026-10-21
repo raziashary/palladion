@@ -207,7 +207,11 @@ class EvidenceCritic:
                 store.append("ATTEMPT", ledger.trace_id, {"role": "critic", "stage": "review",
                     "attempt": attempt, "status": status, "usage": usage, "error_code": error_code,
                     "provider_code": provider_code})
+                if self.tools.log is not None:
+                    self.tools.log.model_call("critic", "review", status, usage, error_code)
             store.append("DIAGNOSTIC", ledger.trace_id, {"review": review.model_dump(mode="json"), "draft_sha256": digest})
+            if self.tools.log is not None:
+                self.tools.log.critic_review(review)
             previous = review
             queries = [s.query for s in review.counter_searches] + list(review.suggested_counter_searches)
             searched = False
@@ -222,7 +226,10 @@ class EvidenceCritic:
                     store.append("TOOL_RESULT", ledger.trace_id, {"tool": "search_knowledge", "status": "FAILED",
                         "error_code": "CRITIC_SEARCH_BUDGET_EXHAUSTED"})
                     continue
-                await self.tools.execute("search_knowledge", json.dumps({"query": query, "limit": 2}))
+                arguments = json.dumps({"query": query, "limit": 2})
+                result = await self.tools.execute("search_knowledge", arguments)
+                if self.tools.log is not None:
+                    self.tools.log.tool_call("critic", "search_knowledge", arguments, str(result.get("status")))
                 searched = True
             if blind or searched:
                 blind = False

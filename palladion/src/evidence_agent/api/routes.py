@@ -343,7 +343,7 @@ def index_health(case_id: str, request: Request,
                                reuse_physical_audit=reuse_physical_audit)
 
 
-@router.post("/v1/cases/{case_id}/messages", response_model=MessageResponse)
+@router.post("/v1/cases/{case_id}/messages", response_model=MessageResponse, response_model_exclude_unset=True)
 async def message(case_id: str, body: Message, request: Request,
                    authorization: str | None = Header(default=None)) -> object:
     """Run one bounded investigation for the authenticated current case member.

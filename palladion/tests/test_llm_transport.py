@@ -227,3 +227,148 @@ def test_same_model_pacing_supports_separate_event_loops(monkeypatch):
         for task in tasks:
             task.result()
     assert len(calls) == 2 and times[1]-times[0] >= 0.024
+
+
+# --------------------------------------------------------------------------- counted evaluation transport (ADR-0099)
+
+
+import importlib.util  # noqa: E402
+import threading  # noqa: E402
+from http.server import BaseHTTPRequestHandler, HTTPServer  # noqa: E402
+from pathlib import Path  # noqa: E402
+
+
+class Provider:
+    """A real loopback HTTP server that answers like the provider and remembers what it was sent."""
+
+    def __init__(self) -> None:
+        seen = self.seen = []
+
+        class Handler(BaseHTTPRequestHandler):
+            def do_POST(self):
+                body = self.rfile.read(int(self.headers["content-length"]))
+                seen.append({"path": self.path, "authorization": self.headers.get("authorization"),
+                             "payload": json.loads(body)})
+                data = json.dumps({"choices": [{"message": {"content": "{}"}}],
+                                   "usage": {"prompt_tokens": 3, "completion_tokens": 2}}).encode()
+                self.send_response(200)
+                self.send_header("content-type", "application/json")
+                self.send_header("content-length", str(len(data)))
+                self.end_headers()
+                self.wfile.write(data)
+
+            def log_message(self, *args):
+                pass
+
+        self.server = HTTPServer(("127.0.0.1", 0), Handler)
+        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
+
+    def __enter__(self):
+        self.thread.start()
+        return self
+
+    def __exit__(self, *exc):
+        self.server.shutdown()
+        self.server.server_close()
+
+    @property
+    def base_url(self):
+        return f"http://127.0.0.1:{self.server.server_port}/v1"
+
+
+def test_a_loopback_base_url_receives_the_call_with_the_configured_cap_and_key():
+    with Provider() as provider:
+        model = GroqModel("run-token-canary", enabled=True, base_url=provider.base_url, completion_cap=700)
+        turn = asyncio.run(model.complete([{"role": "user", "content": "Synthetic request"}], definitions()))
+    assert turn.usage == {"prompt_tokens": 3, "completion_tokens": 2}
+    [seen] = provider.seen
+    assert seen["path"] == "/v1/chat/completions" and seen["authorization"] == "Bearer run-token-canary"
+    assert seen["payload"]["max_completion_tokens"] == 700
+
+
+def test_the_default_address_and_cap_are_unchanged():
+    model = GroqModel("synthetic", enabled=True)
+    assert model.endpoint == "https://api.groq.com/openai/v1/chat/completions" and model.completion_cap == 768
+
+
+@pytest.mark.parametrize("url", [
+    "https://api.example.com/v1", "http://10.0.0.5:8000/v1", "http://127.0.0.1.evil.example:8000/v1",
+    "http://127.0.0.1:8000@evil.example/v1", "http://user:pw@127.0.0.1:8000/v1", "https://127.0.0.1:8000/v1",
+    "http://127.0.0.1/v1", "http://127.0.0.1:8000/v1?x=1", "http://127.0.0.1:notaport/v1", "ftp://127.0.0.1:8000/v1",
+])
+def test_a_base_url_that_is_not_an_http_loopback_address_with_a_port_is_refused(url):
+    with pytest.raises(ValueError):
+        GroqModel("synthetic", enabled=True, base_url=url)
+
+
+@pytest.mark.parametrize("cap", [63, 4097, 768.0, True, None])
+def test_a_completion_cap_outside_its_range_or_type_is_refused(cap):
+    with pytest.raises(ValueError):
+        GroqModel("synthetic", enabled=True, completion_cap=cap)
+
+
+def test_the_key_can_come_from_a_named_variable_and_is_never_echoed(monkeypatch):
+    monkeypatch.setenv("BENCH_RUN_KEY", "canary-key-value")
+    model = GroqModel.from_environment("BENCH_RUN_KEY", enabled=True)
+    assert model.endpoint.startswith("https://api.groq.com/")
+    with pytest.raises(PermissionError) as caught:
+        GroqModel.from_environment("BENCH_RUN_KEY", enabled=False)
+    assert "canary-key-value" not in str(caught.value)
+    monkeypatch.setenv("BENCH_RUN_KEY", "has a space")
+    with pytest.raises(PermissionError) as caught:
+        GroqModel.from_environment("BENCH_RUN_KEY", enabled=True)
+    assert "has a space" not in str(caught.value)
+    monkeypatch.delenv("BENCH_RUN_KEY")
+    with pytest.raises(PermissionError):
+        GroqModel.from_environment("BENCH_RUN_KEY", enabled=True)
+    with pytest.raises(ValueError):
+        GroqModel.from_environment("not a variable; rm -rf", enabled=True)
+
+
+def load_serve():
+    spec = importlib.util.spec_from_file_location("serve_script", Path(__file__).parents[1] / "scripts/serve.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_the_launcher_defaults_leave_ordinary_serving_unchanged():
+    serve = load_serve()
+    args, settings = serve.parse_args([])
+    assert args.model_base_url is None and args.key_env is None and args.completion_cap == 768
+    assert settings.request_timeout_seconds == 60 and args.model_timeout == 25
+
+
+def test_the_launcher_options_for_a_counted_run_reach_the_model(monkeypatch):
+    serve = load_serve()
+    monkeypatch.setenv("BENCH_RUN_KEY", "canary-key-value")
+    with Provider() as provider:
+        args, settings = serve.parse_args(["--enable-live-llm", "--model-base-url", provider.base_url, "--key-env",
+                                           "BENCH_RUN_KEY", "--completion-cap", "2000", "--request-timeout", "240",
+                                           "--model-timeout", "120", "--model", "openai/gpt-oss-120b"])
+        model = serve.build_model(args)
+        asyncio.run(model.complete([{"role": "user", "content": "Synthetic request"}], []))
+    assert settings.request_timeout_seconds == 240 and model.timeout == 120
+    assert provider.seen[0]["payload"]["max_completion_tokens"] == 2000
+    assert provider.seen[0]["payload"]["model"] == "openai/gpt-oss-120b"
+
+
+@pytest.mark.parametrize("argv", [
+    ["--model-base-url", "http://127.0.0.1:9/v1"], ["--key-env", "BENCH_RUN_KEY"], ["--request-timeout", "400"],
+    ["--enable-live-llm", "--request-timeout", "0"],
+])
+def test_the_launcher_refuses_counted_run_options_without_enablement_or_outside_their_range(argv):
+    serve = load_serve()
+    with pytest.raises(SystemExit) as caught:
+        serve.parse_args(argv)
+    assert caught.value.code == 2
+
+
+def test_a_named_settings_file_is_used_and_an_unreadable_one_fails_before_serving(tmp_path):
+    serve = load_serve()
+    chosen = tmp_path / "settings.yaml"
+    chosen.write_text("schema_version: '1.0'\nrequest_timeout_seconds: 90\ncontinuity_enabled: false\n", encoding="utf-8")
+    args, settings = serve.parse_args(["--settings", str(chosen), "--request-timeout", "90"])
+    assert settings.continuity_enabled is False and args.settings == chosen
+    with pytest.raises(FileNotFoundError):
+        serve.parse_args(["--settings", str(tmp_path / "missing.yaml")])

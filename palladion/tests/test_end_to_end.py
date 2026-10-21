@@ -188,8 +188,9 @@ def auth(token: str) -> dict[str, str]:
 def test_p08_uploaded_injection_reaches_actual_model_as_data_without_private_leak(runtime):
     from evidence_agent.agent.llm import GroqModel
     from evidence_agent.agent.services import configure_agent, fixture_adapter
+    from evidence_agent.core.clock import utc_clock
     from evidence_agent.live.contracts import CaseScope
-    from evidence_agent.live.gateway import load_config, register_scope, utc_clock
+    from evidence_agent.live.gateway import load_config, register_scope
     from evidence_agent.settings import Settings
     root,index,_=runtime
     with Database(root/"registry.sqlite") as database:

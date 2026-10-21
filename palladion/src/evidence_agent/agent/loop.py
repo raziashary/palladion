@@ -167,6 +167,8 @@ class AgentRuntime:
                 {"attempt": number, "role": "main", "stage": "final" if final else "investigate",
                  "status": status, "usage": usage, "error_code": error_code,
                  "provider_code": provider_code})
+            if self.tools.log is not None:
+                self.tools.log.model_call("main", "final" if final else "investigate", status, usage, error_code)
 
     async def _investigate(self, query: str, hints: dict[str, Any]) -> Draft:
         await self._plan(query,hints)
@@ -217,6 +219,9 @@ class AgentRuntime:
 
                 async def dispatch(call: dict[str, Any]) -> dict[str, Any]:
                     def rejected(code: str) -> dict[str, Any]:
+                        if self.tools.log is not None:  # the call passed the schema check above
+                            self.tools.log.tool_call("main", call["function"]["name"],
+                                                     call["function"]["arguments"], code)
                         self.ledger.failures.append(code)
                         self.store.append("TOOL_RESULT", self.ledger.trace_id, {
                             "tool": "unknown", "status": "FAILED", "error_code": code})
@@ -230,7 +235,11 @@ class AgentRuntime:
                     function = call["function"]
                     if not isinstance(function.get("name"), str) or not isinstance(function.get("arguments"), str):
                         return rejected("TOOL_SCHEMA_INVALID")
-                    return await self.tools.execute(function["name"], function["arguments"])
+                    result = await self.tools.execute(function["name"], function["arguments"])
+                    if self.tools.log is not None:
+                        self.tools.log.tool_call("main", function["name"], function["arguments"],
+                                                 str(result.get("status")))
+                    return result
 
                 results = await asyncio.gather(*(dispatch(c) for c in clean_calls))
                 for call, result in zip(clean_calls, results, strict=True):
@@ -254,6 +263,8 @@ class AgentRuntime:
         draft = draft or safe_draft(self.ledger)
         self.store.append("DIAGNOSTIC", self.ledger.trace_id, {
             "initial_proposed_draft": draft.model_dump(mode="json"), "initial_draft_origin": origin})
+        if self.tools.log is not None:
+            self.tools.log.initial_draft(draft, origin)
         if self.experiment is None or self.experiment.review_required(query,draft):
             self.review = await self.critic.run(query, packet, draft)
         return await self._finalize(query, draft)
@@ -317,6 +328,8 @@ class AgentRuntime:
                 "operational_guidance":False}
         response["session_id"] = self.store.session_id
         self.store.append("RELEASE", self.ledger.trace_id, response)
+        if self.tools.log is not None:  # after the stored release: the report is not part of it
+            response["evaluator"] = self.tools.log.report(draft, response)
         return response
 
 

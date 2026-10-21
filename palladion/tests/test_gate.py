@@ -8,8 +8,8 @@ import pytest
 
 from evidence_agent.agent.draft import Claim, Draft
 from evidence_agent.agent.gate import release
+from evidence_agent.core.clock import utc_clock
 from evidence_agent.core.errors import PermissionDenied
-from evidence_agent.live.gateway import utc_clock
 
 from .test_agent_budget import make_runtime
 
@@ -89,9 +89,7 @@ def test_missing_policy_slots_survive_model_omission_and_gate_reads_trace(p03):
 
 def test_stale_and_mid_request_revocation_are_rechecked(p03, monkeypatch):
     fixture, identifier, claim = live_fixture(p03)
-    monkeypatch.setattr(
-        "evidence_agent.live.gateway.utc_clock", lambda: utc_clock() + timedelta(seconds=1000)
-    )
+    monkeypatch.setattr(p03.registry, "clock", lambda: utc_clock() + timedelta(seconds=1000))
     response = release(Draft(claims=(claim,)), fixture.ledger)
     assert response["verified_claims"] == []
     p03.registry.revoke_membership(p03.admin, p03.reader.principal_id, "case-42")

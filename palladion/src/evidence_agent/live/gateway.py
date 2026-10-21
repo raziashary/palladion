@@ -39,10 +39,6 @@ from evidence_agent.live.mock import ReadAdapter
 from evidence_agent.storage.registry import Registry
 
 
-def utc_clock() -> datetime:
-    return datetime.now(timezone.utc)
-
-
 def iso(value: datetime) -> str:
     if value.tzinfo is None or value.utcoffset() is None:
         raise ValueError("Aware backend time required")
@@ -121,8 +117,9 @@ def read_observation(registry: Registry, principal: Principal, case_id: str,
 
 class LiveGateway:
     def __init__(self, registry: Registry, adapter: ReadAdapter, config: AdapterConfig, *,
-                 clock: Callable[[], datetime] = utc_clock) -> None:
-        self.registry, self.adapter, self.config, self.clock = registry, adapter, config, clock
+                 clock: Callable[[], datetime] | None = None) -> None:
+        self.registry, self.adapter, self.config = registry, adapter, config
+        self.clock = clock or registry.clock
         self._semaphore = asyncio.Semaphore(config.max_concurrent)
         self._pending: dict[tuple[str, str, str, str], asyncio.Task[LiveObservation]] = {}
         self._waiters: dict[tuple[str, str, str, str], int] = defaultdict(int)

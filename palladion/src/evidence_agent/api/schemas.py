@@ -102,3 +102,6 @@ class MessageResponse(RequestModel):
     next_steps: list[str]
     budget: dict[str, int]
     verification_failures: list[str]
+    # Present only when the server was started in evaluator mode (ADR-0100); omitted otherwise.
+    experiment: dict[str, Any] | None = None
+    evaluator: dict[str, Any] | None = None

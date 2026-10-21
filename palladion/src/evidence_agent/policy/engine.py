@@ -15,7 +15,7 @@ from evidence_agent.core.models import (
     PolicyDecisionStatus,
     Principal,
 )
-from evidence_agent.live.gateway import iso, read_observation, read_scope, utc_clock
+from evidence_agent.live.gateway import iso, read_observation, read_scope
 from evidence_agent.policy.registry import PolicyRegistry
 from evidence_agent.policy.temporal import TemporalResolver
 
@@ -83,9 +83,9 @@ def evaluate_predicate(predicate: dict[str, Any], facts: dict[str, Any]) -> bool
 
 class PolicyEngine:
     """Facts are resolved from gateway event IDs, never caller-owned fact values."""
-    def __init__(self, policies: PolicyRegistry, *, clock: Callable[[], datetime] = utc_clock) -> None:
-        self.policies, self.registry, self.clock = policies, policies.registry, clock
-        self.temporal = TemporalResolver(policies, clock=clock)
+    def __init__(self, policies: PolicyRegistry, *, clock: Callable[[], datetime] | None = None) -> None:
+        self.policies, self.registry, self.clock = policies, policies.registry, clock or policies.clock
+        self.temporal = TemporalResolver(policies, clock=self.clock)
 
     def evaluate(self, principal: Principal, case_id: str, family_id: str,
                   evidence_ids: Sequence[str] = (), *, knowledge_cutoff: datetime | None = None,
