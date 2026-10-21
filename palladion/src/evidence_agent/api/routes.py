@@ -82,7 +82,7 @@ def services(request: Request, authorization: str | None) -> Iterator[tuple[Regi
         raise PermissionDenied
     root: Path = request.app.state.runtime_root
     with Database(root / "registry.sqlite") as database:
-        registry = Registry(database, OriginalStore(root / "originals"))
+        registry = Registry(database, OriginalStore(root / "originals"), request.app.state.clock)
         principal = registry.access.authenticate(principal_id)
         yield registry, Catalog(registry), principal
 

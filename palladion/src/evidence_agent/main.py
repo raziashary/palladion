@@ -11,6 +11,7 @@ from starlette.middleware.base import RequestResponseEndpoint
 from starlette.responses import Response
 
 from evidence_agent.api.routes import router
+from evidence_agent.core.clock import Clock, utc_clock
 from evidence_agent.core.errors import EvidenceAgentError
 from evidence_agent.core.retrieval import SearchIndex
 from evidence_agent.retrieval.graph_expand import GraphExpansion
@@ -30,7 +31,8 @@ async def lifecycle(app: FastAPI) -> AsyncIterator[None]:
 
 
 def create_app(runtime_root: Path, index: SearchIndex, tokens: Mapping[str, str],
-               ranker: Ranker | None = None, graph: GraphExpansion | None = None) -> FastAPI:
+               ranker: Ranker | None = None, graph: GraphExpansion | None = None,
+               clock: Clock = utc_clock) -> FastAPI:
     app = FastAPI(title="Palladion evidence prototype", docs_url=None, redoc_url=None, lifespan=lifecycle)
     app.state.runtime_root = runtime_root.resolve()
     app.state.index = index
@@ -38,6 +40,7 @@ def create_app(runtime_root: Path, index: SearchIndex, tokens: Mapping[str, str]
     app.state.ranker = ranker
     app.state.graph = graph
     app.state.graph_required = False
+    app.state.clock = clock  # the evaluation clock every registry of this application reads (ADR-0101)
 
     @app.middleware("http")
     async def bounded_body(request: Request, call_next: RequestResponseEndpoint) -> Response:

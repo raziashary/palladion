@@ -87,9 +87,8 @@ def test_the_gateway_and_the_policy_engine_default_to_the_registry_clock_and_hon
 
 def test_an_application_given_a_clock_builds_its_registry_with_it(p03):
     root = Path(p03.registry.database.path).parent
-    app = create_app(root, UnavailableIndex(), {"reader-test": "reader-a"})
-    configure_agent(app, model=ScriptedModel([]), adapter=MockAdapter({}), config=p03.config,
-                    settings=Settings(), clock=lambda: FROZEN)
+    app = create_app(root, UnavailableIndex(), {"reader-test": "reader-a"}, clock=lambda: FROZEN)
+    configure_agent(app, model=ScriptedModel([]), adapter=MockAdapter({}), config=p03.config, settings=Settings())
     with TestClient(app) as client:
         response = client.post("/v1/cases/case-42/messages", headers={"Authorization": "Bearer reader-test"},
                                json={"query": "hello"})

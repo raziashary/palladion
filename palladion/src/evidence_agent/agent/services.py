@@ -34,7 +34,7 @@ class AgentServices:
                  ranker: Ranker | None = None, graph: GraphExpansion | None = None,
                  experiment: ExperimentControls | None = None, clock: Clock = utc_clock) -> None:
         self.root, self.index, self.model = root, index, model
-        self.clock = clock  # the registry's evaluation clock (ADR-0101); wall time unless an evaluator run fixes it
+        self.clock = clock  # the application's evaluation clock (ADR-0101): wall time unless an evaluator run fixes it
         self.experiment = experiment  # evaluator mode only: fixed at launch, never chosen by a request (ADR-0100)
         self.adapter, self.config, self.settings, self.ranker = adapter, config, settings, ranker
         self.hotcache = HotCache()
@@ -72,13 +72,13 @@ class AgentServices:
 
 def configure_agent(app: FastAPI, *, model: LanguageModel | None, adapter: ReadAdapter,
                     config: AdapterConfig, settings: Settings,
-                    experiment: ExperimentControls | None = None, clock: Clock = utc_clock) -> None:
+                    experiment: ExperimentControls | None = None) -> None:
     """Explicit wiring; model credentials merely existing never enable runtime calls."""
     if settings.graph_enabled != (app.state.graph is not None):
         raise ValueError("Graph treatment and explicit application wiring disagree")
     app.state.graph_required = settings.graph_required
     app.state.agent_services = AgentServices(app.state.runtime_root, app.state.index,
-        model, adapter, config, settings, app.state.ranker, app.state.graph, experiment, clock)
+        model, adapter, config, settings, app.state.ranker, app.state.graph, experiment, app.state.clock)
 
 
 def fixture_adapter(app_root: Path) -> MockAdapter:

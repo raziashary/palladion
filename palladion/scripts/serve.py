@@ -120,14 +120,14 @@ def evaluation_clock(args: argparse.Namespace) -> Clock:
 def build_app(args: argparse.Namespace, settings: Settings, index: QdrantIndex,
               graph: GraphExpansion | None) -> FastAPI:
     """The application exactly as served: the live model, counted transport and evaluator arm only when asked for."""
-    app = create_app(args.root, index, load_demo_tokens(args.root), FastEmbedReranker(enabled=args.rerank), graph)
+    app = create_app(args.root, index, load_demo_tokens(args.root), FastEmbedReranker(enabled=args.rerank), graph,
+                     evaluation_clock(args))
     app.state.graph_required = args.require_graph
     if args.enable_live_llm:
         configure_agent(app, model=build_model(args), adapter=fixture_adapter(APP_ROOT),
             config=load_config(APP_ROOT / "config/adapters.yaml"),
             settings=settings.model_copy(update={"enable_live_llm": True, "model": args.model}),
-            experiment=ExperimentControls(arm=args.evaluator_arm, enabled=True) if args.evaluator_arm else None,
-            clock=evaluation_clock(args))
+            experiment=ExperimentControls(arm=args.evaluator_arm, enabled=True) if args.evaluator_arm else None)
     return app
 
 
