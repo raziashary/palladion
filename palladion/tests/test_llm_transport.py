@@ -355,7 +355,7 @@ def test_the_launcher_options_for_a_counted_run_reach_the_model(monkeypatch):
 
 @pytest.mark.parametrize("argv", [
     ["--model-base-url", "http://127.0.0.1:9/v1"], ["--key-env", "BENCH_RUN_KEY"], ["--request-timeout", "400"],
-    ["--enable-live-llm", "--request-timeout", "0"],
+    ["--enable-live-llm", "--request-timeout", "0"], ["--enable-live-llm", "--model-base-url", "http://127.0.0.1:9/v1"],
 ])
 def test_the_launcher_refuses_counted_run_options_without_enablement_or_outside_their_range(argv):
     serve = load_serve()

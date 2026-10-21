@@ -67,6 +67,14 @@ def test_memory_validity_is_judged_against_the_registry_time(p03, monkeypatch):
         memory.write(MemorySpec(scope_id="reader-a", content="late", valid_until=soon))
 
 
+def test_memory_recall_selects_by_the_registry_time_not_the_wall_clock(p03, monkeypatch):
+    memory = CaseStore(p03.registry, p03.reader, "case-42").memory()
+    freeze(monkeypatch, p03)  # the year 2040, later than the real date
+    start = FROZEN - timedelta(days=1)  # valid from a day before the registry instant, long after the wall clock
+    later = memory.write(MemorySpec(scope_id="reader-a", content="debit reported", valid_from=start))
+    assert later in [item["memory_id"] for item in memory.recall()]
+
+
 def test_live_evidence_is_fresh_or_stale_by_the_registry_time_not_the_wall_clock(p03, monkeypatch):
     freeze(monkeypatch, p03)
     fixture, identifier, claim = live_fixture(p03)

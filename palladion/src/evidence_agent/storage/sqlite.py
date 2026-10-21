@@ -412,9 +412,14 @@ class Database:
 
 
 
+def iso_stamp(moment: datetime) -> str:
+    """Fixed-precision UTC ISO-8601 text of an instant, suitable for lexical ordering."""
+    return moment.astimezone(timezone.utc).isoformat(timespec="microseconds").replace("+00:00", "Z")
+
+
 def utc_now() -> str:
-    """Return fixed-precision UTC ISO-8601 text suitable for lexical ordering."""
-    return datetime.now(timezone.utc).isoformat(timespec="microseconds").replace("+00:00", "Z")
+    """The wall clock as fixed-precision UTC ISO-8601 text."""
+    return iso_stamp(datetime.now(timezone.utc))
 
 
 def _read_sql_statements(script: str) -> list[str]:

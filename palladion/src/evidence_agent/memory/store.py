@@ -21,7 +21,7 @@ from evidence_agent.core.models import (
     VersionedModel,
 )
 from evidence_agent.storage.registry import Registry
-from evidence_agent.storage.sqlite import utc_now
+from evidence_agent.storage.sqlite import iso_stamp, utc_now
 
 
 class CaseStore:
@@ -559,7 +559,7 @@ class MemoryStore:
                     AND v.event_kind='MEMORY_CLOSED' AND v.case_id=coalesce(p.origin_case_id,?))
             """
             actor = self.case.principal
-            now = utc_now()
+            now = iso_stamp(self.registry.clock())  # the registry clock, so an evaluator run judges validity at its instant
             params.extend([actor.principal_id, actor.principal_id, self.case.case_id,
                 actor.principal_id, json.dumps(actor.allowed_case_ids), actor.principal_id, now, now, self.case.case_id])
             if category:

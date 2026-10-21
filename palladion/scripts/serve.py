@@ -82,6 +82,8 @@ def parse_args(argv: Sequence[str] | None = None) -> tuple[argparse.Namespace, S
         parser.error("Model call spacing requires --enable-live-llm")
     if (args.model_base_url or args.key_env) and not args.enable_live_llm:
         parser.error("--model-base-url and --key-env require --enable-live-llm")
+    if args.model_base_url and not args.key_env:
+        parser.error("--model-base-url requires --key-env, so the root .env key is never sent to another address")
     if args.require_graph and not args.enable_graph:
         parser.error("--require-graph requires --enable-graph")
     if args.evaluator_arm and not (args.acknowledge_not_serving and args.enable_live_llm):
