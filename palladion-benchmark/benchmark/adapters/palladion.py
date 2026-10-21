@@ -117,6 +117,7 @@ class PalladionArm:
         condition: Condition = Condition.C2,
         principals: PrincipalMap | None = None,
         client: httpx.Client | None = None,
+        timeout: float = TIMEOUT_SECONDS,
     ) -> None:
         if mode not in ("lexical", "dense", "hybrid", "reranked"):
             raise AdapterError("unknown Palladion search mode")
@@ -127,7 +128,7 @@ class PalladionArm:
         self.condition = condition
         self.principals = principals or PrincipalMap()
         self.access = AccessFilter(view, condition)
-        self._client = client or httpx.Client(timeout=TIMEOUT_SECONDS)
+        self._client = client or httpx.Client(timeout=timeout)
         self._owns_client = client is None
         self._revisions: dict[str, str] = {}  # Palladion revision id -> published document id
         self._table_states: dict[str, str] = {}  # published document id -> state it was given in Palladion
@@ -137,7 +138,7 @@ class PalladionArm:
 
     # -- plumbing --------------------------------------------------------------------------------
 
-    def _call(self, method: str, path: str, principal: str, body: dict[str, Any] | None = None) -> httpx.Response:
+    def call(self, method: str, path: str, principal: str, body: dict[str, Any] | None = None) -> httpx.Response:
         if principal not in self._tokens:
             raise AdapterError(f"no token for Palladion principal {principal}")
         try:
@@ -148,6 +149,10 @@ class PalladionArm:
             raise TimeoutError("Palladion did not answer in time") from exc
         except httpx.TransportError as exc:
             raise ArmUnavailable("Palladion is not reachable") from exc
+
+    def document_for(self, revision_id: str) -> str | None:
+        """The published document a Palladion revision holds; None for a revision this corpus does not know."""
+        return self._revisions.get(revision_id)
 
     def call_flags(self) -> tuple[str, ...]:
         return flags_from_notes(self.last_notes)
@@ -208,7 +213,7 @@ class PalladionArm:
             named = predecessor is not None and states.get(predecessor) == "APPROVED"
             body = {"supersedes_revision_id": revisions[str(predecessor)]} if named else None
             self._expect(
-                self._call("POST", f"/sources/{revisions[doc_id]}/approve", APPROVER, body), 200, "approve", doc_id
+                self.call("POST", f"/sources/{revisions[doc_id]}/approve", APPROVER, body), 200, "approve", doc_id
             )
             states[doc_id] = "APPROVED"
             superseded += int(named)
@@ -220,15 +225,52 @@ class PalladionArm:
         for doc_id, record in records.items():
             # Revoked last, so a withdrawn version is still approved when a later version supersedes it.
             if record.registry_state in REVOKE_STATES and states[doc_id] == "APPROVED":
-                self._expect(
-                    self._call("POST", f"/sources/{revisions[doc_id]}/revoke", APPROVER), 200, "revoke", doc_id
-                )
+                self._expect(self.call("POST", f"/sources/{revisions[doc_id]}/revoke", APPROVER), 200, "revoke", doc_id)
                 states[doc_id] = "REVOKED"
                 revoked += 1
         table_path.write_text(json.dumps({"revisions": revisions, "states": states}, sort_keys=True), encoding="utf-8")
         self._revisions = {revision: doc for doc, revision in revisions.items()}
         self._table_states = states
         return LoadReport(len(revisions), approved, revoked, len(revisions) - approved, revisions, states, superseded)
+
+    def publish(self, record: ManifestRecord, text: str, *, supersedes: str | None = None) -> str:
+        """Upload one more document after the load, approve it where its state allows and name the document it
+        supersedes when that one is approved. The arm's own view and map learn the document; the revision table on
+        disk and any other view are not changed."""
+        if record.doc_id in self._table_states:
+            raise AdapterError(f"{record.doc_id} is already in Palladion; a change is a new document or a revoke")
+        revision = self._upload(record, text)
+        self._revisions[revision] = record.doc_id
+        self._table_states[record.doc_id] = "DRAFT"
+        self.view = self.view.with_document(record, text)  # a passage of it must map back to a document
+        self.access = AccessFilter(self.view, self.condition)
+        if record.registry_state in APPROVE_STATES:
+            named = supersedes is not None and self._table_states.get(supersedes) == "APPROVED"
+            body = {"supersedes_revision_id": self._revision_of(str(supersedes))} if named else None
+            self._expect(
+                self.call("POST", f"/sources/{revision}/approve", APPROVER, body), 200, "approve", record.doc_id
+            )
+            self._table_states[record.doc_id] = "APPROVED"
+        if record.registry_state in REVOKE_STATES:
+            self.revoke(record.doc_id)
+        return revision
+
+    def revoke(self, doc_id: str) -> None:
+        """Revoke an approved document so Palladion stops serving it. Palladion has no route that undoes this."""
+        if self._table_states.get(doc_id) != "APPROVED":
+            raise AdapterError(f"{doc_id} is not approved in Palladion, so it cannot be revoked")
+        self._expect(self.call("POST", f"/sources/{self._revision_of(doc_id)}/revoke", APPROVER), 200, "revoke", doc_id)
+        self._table_states[doc_id] = "REVOKED"
+
+    def held_states(self) -> dict[str, str]:
+        """The state each document was given in Palladion (DRAFT, APPROVED or REVOKED), as this arm recorded it."""
+        return dict(self._table_states)
+
+    def _revision_of(self, doc_id: str) -> str:
+        for revision, document in self._revisions.items():
+            if document == doc_id:
+                return revision
+        raise AdapterError(f"{doc_id} has no Palladion revision")
 
     def map_revisions(self, revision_to_document: Mapping[str, str]) -> None:
         """Tell the arm which Palladion revision holds which published document."""
@@ -253,7 +295,7 @@ class PalladionArm:
             "valid_to": record.valid_to,
             "sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
         }
-        response = self._call("POST", "/sources", UPLOADER, body)
+        response = self.call("POST", "/sources", UPLOADER, body)
         self._expect(response, 201, "upload", record.doc_id)
         revision = str(response.json()["revision_id"])
         return revision
@@ -275,7 +317,7 @@ class PalladionArm:
         documents = {r.doc_id for r in self.view.records}
         if set(self._revisions.values()) != documents:
             raise AdapterError("the revision table does not cover exactly the published corpus")
-        health = self._call("GET", f"/index-health?case_id={self.principals.case_id}", self.principals.reader)
+        health = self.call("GET", f"/index-health?case_id={self.principals.case_id}", self.principals.reader)
         self._expect(health, 200, "read index health for", self.principals.case_id)
         coverage = health.json()
         blocking = sorted(set(coverage["warnings"]) & (UNAVAILABLE_WARNINGS | RETRYABLE_WARNINGS))
@@ -362,7 +404,7 @@ class PalladionArm:
 
     def _search(self, request: RetrievalRequest, mode: Mode) -> list[EvidenceCandidate]:
         principal, case_id = self.principals.resolve(request.principal_id)
-        response = self._call(
+        response = self.call(
             "POST",
             "/search",
             principal,

@@ -16,7 +16,7 @@ import re
 import subprocess
 import sys
 from collections.abc import Mapping
-from dataclasses import dataclass, fields
+from dataclasses import dataclass, field, fields
 from pathlib import Path
 from typing import Any
 
@@ -36,6 +36,7 @@ from benchmark.contracts import (
 
 _HEX64 = re.compile(r"[0-9a-f]{64}")
 _COMMIT = re.compile(r"[0-9a-f]{40}")
+_EXACT_VERSION = re.compile(r"[0-9]+(?:\.[0-9]+)*(?:(?:a|b|rc|post|dev)[0-9]+)?")
 _FLOATING = frozenset({"latest", "main", "master", "head", "stable", "nightly", "unpinned"})
 MAX_HASHED_FILE_BYTES = 64 * 1024 * 1024
 # Arms whose behavior depends on the Palladion tree: a confirmatory run must pin and record it.
@@ -98,7 +99,9 @@ class ComparatorPin:
     """What identifies a third-party comparator's build: where its code came from and how it was installed.
 
     ``deviations`` lists every way the run differs from the upstream's own defaults, so a reader can see how official
-    the run is. A floating reference is refused: the commit is a full lower-case id.
+    the run is. A floating reference is refused: the commit is a full lower-case id. A framework installed from a
+    package index (LangChain, LangGraph) has no commit of its own to name; it is pinned instead by exact versions in
+    ``packages``, and ``commit`` is then empty.
     """
 
     repository: str
@@ -107,23 +110,30 @@ class ComparatorPin:
     interpreter: str
     native_config: Mapping[str, Any]
     deviations: tuple[str, ...]
+    packages: Mapping[str, str] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         o = "ComparatorPin"
         object.__setattr__(self, "repository", require_text(f"{o}.repository", self.repository, max_len=300))
         if not self.repository.startswith("https://"):
             raise ManifestError(f"{o}.repository must be an https URL")
-        if not _COMMIT.fullmatch(self.commit):
+        packages: dict[str, str] = {}
+        for name, version in dict(self.packages).items():
+            if not (isinstance(name, str) and name and isinstance(version, str) and _EXACT_VERSION.fullmatch(version)):
+                raise ManifestError(f"{o}.packages must name each package with an exact version, not a range")
+            packages[name] = version
+        object.__setattr__(self, "packages", freeze(f"{o}.packages", packages))
+        if not (self.commit == "" and packages) and not _COMMIT.fullmatch(self.commit):
             raise ManifestError(f"{o}.commit must be a 40-character lowercase hex id, not a branch or tag")
-        if not _HEX64.fullmatch(self.lock_sha256):
-            raise ManifestError(f"{o}.lock_sha256 must be a 64-character lowercase hex digest")
         object.__setattr__(self, "interpreter", require_text(f"{o}.interpreter", self.interpreter, max_len=40))
         object.__setattr__(self, "native_config", freeze(f"{o}.native_config", self.native_config))
         deviations = tuple(require_text(f"{o}.deviations", d, max_len=300) for d in self.deviations)
         object.__setattr__(self, "deviations", deviations)
+        if not _HEX64.fullmatch(self.lock_sha256):
+            raise ManifestError(f"{o}.lock_sha256 must be a 64-character lowercase hex digest")
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        record: dict[str, Any] = {
             "repository": self.repository,
             "commit": self.commit,
             "lock_sha256": self.lock_sha256,
@@ -131,13 +141,17 @@ class ComparatorPin:
             "native_config": thaw(self.native_config),
             "deviations": list(self.deviations),
         }
+        if self.packages:  # omitted when empty, so a pin written before this field existed reads and writes unchanged
+            record["packages"] = thaw(self.packages)
+        return record
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> ComparatorPin:
-        _only(cls.__name__, data, ("repository", "commit", "lock_sha256", "interpreter", "native_config", "deviations"))
+        required = ("repository", "commit", "lock_sha256", "interpreter", "native_config", "deviations")
+        _only(cls.__name__, {k: v for k, v in data.items() if k != "packages"}, required)
         return cls(
             data["repository"], data["commit"], data["lock_sha256"], data["interpreter"],
-            data["native_config"], tuple(data["deviations"]),
+            data["native_config"], tuple(data["deviations"]), data.get("packages", {}),
         )  # fmt: skip
 
 

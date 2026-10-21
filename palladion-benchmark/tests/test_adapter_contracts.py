@@ -511,7 +511,7 @@ def test_matrix_prints_a_word_in_every_cell_never_blank() -> None:
 
 def test_matrix_for_a_subset_and_unknown_arm() -> None:
     registry = default_registry()
-    subset = registry.render_matrix(["R0", "E3"])
+    subset = registry.render_matrix(["R0", "R7b"])
     assert subset.count("\n") == 3 and "FEATURE_NOT_SUPPORTED" in subset
     with pytest.raises(ContractError):
         registry.render_matrix(["R99"])
@@ -520,7 +520,7 @@ def test_matrix_for_a_subset_and_unknown_arm() -> None:
 def test_unverified_capability_blocks_the_run_and_is_recorded_as_not_run() -> None:
     registry = default_registry()
     with pytest.raises(CapabilityNotVerified) as caught:
-        registry.require_runnable("E0", [Capability.ACL_FILTER])  # B07 verifies it; R4 was verified in B06
+        registry.require_runnable("R7", [Capability.ACL_FILTER])  # the aggregate R7 row stays unverified
     assert classify_exception(caught.value)[0] is RunStatus.NOT_RUN
 
 
@@ -538,13 +538,16 @@ def test_verified_support_passes_and_no_requirement_returns_the_spec() -> None:
     assert registry.require_runnable("X1").arm_id == "X1"
 
 
-def test_critic_arms_are_pinned_to_the_documented_open_question() -> None:
+def test_the_palladion_system_arms_are_runnable_with_every_capability_declared() -> None:
     registry = default_registry()
-    with pytest.raises(CapabilityUnsupported, match="OQ11"):
-        registry.require_runnable("E3")
-    with pytest.raises(ArmUnavailable, match="OQ11"):
-        registry.require_runnable("E4")
-    assert registry.get("E3").forced_status is RunStatus.FEATURE_NOT_SUPPORTED
+    for arm_id in ("E3", "E4"):
+        spec = registry.require_runnable(arm_id, [Capability.NATIVE_CITATION])
+        assert spec.forced_status is None
+        assert all(d.support is not Support.UNVERIFIED for d in spec.capabilities.values())
+        with pytest.raises(CapabilityUnsupported):
+            registry.require_runnable(arm_id, [Capability.ACL_FILTER])
+        with pytest.raises(CapabilityUnsupported):
+            registry.require_runnable(arm_id, [Capability.TEMPORAL_FILTER])
 
 
 def test_forced_status_needs_a_reason_and_a_legal_value() -> None:

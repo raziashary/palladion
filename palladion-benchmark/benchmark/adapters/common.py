@@ -106,6 +106,12 @@ class PublishedView:
     def documents(self) -> list[Document]:
         return [Document(r, self._texts[r.doc_id]) for r in self.records]
 
+    def with_document(self, record: ManifestRecord, text: str) -> PublishedView:
+        """A new view that also holds one more document; this view, and any arm built on it, is unchanged."""
+        if any(r.doc_id == record.doc_id for r in self.records):
+            raise AdapterError(f"{record.doc_id} is already in the view")
+        return PublishedView(self.root, (*self.records, record), self.identity, {**self._texts, record.doc_id: text})
+
 
 def chunk_document(doc_id: str, text: str, max_words: int = DEFAULT_CHUNK_WORDS) -> list[Chunk]:
     """Tile ``text`` into chunks that start where the previous one ended and end at the document's end.

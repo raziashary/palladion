@@ -301,7 +301,9 @@ def test_the_comparator_is_handed_the_shared_chunks_and_nothing_else(tmp_path: P
         "chunk_id",
         "doc_id",
         "text",
+        "clauses",  # the published clause ids the chunk's lines hold: structure of the text, not a label
     }
+    assert [r["clauses"] for r in rows] == [list(c.clauses) for c in shared]
     assert arm.index_stats()["chunks"] == len(shared)
 
 
@@ -712,3 +714,17 @@ def test_importing_litellm_in_a_comparator_environment_does_not_load_the_project
 
     assert leaked({}) != "[]", "positive control: without the switch the import does load the key"
     assert leaked({"LITELLM_MODE": "PRODUCTION"}) == "[]"
+
+
+@pytest.mark.parametrize(
+    ("code", "fault"),
+    [
+        ("WORKER_RateLimitError", True), ("WORKER_OpenAIRateLimitError", True), ("WORKER_APIConnectionError", True),
+        ("WORKER_OpenAIPermissionDeniedError", True), ("WORKER_ValueError", False),
+        ("WORKER_OpenAIInvalidRequestError", False), ("TIMEOUT", False),
+    ],
+)  # fmt: skip
+def test_only_a_refused_or_failed_model_call_is_a_provider_fault(code: str, fault: bool) -> None:
+    from benchmark.adapters.worker import _is_provider_fault
+
+    assert _is_provider_fault(code) is fault

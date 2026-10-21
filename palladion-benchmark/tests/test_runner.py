@@ -648,18 +648,18 @@ def test_the_registry_blocks_arms_with_unverified_capabilities_before_any_call(t
     assert all(r.duration_ms is None for r in finals(world).values())  # no call, so no duration (never 0)
 
 
-def test_a_forced_registry_status_is_recorded_for_the_critic_arm(tmp_path: Path) -> None:
+def test_a_forced_registry_status_is_recorded_for_a_system_arm_that_cannot_run(tmp_path: Path) -> None:
     system = System()
     cfg = settings()
-    path = tmp_path / "manifest-E3.json"
-    write_manifest(path, "E3", cfg, track=Track.NATIVE_END_TO_END)
+    path = tmp_path / "manifest-E2.json"
+    write_manifest(path, "E2", cfg, track=Track.NATIVE_END_TO_END)
     ledger = RunLedger(tmp_path / "ledger.jsonl")
-    runner = Runner(RUN_ID, cfg, [ArmBinding("E3", system, path)], ledger, PlanRegistry(tmp_path / "p.jsonl"),
+    runner = Runner(RUN_ID, cfg, [ArmBinding("E2", system, path)], ledger, PlanRegistry(tmp_path / "p.jsonl"),
                     default_registry())  # fmt: skip
     runner.run([RunnerCase(CaseRequest(qid(1), "q", "p1", "snap1", "2026-10-18T03:00:00Z", None, {}, 4000, None, 0))],
                split="pilot")  # fmt: skip
     (record,) = ledger.records
-    assert (record.status, record.code) == (RunStatus.FEATURE_NOT_SUPPORTED, "CAPABILITY_UNSUPPORTED")
+    assert (record.status, record.code) == (RunStatus.NOT_RUN, "ARM_UNAVAILABLE")
     assert system.log == []
 
 

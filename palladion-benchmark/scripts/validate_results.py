@@ -1,7 +1,7 @@
 """Validate a Track A run directory: schema, budgets, leakage, secrets and hashes (B04-T04.03).
 
     uv run python scripts/validate_results.py --run-dir artifacts/runs/pilot-c2 --root artifacts/fixtures/S \\
-        --env-file .env --tokens-file artifacts/palladion-runtime/demo_auth.json
+        --env-file .env --tokens-file artifacts/palladion-runtime-<pin>/demo_auth.json
 
 Exit status: 0 the directory is clean, 1 it has findings (each names a rule and a file, never matched text), 2 a usage
 error. ``--env-file`` and ``--tokens-file`` supply values that must appear nowhere in the artifacts; they are read in

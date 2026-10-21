@@ -4,8 +4,12 @@ Only artifacts the owner approved are accepted (OQ14, BADR-0031): HippoRAG 2, Gr
 upstream repository at one commit, installed into its own uv environment. Nothing is downloaded by this module; it
 checks what is on disk against the approval and describes it as a ``ComparatorPin`` for the run manifest.
 
+The end-to-end frameworks of B07 (LangChain for E0, LangGraph for E1) are approved as exact package versions in one
+environment (BADR-0040) and described by ``framework_pin``; Google ADK (E2) is recorded as not installed.
+
     python scripts/comparators.py verify            check every checkout against its approved commit
     python scripts/comparators.py pin R6            print the pin of one comparator as JSON
+    python scripts/comparators.py framework E1      print the pin of one framework environment as JSON
 """
 
 from __future__ import annotations
@@ -82,6 +86,40 @@ APPROVED: Mapping[str, Approved] = {
 }
 
 
+@dataclass(frozen=True)
+class ApprovedFramework:
+    """An approved set of exact package versions in one isolated environment, for an end-to-end arm."""
+
+    arm_id: str
+    name: str
+    environment: str
+    packages: Mapping[str, str]  # distribution -> exact version
+    note: str
+
+
+# One environment holds both: E1 builds on E0's components. Versions are what the owner approved on 2026-10-21 (the
+# latest releases at least two weeks old, installed with ``--exclude-newer 2026-10-07``).
+_LANGCHAIN_PACKAGES: Mapping[str, str] = {
+    "langchain-core": "1.6.7",
+    "langchain-text-splitters": "1.1.3",
+    "langchain-openai": "1.6.7",
+    "langgraph": "1.2.14",
+    "openai": "3.26.0",
+    "numpy": "2.5.3",  # langchain-core's in-memory store computes cosine similarity with it (BADR-0040)
+}
+FRAMEWORKS: Mapping[str, ApprovedFramework] = {
+    "E0": ApprovedFramework(
+        "E0", "LangChain two-step", "env-langchain", _LANGCHAIN_PACKAGES,
+        "standard splitter, in-memory vector store and retriever; a reference implementation, not one algorithm",
+    ),
+    "E1": ApprovedFramework(
+        "E1", "LangGraph bounded agentic loop", "env-langchain", _LANGCHAIN_PACKAGES,
+        "a retriever tool and a bounded loop over the same components as E0",
+    ),
+}  # fmt: skip
+NOT_INSTALLED = {"E2": "Google ADK is recorded only: no package, access or managed-service probe is approved (OQ07)"}
+
+
 def approved(arm_id: str) -> Approved:
     try:
         return APPROVED[arm_id]
@@ -110,12 +148,12 @@ def verify_checkout(path: Path, repository: str, commit: str) -> None:
         raise ComparatorPinError(f"{path.name}: tracked files differ from the commit")
 
 
-def _env_python(environment: Path) -> Path:
+def env_python(environment: Path) -> Path:
     return environment / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
 
 
 def interpreter_version(environment: Path) -> str:
-    python = _env_python(environment)
+    python = env_python(environment)
     if not python.is_file():
         raise ComparatorPinError(f"{environment.name} has no interpreter")
     result = subprocess.run(
@@ -130,13 +168,75 @@ def interpreter_version(environment: Path) -> str:
 def lock_digest(environment: Path) -> str:
     """SHA-256 of the sorted list of installed distributions with their versions (``uv pip freeze``)."""
     result = subprocess.run(
-        ["uv", "pip", "freeze", "--python", str(_env_python(environment))],
+        ["uv", "pip", "freeze", "--python", str(env_python(environment))],
         capture_output=True, text=True, check=False, timeout=120,
     )  # fmt: skip
     if result.returncode != 0:
         raise ComparatorPinError(f"{environment.name}: the installed packages could not be listed")
     lines = sorted(line.strip() for line in result.stdout.splitlines() if line.strip())
     return hashlib.sha256("\n".join(lines).encode("utf-8")).hexdigest()
+
+
+def installed_packages(environment: Path) -> dict[str, str]:
+    """Distribution name (lower case, hyphens) -> version of everything installed in the environment."""
+    result = subprocess.run(
+        ["uv", "pip", "freeze", "--python", str(env_python(environment))],
+        capture_output=True, text=True, check=False, timeout=120,
+    )  # fmt: skip
+    if result.returncode != 0:
+        raise ComparatorPinError(f"{environment.name}: the installed packages could not be listed")
+    found: dict[str, str] = {}
+    for line in result.stdout.splitlines():
+        name, separator, version = line.strip().partition("==")
+        if separator:
+            found[name.lower().replace("_", "-")] = version
+    return found
+
+
+def framework_pin(arm_id: str, *, root: Path = COMPARATORS_DIR) -> dict[str, Any]:
+    """Verify that the environment holds exactly the approved versions and describe it for a run manifest."""
+    if arm_id in NOT_INSTALLED:
+        raise ComparatorPinError(f"{arm_id}: {NOT_INSTALLED[arm_id]}")
+    try:
+        artifact = FRAMEWORKS[arm_id]
+    except KeyError:
+        raise ComparatorPinError(f"{arm_id} is not an approved framework (approved: {', '.join(FRAMEWORKS)})") from None
+    environment = root / artifact.environment
+    installed = installed_packages(environment)
+    wrong = {name: installed.get(name) for name, version in artifact.packages.items() if installed.get(name) != version}
+    if wrong:
+        raise ComparatorPinError(f"{environment.name}: not the approved versions for {', '.join(sorted(wrong))}")
+    return {
+        "arm": arm_id,
+        "environment": artifact.environment,
+        "packages": dict(artifact.packages),
+        "interpreter": interpreter_version(environment),
+        "lock_sha256": lock_digest(environment),
+        "note": artifact.note,
+    }
+
+
+def build_framework_pin(
+    arm_id: str,
+    *,
+    root: Path = COMPARATORS_DIR,
+    native_config: Mapping[str, Any],
+    deviations: Sequence[str],
+) -> ComparatorPin:
+    """The approved framework environment described as a manifest pin: exact versions instead of a commit."""
+    described = framework_pin(arm_id, root=root)
+    try:
+        return ComparatorPin(
+            repository="https://pypi.org/project/langchain-core/",
+            commit="",
+            lock_sha256=described["lock_sha256"],
+            interpreter=described["interpreter"],
+            native_config=dict(native_config),
+            deviations=tuple(deviations),
+            packages=described["packages"],
+        )
+    except ManifestError as exc:
+        raise ComparatorPinError(str(exc)) from None
 
 
 def build_pin(
@@ -171,12 +271,18 @@ def main(argv: list[str] | None = None) -> int:
     one = sub.add_parser("pin")
     one.add_argument("arm", choices=sorted(APPROVED))
     one.add_argument("--root", type=Path, default=COMPARATORS_DIR)
+    framework = sub.add_parser("framework")
+    framework.add_argument("arm", choices=sorted([*FRAMEWORKS, *NOT_INSTALLED]))
+    framework.add_argument("--root", type=Path, default=COMPARATORS_DIR)
     options = parser.parse_args(argv)
     try:
         if options.command == "verify":
             for arm_id, artifact in APPROVED.items():
                 verify_checkout(options.root / artifact.checkout, artifact.repository, artifact.commit)
                 print(f"{arm_id} {artifact.name}: the checkout is the approved commit")
+            return 0
+        if options.command == "framework":
+            print(json.dumps(framework_pin(options.arm, root=options.root), indent=2))
             return 0
         print(
             json.dumps(build_pin(options.arm, root=options.root, native_config={}, deviations=[]).to_dict(), indent=2)

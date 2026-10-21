@@ -195,6 +195,31 @@ def test_a_graph_run_carries_no_gold_in_its_new_fields(graph_run: Path) -> None:
         assert gold not in text
 
 
+def test_a_package_index_framework_is_pinned_by_exact_versions_and_old_pins_are_unchanged() -> None:
+    framework = pin(commit="", packages={"langchain-core": "1.6.7", "langgraph": "1.2.14"})
+    parsed = ComparatorPin.from_dict(framework)
+    assert parsed.commit == "" and dict(parsed.packages) == {"langchain-core": "1.6.7", "langgraph": "1.2.14"}
+    assert parsed.to_dict() == framework and ComparatorPin.from_dict(parsed.to_dict()) == parsed
+    old = ComparatorPin.from_dict(pin())
+    assert "packages" not in old.to_dict(), "a pin without packages serialises exactly as before"
+
+
+@pytest.mark.parametrize(
+    ("over", "reason"),
+    [
+        ({"commit": ""}, "40-character"),
+        ({"commit": "main", "packages": {"a": "1.0"}}, "40-character"),
+        ({"commit": "", "packages": {"langgraph": "latest"}}, "exact version"),
+        ({"commit": "", "packages": {"langgraph": ">=1.2"}}, "exact version"),
+        ({"commit": "", "packages": {"langgraph": "1.*"}}, "exact version"),
+        ({"commit": "", "packages": {"": "1.0"}}, "packages"),
+    ],
+)
+def test_a_framework_pin_without_exact_versions_or_a_commit_is_refused(over: dict[str, Any], reason: str) -> None:
+    with pytest.raises(ManifestError, match=reason):
+        ComparatorPin.from_dict(pin(**over))
+
+
 def test_an_arm_without_a_valid_pin_cannot_start(s_root: Path, tmp_path: Path) -> None:
     view = PublishedView.load(s_root / "published")
     for bad in (False, pin(commit="main"), {}):

@@ -14,10 +14,15 @@ import comparators
 from benchmark.run_manifest import ComparatorPin
 from comparators import (
     APPROVED,
+    FRAMEWORKS,
+    NOT_INSTALLED,
     Approved,
     ComparatorPinError,
     approved,
+    build_framework_pin,
     build_pin,
+    framework_pin,
+    installed_packages,
     interpreter_version,
     lock_digest,
     verify_checkout,
@@ -184,3 +189,81 @@ def test_the_downloaded_checkouts_are_the_approved_commits() -> None:
     assert done.returncode == 0, done.stderr
     assert done.stdout.count("the checkout is the approved commit") == 3
     assert json.dumps(sorted(comparators.APPROVED))
+
+
+# --------------------------------------------------------------------------- the end-to-end frameworks (BADR-0040)
+
+
+def site_packages(env: Path) -> Path:
+    return (
+        next(env.glob("Lib/site-packages")) if sys.platform == "win32" else next(env.glob("lib/python*/site-packages"))
+    )
+
+
+def install_by_hand(env: Path, name: str, version: str) -> None:
+    """What an installer leaves behind, written by hand so no network is needed."""
+    info = site_packages(env) / f"{name.replace('-', '_')}-{version}.dist-info"
+    info.mkdir()
+    lines = ["Metadata-Version: 2.1", f"Name: {name}", f"Version: {version}", ""]
+    (info / "METADATA").write_text(chr(10).join(lines), encoding="utf-8")
+    (info / "RECORD").write_text("", encoding="utf-8")
+
+
+def framework_root(tmp_path: Path, versions: dict[str, str]) -> Path:
+    make_env(tmp_path / FRAMEWORKS["E1"].environment)
+    for name, version in versions.items():
+        install_by_hand(tmp_path / FRAMEWORKS["E1"].environment, name, version)
+    return tmp_path
+
+
+def test_the_framework_environment_must_hold_exactly_the_approved_versions(tmp_path: Path) -> None:
+    root = framework_root(tmp_path, dict(FRAMEWORKS["E1"].packages))
+    pin = framework_pin("E1", root=root)
+    assert pin["packages"] == dict(FRAMEWORKS["E1"].packages) and len(pin["lock_sha256"]) == 64
+    assert pin["interpreter"].startswith(f"{sys.version_info.major}.{sys.version_info.minor}")
+    assert framework_pin("E0", root=root)["environment"] == pin["environment"], "E0 and E1 share one environment"
+
+
+def test_a_missing_or_different_version_is_refused_by_name(tmp_path: Path) -> None:
+    approved_packages = dict(FRAMEWORKS["E1"].packages)
+    wrong = {**approved_packages, "langgraph": "0.0.1"}
+    with pytest.raises(ComparatorPinError, match="langgraph"):
+        framework_pin("E1", root=framework_root(tmp_path / "a", wrong))
+    missing = {name: version for name, version in approved_packages.items() if name != "openai"}
+    with pytest.raises(ComparatorPinError, match="openai"):
+        framework_pin("E1", root=framework_root(tmp_path / "b", missing))
+
+
+def test_google_adk_is_recorded_not_installed_and_an_unknown_arm_is_refused(tmp_path: Path) -> None:
+    assert set(NOT_INSTALLED) == {"E2"}
+    with pytest.raises(ComparatorPinError, match="recorded only"):
+        framework_pin("E2", root=tmp_path)
+    with pytest.raises(ComparatorPinError, match="not an approved framework"):
+        framework_pin("E9", root=tmp_path)
+
+
+def test_installed_packages_lists_what_is_there_with_normalised_names(tmp_path: Path) -> None:
+    env = make_env(tmp_path / "env")
+    install_by_hand(env, "Some_Package", "2.3")
+    assert installed_packages(env)["some-package"] == "2.3"
+
+
+@pytest.mark.skipif(
+    not (REAL / FRAMEWORKS["E0"].environment).exists(), reason="the framework environment is not installed"
+)
+def test_the_installed_framework_environment_is_the_approved_one() -> None:
+    assert framework_pin("E0")["packages"] == dict(FRAMEWORKS["E0"].packages)
+
+
+def test_the_framework_pin_carries_exact_versions_and_no_commit(tmp_path: Path) -> None:
+    root = framework_root(tmp_path, dict(FRAMEWORKS["E1"].packages))
+    pin = build_framework_pin("E1", root=root, native_config={"k": 4}, deviations=["a"])
+    assert isinstance(pin, ComparatorPin) and pin.commit == "" and dict(pin.packages) == dict(FRAMEWORKS["E1"].packages)
+    assert ComparatorPin.from_dict(pin.to_dict()) == pin
+    with pytest.raises(ComparatorPinError, match="langgraph"):
+        build_framework_pin(
+            "E1",
+            root=framework_root(tmp_path / "x", {**FRAMEWORKS["E1"].packages, "langgraph": "0.1"}),
+            native_config={},
+            deviations=[],
+        )

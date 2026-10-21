@@ -15,13 +15,13 @@ arms:
   - {id: R5, name: "GraphRAG Local", family: graph_research, tracks: [retrieval_only], pin: {kind: commit, value: "5faaaf4f5685fa2056fa8c3bf9342cb089f2942f"}, eligibility: "document questions; Global mode is a separate exploratory condition"}
   - {id: R6, name: "LightRAG", family: graph_research, tracks: [retrieval_only], pin: {kind: commit, value: "28ff1b05f2ac3f3e6fa14dd2cd33656579bd0c9c"}, eligibility: "document questions; a matched subset of the S tier under the owner's live limits (BADR-0031)"}
   - {id: R7, name: "Palladion retriever", family: system_under_test, tracks: [retrieval_only, controlled_qa], pin: {kind: unpinned, value: "UNPINNED"}, eligibility: all}
-  - {id: R7a, name: "Palladion retriever without graph", family: system_under_test, tracks: [retrieval_only, controlled_qa], pin: {kind: commit, value: "6444345209cabd9dc0b637c53ee063dd2fe87303"}, eligibility: all}
-  - {id: R7b, name: "Palladion retriever with bounded graph", family: system_under_test, tracks: [retrieval_only], pin: {kind: unpinned, value: "UNPINNED"}, eligibility: "FEATURE_NOT_SUPPORTED at 6444345: no HTTP route creates graph links (BR34, PF07)"}
-  - {id: E0, name: "Plain LangChain two-step", family: framework, tracks: [native_end_to_end], pin: {kind: unpinned, value: "UNPINNED"}, eligibility: all}
-  - {id: E1, name: "LangGraph agentic", family: framework, tracks: [native_end_to_end], pin: {kind: unpinned, value: "UNPINNED"}, eligibility: all}
-  - {id: E2, name: "Google ADK with RAG Engine", family: managed_service, tracks: [native_end_to_end], pin: {kind: unpinned, value: "UNPINNED"}, eligibility: "NOT_RUN unless access is confirmed (OQ07)"}
-  - {id: E3, name: "Palladion without critic", family: system_under_test, tracks: [native_end_to_end], pin: {kind: unpinned, value: "UNPINNED"}, eligibility: "FEATURE_NOT_SUPPORTED until Palladion documents a critic-off switch (OQ11)"}
-  - {id: E4, name: "Full Palladion with critic", family: system_under_test, tracks: [native_end_to_end], pin: {kind: unpinned, value: "UNPINNED"}, eligibility: "NOT_RUN until Palladion ships its independent critic (OQ11)"}
+  - {id: R7a, name: "Palladion retriever without graph", family: system_under_test, tracks: [retrieval_only, controlled_qa], pin: {kind: commit, value: "eec4ba59fe2701e2e9ba889d68d654ec762de855"}, eligibility: all}
+  - {id: R7b, name: "Palladion retriever with bounded graph", family: system_under_test, tracks: [retrieval_only], pin: {kind: unpinned, value: "UNPINNED"}, eligibility: "FEATURE_NOT_SUPPORTED: the link route (PF07) exists since P10, but no graph store (OQ12) and no link-selection rule are in place (BR34)"}
+  - {id: E0, name: "Plain LangChain two-step", family: framework, tracks: [native_end_to_end], pin: {kind: version, value: "1.6.7"}, eligibility: all}
+  - {id: E1, name: "LangGraph agentic", family: framework, tracks: [native_end_to_end], pin: {kind: version, value: "1.2.14"}, eligibility: all}
+  - {id: E2, name: "Google ADK with RAG Engine", family: managed_service, tracks: [native_end_to_end], pin: {kind: unpinned, value: "UNPINNED"}, eligibility: "NOT_RUN: no access configured and no probe approved (OQ07); FEATURE_NOT_SUPPORTED for the four-tool set and the principal filter even with access"}
+  - {id: E3, name: "Palladion without critic", family: system_under_test, tracks: [native_end_to_end], pin: {kind: commit, value: "eec4ba59fe2701e2e9ba889d68d654ec762de855"}, eligibility: "evaluator control B5 started by the evaluator-only launcher flag (BADR-0039); a distinct treatment: policy and operational claims need a review the gate does not get"}
+  - {id: E4, name: "Full Palladion with critic", family: system_under_test, tracks: [native_end_to_end], pin: {kind: commit, value: "eec4ba59fe2701e2e9ba889d68d654ec762de855"}, eligibility: "the default serving path with the critic on every message, started in evaluator mode for its report (BADR-0039)"}
 
 # Embedding and reranker follow Palladion's pins (OQ04, OQ05), read from Palladion's source on 2026-10-19
 # (retrieval/embeddings.py and retrieval/rerank.py). The file digests were measured on the benchmark's own download
@@ -52,5 +52,8 @@ shared_models:
     digests:
       qdrant-x86_64-unknown-linux-musl.tar.gz: "50b253243309ed0ae50a19f678f0d0adcc4f0b567b3bd2c5c0c7e02fa8404bb6"
 
-# Palladion at P06 (6444345), the commit the isolated runtime of scripts/palladion_runtime.py checks out.
-system_under_test: {kind: commit, value: "6444345209cabd9dc0b637c53ee063dd2fe87303"}
+# E0 is pinned by langchain-core and E1 by langgraph; the exact versions of the whole environment are in the run
+# manifest (ComparatorPin.packages) and in scripts/comparators.py (BADR-0040).
+# Palladion at eec4ba5 (B07: P10 plus the evaluator transport, control arm and application clock), the commit the isolated runtime of
+# scripts/palladion_runtime.py checks out. Results recorded at 6444345 keep that pin (BADR-0038).
+system_under_test: {kind: commit, value: "eec4ba59fe2701e2e9ba889d68d654ec762de855"}

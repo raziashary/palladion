@@ -6,7 +6,8 @@ its own Qdrant collection on the benchmark's server (127.0.0.1:17333). Palladion
 belong to its contributor and are never used; ``live_state`` is read before and after every session so a change would
 show.
 
-Palladion's own seed (``scripts/seed.py``) creates its demo principals, cases and four demo sources; the demo sources
+Palladion's own seed (``scripts/seed.py --policies``) creates its demo principals, cases (with their scopes and policy
+fixtures, which the agent runtime of E3 and E4 needs) and four demo sources; the demo sources
 are then revoked through its HTTP API so that only the benchmark corpus is retrievable. Tokens live in the runtime
 root's ``demo_auth.json``; they are read inside this module and handed to the adapter, never printed or logged.
 """
@@ -16,6 +17,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -23,23 +25,30 @@ import sys
 import time
 import urllib.error
 import urllib.request
-from dataclasses import dataclass
+from collections.abc import Mapping
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from benchmark.adapters.models import spec_from_pin, verify
-from benchmark.config import load_all
+import yaml
 
-PINNED_COMMIT = "6444345209cabd9dc0b637c53ee063dd2fe87303"
 BENCH = Path(__file__).resolve().parents[1]
-PROJECT = BENCH
 sys.path.insert(0, str(BENCH))
+
+from benchmark.adapters.models import spec_from_pin, verify  # noqa: E402
+from benchmark.config import load_all  # noqa: E402
+
+PINNED_COMMIT = "eec4ba59fe2701e2e9ba889d68d654ec762de855"
+PROJECT = BENCH
 REPO = BENCH.parent
 WORKTREE = BENCH / "artifacts" / f"palladion-{PINNED_COMMIT[:7]}"
-RUNTIME_ROOT = BENCH / "artifacts" / "palladion-runtime"
+RUNTIME_ROOT = BENCH / "artifacts" / f"palladion-runtime-{PINNED_COMMIT[:7]}"
 QDRANT_URL = "http://127.0.0.1:17333"
-COLLECTION = "bench_palladion"
+COLLECTION = f"bench_palladion_{PINNED_COMMIT[:7]}"
 PORT = 18081
+SYSTEM_PORTS = {"E3": 18082, "E4": 18083}  # the evaluator servers of the end-to-end arms
+KEY_VARIABLE = "BENCH_PROXY_TOKEN"  # holds the counting proxy's per-run token, never a provider key
+EVALUATOR_ARMS = {"E3": "B5", "E4": "B6"}
 PALLADION_DEFAULT_PORT = 18080
 PALLADION_QDRANT = "http://127.0.0.1:16333"
 PALLADION_COLLECTION = "knowledge_chunks_v1"
@@ -107,9 +116,12 @@ def pins_from_source(worktree: Path = WORKTREE) -> dict[str, str]:
 
 
 def sync_environment(worktree: Path = WORKTREE) -> None:
-    result = run(["uv", "sync", "--frozen"], application_dir(worktree), timeout=1800)
+    # Offline: the benchmark downloads nothing without the owner's approval (OQ14); the packages are in uv's cache.
+    result = run(["uv", "sync", "--frozen", "--offline"], application_dir(worktree), timeout=1800)
     if result.returncode != 0:
-        raise PalladionRuntimeError("uv could not build Palladion's environment from its lock file")
+        raise PalladionRuntimeError(
+            "uv could not build Palladion's environment from its lock file and the local cache (no download is tried)"
+        )
 
 
 def install_model_cache(worktree: Path = WORKTREE) -> None:
@@ -194,6 +206,7 @@ def seed(worktree: Path = WORKTREE, root: Path = RUNTIME_ROOT) -> dict[str, str]
             QDRANT_URL,
             "--collection",
             COLLECTION,
+            "--policies",  # the case scope and policy fixtures the agent runtime needs (R7a's search does not)
         ],
         application_dir(worktree),
         timeout=1800,
@@ -218,6 +231,8 @@ class PalladionRuntime:
     root: Path = RUNTIME_ROOT
     port: int = PORT
     rerank: bool = True
+    extra_args: tuple[str, ...] = ()
+    extra_env: Mapping[str, str] = field(default_factory=dict)
     process: subprocess.Popen[bytes] | None = None
 
     @property
@@ -236,8 +251,13 @@ class PalladionRuntime:
         ]  # fmt: skip
         if self.rerank:
             command.append("--rerank")
+        command.extend(self.extra_args)
         self.process = subprocess.Popen(
-            command, cwd=application_dir(self.worktree), stdout=log, stderr=subprocess.STDOUT
+            command,
+            cwd=application_dir(self.worktree),
+            stdout=log,
+            stderr=subprocess.STDOUT,
+            env={**os.environ, **self.extra_env},
         )
         deadline = time.monotonic() + HEALTH_TIMEOUT_SECONDS
         while time.monotonic() < deadline:
@@ -264,6 +284,54 @@ class PalladionRuntime:
 
     def __exit__(self, *_: object) -> None:
         self.stop()
+
+
+def settings_without_continuity(worktree: Path, target: Path) -> Path:
+    """A copy of the pinned settings with continuity off; Palladion's own file is read and never changed."""
+    base = yaml.safe_load((application_dir(worktree) / "config/settings.yaml").read_text(encoding="utf-8"))
+    target.write_text(yaml.safe_dump({**base, "continuity_enabled": False}), encoding="utf-8")
+    return target
+
+
+def evaluator_runtime(
+    arm_id: str,
+    *,
+    model: str,
+    proxy_url: str,
+    token: str,
+    evaluation_time: str,
+    completion_cap: int,
+    model_timeout: float,
+    request_timeout: int,
+    continuity: bool = True,
+    root: Path = RUNTIME_ROOT,
+    worktree: Path = WORKTREE,
+) -> PalladionRuntime:
+    """The isolated Palladion started as the evaluator server of an end-to-end arm (ADR-0099 to ADR-0101).
+
+    Every model call goes to the counting proxy at ``proxy_url`` carrying its per-run ``token`` (in an environment
+    variable of this one process, never on a command line); the control arm and the evaluation time are fixed at launch.
+    ``continuity=False`` starts it from a copy of the pinned settings with the continuity packet off (the memory-free
+    baseline), written beside the runtime root.
+    """
+    if arm_id not in EVALUATOR_ARMS:
+        raise PalladionRuntimeError(f"{arm_id} is not a Palladion end-to-end arm")
+    args = [
+        "--enable-live-llm", "--key-env", KEY_VARIABLE, "--model", model, "--model-base-url", proxy_url,
+        "--completion-cap", str(completion_cap), "--model-timeout", str(model_timeout),
+        "--request-timeout", str(request_timeout), "--evaluator-arm", EVALUATOR_ARMS[arm_id],
+        "--acknowledge-not-serving", "--evaluation-time", evaluation_time,
+    ]  # fmt: skip
+    if not continuity:
+        args += ["--settings", str(settings_without_continuity(worktree, root.parent / f"settings-{arm_id}.yaml"))]
+    return PalladionRuntime(
+        worktree=worktree,
+        root=root,
+        port=SYSTEM_PORTS[arm_id],
+        rerank=True,
+        extra_args=tuple(args),
+        extra_env={KEY_VARIABLE: token},
+    )
 
 
 OUTAGE_WARNINGS = frozenset({"INDEX_UNAVAILABLE", "INDEX_MANIFEST_MISMATCH", "ACCEPTED_BUT_UNINDEXED"})

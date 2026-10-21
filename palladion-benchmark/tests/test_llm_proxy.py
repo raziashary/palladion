@@ -365,3 +365,69 @@ def test_a_daily_token_limit_stops_the_run_instead_of_spending_calls_on_refusals
     refused = proxy.chat(body())
     assert isinstance(refused, Refusal) and refused.code == "DAILY_LIMIT_REACHED"
     assert proxy.usage()["calls"] == 2 and len(transport.payloads) == 2, "no further call is made or counted"
+
+
+# --------------------------------------------------------------------------- tools for agent arms
+
+
+def tool_reply(calls: int) -> TransportResponse:
+    message: dict[str, Any] = {"role": "assistant", "content": None}
+    message["tool_calls"] = [
+        {"id": f"c{i}", "type": "function", "function": {"name": "search", "arguments": "{}"}} for i in range(calls)
+    ]
+    body = {"choices": [{"message": message}], "usage": {"prompt_tokens": 10, "completion_tokens": 5}}
+    return TransportResponse(200, {}, json.dumps(body).encode())
+
+
+TOOLS = [{"type": "function", "function": {"name": "search", "parameters": {"type": "object", "properties": {}}}}]
+
+
+def body_with_tools(**extra: Any) -> bytes:
+    payload = json.loads(body())
+    payload.update(tools=TOOLS, tool_choice="auto", **extra)
+    return json.dumps(payload).encode()
+
+
+def test_a_request_with_tools_is_refused_unless_the_run_states_a_tool_cap(tmp_path: Path) -> None:
+    transport = Fake(tool_reply(1))
+    refused = make(transport, tmp_path).chat(body_with_tools())
+    assert isinstance(refused, Refusal) and refused.code == "PARAMETER_REFUSED" and transport.payloads == []
+    allowed = make(Fake(tool_reply(1)), tmp_path, max_tool_calls=2).chat(body_with_tools(parallel_tool_calls=False))
+    assert isinstance(allowed, TransportResponse)
+
+
+def test_every_tool_call_a_reply_requests_is_counted_and_the_cap_stops_the_next_offer(tmp_path: Path) -> None:
+    transport = Fake(tool_reply(2), tool_reply(1), reply())
+    proxy = make(transport, tmp_path, max_calls=10, max_tool_calls=3)
+    assert isinstance(proxy.chat(body_with_tools()), TransportResponse)
+    assert proxy.usage()["tool_calls"] == 2
+    assert isinstance(proxy.chat(body_with_tools()), TransportResponse)
+    assert proxy.usage()["tool_calls"] == 3
+    stopped = proxy.chat(body_with_tools())
+    assert isinstance(stopped, Refusal) and stopped.code == "TOOL_BUDGET_EXHAUSTED"
+    assert proxy.usage()["calls"] == 2 and len(transport.payloads) == 2, "a refused offer is neither sent nor counted"
+    final = proxy.chat(body())  # the final answer carries no tools and is still served
+    assert isinstance(final, TransportResponse) and proxy.usage()["calls"] == 3
+
+
+def test_an_unknown_parameter_is_still_refused_when_tools_are_allowed(tmp_path: Path) -> None:
+    proxy = make(Fake(), tmp_path, max_tool_calls=2)
+    payload = json.loads(body_with_tools())
+    payload["logit_bias"] = {}
+    refused = proxy.chat(json.dumps(payload).encode())
+    assert isinstance(refused, Refusal) and refused.code == "PARAMETER_REFUSED"
+
+
+def test_a_negative_tool_cap_is_refused() -> None:
+    with pytest.raises(ProxyError):
+        limits(max_tool_calls=-1)
+
+
+def test_a_client_that_says_stream_false_is_served_and_the_key_is_not_forwarded(tmp_path: Path) -> None:
+    transport = Fake()
+    proxy = make(transport, tmp_path)
+    payload = json.loads(body())
+    assert isinstance(proxy.chat(json.dumps({**payload, "stream": False}).encode()), TransportResponse)
+    assert "stream" not in transport.payloads[0], "nothing about streaming reaches the provider"
+    refused = proxy.chat(json.dumps({**payload, "stream": True}).encode())
+    assert isinstance(refused, Refusal) and refused.code == "STREAMING_REFUSED"

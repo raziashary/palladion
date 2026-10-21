@@ -41,6 +41,7 @@ from benchmark.contracts import (
     ContractError,
     EvidenceCandidate,
     RetrievalRequest,
+    TransientInfrastructureError,
     screen_arm_visible,
 )
 from benchmark.llm_proxy import ProxyServer
@@ -231,6 +232,16 @@ class ComparatorWorker:
 OVERFETCH = 3  # hits asked of a comparator per hit wanted, because the access filter acts after its ranking
 MAX_HITS = 100
 _UNAVAILABLE = {"TIMEOUT", "EXITED", "WORKER_DEAD", "PIPE_BROKEN", "REPLY_TOO_LARGE", "BAD_REPLY", "TOO_MUCH_NOISE"}
+# What an OpenAI-compatible client in a worker raises when its model call is refused or fails (it reports a type name;
+# LangChain's wrappers carry an OpenAI prefix on the same names).
+_PROVIDER_FAULTS = frozenset(
+    {"RateLimitError", "APIConnectionError", "APITimeoutError", "InternalServerError", "APIStatusError",
+     "PermissionDeniedError", "ServiceUnavailableError"}
+)  # fmt: skip
+
+
+def _is_provider_fault(code: str) -> bool:
+    return code.removeprefix("WORKER_").removeprefix("OpenAI") in _PROVIDER_FAULTS
 
 
 class WorkerArm:
@@ -283,7 +294,9 @@ class WorkerArm:
         if Path(source_manifest_uri).resolve() != self._view.root.resolve():
             raise AdapterError("the index is built from the published directory this arm was created with")
         chunks = build_chunks(self._view, self._chunk_words)
-        rows = [{"chunk_id": c.chunk_id, "doc_id": c.doc_id, "text": c.text} for c in chunks]
+        rows = [
+            {"chunk_id": c.chunk_id, "doc_id": c.doc_id, "text": c.text, "clauses": list(c.clauses)} for c in chunks
+        ]
         try:
             screen_arm_visible("corpus", [row["text"] for row in rows])
         except ContractError:
@@ -305,13 +318,10 @@ class WorkerArm:
         after = dict(self._usage())
         if isinstance(native, dict):  # the pin now records what actually ran: the native configuration and deviations
             reported = native.get("deviations")
-            self._pin = ComparatorPin(
-                self._pin.repository,
-                self._pin.commit,
-                self._pin.lock_sha256,
-                self._pin.interpreter,
-                {k: v for k, v in native.items() if k != "deviations"},
-                tuple(str(d) for d in reported) if isinstance(reported, list) else self._pin.deviations,
+            self._pin = replace(
+                self._pin,
+                native_config={k: v for k, v in native.items() if k != "deviations"},
+                deviations=tuple(str(d) for d in reported) if isinstance(reported, list) else self._pin.deviations,
             )
         self._chunks = {c.chunk_id: c for c in chunks}
         self._stats = {
@@ -333,16 +343,7 @@ class WorkerArm:
             raise AdapterError("build_index must run before retrieve")
         before = dict(self._usage())
         wanted = min(MAX_HITS, request.limit * OVERFETCH)
-        try:
-            reply = self._worker.request(
-                "retrieve", {"query": request.query, "limit": wanted}, timeout=self._query_timeout
-            )
-        except WorkerError as exc:
-            if exc.code == "TIMEOUT":  # a query that overran is a TIMEOUT result, not an arm that was never available
-                raise TimeoutError(f"{self.arm_id} did not answer within {self._query_timeout:g} s") from None
-            if exc.code in _UNAVAILABLE:
-                raise ArmUnavailable(f"{self.arm_id} worker failed: {exc.code}") from None
-            raise ContractError(f"{self.arm_id} could not answer: {exc.code}") from None
+        reply = self.invoke("retrieve", {"query": request.query, "limit": wanted})
         after = dict(self._usage())
         hits = self._hits(reply, wanted)
         visible = [h for h in hits if self._access.allows(request.principal_id, self._chunks[h["chunk_id"]].doc_id)]
@@ -361,6 +362,20 @@ class WorkerArm:
             "query_llm_calls": after.get("calls", 0) - before.get("calls", 0),
         }
         return list(bundle.kept)
+
+    def invoke(self, op: str, params: Mapping[str, Any], *, timeout: float | None = None) -> Any:
+        """Ask the worker for one operation; a failure becomes the run state the Runner records for it."""
+        limit = self._query_timeout if timeout is None else timeout
+        try:
+            return self._worker.request(op, dict(params), timeout=limit)
+        except WorkerError as exc:
+            if exc.code == "TIMEOUT":  # a call that overran is a TIMEOUT result, not an arm that was never available
+                raise TimeoutError(f"{self.arm_id} did not answer within {limit:g} s") from None
+            if exc.code in _UNAVAILABLE:
+                raise ArmUnavailable(f"{self.arm_id} worker failed: {exc.code}") from None
+            if _is_provider_fault(exc.code):  # the counting proxy or the provider refused a model call of the worker
+                raise TransientInfrastructureError(f"{self.arm_id}: a model call failed ({exc.code})") from None
+            raise ContractError(f"{self.arm_id} could not answer: {exc.code}") from None
 
     def _hits(self, reply: Any, wanted: int) -> list[dict[str, Any]]:
         if not isinstance(reply, dict) or not isinstance(reply.get("hits"), list):

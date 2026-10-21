@@ -178,9 +178,53 @@ def _comparator_arm(arm_id: str) -> Mapping[str, tuple[Support, str]]:
     }
 
 
+def _framework_arm(test_file: str) -> Mapping[str, tuple[Support, str]]:
+    """Capabilities of an end-to-end arm built from LangChain components in a worker behind the proxy (BADR-0040)."""
+    return {
+        "native_citation": (
+            Support.UNSUPPORTED,
+            "provenance comes from the harness chunker and the shared prompt's citation ids, not from the framework",
+        ),
+        "acl_filter": (
+            Support.UNSUPPORTED,
+            "the in-memory store has no principal filter; the harness filters what the retriever returns after ranking",
+        ),
+        "temporal_filter": (Support.UNSUPPORTED, "no as-of selection; the store ranks text and the clock is not used"),
+        "offline_cost": (
+            Support.SUPPORTED,
+            f"index_stats reports build time, embeddings counted by the proxy and size, tested in {test_file}",
+        ),
+    }
+
+
+def _palladion_system_graph() -> tuple[Support, str]:
+    return Support.UNSUPPORTED, "Palladion's graph expansion is off by default and is not enabled for E3 or E4 (OQ12)"
+
+
+def _palladion_system() -> Mapping[str, tuple[Support, str]]:
+    """Capabilities of E3 and E4 over Palladion's message interface (BADR-0039), proven in the system-arm tests."""
+    return {
+        "native_citation": (
+            Support.SUPPORTED,
+            "citations carry revision ids and byte offsets that map to published locators; "
+            "tested in tests/test_palladion_system.py",
+        ),
+        "acl_filter": (
+            Support.UNSUPPORTED,
+            "every benchmark principal maps to one Palladion reader in one case; an answer's use of an unreadable "
+            "source is scored, not filtered",
+        ),
+        "temporal_filter": (
+            Support.UNSUPPORTED,
+            "the evaluation time is fixed when the server starts; a request with another time is refused",
+        ),
+        "offline_cost": (Support.UNSUPPORTED, "indexing happens inside Palladion at approval and is not reported"),
+    }
+
+
 R7B_REASON = (
-    "at the pinned commit Palladion accepts only EXCEPTION_TO links created in-process and no HTTP route creates "
-    "links, so an HTTP-only arm has no graph to expand (BR34, PF07)"
+    "Palladion's route for typed links (PF07) exists since P10, but no graph store runs here (OQ12) and no rule "
+    "selects the links from published text, so the arm has no graph to expand (BR34)"
 )
 
 
@@ -259,30 +303,31 @@ def default_registry() -> ArmRegistry:
             graph=palladion_graph,
             forced=(RunStatus.FEATURE_NOT_SUPPORTED, R7B_REASON),
         ),
-        _arm("E0", "Plain LangChain two-step", (c,), "B07"),
-        _arm("E1", "LangGraph agentic", (c,), "B07"),
+        _arm("E0", "Plain LangChain two-step", (c,), "B07", overrides=_framework_arm("tests/test_langchain.py")),
+        _arm("E1", "LangGraph agentic", (c,), "B07", overrides=_framework_arm("tests/test_langgraph.py")),
         _arm(
             "E2",
             "Google ADK with RAG Engine",
             (c,),
             "B07",
             graph=(Support.UNVERIFIED, "managed service internals are not documented to us"),
+            forced=(RunStatus.NOT_RUN, "no managed-service access is configured and no probe is approved (OQ07)"),
         ),
         _arm(
             "E3",
             "Palladion without critic",
             (c,),
             "B07",
-            graph=palladion_graph,
-            forced=(RunStatus.FEATURE_NOT_SUPPORTED, "Palladion has no documented critic-off switch (OQ11)"),
+            graph=_palladion_system_graph(),
+            overrides=_palladion_system(),
         ),
         _arm(
             "E4",
             "Full Palladion with critic",
             (c,),
             "B07",
-            graph=palladion_graph,
-            forced=(RunStatus.NOT_RUN, "Palladion's independent critic is a later phase of its own plan (OQ11)"),
+            graph=_palladion_system_graph(),
+            overrides=_palladion_system(),
         ),
     ):
         registry.register(spec)

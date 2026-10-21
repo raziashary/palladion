@@ -9,6 +9,10 @@ the call or token cap is reached. A rate-limited call and a failed call are coun
 Embeddings are served locally by an injected function, so no provider call is made for them and the comparator uses the
 same pinned embedding model as the benchmark's own arms (protocol 3.1 item 4).
 
+An agent arm (E1, E3, E4) sends tool definitions. They are accepted only when the run states a tool-call cap, every
+tool call a reply requests is counted, and a request that offers tools is refused once the cap is reached (a request
+without tools, such as a final answer, is still served within the other caps).
+
 Records keep numbers and fixed codes only: never a prompt, a reply or a key.
 """
 
@@ -37,6 +41,8 @@ _ALLOWED_PARAMS = frozenset(
     {"model", "messages", "temperature", "top_p", "response_format", "max_tokens", "max_completion_tokens", "seed",
      "stop", "reasoning_effort", "n"}
 )  # fmt: skip
+# Accepted only when the run states a tool-call cap (agent arms); they are refused, not dropped, otherwise.
+_TOOL_PARAMS = frozenset({"tools", "tool_choice", "parallel_tool_calls"})
 _PASS_HEADERS = ("content-type", "retry-after")
 
 
@@ -53,10 +59,13 @@ class ProxyLimits:
     max_completion_tokens: int
     pace_seconds: float
     models: tuple[str, ...]
+    max_tool_calls: int | None = None  # None: a request that carries tools is refused; a number allows them up to it
 
     def __post_init__(self) -> None:
         if self.max_calls < 0 or self.max_tokens < 0 or self.max_completion_tokens < 1 or self.pace_seconds < 0:
             raise ProxyError("limits must be non-negative, with a completion cap of at least 1")
+        if self.max_tool_calls is not None and self.max_tool_calls < 0:
+            raise ProxyError("the tool-call cap must be non-negative")
         if not self.models or any(not m for m in self.models):
             raise ProxyError("a proxy needs at least one approved model")
 
@@ -101,7 +110,7 @@ class CountingProxy:
         self._last_dispatch: float | None = None
         self._totals: dict[str, int] = dict.fromkeys(
             ("calls", "rate_limited", "errors", "refused", "prompt_tokens", "completion_tokens", "estimated_tokens",
-             "embedding_requests", "embedding_inputs"), 0
+             "tool_calls", "embedding_requests", "embedding_inputs"), 0
         )  # fmt: skip
         self._sequence = 0
         self._daily_wall = False  # the provider said the day's tokens are used up, so no call can succeed now
@@ -149,7 +158,8 @@ class CountingProxy:
             return self._refuse(400, "NOT_JSON")
         if payload.get("stream"):
             return self._refuse(400, "STREAMING_REFUSED")
-        unknown = sorted(set(payload) - _ALLOWED_PARAMS)
+        permitted = _ALLOWED_PARAMS if self.limits.max_tool_calls is None else _ALLOWED_PARAMS | _TOOL_PARAMS
+        unknown = sorted(set(payload) - permitted - {"stream"})  # a client may say stream=false; it is never forwarded
         if unknown:
             return self._refuse(400, "PARAMETER_REFUSED")
         if payload.get("n", 1) != 1:
@@ -162,18 +172,30 @@ class CountingProxy:
         cap = self.limits.max_completion_tokens
         asked = payload.get("max_completion_tokens", payload.get("max_tokens"))
         completion_cap = cap if not isinstance(asked, int) or isinstance(asked, bool) else max(1, min(asked, cap))
-        outgoing = {k: v for k, v in payload.items() if k not in ("max_tokens", "n")}
+        outgoing = {k: v for k, v in payload.items() if k not in ("max_tokens", "n", "stream")}
         outgoing["max_completion_tokens"] = completion_cap
         with self._dispatch_lock:
-            return self._dispatch(str(model), outgoing, completion_cap)
+            return self._dispatch(str(model), outgoing, completion_cap, offers_tools=bool(payload.get("tools")))
 
-    def _dispatch(self, model: str, payload: Mapping[str, Any], completion_cap: int) -> TransportResponse | Refusal:
+    def _dispatch(
+        self, model: str, payload: Mapping[str, Any], completion_cap: int, *, offers_tools: bool
+    ) -> TransportResponse | Refusal:
         estimate = _estimate_tokens(payload)
         with self._lock:
             calls = self._totals["calls"]
             spent = self._totals["prompt_tokens"] + self._totals["completion_tokens"] + self._totals["estimated_tokens"]
             walled = self._daily_wall
-            if walled or calls >= self.limits.max_calls or spent + estimate + completion_cap > self.limits.max_tokens:
+            tools_spent = (
+                offers_tools
+                and self.limits.max_tool_calls is not None
+                and self._totals["tool_calls"] >= self.limits.max_tool_calls
+            )
+            if (
+                walled
+                or tools_spent
+                or calls >= self.limits.max_calls
+                or spent + estimate + completion_cap > self.limits.max_tokens
+            ):
                 over = True
             else:
                 over = False
@@ -181,7 +203,8 @@ class CountingProxy:
         if walled:
             return self._refuse(429, "DAILY_LIMIT_REACHED", model=model)
         if over:
-            return self._refuse(403, "BUDGET_EXHAUSTED", model=model)
+            code = "TOOL_BUDGET_EXHAUSTED" if tools_spent else "BUDGET_EXHAUSTED"
+            return self._refuse(403, code, model=model)
         if self.limits.pace_seconds and self._last_dispatch is not None:
             wait = self._last_dispatch + self.limits.pace_seconds - self._monotonic()
             if wait > 0:
@@ -205,6 +228,7 @@ class CountingProxy:
             self._record(outcome="ERROR", code=failure, model=model, latency_ms=latency_ms, http_status=None)
             return Refusal(502, failure)
         prompt, completion = _usage(response)
+        requested_tools = _tool_calls(response) if response.status == 200 else 0
         with self._lock:
             if response.status == 429:
                 self._totals["rate_limited"] += 1
@@ -212,6 +236,7 @@ class CountingProxy:
                     self._daily_wall = True  # every later call would be refused too and would use a call
             elif response.status != 200:
                 self._totals["errors"] += 1
+            self._totals["tool_calls"] += requested_tools
             if response.status == 200:
                 # A reply that omits its usage is charged at the worst case (the prompt estimate and the full
                 # completion cap), shown apart from the provider's own numbers. A refusal (429, other) spent nothing.
@@ -223,7 +248,7 @@ class CountingProxy:
         outcome = "OK" if response.status == 200 else ("RATE_LIMITED" if response.status == 429 else "ERROR")
         self._record(
             outcome=outcome, model=model, http_status=response.status, prompt_tokens=prompt,
-            completion_tokens=completion, latency_ms=latency_ms,
+            completion_tokens=completion, latency_ms=latency_ms, tool_calls=requested_tools,
         )  # fmt: skip
         return response
 
@@ -262,6 +287,15 @@ class CountingProxy:
             "usage": {"prompt_tokens": words, "total_tokens": words},
         }  # fmt: skip
         return TransportResponse(200, {"content-type": "application/json"}, json.dumps(body).encode())
+
+
+def _tool_calls(response: TransportResponse) -> int:
+    """How many tool calls a reply asks for (the single choice); an unreadable reply asks for none."""
+    try:
+        calls = json.loads(response.body)["choices"][0]["message"].get("tool_calls") or []
+    except (ValueError, KeyError, IndexError, TypeError, AttributeError):
+        return 0
+    return len(calls) if isinstance(calls, list) else 0
 
 
 def _usage(response: TransportResponse) -> tuple[int | None, int | None]:
