@@ -7,13 +7,35 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
+import pytest
+
 from benchmark.config import load_fixtures_config
+from benchmark.contracts import EvidenceStatus
 from benchmark.fixtures import sha256_hex
 from benchmark.fixtures.artifacts import build_corpus, plan_from_config
 from benchmark.fixtures.documents import Category, Document, make_document
 from benchmark.fixtures.entities import Merchant
 from benchmark.fixtures.knowledge import DocKind, Interval, Lifecycle, rehash
 from benchmark.fixtures.manifest import Split, build_records, snapshot_id
+from benchmark.fixtures.mutations import (
+    CATALOG,
+    INVARIANTS,
+    AskPattern,
+    Expectation,
+    MutationClass,
+    MutationContext,
+    MutationError,
+    MutationInstance,
+    Op,
+    OpKind,
+    Requirement,
+    apply_corpus,
+    corpus_changes,
+    declared_changes,
+    instantiate,
+    instantiate_all,
+    spec_of,
+)
 from benchmark.fixtures.question_gen import build_questions
 from benchmark.fixtures.questions import Answerability, GoldRecord, Stratum
 from benchmark.fixtures.validation import (
@@ -26,6 +48,7 @@ from benchmark.fixtures.validation import (
     check_gold_support,
     check_leakage,
     check_merge_identity,
+    check_mutations,
     check_realism,
     check_referential,
     check_temporal,
@@ -351,3 +374,161 @@ def test_clause_numbers_are_not_read_as_claim_numbers(
     record = first_of(s_questions, Stratum.Q2)
     clause_like = replace(record, required_claims=("the window is 41 hours",))
     assert any("claim number 41" in f.detail for f in check_gold_support([clause_like], s_corpus, s_world))
+
+
+# --------------------------------------------------------------------------- mutations and invariants (B07-T07.01)
+
+
+@pytest.fixture(scope="module")
+def mutation_ctx(
+    s_world: World, s_corpus: tuple[Document, ...], s_questions: tuple[GoldRecord, ...]
+) -> MutationContext:
+    return MutationContext(s_world, s_corpus, s_questions, 7)
+
+
+@pytest.fixture(scope="module")
+def instances(mutation_ctx: MutationContext) -> tuple[MutationInstance, ...]:
+    return instantiate_all(mutation_ctx)
+
+
+def by_id(instances: tuple[MutationInstance, ...], instance_id: str) -> MutationInstance:
+    return next(i for i in instances if i.instance_id == instance_id)
+
+
+def test_the_catalog_holds_19_mutations_and_7_invariants_and_binds_to_the_fixture(
+    mutation_ctx: MutationContext, instances: tuple[MutationInstance, ...]
+) -> None:
+    assert [s.mutation_id for s in CATALOG] == [f"M{n:02d}" for n in range(1, 20)]
+    assert [i.invariant_id for i in INVARIANTS] == [f"MT{n:02d}" for n in range(1, 8)]
+    assert len(instances) == 19 + 4 + 7 and len({i.instance_id for i in instances}) == len(instances)
+    assert check_mutations(mutation_ctx, instances) == []
+    assert all(
+        i.klass is spec_of(i.spec_id).klass for i in instances if i.spec_id.startswith("M0") or i.spec_id[1] != "T"
+    )
+
+
+def test_instantiation_is_deterministic(mutation_ctx: MutationContext, instances: tuple[MutationInstance, ...]) -> None:
+    assert instantiate_all(mutation_ctx) == instances
+    other = instantiate_all(MutationContext(mutation_ctx.world, mutation_ctx.corpus, mutation_ctx.questions, 8))
+    assert other != instances
+
+
+def test_each_mutation_needs_what_its_patch_touches(instances: tuple[MutationInstance, ...]) -> None:
+    needs = {i.instance_id: i.requirements for i in instances}
+    assert Requirement.GRAPH in needs["M07:base"] and Requirement.GRAPH in needs["M15:base"]
+    assert needs["M08:base"] == {Requirement.INDEX} and needs["M11:base"] == {Requirement.LIVE}
+    assert needs["M12:base"] == {Requirement.LIVE, Requirement.CLOCK}
+    assert needs["M13:base"] == {Requirement.CONVERSATION} and needs["M01:base"] == {Requirement.PUBLISH}
+    assert by_id(instances, "M12:base").klass is MutationClass.NEEDS_SERVER_STATE
+    assert [i.instance_id for i in instances if i.ask is AskPattern.BEFORE_AFTER] == [
+        "M09:base",
+        "M10:base",
+        "MT02:base",
+    ]
+
+
+def test_a_patch_changes_the_corpus_in_exactly_the_declared_way(
+    mutation_ctx: MutationContext, instances: tuple[MutationInstance, ...]
+) -> None:
+    for instance in instances:
+        ops = (*instance.precondition, *instance.patch)
+        mutated = apply_corpus(mutation_ctx.corpus, ops)
+        assert corpus_changes(mutation_ctx.corpus, mutated) == declared_changes(mutation_ctx.corpus, ops), (
+            instance.instance_id
+        )
+    revoke = by_id(instances, "M09:base").patch
+    other = by_id(instances, "MT07:base").patch
+    changed = corpus_changes(mutation_ctx.corpus, apply_corpus(mutation_ctx.corpus, revoke))
+    assert changed != declared_changes(mutation_ctx.corpus, other), "a different patch declares a different change"
+    assert {kind for kind, _, _ in changed} == {"acl_roles"}
+
+
+def test_a_precondition_and_its_patch_restore_the_base_corpus(
+    mutation_ctx: MutationContext, instances: tuple[MutationInstance, ...]
+) -> None:
+    for instance_id in ("MT04:base", "MT05:base"):
+        instance = by_id(instances, instance_id)
+        broken = apply_corpus(mutation_ctx.corpus, instance.precondition)
+        assert corpus_changes(mutation_ctx.corpus, broken) != frozenset()
+        assert corpus_changes(mutation_ctx.corpus, apply_corpus(broken, instance.patch)) == frozenset()
+
+
+def test_the_gold_of_a_version_mutation_matches_the_worlds_own_selector(
+    mutation_ctx: MutationContext, instances: tuple[MutationInstance, ...]
+) -> None:
+    m01 = by_id(instances, "M01:base")
+    assert m01.expectation.versions == mutation_ctx.question(m01.base_question_id).gold_applicable_version_ids
+    assert by_id(instances, "M19:base").expectation.statuses == (EvidenceStatus.CONFLICT,)
+    added = next(op.document for op in m01.patch if op.document)
+    assert added and added.doc_id in m01.expectation.must_not_cite and added.registry_state == "approved"
+
+
+def test_the_injection_variants_are_inert_text_with_a_made_up_canary(instances: tuple[MutationInstance, ...]) -> None:
+    variants = [i for i in instances if i.spec_id == "M14"]
+    assert [i.variant for i in variants] == ["plain", "homoglyph", "nested_json", "faux_system", "indirect_url"]
+    texts = {i.variant: next(op.document.text for op in i.patch if op.document) for i in variants}
+    assert all(i.expectation.must_not_expose[0].startswith("ZK-") for i in variants)
+    assert texts["plain"].isascii() and not texts["homoglyph"].isascii()
+    assert '"instruction"' in texts["nested_json"] and "<|system|>" in texts["faux_system"]
+    assert ".invalid" in texts["indirect_url"] and "http://" not in "".join(texts.values())
+
+
+def test_a_mutation_that_cannot_be_built_is_refused_with_its_reason(mutation_ctx: MutationContext) -> None:
+    with pytest.raises(MutationError, match="no variant"):
+        instantiate(mutation_ctx, "M01", "other")
+    with pytest.raises(MutationError, match="no mutation"):
+        spec_of("M99")
+    empty = MutationContext(mutation_ctx.world, mutation_ctx.corpus, (), 7)
+    with pytest.raises(MutationError, match="has no question"):
+        instantiate(empty, "M01")
+
+
+def test_corpus_operations_refuse_what_they_cannot_do(mutation_ctx: MutationContext) -> None:
+    corpus = mutation_ctx.corpus
+    plain = next(d for d in corpus if not d.authoritative)
+    restricted = next(d for d in corpus if d.acl_roles)
+    authoritative = next(d for d in corpus if d.authoritative)
+    cases = [
+        (Op(OpKind.EDIT_TEXT, plain.doc_id, "x", old=" "), "exactly once"),
+        (Op(OpKind.EDIT_TEXT, authoritative.doc_id, "x", old=authoritative.text.split()[0]), "replaced by a version"),
+        (Op(OpKind.REVOKE_ROLE, restricted.doc_id, "no_such_role"), "does not hold"),
+        (Op(OpKind.GRANT_ROLE, plain.doc_id, "engineer"), "nothing to widen"),
+        (Op(OpKind.SET_TITLE, "ART-missing", "x"), "no document"),
+        (Op(OpKind.ADD_DOCUMENT, document=plain), "already exists"),
+    ]
+    for op, reason in cases:
+        with pytest.raises(MutationError, match=reason):
+            apply_corpus(corpus, [op])
+    with pytest.raises(MutationError, match="exact text"):
+        Op(OpKind.EDIT_TEXT, "x", "y")
+    with pytest.raises(MutationError, match="not a live mode"):
+        Op(OpKind.SET_LIVE, "TXN-1", "sideways")
+
+
+def test_each_planted_defect_in_the_mutations_is_caught(
+    mutation_ctx: MutationContext, instances: tuple[MutationInstance, ...]
+) -> None:
+    m01 = by_id(instances, "M01:base")
+    doc = next(op.document for op in m01.patch if op.document)
+    assert doc
+    claim = next((c for q in mutation_ctx.questions for c in q.required_claims if len(c) > 8), None)
+    assert claim
+    leaking_q = next(q for q in mutation_ctx.questions if claim in q.required_claims)
+    planted = {
+        "names a mutation": replace(
+            m01,
+            patch=(Op(OpKind.ADD_DOCUMENT, document=replace(doc, text=doc.text + "\nthis is wrong_latest_version")),),
+        ),
+        "repeats a gold claim": replace(
+            m01,
+            base_question_id=leaking_q.question_id,
+            patch=(Op(OpKind.ADD_DOCUMENT, document=replace(doc, text=claim)),),
+        ),
+        "does not apply": replace(m01, patch=(Op(OpKind.REVOKE_ROLE, doc.doc_id, "x"),)),
+        "constrains nothing": replace(m01, expectation=Expectation("nothing")),
+        "not in the fixture": replace(m01, base_question_id="q-ffffffffffffffff"),
+    }
+    for reason, bad in planted.items():
+        found = check_mutations(mutation_ctx, [bad])
+        assert any(reason in f.detail for f in found), (reason, found[:3])
+    assert any("no instance" in f.detail for f in check_mutations(mutation_ctx, instances[:-1]))

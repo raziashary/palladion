@@ -31,6 +31,18 @@ from benchmark.fixtures.knowledge import (
     validate_knowledge,
 )
 from benchmark.fixtures.manifest import find_barrier_markers
+from benchmark.fixtures.mutations import (
+    CATALOG,
+    INVARIANTS,
+    MutationContext,
+    MutationError,
+    MutationInstance,
+    apply_corpus,
+    arm_visible_text,
+    corpus_changes,
+    declared_changes,
+    secret_names,
+)
 from benchmark.fixtures.operations import validate_operations
 from benchmark.fixtures.questions import Answerability, GoldRecord, Stratum
 from benchmark.fixtures.world import World
@@ -471,3 +483,53 @@ def validate_fixture(world: World, corpus: Sequence[Document], records: Sequence
         findings += run()
     realism, metrics = check_realism(records, corpus, world)
     return ValidationReport(tuple(findings + realism), metrics)
+
+
+# --------------------------------------------------------------------------- mutations (B07-T07.01)
+
+
+def check_mutations(ctx: MutationContext, instances: Sequence[MutationInstance]) -> list[Finding]:
+    """The catalog is complete, every instance has gold, a metric and a class, its patch changes the corpus in exactly
+    the declared way, and nothing an arm would read names a mutation or repeats gold."""
+    findings: list[Finding] = []
+    if len(CATALOG) != 19 or len(INVARIANTS) != 7:
+        findings.append(Finding("mutations", "catalog", f"{len(CATALOG)} mutations and {len(INVARIANTS)} invariants"))
+    ids = [s.mutation_id for s in CATALOG] + [i.invariant_id for i in INVARIANTS]
+    if len(set(ids)) != len(ids):
+        findings.append(Finding("mutations", "catalog", "duplicate id"))
+    rows = [(s.mutation_id, s.failure_metric, s.gold_expectation) for s in CATALOG]
+    rows += [(i.invariant_id, i.failure_metric, i.statement) for i in INVARIANTS]
+    for row_id, metric, gold in rows:
+        if not metric.strip() or not gold.strip():
+            findings.append(Finding("mutations", row_id, "no gold or metric"))
+    wanted = {(s.mutation_id, v) for s in CATALOG for v in s.variants} | {(i.invariant_id, "base") for i in INVARIANTS}
+    built = {(i.spec_id, i.variant) for i in instances}
+    for missing in sorted(wanted - built):
+        findings.append(Finding("mutations", ":".join(missing), "no instance"))
+    names = [n for n in secret_names() if n]
+    gold_text = {
+        q.question_id: [c for c in (*q.required_claims, *q.forbidden_claims) if len(c) > 8] for q in ctx.questions
+    }
+    for instance in instances:
+        subject = instance.instance_id
+        exp = instance.expectation
+        if not (exp.statuses or exp.must_cite or exp.must_not_cite or exp.must_not_expose or exp.versions):
+            findings.append(Finding("mutations", subject, "the expectation constrains nothing"))
+        if instance.base_question_id not in gold_text:
+            findings.append(Finding("mutations", subject, "the base question is not in the fixture"))
+            continue
+        ops = (*instance.precondition, *instance.patch)
+        try:
+            mutated = apply_corpus(ctx.corpus, ops)
+        except MutationError as exc:
+            findings.append(Finding("mutations", subject, f"the patch does not apply: {exc}"))
+            continue
+        if corpus_changes(ctx.corpus, mutated) != declared_changes(ctx.corpus, ops):
+            findings.append(Finding("mutations", subject, "the mutated corpus differs from the declared patch"))
+        for text in arm_visible_text(ops):
+            lowered = text.lower()
+            if any(re.search(rf"(?<![\w-]){re.escape(n.lower())}(?![\w-])", lowered) for n in names):
+                findings.append(Finding("mutations", subject, "arm-visible text names a mutation"))
+            if any(claim.lower() in lowered for claim in gold_text[instance.base_question_id]):
+                findings.append(Finding("mutations", subject, "arm-visible text repeats a gold claim"))
+    return findings

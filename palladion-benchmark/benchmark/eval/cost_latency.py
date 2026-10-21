@@ -4,15 +4,24 @@ Two rules hold throughout. A timed-out call is censored: its duration is "at lea
 latency, so percentiles are computed over completed calls and the timeouts are reported beside them. A missing cost
 stays missing: nothing is summed as zero unless the system reported zero. Offline (index build) cost comes from the
 index record an arm writes and is spread over an amortization horizon the caller states.
+
+The last section measures update consistency (B07-T05.03): how long a *reader* kept answering differently from the
+committed source state after an event. It lives here because it is time accounting, but it is scored against the
+update stream's committed state, never against retrieval gold, and it never looks inside an index.
 """
 
 from __future__ import annotations
 
+from collections import defaultdict
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
 from benchmark.contracts import RunStatus
+from benchmark.eval.observable import NotObservable
 from benchmark.eval.statistics import StatisticsError, quantile
+from benchmark.fixtures.knowledge import parse_ts
+from benchmark.fixtures.manifest import ManifestRecord
+from benchmark.fixtures.updates import DocEvent, DocState, EventKind, UpdateError, apply, shown
 from benchmark.runner import LedgerRecord
 
 LATENCY_LEVELS = (0.50, 0.90, 0.95, 0.99)
@@ -134,3 +143,161 @@ def amortized_cost_per_query(
     if offline.cost_usd is None or online_mean_usd is None:
         return None
     return online_mean_usd + offline.cost_usd / amortization_queries
+
+
+# --------------------------------------------------------------------------- update consistency (B07-T05.03)
+
+INDEX_REASON = "index-internal staleness is not observed; only what the reader returned is"
+CLASSIFICATION_REASON = "a search result does not show a document's classification, so a reclassification is not seen"
+NO_PROBE_REASON = "no probe of the document was taken between this event and the next change to it"
+NO_REVISION_REASON = "the reader's probes carry no revision, so an amendment cannot be seen"
+
+
+@dataclass(frozen=True)
+class ReaderProbe:
+    """One search that must or must not return a document, taken at ``at`` for ``role``.
+
+    ``returned`` is whether the reader gave the document back; ``revision`` is the amendment count of the text it gave
+    back, when the reader exposes one.
+    """
+
+    at: str
+    doc_id: str
+    role: str
+    returned: bool
+    revision: int | None = None
+
+
+@dataclass(frozen=True)
+class ExposureWindow:
+    """How long the reader disagreed with the committed state after one event, as bounds from the probes taken.
+
+    ``lower_s`` is the time to the last probe that disagreed (0 when none did); ``upper_s`` is the time to the first
+    probe after which every probe agreed, or None when the reader never settled within the probes (censored: at least
+    ``lower_s``). The bounds are never negative.
+    """
+
+    event_id: str
+    kind: EventKind
+    doc_id: str
+    probes: int
+    lower_s: float
+    upper_s: float | None
+
+    @property
+    def exposed(self) -> bool:
+        return self.lower_s > 0 or self.upper_s is None
+
+
+@dataclass(frozen=True)
+class KindSummary:
+    measured: int
+    exposed: int
+    censored: int
+    max_lower_s: float
+    mean_lower_s: float
+
+
+@dataclass(frozen=True)
+class UpdateConsistency:
+    windows: tuple[ExposureWindow, ...]
+    by_kind: Mapping[str, KindSummary]
+    unmeasured: Mapping[str, NotObservable]  # event id -> why no window exists
+    index_internal: NotObservable
+
+
+def update_consistency(
+    events: Sequence[DocEvent], records: Mapping[str, ManifestRecord], probes: Sequence[ReaderProbe]
+) -> UpdateConsistency:
+    """Exposure windows of a reader against the committed source state of ``events``.
+
+    Each probe is compared with the state its document had when the probe was taken (the as-of rule), so a reader that
+    returns a document that was withdrawn or superseded, or hides one that was approved, disagrees. An event is
+    measured over the probes of its document up to the next change to that document; an event that changes nothing a
+    search can show gets no window and the reason is recorded.
+    """
+    timeline: dict[str, list[tuple[DocEvent, DocState, DocState]]] = defaultdict(list)
+    states: dict[str, DocState] = {}
+    for event in sorted(events, key=lambda e: parse_ts(e.at)):
+        if event.doc_id not in records:
+            raise StatisticsError(f"an event names a document the records do not hold: {event.doc_id}")
+        before = states.get(event.doc_id, DocState())
+        try:
+            apply(states, event)
+        except UpdateError as exc:
+            raise StatisticsError(f"the events are not a valid stream: {exc}") from exc
+        timeline[event.doc_id].append((event, before, states[event.doc_id]))
+    by_doc: dict[str, list[ReaderProbe]] = defaultdict(list)
+    for probe in sorted(probes, key=lambda p: parse_ts(p.at)):
+        if probe.doc_id not in records:
+            raise StatisticsError(f"a probe names a document the records do not hold: {probe.doc_id}")
+        by_doc[probe.doc_id].append(probe)
+
+    windows: list[ExposureWindow] = []
+    unmeasured: dict[str, NotObservable] = {}
+    for doc_id, steps in timeline.items():
+        record = records[doc_id]
+        for position, (event, before, after) in enumerate(steps):
+            if event.kind is EventKind.RECLASSIFY:
+                unmeasured[event.event_id] = NotObservable(CLASSIFICATION_REASON)
+                continue
+            if event.kind is EventKind.AMEND and not any(p.revision is not None for p in by_doc[doc_id]):
+                unmeasured[event.event_id] = NotObservable(NO_REVISION_REASON)
+                continue
+            start = parse_ts(event.at)
+            end = parse_ts(steps[position + 1][0].at) if position + 1 < len(steps) else None
+            taken = [
+                p
+                for p in by_doc[doc_id]
+                if parse_ts(p.at) >= start
+                and (end is None or parse_ts(p.at) < end)
+                and _affected(event, before, after, record, p)
+            ]
+            if taken:
+                windows.append(_window(event, after, record, taken))
+            else:
+                unmeasured[event.event_id] = NotObservable(NO_PROBE_REASON)
+    return UpdateConsistency(tuple(windows), _summaries(windows), unmeasured, NotObservable(INDEX_REASON))
+
+
+def _affected(event: DocEvent, before: DocState, after: DocState, record: ManifestRecord, probe: ReaderProbe) -> bool:
+    """Whether the event changes what this probe must see."""
+    if event.kind is EventKind.AMEND:
+        return probe.revision is not None
+    return shown(before, record, probe.role) != shown(after, record, probe.role)
+
+
+def _agrees(event: DocEvent, after: DocState, record: ManifestRecord, probe: ReaderProbe) -> bool:
+    if probe.returned != shown(after, record, probe.role):
+        return False
+    return event.kind is not EventKind.AMEND or not probe.returned or probe.revision == after.revision
+
+
+def _window(event: DocEvent, after: DocState, record: ManifestRecord, probes: Sequence[ReaderProbe]) -> ExposureWindow:
+    start = parse_ts(event.at)
+    verdicts = [(parse_ts(p.at), _agrees(event, after, record, p)) for p in probes]
+    last_bad = max((at for at, ok in verdicts if not ok), default=None)
+    settled: float | None
+    if last_bad is None:
+        lower, settled = 0.0, (verdicts[0][0] - start).total_seconds()
+    else:
+        later = [at for at, _ in verdicts if at > last_bad]
+        lower = (last_bad - start).total_seconds()
+        settled = (min(later) - start).total_seconds() if later else None
+    return ExposureWindow(event.event_id, event.kind, event.doc_id, len(probes), lower, settled)
+
+
+def _summaries(windows: Sequence[ExposureWindow]) -> dict[str, KindSummary]:
+    grouped: dict[str, list[ExposureWindow]] = defaultdict(list)
+    for window in windows:
+        grouped[window.kind.value].append(window)
+    return {
+        kind: KindSummary(
+            measured=len(items),
+            exposed=sum(w.exposed for w in items),
+            censored=sum(w.upper_s is None for w in items),
+            max_lower_s=max(w.lower_s for w in items),
+            mean_lower_s=sum(w.lower_s for w in items) / len(items),
+        )
+        for kind, items in sorted(grouped.items())
+    }
