@@ -780,3 +780,112 @@ Dispositions that change or narrow the wording above (E-B05-004): **item 7**: a 
 **Verification:** E-B06-004 reports each R6 segment with its model; B08 documents carry the private-experiment framing.
 
 **Closure, 2026-10-20 (BADR-0037):** owner chose "Accept partial, close B06": B06-T06.01 is closed with its limits written in E-B06-004 and E-B06-005 (R6 63 of 103 chunks, no query answered; R4 and R5 not attempted; R7a not run on the subset). Completing the live graph runs stays optional (BR39).
+
+## BADR-0038 — The benchmark may change Palladion where a card needs it (supersedes the edit ban of BADR-0002 for B07 onward)
+
+**Status:** ACCEPTED; 2026-10-21.
+
+**Authority:** Owner message in chat, 2026-10-21: "for context the other guy has stopped working on @palladion so from this point on forward you may change palladion if it is necessary".
+
+**Question:** BADR-0002 forbade editing or staging anything under `palladion/` because another contributor owned it. That contributor has stopped. What may the benchmark work now do to Palladion?
+
+**Why:** B07 needs E3 and E4 over Palladion's message interface, and OQ11/PF06 left the critic-off arm reachable only through Palladion's own Python evaluator, not through HTTP; a model client that talks only to the provider also bypasses the counting proxy.
+
+**Options:** keep the ban and mark E3/E4 FEATURE_NOT_SUPPORTED; edit Palladion freely; edit Palladion only where a benchmark card cannot be built or proven otherwise.
+
+**Recommendation:** the third.
+
+**What affects what:** (1) A change under `palladion/` is made only when a named B07 card cannot be built or proven without it, it is the smallest change that does so, and it is justified in this log before it is made. (2) Palladion's own rules apply to such a change (root `AGENTS.md`: ADR in `palladion/docs/development/ADR_LOG.md`, tests, evidence, its locked decisions and its "no serving bypass" rule unchanged; graph stays off by default). (3) Benchmark code still reaches Palladion only over HTTP and never imports it (BADR-0002's second half stands); a server-side wiring change in Palladion's launcher is allowed because it is configuration of the system under test, not an import. (4) Because Palladion then moves, R7a and any later arm are re-pinned to the new commit; recorded results keep the pin they were produced under. (5) Commits touching `palladion/` are separate from benchmark commits, and pushing them needs the owner's approval (root `AGENTS.md`), asked before the first such push.
+
+**My answer (editable):** Accepted as above.
+
+**Verification:** each Palladion change is listed with its card, its Palladion ADR and its tests in E-B07 evidence; `git diff --name-only` for a benchmark commit shows no `palladion/` path.
+
+## BADR-0039 — B07 scope: how E3 and E4 are defined, what Palladion gets, and what is not observed
+
+**Status:** ACCEPTED; 2026-10-21.
+
+**Authority:** Owner answers in chat, 2026-10-21 (AskUserQuestion after the B07 adversary, E-B07-001): "Yes, evaluator-only flag"; "Approve the list"; "Principal + case per episode"; "Defer to B08 as NOT_RUN". The owner's instruction to finish B07 end to end and BADR-0038 give the rest.
+
+**Question:** The adversary showed E4 is already Palladion's default serving path but E3 (critic removed) has no HTTP path, that Palladion's model client cannot be counted by the benchmark, that its policy and operational claims cannot be released without the critic's review, that private memory crosses cases by principal, and that the oracle policy tool would be circular. How is B07 scoped?
+
+**Why:** Fairness controls (protocol 3.1) need every model call counted and capped outside the system, a frozen clock, and one version of the system; Track C needs isolation between independent episodes.
+
+**Options:** E3 FEATURE_NOT_SUPPORTED; an evaluator-only launcher option; a request-level switch (rejected: it would be a serving bypass).
+
+**Recommendation:** the evaluator-only launcher option, with the narrowest set of Palladion changes.
+
+**What affects what:** (1) **E4** is Palladion's default serving path at the new pin. **E3** is Palladion's own evaluator control B5 (critic removed, final gate kept), started by a launcher flag that needs an explicit acknowledgement; it is a distinct, disclosed treatment: because the gate releases policy results, rule requirements and operational guidance only after a review, E3 reports those as unavailable, and its numbers are not read as 'the architecture without the critic' on those strata. E3 is never labelled E4. (2) **Palladion changes** (BADR-0038, each with a Palladion ADR first, tests, default serving byte-identical, 'no serving bypass' unchanged): B07-T00.01 loopback-only model base URL, key from a named environment variable, completion cap and request deadline as launcher parameters, a settings-file argument; B07-T00.02 evaluator mode with a response evaluator block; B07-T00.03 an injected evaluation clock; no other Palladion change without a new entry. (3) **One pin** for R7a, E3 and E4 (B07-T00.04); results already recorded keep 6444345. (4) **Observation:** token and call counts come from the counting proxy's book; Palladion's own counts are kept as self-reported with a divergence flag; a metric that needs data no interface returns (memory contents, tool arguments) is NOT_OBSERVABLE, never zero or estimated. (5) **Episodes:** one provisioned principal and case per independent episode (the episode's token registered by the evaluator-mode launcher), so private memory does not cross episodes; no state reset inside an episode; the reload cost is measured and reported. (6) **Oracle policy-tool condition (protocol 9.4):** NOT_RUN in B07 with its reason (the generator's resolver built the gold, so a tool built from it is circular); an independent policy evaluator is a B08 task. (7) **Not built for Palladion at this pin:** M07 and M15 (graph is off, Neo4j is OQ12); mutations that need server state no interface sets (M08, M11, M12 if the clock option proves insufficient) are recorded NOT_RUN or FEATURE_NOT_SUPPORTED per system. (8) **Approved quotes:** a verbatim quote of an approved document that is non-normative or an injection text is released as 'Approved source states'; it is scored as an authority-confusion candidate, not as a verified fact (BR43). (9) **Models:** each Palladion server runs one model (BADR-0008 amended for these arms: the model used is recorded per run and the pilot uses one model for all arms of a question); one completion cap for all arms is set with the pilot limits. (10) **Live use:** none until the owner states limits for B07-T09.01 (BADR-0030 stands); downloads of LangChain, LangGraph and Google ADK need the owner's approval by name (OQ14, B07-T00.05); no Google access probe without approval (OQ07).
+
+**My answer (editable):** Accepted as above.
+
+**Verification:** E-B07-001 holds the adversary receipt and dispositions; each Palladion change lists its Palladion ADR, tests and evidence; the plan, gates and checker reflect the new cards.
+
+## BADR-0040 — Downloads for B07: the LangChain and LangGraph environment and one Palladion wheel
+
+**Status:** ACCEPTED; 2026-10-21.
+
+**Authority:** Owner answers in chat, 2026-10-21: "Yes, install (Recommended)" for langchain-core, langchain-text-splitters, langgraph and langchain-openai with dependencies into an isolated Python 3.12 environment; and "Yes, that wheel only (Recommended)" for the one Palladion dependency missing from the local cache.
+
+**Question:** E0 and E1 need LangChain and LangGraph; the isolated Palladion at its new commit needs its locked environment. What may be downloaded?
+
+**Why:** OQ14 and BADR-0031 item 7: nothing is downloaded before the owner approves that artifact.
+
+**Options:** install the packages; mark E0 and E1 NOT_RUN; reuse another environment (they conflict on pydantic and openai versions).
+
+**Recommendation:** the first.
+
+**What affects what:** (1) `artifacts/comparators/env-langchain` (gitignored) on uv-managed CPython 3.12.15 holds `langchain-core` 1.6.7, `langchain-text-splitters` 1.1.3, `langchain-openai` 1.6.7, `langgraph` 1.2.14 and `openai` 3.26.0, installed with `uv pip install --exclude-newer 2026-10-07` (the latest releases at least two weeks old); measured size 45 MB; `scripts/comparators.py framework E1` verifies exactly these versions and records the lock digest `4ac56681ff6c...` (first 12 characters). Google ADK (E2) is recorded and not installed. (2) For the isolated Palladion at `4af66d6` (`artifacts/palladion-4af66d6/palladion/.venv`) `uv sync --frozen` fetched what the local cache lacked, starting with `pytz` 2026.5; the lock file's hashes are checked by uv. Later syncs use `--offline` so the launcher never downloads without approval again. No other download in B07 is approved; a model download for any framework would need its own approval.
+
+**My answer (editable):** Approved as above.
+
+**Verification:** `scripts/comparators.py framework E0|E1` output; tests in `tests/test_comparators.py`; E-B07-002.
+
+**Addendum, 2026-10-21 (BADR-0040):** `numpy` 2.5.3 was added to `env-langchain` on the owner's approval ("Yes, install numpy"): `InMemoryVectorStore` needs it to compute cosine similarity and langchain-core lists it only as an optional extra. The environment is 99 MB after it. The framework pin now names it; the lock digest changes accordingly.
+
+
+## BADR-0041 — Palladion episodes are isolated by principal and session in the corpus case; the pin moves to `eec4ba5` (amends BADR-0039)
+
+**Status:** ACCEPTED; 2026-10-21.
+
+**Authority:** Owner answer in chat, 2026-10-21: "Principal per episode, shared case (Recommended)". The pin move is the consequence of BADR-0038 (a Palladion change committed apart from benchmark work).
+
+**Question:** BADR-0039 chose one provisioned principal and one case per independent episode. Can Palladion's cases hold the corpus?
+
+**Why:** Measured on the isolated runtime: a principal provisioned through `POST /v1/admin/principals`, `/v1/admin/cases` and a membership of a new case `case-ep-1` searches that case with HTTP 200 and **0 passages**, while the same search in `case-42` (where the corpus was uploaded) returns passages. Sources belong to the case they were uploaded under, so a case per episode would need the 1,200-document corpus uploaded again for every episode and arm.
+
+**Amended 2026-10-22 (audit):** BADR-0039 item 5 and BR41 still say "principal and case per episode"; BADR-0041 supersedes that to principal and session per episode in the corpus case. Mutation cases ask as one further principal that no episode uses (`mutation-cases`).
+
+**Options:** (a) one principal per episode and heat, a member of the corpus case, with a fresh session per episode; (b) a case per episode with a copy of the corpus; (c) reset the runtime between episodes.
+
+**Recommendation:** (a): the smallest change, no re-upload, and the cross-episode leakage measure (`benchmark/eval/memory.py`) counts any residue instead of assuming there is none.
+
+**What affects what:** (1) `scripts/run_track_c.py` provisions `usr_…` principals with the grants `source:read` and `case:read`, adds each to `case-42`, writes a token for each into the runtime's operator-owned `demo_auth.json` and only then starts the evaluator servers. (2) Private (USER) memory is keyed by principal and the session is new per episode, but case-scoped records (policy decisions, case events of the case) stay shared; a fact that crosses episodes through them shows up as leakage. A hot repeat (same episode, same principal) is the only condition that keeps memory. (3) E3 and E4 share one Palladion state, so a mutation made for one is visible to the other; the entry point refuses both arms with mutation cases in one run and the pilot runs them one at a time on a freshly prepared runtime (the added documents are revoked after each case, and a revoked base document is reported as not restorable). (4) The pin in `configs/comparators.yaml`, `scripts/palladion_runtime.py` and `tests/test_config_loader.py` moves from `4af66d6` to `eec4ba5` (Palladion commit "make the application own the injected evaluation clock"); results recorded at `6444345` keep their pin.
+
+**My answer (editable):** Approved: principal per episode, shared case.
+
+**Verification:** probe output in E-B07-002; `tests/test_track_c.py` (isolation, leakage control); the smoke runs `c-smoke`, `c-smoke-fw`, `c-dry`.
+
+## BADR-0042 — Limits for the live Track C pilot (B07-T09.01; OQ14)
+
+**Status:** ACCEPTED; 2026-10-21.
+
+**Authority:** Owner answer in chat, 2026-10-21: "Palladion arms only, ~1 day (Recommended)": E3 and E4, two episodes of four turns and four mutation cases (M01, M09, M13, M14); per arm 250 calls, 150,000 tokens, 700 completion tokens, 20 s pace. E0 and E1 stay offline-proven and are run on a later day only if the owner asks.
+
+**Question:** Which live limits apply to the first Track C pilot?
+
+**Why:** BADR-0030 and BADR-0032: no live use until the owner states limits for the run; the free tier gives about 200,000 tokens per day per model.
+
+**Options:** Palladion arms only; all four arms over two or three days; no live pilot.
+
+**Recommendation:** the first: the dry-run estimate (`c-dry`) is 36,648 prompt tokens and at most 21,000 completion tokens for E3, 66,854 and 33,600 for E4, inside the caps; E0 and E1 add embedding work and baseline conditions that the day's quota would not cover.
+
+**What affects what:** (1) One model, `qwen/qwen3.8-27b`, for every call of a run (BADR-0039); no failover. (2) The caps are per arm and enforced by that arm's counting proxy (`--call-cap 250 --token-cap 150000 --pace-seconds 20 --max-completion-tokens 700`; the pace was later raised to 45 s, see the addendum). A run-wide tool-call cap (episodes x 6 x 8 + cases x 16 = 160 for the pilot) is set by the script, is not an owner limit, and only ever lowers what an arm may do. (3) E3 and E4 run in two invocations, each on a freshly prepared runtime (BADR-0041). (4) A cap, a daily-limit stop or a failed call is recorded in the ledger and the summary; nothing is retried by hand and nothing is dropped. (5) The estimate and the measurement are reported side by side. (6) No confirmatory claim.
+
+**My answer (editable):** Approved as above.
+
+**Verification:** `artifacts/runs/c-live-e3`, `artifacts/runs/c-live-e4` (`summary.json`, `ledger.jsonl`, `proxy-*.jsonl`), E-B07-003.
+
+**Addendum, 2026-10-21 (BADR-0042):** the first live attempt, `artifacts/runs/c-live-e3`, was a harness fault and is kept as a result, not rerun silently. Palladion's connection used the adapter's 60 s client timeout while a message takes several paced model calls (20 s apart), so 7 of 8 turns and 3 of 4 mutation asks ended as TIMEOUT on the client side while the server went on spending: the proxy's saved book shows 31 calls (the run's totals said 32), 70,774 prompt and 5,923 completion tokens (76,697 of the day's ~200,000) for answers nobody read, 8 of them rate-limited (HTTP 429 per minute) and one 413. Corrected: the connection timeout is now Palladion's own request deadline plus 30 s (`PalladionArm(timeout=)`), and the pace is 45 s instead of 20 s, which is a slower rate inside the owner's limits (it can only lower calls per minute); the call, token and completion caps are unchanged. Because the day's quota is partly spent, E3 runs now and E4 on a later day, each on a freshly prepared runtime (BADR-0041).
+
+**Addendum, 2026-10-22 (BADR-0041, end-of-phase audit):** (1) The entry point now refuses `--arms E3,E4` in one invocation whether or not mutation cases are requested: both servers would run on one database with the same principals, and private memory is keyed by principal. (2) Each run's limits (caps, pace, completion cap, timeouts) are written into its manifest, and a live run must name the call cap, token cap and pace. (3) The audit also found, and I fixed in Palladion (commit `dd70c0e`, ADR-0101 second addendum), a wall-clock read in memory recall and a launcher path that could send the root `.env` key to a custom model address. The pin stays `eec4ba5`: the live pilot ran there, and the next live run re-pins to the commit that has these two fixes.

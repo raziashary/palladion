@@ -206,21 +206,22 @@ Exit: Track A on a matched S subset for R4 to R6 with full costs, R7b recorded a
 
 ## B07 — System arms, memory, critic and mutations (Slice 4)
 
-Goal O07. Read protocol §2.2, §5.3–5.4, §11, §16 and §17. Depends on B04, B05 and B02. Cross-project dependency: Palladion message interface and critic (P06 on its plan).
+Goal O07. Read protocol §2.2, §5.3–5.4, §11, §16 and §17. Depends on B02, B04, B05 and B06. The owner has allowed changes to Palladion where a card needs them (BADR-0038); E3 and E4 are defined by BADR-0039.
 
 | Task | Work and producer → consumer | Acceptance / proof |
 |---|---|---|
+| B07-T00 | Palladion changes and pins: model transport, evaluator mode, evaluation clock, one pin, framework pins | Default serving unchanged; counted and capped calls; one pin |
 | B07-T01 | E0 LangChain two-step | Pinned; budgeted |
 | B07-T02 | E1 LangGraph loop | Matched budget |
 | B07-T03 | E2 Google ADK, conditional | Without access: NOT_RUN |
-| B07-T04 | E3/E4 Palladion system adapter | Actual invocation counts |
-| B07-T05 | Episodes, update events, memory and update-consistency metrics | Episode partitions; poisoning counted; stale-index windows measured |
-| B07-T06 | Critic and tool-use metrics | Injected-error pairs scored |
-| B07-T07 | Mutation and metamorphic fixtures | 19 mutations and 7 invariants with gold |
+| B07-T04 | E3/E4 Palladion system adapter | Usage from the proxy's book; E3 never relabelled E4 |
+| B07-T05 | Episodes, update events, memory and update-consistency metrics | Episode partitions; poisoning counted; stale-index windows measured at the reader |
+| B07-T06 | Critic and tool-use metrics | Injected-error pairs scored; NOT_OBSERVABLE is not zero |
+| B07-T07 | Mutation and metamorphic specifications and their application | 19 mutations and 7 invariants with gold; unappliable ones recorded |
 | B07-T08 | Track C runner | No cross-episode leakage |
 | B07-T09 | Track C pilot | Budgets and failures recorded |
 
-Exit: native end-to-end pilot with mutation cases. No confirmatory claim.
+Exit: native end-to-end pilot with mutation cases, within the free tier. No confirmatory claim.
 
 ## B08 — Scale, tuning, preregistration and confirmatory run (Slice 5)
 
@@ -929,113 +930,179 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
 
 ### Atomic tasks — B07
 
+<a id="b07-t00-06"></a>
+
+- [x] **B07-T00.06 — Counting proxy: tool-call allowance for agent arms**
+  - **Files:** `palladion-benchmark/benchmark/llm_proxy.py`, `palladion-benchmark/tests/test_llm_proxy.py`.
+  - **Depends:** B06-T00.02.
+  - **Change:** The proxy refuses every request that carries tools, so no agent arm can be counted or capped. Add an opt-in per-run allowance (off by default, so the graph comparators' paths are unchanged) that accepts the tool-calling parameters (tools, tool_choice, parallel_tool_calls), counts every tool call a reply requests, and refuses once a stated tool-call cap is reached; the call, token, completion and model caps apply exactly as before.
+  - **Proof:** UNIT; BG-ADAPTER, BG-FAIR; with the allowance off a tool request is still refused; with it on, replies' tool calls are counted and the cap stops the next call; a request with an unknown parameter is still refused.
+  - **Evidence:** E-B07-002; tool-call allowance in the counting proxy.
+
+<a id="b07-t00-01"></a>
+
+- [x] **B07-T00.01 — Palladion model transport for counted evaluation runs**
+  - **Files:** `palladion-benchmark/docs/development/ADR_LOG.md`, `palladion-benchmark/docs/development/EVIDENCE_LOG.md`.
+  - **Palladion files:** `palladion/src/evidence_agent/agent/llm.py`, `palladion/scripts/serve.py`, `palladion/tests/test_llm_transport.py`, `palladion/docs/development/ADR_LOG.md`, `palladion/docs/development/EVIDENCE_LOG.md`.
+  - **Depends:** B04-T03.02, B07-T00.06, BADR-0038.
+  - **Change:** Palladion's model client sends every call to the provider's public address with the key from its own .env, so a run could neither be counted nor capped by the benchmark. Give the client an optional base URL accepted only for a loopback host (the default stays the provider), let the key come from a named environment variable instead of a file copy, make the completion cap and the per-request deadline launcher parameters (defaults unchanged), and give the launcher a settings-file argument. Ordinary serving is byte-identical. Each change is written as a Palladion ADR first.
+  - **Proof:** INTEGRATION; BG-ADAPTER, BG-SECURITY; a non-loopback base URL is refused; the default address is unchanged; a message sent through the benchmark's counting proxy reaches a fake provider and the proxy's book counts every call; the key appears in no log, argument list or file.
+  - **Evidence:** E-B07-002; Palladion 4af66d6 (ADR-0099): loopback-only counted transport.
+
+<a id="b07-t00-02"></a>
+
+- [x] **B07-T00.02 — Palladion evaluator mode: critic-off arm and evaluator fields**
+  - **Files:** `palladion-benchmark/docs/development/ADR_LOG.md`, `palladion-benchmark/docs/development/EVIDENCE_LOG.md`.
+  - **Palladion files:** `palladion/src/evidence_agent/agent/services.py`, `palladion/src/evidence_agent/agent/loop.py`, `palladion/src/evidence_agent/api/schemas.py`, `palladion/scripts/serve.py`, `palladion/tests/test_evaluator_mode.py`, `palladion/docs/development/ADR_LOG.md`, `palladion/docs/development/EVIDENCE_LOG.md`.
+  - **Depends:** B07-T00.01.
+  - **Change:** Today the critic-off arm (the evaluator control B5) exists only inside Palladion's own Python study, so E3 has no HTTP path. Add a launcher option that starts the server in an evaluator mode with an explicit acknowledgement flag, wires the chosen evaluator arm into every case runtime (server wiring, never a request field), and, only in that mode, adds an evaluator block to the message response: the arm, model calls and tokens by role, the critic's findings and countersearch queries, the initial draft digest and each claim's closed kind. Default serving, its response schema and its 'no serving bypass' statement are unchanged; gate, ACL, authority, parser and time stay mandatory. E3 is Palladion's own B5 (critic removed, final gate kept), so a policy or operational claim the gate releases only after review is reported unavailable, and that is disclosed.
+  - **Proof:** INTEGRATION; BG-ADAPTER, BG-TRACKC; with the arm set the trace holds no critic call and the default holds one; the default response is byte-identical to before; a request carrying an arm field is rejected; the capability report still lists every bypass as unsupported.
+  - **Evidence:** E-B07-002; Palladion 4af66d6 (ADR-0100): evaluator mode and block.
+
+<a id="b07-t00-03"></a>
+
+- [x] **B07-T00.03 — Palladion evaluation clock**
+  - **Files:** `palladion-benchmark/docs/development/ADR_LOG.md`, `palladion-benchmark/docs/development/EVIDENCE_LOG.md`.
+  - **Palladion files:** `palladion/src/evidence_agent/retrieval/evidence.py`, `palladion/src/evidence_agent/memory/packet.py`, `palladion/src/evidence_agent/agent/preflight.py`, `palladion/src/evidence_agent/agent/services.py`, `palladion/scripts/serve.py`, `palladion/tests/test_evaluation_clock.py`, `palladion/docs/development/ADR_LOG.md`, `palladion/docs/development/EVIDENCE_LOG.md`.
+  - **Depends:** B07-T00.02.
+  - **Change:** Palladion reads the wall clock for live-observation freshness, the evidence ledger, the continuity packet and preflight, so the same case answers differently on different days, while protocol 3.1 item 6 freezes the evaluation time. In evaluator mode only, pass one clock from the launcher through the ledger, the packet builder, preflight and the gateway (an explicit argument, no global override); the default stays the wall clock.
+  - **Proof:** INTEGRATION; BG-FAIR, BG-REPRO; the same case sent at two different real times gives an identical answer, freshness verdict and trace under a fixed clock; without the option the wall clock is still used.
+  - **Evidence:** E-B07-002; Palladion 4af66d6, eec4ba5 (ADR-0101): registry-owned evaluation clock; reported to the owner.
+
+<a id="b07-t00-04"></a>
+
+- [x] **B07-T00.04 — One Palladion pin for R7a, E3 and E4**
+  - **Files:** `palladion-benchmark/benchmark/adapters/palladion.py`, `palladion-benchmark/scripts/palladion_runtime.py`, `palladion-benchmark/scripts/palladion_aliases.py`, `palladion-benchmark/configs/comparators.yaml`, `palladion-benchmark/tests/test_palladion_runtime.py`.
+  - **Depends:** B07-T00.03, B04-T03.02, B06-T04.01.
+  - **Change:** Choose the Palladion commit that carries the three changes above as the single pin for R7a, E3 and E4, rebuild the isolated worktree and runtime at it, and rerun the R7a smoke. Re-evaluate the alias and principal workarounds of BADR-0027 against PF02 and PF05 and drop only those the new version makes unnecessary. Results recorded at 6444345 keep that pin and are history; they are not rescored.
+  - **Proof:** SMOKE; BG-ADAPTER, BG-REPRO; the worktree commit equals the pin and a dirty tree is refused; an R7a retrieval run returns candidates mapped to published documents for the subset questions; the manifest names the new pin and the old runs still validate.
+  - **Evidence:** E-B07-002; BADR-0041: one pin eec4ba5.
+
+<a id="b07-t00-05"></a>
+
+- [x] **B07-T00.05 — Pins and approved environments for LangChain, LangGraph and Google ADK**
+  - **Files:** `palladion-benchmark/scripts/comparators.py`, `palladion-benchmark/configs/comparators.yaml`, `palladion-benchmark/tests/test_comparators.py`.
+  - **Depends:** B06-T00.03, B07-T00.04, OQ14.
+  - **Change:** Same pattern as the graph comparators: for each framework, an exact version the owner approves by name and size, an isolated uv environment on an interpreter its wheels support, the lock digest and interpreter in the manifest, and no download before approval. Google ADK is only recorded (its use is conditional, B07-T03.01).
+  - **Proof:** INTEGRATION; BG-ADAPTER, BG-REPRO; an unapproved package or a wrong version is refused; the environment reproduces its recorded digest.
+  - **Evidence:** E-B07-002; BADR-0040: env-langchain pins; Google ADK not installed.
+
 <a id="b07-t01-01"></a>
 
-- [ ] **B07-T01.01 — E0 plain LangChain two-step**
-  - **Files:** `palladion-benchmark/benchmark/adapters/langchain.py`.
-  - **Depends:** B04-T04.02, B01-T05.01.
-  - **Change:** Pinned LangChain components and the shared generator; declared as a reference implementation, not one algorithm.
-  - **Proof:** INTEGRATION; BG-ADAPTER, BG-TRACKC; component versions pinned; call budget enforced.
-  - **Evidence:** Not yet executed.
+- [x] **B07-T01.01 — E0 plain LangChain two-step**
+  - **Files:** `palladion-benchmark/benchmark/adapters/langchain.py`, `palladion-benchmark/benchmark/adapters/worker.py`, `palladion-benchmark/benchmark/run_manifest.py`, `palladion-benchmark/scripts/comparators.py`, `palladion-benchmark/comparators/langchain/worker.py`, `palladion-benchmark/tests/test_langchain.py`.
+  - **Depends:** B07-T00.05, B04-T04.02, B01-T05.01, B05-T06.01.
+  - **Change:** A worker in its own pinned environment indexes the published text with LangChain's standard splitter, an in-memory vector store and the benchmark's embedding model served by the counting proxy, and returns ranked chunks; the benchmark's shared generator, prompt and answer gate then answer (the Track B pattern). Declared a reference implementation, not one algorithm; the component versions and splitter sizes are recorded. One generator call per question, enforced.
+  - **Proof:** INTEGRATION; BG-ADAPTER, BG-TRACKC; the manifest holds the component versions; a second generator call is refused and recorded as a failure; a planted gold phrase in the published text is rejected before indexing.
+  - **Evidence:** E-B07-002; E0 proven in the real framework environment.
 
 <a id="b07-t02-01"></a>
 
-- [ ] **B07-T02.01 — E1 LangGraph bounded agentic loop**
-  - **Files:** `palladion-benchmark/benchmark/adapters/langgraph.py`.
-  - **Depends:** B07-T01.01.
-  - **Change:** Retriever tool and a loop with the same call, tool and time budget as other arms.
-  - **Proof:** INTEGRATION; BG-ADAPTER, BG-FAIR; exceeding the matched budget is recorded as a failure.
-  - **Evidence:** Not yet executed.
+- [x] **B07-T02.01 — E1 LangGraph bounded agentic loop**
+  - **Files:** `palladion-benchmark/benchmark/adapters/langgraph.py`, `palladion-benchmark/comparators/langchain/worker.py`, `palladion-benchmark/tests/test_langgraph.py`.
+  - **Depends:** B07-T01.01, B07-T00.06.
+  - **Change:** A LangGraph loop in its own environment with one retriever tool (the E0 retriever) and the same ceilings as the other arms: at most 5 model calls including the final answer, 8 tool calls and the same time limit, counted and capped run-wide by the counting proxy (the tool-call allowance of B07-T00.06) and checked per question from the worker's report. The final reply is parsed by the shared answer schema. Exceeding a ceiling is a recorded failure, never a truncated metric.
+  - **Proof:** INTEGRATION; BG-ADAPTER, BG-FAIR; a loop that wants a sixth model call or a ninth tool call is stopped and the case is a recorded failure; the proxy still refuses every tool request on the other arms' paths; counts equal the proxy's book.
+  - **Evidence:** E-B07-002; E1 proven, ceilings enforced.
 
 <a id="b07-t03-01"></a>
 
-- [ ] **B07-T03.01 — E2 Google ADK with RAG Engine, conditional**
-  - **Files:** `palladion-benchmark/benchmark/adapters/google_adk.py`.
+- [x] **B07-T03.01 — E2 Google ADK with RAG Engine, conditional**
+  - **Files:** `palladion-benchmark/benchmark/adapters/google_adk.py`, `palladion-benchmark/benchmark/registry.py`, `palladion-benchmark/tests/test_google_adk.py`.
   - **Depends:** B07-T01.01, OQ07.
-  - **Change:** Adapter that declares NOT_RUN or FEATURE_NOT_SUPPORTED when access, region, billing or filter support is missing.
-  - **Proof:** INTEGRATION; BG-ADAPTER; without access the arm reports NOT_RUN with a reason and no score.
-  - **Evidence:** Not yet executed.
+  - **Change:** By default E2 is NOT_RUN by configuration with a stated reason (no managed-service access probed; a probe is an external call and needs the owner's approval), and FEATURE_NOT_SUPPORTED for the four-tool and principal-filter set even with access. The adapter never fabricates an answer.
+  - **Proof:** UNIT; BG-ADAPTER; the arm reports NOT_RUN with its reason and no score; a configuration that names access but lacks the owner's approval still reports NOT_RUN.
+  - **Evidence:** E-B07-002; E2 NOT_RUN with its reason.
 
 <a id="b07-t04-01"></a>
 
-- [ ] **B07-T04.01 — E3 and E4 Palladion system adapter**
-  - **Files:** `palladion-benchmark/benchmark/adapters/palladion.py`.
-  - **Depends:** B04-T03.02, B06-T04.01, OQ11.
-  - **Change:** answer, reset_case, report_usage and report_trace over Palladion's message interface. Palladion's current settings cannot disable the critic (minimum one call) and its independent critic is a later Palladion phase, so E3 and E4 are defined only when Palladion exposes a documented switch and critic; otherwise the arm is FEATURE_NOT_SUPPORTED. The benchmark never edits Palladion to obtain a switch.
-  - **Proof:** INTEGRATION; BG-ADAPTER, BG-TRACKC; usage reports actual main and critic invocations; with no critic-off switch E3 is FEATURE_NOT_SUPPORTED and E4 is NOT_RUN, never a relabeled E4.
-  - **Evidence:** Not yet executed.
+- [x] **B07-T04.01 — E3 and E4 Palladion system adapter**
+  - **Files:** `palladion-benchmark/benchmark/adapters/palladion_system.py`, `palladion-benchmark/benchmark/adapters/palladion.py`, `palladion-benchmark/benchmark/registry.py`, `palladion-benchmark/configs/comparators.yaml`, `palladion-benchmark/tests/test_palladion_system.py`.
+  - **Depends:** B07-T00.04, B07-T00.05, B07-T03.01, B07-T00.06, B04-T03.02, OQ11.
+  - **Change:** answer, reset_case, report_usage and report_trace over Palladion's message interface (HTTP only). E4 is the default serving path at the pin; E3 is the evaluator-mode critic-off arm (B5), defined by Palladion's own control and disclosed as a distinct treatment. Usage tokens and calls come from the counting proxy's book; Palladion's own counts are kept beside them as self-reported and a divergence is a recorded flag. A GLOBAL_DEADLINE or other verification failure is a run state, never a normal answer. The response's evaluator block feeds the critic and tool-use metrics; fields Palladion does not give are NOT_OBSERVABLE, not zero.
+  - **Proof:** INTEGRATION; BG-ADAPTER, BG-TRACKC; usage equals the proxy's book on a real local Palladion with a fake provider; with the critic off the trace has no critic call; a deadline cut is recorded as such; E3 is never labelled E4.
+  - **Evidence:** E-B07-002; E3/E4 on a real server; counts equal the proxy's book.
 
 <a id="b07-t05-01"></a>
 
-- [ ] **B07-T05.01 — Multi-turn episodes and time-series update events**
-  - **Files:** `palladion-benchmark/benchmark/fixtures/questions.py`, `palladion-benchmark/benchmark/fixtures/world.py`.
+- [x] **B07-T05.01 — Multi-turn episodes and time-series update events**
+  - **Files:** `palladion-benchmark/benchmark/fixtures/episodes.py`, `palladion-benchmark/benchmark/fixtures/updates.py`, `palladion-benchmark/tests/test_episodes.py`.
   - **Depends:** B02-T04.02, B02-T01.03.
-  - **Change:** Episode generator with deterministic clock, partition by episode and scripted transitions in questions.py, and 1,000 document events for the update benchmark in world.py; S-tier pilot uses a small subset.
-  - **Proof:** UNIT; BG-GOLD; no episode spans two splits; replay is deterministic.
-  - **Evidence:** Not yet executed.
+  - **Change:** Episode generator with a deterministic clock, scripted transitions and pseudonymous episode and turn identifiers, partitioned by episode (never by turn) and separately from the question families; 1,000 deterministic document events (create, amend, approve, withdraw, supersede, reclassify, revoke, delete) for the update benchmark; a validity policy on reported facts is not generated (the measure is NOT_OBSERVABLE, BR48). world.py stays the aggregate. The S-tier pilot uses a small subset.
+  - **Proof:** UNIT; BG-GOLD; no episode spans two splits; replay is deterministic; identifiers and titles reveal no scenario or expected outcome; the events replay to the same committed state.
+  - **Evidence:** E-B07-002; episodes and 1,000-event stream; defect found and fixed.
 
 <a id="b07-t05-02"></a>
 
-- [ ] **B07-T05.02 — Memory evaluation**
-  - **Files:** `palladion-benchmark/benchmark/eval/memory.py`.
+- [x] **B07-T05.02 — Memory evaluation**
+  - **Files:** `palladion-benchmark/benchmark/eval/memory.py`, `palladion-benchmark/benchmark/eval/observable.py`, `palladion-benchmark/tests/test_memory_eval.py`.
   - **Depends:** B07-T05.01.
-  - **Change:** Identity continuity, context-anchoring error, provenance preservation, reported-fact validity, live freshness, poisoning promotion, cross-case leakage, packet sufficiency and recovery after correction.
-  - **Proof:** UNIT; BG-METRIC, BG-SECURITY; a planted promoted user claim is counted.
-  - **Evidence:** Not yet executed.
+  - **Change:** Identity continuity, context-anchoring error, provenance preservation, reported-fact validity, live freshness, poisoning promotion, cross-case leakage, packet sufficiency and recovery after correction, each computed from what the answer, the citations and the evaluator block expose. A metric that needs memory contents no interface returns is printed NOT_OBSERVABLE with the reason, never estimated.
+  - **Proof:** UNIT; BG-METRIC, BG-SECURITY; a planted promoted user claim and a planted cross-episode recall are counted; perfect, empty and shuffled controls differ; NOT_OBSERVABLE prints beside every score.
+  - **Evidence:** E-B07-002; memory measures with NOT_OBSERVABLE.
 
 <a id="b07-t05-03"></a>
 
-- [ ] **B07-T05.03 — Update consistency and stale-index exposure metrics**
-  - **Files:** `palladion-benchmark/benchmark/eval/cost_latency.py`.
+- [x] **B07-T05.03 — Update consistency and stale-index exposure metrics**
+  - **Files:** `palladion-benchmark/benchmark/eval/cost_latency.py`, `palladion-benchmark/benchmark/fixtures/updates.py`, `palladion-benchmark/tests/test_update_consistency.py`.
   - **Depends:** B07-T05.01, B03-T05.01, B06-T00.01.
-  - **Change:** Time-to-consistency and stale-index exposure windows after create, amend, withdraw, supersede, ACL revocation and delete events, scored against the as-of rule and committed source state, separately from retrieval correctness.
-  - **Proof:** UNIT; BG-METRIC; a planted lagging index yields a nonzero exposure window and a consistent index yields zero.
-  - **Evidence:** Not yet executed.
+  - **Change:** Time-to-consistency and exposure windows after create, amend, withdraw, supersede, ACL revocation and delete events, measured at the reader (a search that must or must not return the item after the event), scored against the as-of rule and the committed source state, separately from retrieval correctness. Index-internal staleness is declared not observed.
+  - **Proof:** UNIT; BG-METRIC; a planted lagging reader yields a nonzero window and a consistent one yields zero; a window is never negative.
+  - **Evidence:** E-B07-002; exposure windows at the reader.
 
 <a id="b07-t06-01"></a>
 
-- [ ] **B07-T06.01 — Critic evaluation**
-  - **Files:** `palladion-benchmark/benchmark/eval/critic.py`.
-  - **Depends:** B05-T01.01.
-  - **Change:** Objection precision and recall, repair and regression rates, additional retrievals and cost per net prevented directive; independent-evidence check.
-  - **Proof:** UNIT; BG-METRIC; injected-error pairs and clean drafts both scored; agreement alone is not a metric.
-  - **Evidence:** Not yet executed.
+- [x] **B07-T06.01 — Critic evaluation**
+  - **Files:** `palladion-benchmark/benchmark/eval/critic.py`, `palladion-benchmark/tests/test_critic_eval.py`.
+  - **Depends:** B05-T01.01, B07-T04.01.
+  - **Change:** Objection precision and recall, repair and regression rates, additional retrievals and cost per net prevented directive, and the independent-evidence check, from the evaluator block's initial draft, findings and countersearch. Injected-error pairs (wrong as-of date, fabricated citation, forgotten exception, claimed live state after an outage) come from a scripted main model with the critic blind to the label.
+  - **Proof:** UNIT; BG-METRIC; injected-error pairs and clean drafts are both scored; agreement alone is not a metric; the critic's input contains no injected-error label (a planted label is caught).
+  - **Evidence:** E-B07-002; critic evaluation, blindness check, reads the real trace.
 
 <a id="b07-t06-02"></a>
 
-- [ ] **B07-T06.02 — Tool-use evaluation**
-  - **Files:** `palladion-benchmark/benchmark/eval/tool_use.py`.
-  - **Depends:** B01-T03.03.
-  - **Change:** Tool selection recall, unnecessary invocation, argument validity, result utilization, discovery reversal, boundedness, failure interpretation and escalation.
-  - **Proof:** UNIT; BG-METRIC; over-budget invocations are counted as failures.
-  - **Evidence:** Not yet executed.
+- [x] **B07-T06.02 — Tool-use evaluation**
+  - **Files:** `palladion-benchmark/benchmark/eval/tool_use.py`, `palladion-benchmark/tests/test_tool_use.py`.
+  - **Depends:** B01-T03.03, B07-T04.01.
+  - **Change:** Tool selection recall, unnecessary invocation, argument validity, result utilization, discovery reversal, boundedness, failure interpretation and escalation, from each system's reported tool calls; a metric that needs arguments a system does not report is NOT_OBSERVABLE for it.
+  - **Proof:** UNIT; BG-METRIC; over-budget invocations are counted as failures; a malformed call is surfaced; NOT_OBSERVABLE is never zero.
+  - **Evidence:** E-B07-002; tool-use evaluation, reads the real trace.
 
 <a id="b07-t07-01"></a>
 
-- [ ] **B07-T07.01 — Mutation and metamorphic fixtures**
-  - **Files:** `palladion-benchmark/benchmark/fixtures/world.py`, `palladion-benchmark/benchmark/fixtures/questions.py`, `palladion-benchmark/benchmark/fixtures/validation.py`, `palladion-benchmark/tests/test_fixture_integrity.py`.
+- [x] **B07-T07.01 — Mutation and metamorphic specifications with gold**
+  - **Files:** `palladion-benchmark/benchmark/fixtures/mutations.py`, `palladion-benchmark/benchmark/fixtures/validation.py`, `palladion-benchmark/tests/test_fixture_integrity.py`.
   - **Depends:** B02-T06.01, B07-T05.01.
-  - **Change:** Generate the 19 mutation cases and 7 metamorphic invariants with gold expectations.
-  - **Proof:** INTEGRATION; BG-FIXTURE, BG-GOLD, BG-SECURITY; every mutation has a gold expectation and a failure metric; a mutated fixture differs from its base in exactly the declared way.
-  - **Evidence:** Not yet executed.
+  - **Change:** Specify the 19 mutations and 7 metamorphic invariants as data: the base fixture, the exact patch (documents added, revoked or edited, a fact or a clock changed), the gold expectation and the failure metric from protocol 16.1 and 16.2, and a class (fixture only; expressible over HTTP; needs a clock or server state; unsupported for a given system). Includes the deferred injection variants (homoglyphs, nested JSON, faux system messages, indirect URLs) as inert text. Gold stays evaluator-side.
+  - **Proof:** INTEGRATION; BG-FIXTURE, BG-GOLD, BG-SECURITY; every mutation has a gold expectation, a failure metric and a class; a mutated fixture differs from its base in exactly the declared way; no gold or mutation name appears in any arm-visible file.
+  - **Evidence:** E-B07-002; 19 mutations and 7 invariants with gold on the real fixture.
+
+<a id="b07-t07-02"></a>
+
+- [x] **B07-T07.02 — Mutation application for each system**
+  - **Files:** `palladion-benchmark/benchmark/mutations_apply.py`, `palladion-benchmark/benchmark/adapters/palladion.py`, `palladion-benchmark/benchmark/adapters/common.py`, `palladion-benchmark/tests/test_mutations_apply.py`.
+  - **Depends:** B07-T07.01, B07-T04.01, B07-T00.03.
+  - **Change:** Apply each mutation to a system's state through the interface that system has (Palladion's upload, approve, revoke and admin routes; the retriever arms' own index rebuild) and record, per mutation and system, whether it was applied or is NOT_RUN or FEATURE_NOT_SUPPORTED with the reason (for example M07 and M15 need the graph, which is off; M08 and M11 need server state no interface sets).
+  - **Proof:** INTEGRATION; BG-FIXTURE, BG-SECURITY; a mutation that cannot be applied is a recorded result, never a pass; a mutated Palladion state differs from its base only by the declared patch; an unauthorized read of a revoked passage is counted.
+  - **Evidence:** E-B07-002; applied to a rebuild arm and to a real Palladion; unsupported is recorded.
 
 <a id="b07-t08-01"></a>
 
-- [ ] **B07-T08.01 — Track C runner**
-  - **Files:** `palladion-benchmark/scripts/run_track_c.py`.
-  - **Depends:** B07-T01.01, B07-T02.01, B07-T04.01, B07-T05.02, B07-T05.03, B07-T06.01, B07-T06.02.
-  - **Change:** Run E0-E4 under matched budgets, plus an oracle policy-tool condition (the tool gets the exact inputs for every system, protocol section 9.4; scored against the answer-gold) and again as native best-effort with disclosed differences, with per-case reset, no state reset inside an episode, memory baselines (none, last N turns, rolling summary, scoped episodic) at an equal context budget, and cold, warm and hot-cache conditions.
-  - **Proof:** SMOKE; BG-TRACKC; state does not leak across independent episodes; unavailable arms are reported with a reason.
-  - **Evidence:** Not yet executed.
+- [x] **B07-T08.01 — Track C runner**
+  - **Files:** `palladion-benchmark/benchmark/track_c.py`, `palladion-benchmark/benchmark/scripted_provider.py`, `palladion-benchmark/scripts/run_track_c.py`, `palladion-benchmark/scripts/comparators.py`, `palladion-benchmark/tests/test_track_c.py`.
+  - **Depends:** B07-T01.01, B07-T02.01, B07-T03.01, B07-T04.01, B07-T05.02, B07-T05.03, B07-T06.01, B07-T06.02, B07-T07.02.
+  - **Change:** Run E0 to E4 under matched call, tool, token and time budgets, then as native best-effort with disclosed differences. Per-case reset; no state reset inside an episode; one provisioned principal and case per independent episode so no private memory crosses episodes (BADR-0039); memory baselines (none, last N turns, rolling summary, scoped episodic) at an equal context budget for the arms without memory, Palladion's own settings for its arms; cold, warm and hot conditions as far as each arm supports them. The oracle policy-tool condition is NOT_RUN with its reason (BADR-0039).
+  - **Proof:** SMOKE; BG-TRACKC; a fact stated in one episode is absent from the next; unavailable arms and unsupported conditions are reported with a reason; counts equal the counting proxy's book.
+  - **Evidence:** E-B07-002; runner and entry point smoked end to end with a scripted provider.
 
 <a id="b07-t09-01"></a>
 
-- [ ] **B07-T09.01 — Track C pilot measurement**
+- [x] **B07-T09.01 — Track C pilot measurement**
   - **Files:** `palladion-benchmark/docs/development/EVIDENCE_LOG.md`, `palladion-benchmark/docs/development/PROGRESS.md`.
-  - **Depends:** B07-T08.01, B07-T07.01.
-  - **Change:** Pilot run of E0, E1, E3 and E4 on a pilot subset including mutation cases, with real-provider generation.
-  - **Proof:** MEASUREMENT; BG-TRACKC; budgets, failures and cost recorded; no confirmatory claim.
-  - **Evidence:** Not yet executed.
+  - **Depends:** B07-T08.01, B07-T07.02, B07-T05.01, B07-T05.02, B07-T05.03, B07-T06.01, B07-T06.02, OQ14.
+  - **Change:** A small pilot of E0, E1, E3 and E4 (about 8 questions, at least 4 of them mutation cases, and 2 episodes of 4 turns) with real-provider generation under limits the owner states for the run, spread over days as the free quota requires, with the dry-run token estimate shown beside the measured one. Failed, partial and quota-blocked runs are results.
+  - **Proof:** MEASUREMENT; BG-TRACKC; budgets, failures and cost recorded; calls never exceed the owner's cap; no confirmatory claim.
+  - **Evidence:** E-B07-003; closed with limits by the owner (BADR-0042): E3 answered 3 of 8 turns, E4 NOT_RUN (quota), E0 and E1 not live; no claim.
 
 ### Atomic tasks — B08
 

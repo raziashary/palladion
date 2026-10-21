@@ -1,9 +1,11 @@
 # Current progress
 
-Updated 2026-10-20. Atomic task state lives in the [master plan](MASTER_DEV_PLAN.md);
+Updated 2026-10-22. Atomic task state lives in the [master plan](MASTER_DEV_PLAN.md);
 command observations and review receipts live in the [evidence log](EVIDENCE_LOG.md).
 
 ## Current checkpoint
+
+B07 (system arms, memory, critic and mutations) is DONE with a partial live pilot (E-B07-002 to E-B07-004): the adversary (E-B07-001) and your scope decisions (BADR-0038 to BADR-0042) shaped 19 cards, all closed. Built and proven offline: the Palladion changes (three separate unpushed commits, `4af66d6`, `eec4ba5`, `1feef14`), one new pin, E0 and E1 in the real LangChain and LangGraph environment, E2 as NOT_RUN, E3 and E4 over Palladion's message interface, 1,000 document events and seven kinds of episodes, the memory, update-consistency, critic and tool-use measures with NOT_OBSERVABLE kept apart from zero, the 19 mutations and 7 invariants as operations on the real fixture with their application to each kind of system, and the Track C runner with four memory baselines. Two entry-point smokes ran the whole path with a scripted provider (E2 to E4, and E0 and E1). The live pilot ran only for E3 (BADR-0042): a harness timeout wasted the first attempt (77,000 tokens), the second answered 3 of 8 turns before the provider's daily limit and its per-minute limit bit; a Palladion turn cost a mean 14,204 prompt tokens against a scripted estimate of 4,581, E4 was not run (the day's quota was spent; you chose to close), and E0 and E1 were not run live. No system arm has a result that supports a ranking. The Palladion commits wait for your approval to push; the evaluation-clock change was not on the list you approved by name.
 
 B06 (graph and research comparators) is STARTED: the pre-phase adversary ran (E-B06-001, 16 findings) and the owner decided the scope (BADR-0031). The plan now has three foundation cards (additive contracts, a comparator worker with a counting proxy, approved pins and downloads), the three comparator adapters, R7b as FEATURE_NOT_SUPPORTED with PF07 requested, four graph metrics the data supports, and a cold-state pilot on a matched subset. All nine cards are done (E-B06-002 to E-B06-005), the ninth (B06-T06.01, the live pilot) with the limits below, accepted by the owner: the contracts, the worker and counting proxy, the pins, the three adapters on the real upstream code behind a fake provider, R7b as unsupported at the pin (PF07 has since landed in Palladion; a re-pin is needed), and the graph metrics. The live cold-state pilot ran only partly (E-B06-004, BADR-0032 to BADR-0037): R6 LightRAG indexed 63 of 103 chunks over six attempts and three models (410 provider calls, 667,995 tokens) before every approved model reached Groq's 200,000-tokens-per-day limit, so it never answered a query; R4 and R5 were not run live (quota-blocked, nothing spent). The matched baseline R0 to R3 ran on the same 60-document subset (48 pairs, validated and scored); R7a was not. The end-of-phase audit (E-B06-005, 18 findings) is resolved: the provider key can no longer reach a comparator through litellm, all three workers are loopback-only, the proxy charges worst cases and stops at a daily limit, and a failed or interrupted run keeps its spend record. The Haiku-implementer permission of BADR-0031 ends with B06. The full S tier is not run on the free tier (an estimate of 4 million tokens and 8 hours per system).
 
@@ -34,7 +36,7 @@ Still open and tracked: OQ03 (read Palladion's interface at B04), OQ09 (license,
 | B04 | DONE | E-B04-001 to E-B04-005; the pilot is exploratory, smoke split only |
 | B05 | DONE | Built and audited, E-B05-001 to E-B05-005; the first live pass (16 calls) is descriptive only |
 | B06 | DONE | Built and audited, E-B06-001 to E-B06-005; the live graph pilot is partial (R6 63 of 103 chunks, no query answered; R4 and R5 not attempted; BR39) and no graph arm has a measured result |
-| B07 | PLANNED | Depends on B04, B05, B02 |
+| B07 | DONE | E-B07-001 to E-B07-004; the live pilot is partial (E3 3 of 8 turns, E4 NOT_RUN, E0 and E1 not live; BR47) and no system arm has a measured ranking result |
 | B08 | PLANNED | Depends on B04–B07 exits |
 | B09 | DEFERRED | Conditional replication and stress |
 
@@ -52,7 +54,7 @@ Still open and tracked: OQ03 (read Palladion's interface at B04), OQ09 (license,
 | BG-FAIR | PARTIAL | E-B04-002: one chunker, filter, budget and tie rule for R0 to R3, C1 and C2 differ only in the filter, R7a's differences declared (BR22, BR24, BR27, BR28); equal-budget claims need the pilot |
 | BG-TRACKA | PARTIAL | E-B04-002: runner, scorer and validator work on real runs; the pilot ran (E-B04-005); the sealed confirmatory run is B08-T04.01 |
 | BG-TRACKB | PARTIAL | E-B05-002, E-B05-005: runner, scorer and validator pass on a real-corpus stand-in run and on a 16-pair live qwen run; R7a, the full split and repetitions are not run |
-| BG-TRACKC | NOT_RUN | B07 |
+| BG-TRACKC | PARTIAL | E-B07-002 to E-B07-004: runner, isolation, baselines, counts from the book and run states proven offline and in two scripted smokes; one live arm (E3) answered 3 of 8 turns; E4, E0 and E1 not run live; no confirmatory claim |
 | BG-SECURITY | PARTIAL | Secret scan, key handling and the arm-visible allowlist (E-B01-002, E-B01-003); tenant and role visibility in the manifest, the barrier scan of the published tree, existence-hiding live reads and inert injection documents (E-B02-002); retriever-side enforcement remains for B04 onward |
 | BG-PREREG | NOT_RUN | B08 |
 | BG-ABLATION | NOT_RUN | B08 |

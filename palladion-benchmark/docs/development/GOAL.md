@@ -25,7 +25,7 @@ its status is read from its own documents and source, never assumed.
 | O04: Track A pilot for R0, R1, R2, R3 and R7a | B04; BG-ADAPTER, BG-FAIR, BG-TRACKA; E-B04-001 to E-B04-005 (pilot, no ranking claim) | DONE |
 | O05: Answer-level scorers and Track B pilot with the recorded generator pool | B05; BG-METRIC, BG-TRACKB; E-B05-001 to E-B05-005 (first live pass, descriptive) | DONE |
 | O06: Graph and research comparators R4–R7b measured with full cost, or recorded NOT_RUN reasons | B06; BG-ADAPTER, BG-TRACKA; E-B06-001 to E-B06-005, BADR-0031 (matched subset, R7b unsupported; build done; live pilot partial: R6 63 of 103 chunks, R4 and R5 not attempted, BADR-0037; owner accepted the partial result) | PARTIAL |
-| O07: Native end-to-end systems E0–E4, memory, critic and tool metrics, 19 mutations and 7 invariants | B07; BG-TRACKC, BG-FIXTURE, BG-SECURITY | PLANNED |
+| O07: Native end-to-end systems E0–E4, memory, critic and tool metrics, 19 mutations and 7 invariants | B07; BG-TRACKC, BG-FIXTURE, BG-SECURITY; E-B07-001 to E-B07-004, BADR-0038 to BADR-0042 (live pilot partial: E3 3 of 8 turns, E4 not run, E0 and E1 not live; owner closed it) | PARTIAL |
 | O08: Sealed confirmatory run and ablations with intervals, failures and bounded claims | B08; BG-PREREG, BG-ABLATION, BG-REPORT | PLANNED |
 | O09: Replication and stress, labeled as replication | B09 (conditional on owner authorization of budget); BG-TRACKA, BG-TRACKB | DEFERRED |
 
@@ -62,7 +62,7 @@ owner's GO; the suite request covers B00 only.
 - [x] B04 — retrieval arms R0–R3, R7a and Track A pilot (E-B04-001 to E-B04-005)
 - [ ] B05 — answer-level evaluation and Track B pilot
 - [ ] B06 — graph and research comparators
-- [ ] B07 — system arms, memory, critic, mutations and Track C pilot
+- [x] B07 — system arms, memory, critic, mutations and Track C pilot (E-B07-001 to E-B07-004; pilot partial)
 - [ ] B08 — scale, tuning, preregistration, confirmatory run and ablations
 - [ ] B09 — replication and stress, conditional
 

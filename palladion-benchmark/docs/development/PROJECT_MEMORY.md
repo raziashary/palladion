@@ -74,3 +74,11 @@ Accepted: BADR-0001 to BADR-0037 (all; BADR-0031 to BADR-0037 are the B06 decisi
 - Run the checker with `python palladion-benchmark/docs/development/check_docs.py` from the repository root.
 - Provider calls need an explicit enable flag and a provisioned key; none exists yet. Never read or copy Palladion's `.env`.
 - Reviewer subagents: Haiku 5.5, read-only, complete protocol, no credentials, no git.
+
+
+## What exists in code (B07)
+
+- Palladion (separate unpushed commits `4af66d6`, `eec4ba5`, `1feef14`): counted model transport, evaluator mode with a response `evaluator` block, a registry-owned evaluation clock. Pin `eec4ba5` (BADR-0041).
+- `benchmark/adapters/{langchain,langgraph,google_adk,palladion_system}.py` (E0, E1, E2 NOT_RUN, E3/E4), `comparators/langchain/worker.py`, `benchmark/fixtures/{episodes,updates,mutations}.py`, `benchmark/eval/{memory,critic,tool_use,observable}.py` and the update-consistency section of `eval/cost_latency.py`, `benchmark/mutations_apply.py`, `benchmark/track_c.py`, `benchmark/scripted_provider.py`, `scripts/run_track_c.py`.
+- Key facts: E3 is Palladion's own critic-off control and a distinct treatment (BADR-0039); counts come from each arm's counting proxy; a measure no interface exposes is `NotObservable`, never zero; Palladion episodes are isolated by principal and session in the corpus case (BADR-0041); E3 and E4 run one at a time; a Palladion turn cost a mean 14,204 prompt tokens in the pilot (BR47); the live pilot is partial (E-B07-003, BADR-0042).
+- Evidence: E-B07-001 to E-B07-004. No system arm has a measured result that supports a ranking.

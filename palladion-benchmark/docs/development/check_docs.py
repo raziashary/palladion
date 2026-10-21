@@ -91,6 +91,28 @@ EXTRA_FILES = {
     ROOT + "comparators/lightrag/worker.py",
     ROOT + "tests/test_lightrag.py",
     ROOT + "docs/development/PALLADION_FIXES.md",
+    ROOT + "benchmark/adapters/palladion_system.py",
+    ROOT + "scripts/palladion_aliases.py",
+    ROOT + "comparators/langchain/worker.py",
+    ROOT + "comparators/langgraph/worker.py",
+    ROOT + "benchmark/fixtures/episodes.py",
+    ROOT + "benchmark/fixtures/updates.py",
+    ROOT + "benchmark/fixtures/mutations.py",
+    ROOT + "benchmark/mutations_apply.py",
+    ROOT + "benchmark/track_c.py",
+    ROOT + "benchmark/eval/observable.py",
+    ROOT + "benchmark/scripted_provider.py",
+    ROOT + "tests/test_langchain.py",
+    ROOT + "tests/test_langgraph.py",
+    ROOT + "tests/test_google_adk.py",
+    ROOT + "tests/test_palladion_system.py",
+    ROOT + "tests/test_episodes.py",
+    ROOT + "tests/test_memory_eval.py",
+    ROOT + "tests/test_update_consistency.py",
+    ROOT + "tests/test_critic_eval.py",
+    ROOT + "tests/test_tool_use.py",
+    ROOT + "tests/test_mutations_apply.py",
+    ROOT + "tests/test_track_c.py",
     ROOT + "tests/test_graph_arms.py",
     ROOT + "benchmark/eval/graph_metrics.py",
     ROOT + "tests/test_graph_metrics.py",
@@ -145,6 +167,7 @@ CARD = re.compile(
     re.MULTILINE | re.DOTALL,
 )
 FIELDS = ("Files", "Depends", "Change", "Proof")
+PALLADION = "palladion/"  # a card may also own Palladion files since BADR-0038
 ADR_FIELDS = (
     "Status",
     "Authority",
@@ -186,7 +209,7 @@ def anchors(text: str) -> set[str]:
 def atomic_tasks(plan: str) -> dict[str, dict[str, str]]:
     found: dict[str, dict[str, str]] = {}
     for _, ident, _, body in CARD.findall(plan):
-        found[ident] = dict(re.findall(r"^  - \*\*(Files|Depends|Change|Proof):\*\* (.+)$", body, re.MULTILINE))
+        found[ident] = dict(re.findall(r"^  - \*\*(Files|Palladion files|Depends|Change|Proof):\*\* (.+)$", body, re.MULTILINE))
     return found
 
 
@@ -260,6 +283,9 @@ def validate_atomic_register(plan: str, vision: str, parents: set[str]) -> list[
             elif not allowed:
                 errors.append(f"{ident}: owning file is neither in the protocol tree nor a recorded addition: {path}")
             owned.add(path)
+        for path in re.findall(r"`([^`]+)`", fields.get("Palladion files", "")):
+            if not path.startswith(PALLADION) or ".." in Path(path).parts:
+                errors.append(f"{ident}: Palladion file outside the palladion folder: {path}")
         if not re.match(r"(?:DOC|UNIT|INTEGRATION|SMOKE|MEASUREMENT);", fields["Proof"]):
             errors.append(f"{ident}: missing proof kind")
         if not re.search(r"\bBG-[A-Z0-9]+\b", fields["Proof"]):
@@ -306,8 +332,8 @@ def validate_atomic_register(plan: str, vision: str, parents: set[str]) -> list[
 
     writers: dict[str, list[str]] = {}
     for ident, fields in tasks.items():
-        for path in re.findall(r"`([^`]+)`", fields.get("Files", "")):
-            if path in (DEV + "EVIDENCE_LOG.md", DEV + "PROGRESS.md"):
+        for path in re.findall(r"`([^`]+)`", fields.get("Files", "") + " " + fields.get("Palladion files", "")):
+            if path in (DEV + "EVIDENCE_LOG.md", DEV + "PROGRESS.md", DEV + "ADR_LOG.md"):
                 continue  # Append-only status records.
             writers.setdefault(path, []).append(ident)
     for path, idents in sorted(writers.items()):
@@ -474,7 +500,7 @@ def validate(documents: dict[str, str]) -> list[str]:
     # A checked card must have its owning files on disk (documents and tooling only exist today).
     for ident, fields in tasks.items():
         if state.get(ident) and "Files" in fields:
-            for path in re.findall(r"`([^`]+)`", fields["Files"]):
+            for path in re.findall(r"`([^`]+)`", fields["Files"] + " " + fields.get("Palladion files", "")):
                 if not (REPO / path).exists():
                     errors.append(f"{ident}: checked but file does not exist: {path}")
     return errors
@@ -537,6 +563,12 @@ def self_test(documents: dict[str, str]) -> int:
                 "`palladion-benchmark/benchmark/cli.py`", "`palladion/src/evidence_agent/cli.py`", 1
             ),
         ),
+        "palladion file outside the palladion folder": (
+            plan,
+            documents[plan].replace(
+                "`palladion/src/evidence_agent/agent/llm.py`", "`palladion-benchmark/benchmark/cli.py`", 1
+            ),
+        ),
         "card owns unrecorded file": (
             plan,
             documents[plan].replace(
@@ -578,7 +610,7 @@ def self_test(documents: dict[str, str]) -> int:
         ),
         "PROGRESS gate removed": (
             progress,
-            documents[progress].replace("| BG-TRACKC | NOT_RUN |", "| removed | NOT_RUN |", 1),
+            documents[progress].replace("| BG-PREREG | NOT_RUN |", "| removed | NOT_RUN |", 1),
         ),
         "second PROJECT_MEMORY": (ROOT + "docs/PROJECT_MEMORY.md", "# copy\n"),
         "arm registry row removed": (

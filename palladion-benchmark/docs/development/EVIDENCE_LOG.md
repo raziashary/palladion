@@ -540,3 +540,128 @@ Total over the six: 410 provider calls (202 HTTP-200 replies, of which the 13 of
 | 18 | Organization id in worker.stderr | Yes | Noted in E-B06-004; account identifier only, run directories are gitignored |
 
 **Not verified by the auditor and by me:** the mutant counts in E-B06-002 (8 on the proxy and worker, 6 on graph metrics, 5 on contracts, 5 on `WorkerArm`) have no saved output; they are retained as a claim of the session and not relied on. New mutants this round: whole-word matching (killed).
+
+## E-B07-001 — B07 pre-phase adversary: receipt and dispositions
+
+2026-10-21. One read-only reviewer (Haiku 5.5, medium; BADR-0003) read the complete protocol, the B07 cards and the cards they depend on, the gates, all ADRs, the risks and Palladion's live source (HEAD and the pinned worktree), with no credentials and no ability to run anything. 29 findings, 17 of them HIGH. I verified the load-bearing ones in source before relying on them (marked V).
+
+| # | Finding | Disposition |
+|---|---|---|
+| F1 | E4 is Palladion's default serving path and runs the critic unconditionally; the card, registry and OQ11 say a critic is a later phase (V: `loop.py` runs the critic on every message when no experiment is set) | Accepted. E4 restated; OQ11 re-answered; registry and comparators.yaml reasons to be updated in B07-T04.01 |
+| F2 | E3 has no HTTP path: `ExperimentControls` is built only in Palladion's own study (V: `grep`, `services.begin` takes no experiment) | Accepted; owner approved an evaluator-only launcher flag (BADR-0039); B07-T00.02 |
+| F3 | Without the critic the gate cannot release policy results, rule requirements or operational guidance (V: `gate.py` lines 72-74, 88-90, 93-95, 105-107) | Accepted as a property of the treatment; E3 is disclosed as distinct (BADR-0039 item 1, BR40) |
+| F4 | The model client hard-codes the provider address and reads a key file (V: `llm.py:119`, `serve.py`) | Accepted; B07-T00.01 |
+| F5 | Palladion's completion cap is 768; gpt-oss models spend their cap on hidden reasoning (BADR-0034) | Accepted: the cap becomes a launcher parameter (T00.01); one cap for all arms is set with the pilot limits |
+| F6 | The 60 s request deadline wraps the critic and the model pacing (V: `loop.py:296`, `settings.py`) | Accepted: deadline is a launcher parameter; a GLOBAL_DEADLINE is a recorded state (T00.01, T04.01) |
+| F7 | Usage cannot be taken from the response; Palladion counts differ from the proxy's | Accepted: tokens and calls from the proxy's book, Palladion's counts self-reported with a divergence flag (T04.01) |
+| F8 | Critic findings, initial draft and tool arguments are not returned over HTTP | Accepted: evaluator block (T00.02); arguments NOT_OBSERVABLE (T06.02) |
+| F9 | Palladion claims carry no closed kind, so the answer scorers cannot count them | Accepted: the evaluator block carries each claim's kind (T00.02) |
+| F10 | Private memory is keyed by principal and crosses cases (V: `memory/store.py` scope by principal) | Accepted; owner chose a principal and case per episode (BADR-0039 item 5, BR41) |
+| F11 | The message route has no evidence token budget, so equal counted evidence tokens cannot hold for E3 and E4 | Accepted as a disclosed difference (BR12 extended); not changed |
+| F12 | Policy decision tables cannot be registered over HTTP | Accepted: policy-level parts of M02, M03, M10 and MT03 recorded per system in T07.02, no new route |
+| F13 | Live data and time are Palladion's; freshness uses the wall clock (V: `utc_clock` used in `evidence.py`, `packet.py`, `preflight.py`) | Accepted: evaluation clock (T00.03); live-outage mutations M11 and M12 recorded per system |
+| F14 | Memory is not observable; its vocabulary differs from the protocol's | Accepted: answer-level proxies, NOT_OBSERVABLE otherwise (T05.02) |
+| F15 | The oracle policy-tool condition is circular | Accepted; owner deferred it to B08 as NOT_RUN (BADR-0039 item 6) |
+| F16 | Approved non-normative and injection text is released as a verified quote | Accepted: scored as authority-confusion candidates (BR43) |
+| F17 | The R7a pin predates the features B07 needs | Accepted: one new pin (T00.04); old results keep their pin |
+| F18 | Model and settings are fixed per server process | Accepted: one server per model and per memory setting; the model is recorded per run (BADR-0039 item 9) |
+| F19 | No framework dependencies or environments are planned | Accepted: B07-T00.05, owner approval by name before any download |
+| F20 | E2 NOT_RUN needs a negative control; a probe needs approval | Accepted: T03.01 |
+| F21 | Mutation feasibility is uneven; several failure metrics have no owner | Accepted: T07.01 (specification with class) and T07.02 (application); metrics assigned to T05.02, T06.01 and T07.02 |
+| F22 | Several cards cannot hold their change or miss dependencies | Accepted: cards rewritten (104 cards after this entry) |
+| F23 | Three B07 deferrals from BADR-0023 were orphaned | Accepted: validity policy in T05.01, injection variants in T07.01, 'unindexed source' recorded as covered by M08 in T07.01 |
+| F24 | Governance text is stale | Accepted: BADR-0038, benchmark AGENTS.md updated; the stale card text replaced |
+| F25 | Information-barrier points (pseudonymous identifiers, stored queries, injection documents) | Accepted: T05.01 proof, T07.01 proof |
+| F26 | Injected-error pairs need a scripted main model in Palladion's process | Accepted: T06.01 uses a scripted model through the evaluator launcher, with a blindness control |
+| F27 | Cold, warm and hot cache and C1 cannot be set per request for Palladion | Accepted: declared per arm in T08.01 |
+| F28 | Budget arithmetic: the full Track C does not fit the free tier | Accepted: pilot sized to about 8 questions and 2 episodes of 4 turns over several days; dry-run estimate shown beside the measured (T09.01) |
+| F29 | Minor stale text (S-tier episodes in configs) | To be fixed when T05.01 touches the config |
+
+**Refuted or not relied on:** none of the 29 was refuted; F19 (framework Python support) stays UNCERTAIN until the owner approves the download and the install is tried. **Owner decisions taken:** BADR-0039. **Open for later cards:** the completion cap and model for the pilot; downloads (T00.05); live limits (T09.01).
+
+
+## E-B07-002 — B07 build: Palladion changes, five system arms, fixtures, metrics, mutations and the Track C runner
+
+2026-10-21 to 2026-10-22, from `palladion-benchmark/` unless stated. Cards B07-T00.01 to B07-T08.01 (the foundation cards are listed with the Palladion ones).
+
+**Palladion (separate commits, not pushed; BADR-0038):** `4af66d6` (model transport, evaluator mode with the response `evaluator` block, registry-owned evaluation clock; Palladion ADR-0099 to ADR-0101, E-P10-008), `eec4ba5` (the application owns the injected clock: `create_app(clock=)`, `app.state.clock`), `1feef14` (documentation of the follow-up). Palladion suite at `eec4ba5`: 512 passed, 33 skipped (they need a local Qdrant, a graph store or a live model), ruff and mypy clean; its document checker passes. The ADR-0101 clock was not on the list of changes the owner approved by name; it is reported at this phase close.
+
+**Pins (BADR-0041):** R7a, E3, E4 and the isolated runtime moved from `4af66d6` to `eec4ba5` (`configs/comparators.yaml`, `scripts/palladion_runtime.py`, `tests/test_config_loader.py`); results recorded at `6444345` keep their pin. E0 and E1 are pinned by exact package versions (`langchain-core` 1.6.7, `langchain-text-splitters` 1.1.3, `langchain-openai` 1.6.7, `langgraph` 1.2.14, `openai` 3.26.0, `numpy` 2.5.3; BADR-0040).
+
+**What was built and how it was proven (all offline unless noted):**
+
+| Card | Producer to consumer | Proof observed |
+|---|---|---|
+| T00.06 | counting proxy tool-call allowance (`max_tool_calls`, `stream=false` accepted) to the agent arms | `tests/test_llm_proxy.py`: a tool request beyond the allowance is refused and counted |
+| T00.01 to T00.03 | Palladion transport, evaluator mode, clock to `PalladionSystem` | Palladion tests (above); `tests/test_palladion_system.py` against a real server |
+| T00.04, T00.05 | one pin; framework environment verified by `scripts/comparators.py framework E0\|E1` | `tests/test_comparators.py`, `tests/test_config_loader.py` |
+| T01.01, T02.01 | E0 (LangChain components over the shared chunks, then the shared generator), E1 (LangGraph loop, one search tool, 5 model calls and 8 tool calls at most) in `artifacts/comparators/env-langchain` | `tests/test_langchain.py`, `tests/test_langgraph.py` run the real framework behind the proxy; an over-ceiling loop is an invalid run |
+| T03.01 | E2 NOT_RUN by configuration (no access, no probe approved; OQ07) | `tests/test_google_adk.py` |
+| T04.01 | E3 (Palladion's control B5) and E4 (default serving) over `POST /v1/cases/{case}/messages` | `tests/test_palladion_system.py` on a real server with a scripted provider: usage equals the proxy's book, E3 has no critic call, a deadline cut is a timeout, E3 is never labelled E4; the trace now carries the whole evaluator block and the critic and tool-use metrics read it from there (a real E4 trace scores through `score_critic` and its arguments validate against `TOOL_SCHEMAS`) |
+| T05.01 | `fixtures/episodes.py` (7 kinds, 3 to 6 turns, whole-episode splits, keyed identifiers) and `fixtures/updates.py` (1,000 events over 120 days, a replayable committed state) | `tests/test_episodes.py`, 27 tests. The first run of the stream test failed: the generator picked documents by version depth, so it filled up on root versions and **never emitted a supersede event**; fixed by walking whole version chains oldest first, and a predecessor that was already deleted is not superseded |
+| T05.02 | `eval/memory.py` (identity continuity, anchoring error, recovery after correction, poisoning promoted and echoed, cross-episode leakage, live freshness; packet sufficiency, provenance and reported-fact validity NOT_OBSERVABLE) with `eval/observable.py` | `tests/test_memory_eval.py`, 14 tests: perfect, empty and shuffled controls differ; a planted promoted claim and a planted cross-episode recall are counted; mutation sweep: five mutants killed, one clause found redundant and removed |
+| T05.03 | exposure windows in `eval/cost_latency.py` against the committed state | `tests/test_update_consistency.py`, 10 tests: a lagging reader has a positive window, a consistent one zero, never negative; reclassification and index internals are NOT_OBSERVABLE; four mutants killed |
+| T06.01 | `eval/critic.py`: precision, recall by error type, escape, repair, regression, extra retrievals, cost per net prevented, independent evidence; blindness check | `tests/test_critic_eval.py`, 13 tests; five mutants killed; agreement is not a measure |
+| T06.02 | `eval/tool_use.py`: recall, unnecessary calls, argument validity, utilisation, discovery reversal, boundedness, failure interpretation, escalation | `tests/test_tool_use.py`, 15 tests; five mutants killed; no tool report makes every measure NOT_OBSERVABLE |
+| T07.01 | `fixtures/mutations.py`: M01 to M19 (M14 in five variants) and MT01 to MT07 as operations on the real fixture, with expectation, metric and class; `check_mutations` in `fixtures/validation.py` | `tests/test_fixture_integrity.py` (30 tests, 10 of them new): 30 instances build, every patch changes the corpus exactly as declared, planted names and gold claims in arm-visible text are caught. Findings from building them: the world's selector cannot express a retroactive version that closes an overlapping one (M02's gold is therefore the selector's verdict, a conflict); the corpus has no SOP gold, so M10 targets the current rule of a policy family |
+| T07.02 | `mutations_apply.py`: `RebuildTarget` (arms that rebuild their index), `PalladionTarget` (upload, approve, revoke over HTTP), `Application` outcomes, `violations`, `restore` | `tests/test_mutations_apply.py`, 17 tests including a real Palladion: an added memo is approved and reachable, then revoked and not reachable; a revoked base document is reported as not restorable; M07, M08, M09, M12, MT04 and MT07 are FEATURE_NOT_SUPPORTED with reasons and nothing is called. A real retrieval after a publish exposed that the arm's view did not know the new document; `PublishedView.with_document` and `PalladionArm.publish` fixed it |
+| T08.01 | `track_c.py` (runner, four memory baselines at 120 words, matched ceilings flagged not clipped, per-turn counts from the proxy's book, mutation cases, restore) and `scripts/run_track_c.py` (assembly, per-episode principals, manifest, summary) | `tests/test_track_c.py`, 34 tests: a fact stated in one episode is absent from the next and a one-memory control leaks; unsupported conditions are listed with reasons; counts equal the book and a book that moves outside the turns is a divergence; the entry point refuses two Palladion arms with mutations and a live run without limits |
+
+**What is wired and what is not (audit, E-B07-004).** The runner writes memory scores, mutation records and the tool-argument validity of whatever traces a system reports. `eval/critic.py`, the rest of `eval/tool_use.py` (they need gold: required tools, injected-error labels), the update-exposure windows and the latency and cost summaries are libraries with unit tests and, for the critic and tool arguments, one test that feeds them a real E4 trace; no run has produced a critic, tool-selection, exposure-window or latency figure, and the injected-error run of B07-T06.01 (a scripted drafting model with defects) was not performed. Per-answer text, the self-reported counts and each system's trace are kept in `turns.jsonl` and `mutations.jsonl` in the run directory from now on; the runs recorded here predate that.
+
+**Entry-point smokes (scripted provider, no model):** `c-smoke` (E2, E3, E4; 2 episodes, M01, M08, M09): 16 turns OK, E2 NOT_RUN with its reason, M08 and M09 FEATURE_NOT_SUPPORTED, no divergence. `c-smoke-fw` (E0, E1 in the real framework environment; 4 baselines): 64 turns OK, E0 32 calls and 39 embedding requests, E1 64 calls and 32 tool calls, no divergence, mutation cases NOT_RUN with the reason. `c-dry` (the pilot plan): 16 turns OK. The dry run showed that two Palladion arms share one state (the second arm's upload of an identical document was refused with HTTP 409), so the entry point now refuses that combination and the pilot runs the arms one at a time.
+
+**Palladion probe (BADR-0041):** a principal provisioned with `POST /v1/admin/principals`, a new case and a membership searches the new case with HTTP 200 and 0 passages; added to the corpus case it sees the corpus. Sources belong to the case they were uploaded under.
+
+**Full suite:** `uv run pytest -q` after the build: 1601 passed, 2 failed in 1,957 s (`artifacts/runs/full-suite5.log`). Both failures were stale assumptions of this phase (the proxy book now has a `tool_calls` field; E3 is no longer a forced-out arm); the tests were corrected (`tests/test_run_graph_arms.py`, `tests/test_runner.py`). Final run after the audit fixes: 1,614 passed in 1,996 s, 0 failed (`artifacts/runs/full-suite6.log`); `tests/test_critic_eval.py` was edited once more after that run started and passes (13 tests). `ruff check`, `ruff format --check` and `mypy` clean.
+
+**More limits (audit):** `PalladionTarget.verified` compares the arm's record of what Palladion accepted (HTTP 200 and 201) with the declared patch; it is not an independent read of Palladion's state, which no route offers (a retrieval after the change is the independent check, made in `tests/test_mutations_apply.py`). `c-smoke` mutated E3 and E4 in one invocation, which the entry point now refuses. The barrier scan covers mutation patches, not episode utterances (those are built from fixed templates and keyed tokens). Default responses are claimed unchanged by key set, not by bytes. `reported_fact_validity` is NOT_OBSERVABLE partly because no validity policy is generated (BR48). The memory measures work from replies and can be confounded by a system that repeats the user (a test shows the repeat of a correction does not count as recovery).
+
+**Limits:** no E0 or E1 mutation case runs (a full index rebuild per case is outside the pilot); E2 never runs; the oracle policy-tool condition is NOT_RUN (BADR-0039); a Palladion server runs at one evaluation time, so an episode's clock is moved to it and flagged (`CLOCK_FIXED_BY_ARM`), which makes the stale-live episode unable to test freshness for E3 and E4; the memory measures work from replies only (BR41, BR44).
+
+## E-B07-003 — Track C live pilot (B07-T09.01): E3 partial, E4 not run
+
+2026-10-21 and 2026-10-22. Limits: BADR-0042 (E3 and E4; per arm 250 calls, 150,000 tokens, 700 completion, pace; model `qwen/qwen3.8-27b`). All figures below are recounted from the saved books by script (`artifacts/runs/<run>/proxy-E3.jsonl`, `ledger.jsonl`, `summary.json`).
+
+| Run | Pace | Provider calls | Prompt / completion tokens | Outcomes | Result |
+|---|---|---|---|---|---|
+| `c-dry` (scripted, the plan) | none | E3 30, E4 48 | estimate E3 36,648 prompt (at most 21,000 completion), E4 66,854 (33,600) | 16 turns OK | the estimate the live run is measured against |
+| `c-live-e3` | 20 s | 31 rows in the saved book (22 OK, 8 rate-limited, 1 HTTP 413); the run's totals said 32: one call was reserved and still in flight when the run ended, so it has no row | 70,774 / 5,923 | 7 turns and 3 mutation asks TIMEOUT | **harness fault**: the connection timeout was 60 s, a message takes several paced calls, so the client gave up while the server kept spending |
+| `c-live-e3b` | 45 s | 31 attempts (26 OK, 4 rate-limited, 1 error) plus 7 refused | 113,629 / 6,699 | 3 turns OK (two of them carrying Palladion's own failure flags), 5 INVALID_RUN (provider faults, then refusals once the provider's daily limit was reached: 7 `DAILY_LIMIT_REACHED`); M01, M13, M14 INVALID_RUN, M09 FEATURE_NOT_SUPPORTED | partial; stopped by the provider's daily limit, not by the owner's caps (31 calls of 250, 120,328 tokens of 150,000) |
+| E4 | | 0 | 0 | NOT_RUN | the day's qwen quota was spent (197,025 tokens over the two E3 attempts); owner chose to close with E4 not run |
+
+**Findings.** (1) The eight turns of `c-live-e3b` spent 113,629 prompt tokens, a mean of 14,204 per turn (ledger records, faulted turns included; the per-turn figures range from 5,122 to 23,991), against 36,648 estimated for the whole scripted dry run, 4,581 per turn: the estimate was low by a factor of 3.1. The scripted provider issues one short search and a short draft; the real model issued 2 to 10 tool calls in a turn and Palladion sends the evidence back with each model call (BR47). (2) The three answered turns are PARTIALLY_SUPPORTED, two of them flagged `PALLADION_FAILURE=TOOL_BUDGET_EXHAUSTED` and `VALIDATION_ERROR` (Palladion's own tool budget and a rejected call), and `OVER_MATCHED_TOOL_CALLS` (9 and 10 tool calls in a turn, against the matched ceiling of 8) is recorded, not clipped. (3) `CITATIONS_NOT_PUBLISHED=2` on each answered turn: two citations were to non-document sources. (4) Memory scores on three answered turns: identity continuity has no eligible observation, anchoring error 0 of 1, cross-episode leakage 0 of 3; they support no claim. (5) The per-minute limit (8,000 tokens, BR15) is what the first attempt hit: at a 20 s pace the 429 rate was 8 of 32; at 45 s it was 4 of 31, so pace alone does not keep a 4,000-token call under it. (6) The run's own check compared two in-memory totals and found no divergence; the audit recounted the saved rows and found one call missing from `c-live-e3` (above). The runner now also checks the saved rows (`check_books`). `residues` was empty.
+
+**Not done:** E4 live; E0 and E1 live; any contrast between E3 and E4; any claim about Palladion's quality. No confirmatory claim.
+
+## E-B07-004 — B07 end-of-phase audit: receipt and dispositions
+
+2026-10-22. One read-only auditor (Haiku 5.5, medium; BADR-0003) read the complete protocol and the Palladion blueprint, the B07 cards, ADRs, evidence and risks, and the B07 source and tests of both projects; it ran nothing and had no credentials. 38 findings (5 HIGH, 14 MEDIUM, 13 LOW and the claims it verified). I checked each HIGH and MEDIUM finding against source or the saved books before acting. Dispositions:
+
+| # | Finding | Verified | Disposition |
+|---|---|---|---|
+| H1 | `c-live-e3`: totals say 32 calls, the saved book has 31 rows; the run's book check compared two in-memory numbers | Yes (31 rows counted) | Evidence corrected (31; the extra call was in flight); `check_books` compares the totals with the saved rows; BR50 |
+| H2 | Palladion memory recall judged validity at the wall clock | Yes (`memory/store.py` recall) | Fixed in Palladion `dd70c0e` with a test that fails on the old read; ADR-0101 second addendum |
+| H3 | `violations` compared clause locators with bare document ids | Yes | Normalised to the document; tests with a `doc#clause` citation |
+| H4 | Critic, tool-selection, exposure and latency modules have no run that feeds them; E-B07-002 overstated "reads the real trace" | Yes | Evidence corrected; runs now keep answers and traces; tool-argument validity is computed in the summary; BR49 |
+| H5 | `--arms E3,E4` without mutations shares one database and principals | Yes | The entry point refuses E3 and E4 in one invocation |
+| M1 | "38,000 tokens a message" divided all spend by the answered turns | Yes (mean 14,204 over 8 ledger records) | Restated everywhere as the per-turn mean; BR47 |
+| M2 | A counter-search was counted twice | Yes | Counted once; test |
+| M3 | Critic cost and boundedness use the system's own counts | Yes | Stated in the module and the evidence as self-reported |
+| M4 | A missing argument became the text "None" | Yes | Kept as unreported; test |
+| M5 | Mutation asks used an episode's principal | Yes | A principal of their own (`mutation-cases`) |
+| M6 | Pace not required; limits not in the manifest | Yes | Required for a live run; limits written to the manifest |
+| M7 | Live freshness printed for fixed-clock arms | Yes | NOT_OBSERVABLE with the reason; test |
+| M8 | `verified` compares the arm's record with itself | Yes | Stated as such; a retrieval is the independent check |
+| M9 | A 160 tool-call cap not in the owner's limits | Yes | Stated in BADR-0042; card wording corrected |
+| M10 | Answers and traces not saved | Yes | `turns.jsonl`, `mutations.jsonl` |
+| M11 | No validity policy generated | Yes | Card clause struck; BR48 |
+| M12 | Echo could confound recovery | Partly (a repeated correction names both values, so it does not score) | Test; limit stated |
+| M13 | `--model-base-url` without `--key-env` used the root `.env` key | Yes | Refused in `serve.py` (Palladion `dd70c0e`) |
+| M14 | Stale text (principal and case per episode; pace 20 s) | Yes | Amended in place with dated notes |
+| L1 | A failed mutation application was NOT_RUN | Yes | INVALID_RUN of the harness |
+| L5 | Context label outside the 120-word budget | Yes | Label inside the budget; tests exact |
+| L9, L10, L11, L12 | Placeholders, wrong reference, wording of the stop, smoke provenance | Yes | Corrected (final suite below) |
+| L2, L3, L4, L6, L7, L8, L13 | Retry label, latency summary, registry text, barrier coverage, byte-identical claim, remaining wall reads, unwired surface | Yes | Recorded as limits (E-B07-002), BR49; L8 in ADR-0101; no code change |
+
+**Refuted:** none. **Could not be verified by the auditor** and still unverified: the Palladion test counts it did not run (I ran them: 514 passed, 33 skipped at `dd70c0e`), runtime identity of the "fresh" runtimes (the entry point cannot record it), the `CITATIONS_NOT_PUBLISHED` causes (answers were not saved).

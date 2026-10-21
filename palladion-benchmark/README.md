@@ -59,6 +59,10 @@ same commands for machines that have `make`. Docker is not used on the author's 
 `.env` (copy `.env.example`), an explicit `--enable-live` flag and a call budget, for example
 `uv run python -m benchmark.generator --prove --enable-live`. Run `uv run python -m benchmark.secret_scan --staged` before committing; it fails on binary or oversized files it cannot read unless `--allow-unscannable` is passed.
 
+## Track C (native end-to-end systems)
+
+`uv run python scripts/run_track_c.py --root artifacts/fixtures/S --out artifacts/runs/c-smoke --run-id c-smoke --arms E2,E3,E4 --episodes 2 --mutations M01,M09` runs episodes and mutation cases against E0 to E4 with the offline scripted provider (no model, no key, no claim). It needs the isolated Palladion runtime (`scripts/palladion_runtime.py prepare`) and the benchmark's Qdrant for E3 and E4. A live run needs `--generator live --enable-live` and the owner's `--call-cap`, `--token-cap` and `--pace-seconds`; E3 and E4 are run one at a time on a freshly prepared runtime when mutation cases are included. Every arm's model calls are counted by its own proxy and the counts in the summary are that book.
+
 ## Limits
 
 All data will be fictional and synthetic and is not an actual operating procedure. Synthetic worlds can be easier than real

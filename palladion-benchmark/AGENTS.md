@@ -15,9 +15,12 @@ Palladion system contributor and is not edited from here. Repository root is `C:
 
 ## Scope and integrity
 
-- This project builds the benchmark. It never edits, stages or commits anything under `palladion/` or the repository-root
-  files. Learn Palladion's interface by reading its live source and docs; reach it only through an adapter over its
-  HTTP interface, never by importing its code (BADR-0002).
+- This project builds the benchmark. Since 2026-10-21 (BADR-0038) the Palladion contributor has stopped, and a change under
+  `palladion/` is allowed only when a named benchmark card cannot be built or proven without it: the smallest change, justified
+  in `ADR_LOG.md` first, made under Palladion's own rules (its root `AGENTS.md`, ADRs and tests), committed apart from benchmark
+  work, and pushed only with the owner's approval. Repository-root files are still not edited from here. Learn Palladion's
+  interface by reading its live source and docs; reach it only through an adapter over its HTTP interface, never by importing
+  its code (BADR-0002).
 - The research protocol is the vision. Do not silently change its locked methods. Its numbers are provisional until the
   B08-T03.01 seal; after the seal, changes flag later results exploratory.
 - Keep planning, memory, learning, decisions and evidence in `docs/development/`. Exactly one `PROJECT_MEMORY.md`.
