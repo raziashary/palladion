@@ -236,8 +236,11 @@ Goal O08. Read protocol §13, §14, §15, §19 and §22. Depends on B04–B07 ex
 | B08-T05 | Ablations A01–A16 | One component removed against a stated base |
 | B08-T06 | Plots and reports | No single composite winner |
 | B08-T07 | Final audit and publication package | Claims bounded to measured strata |
+| B08-T08 | Descriptive comparison of Palladion with the other systems (BADR-0043) | Matched lists, cost axis, exploratory label |
 
 Exit: sealed, reproducible results with confidence intervals and failures. A null or adverse result is a completed experiment (protocol §19.4).
+
+**Re-plan, 2026-10-22 (BADR-0043).** The owner wants a comparison of Palladion with the other systems now, under the free tier. B08-T01 to T05 are not run on this path (no M tier, no tuning, no seal, no confirmatory run, no ablations); they stay open and keep their dependencies. Cards B08-T08.01 to T08.06 produce a descriptive, exploratory comparison on the S tier in the order that spends nothing first, with the cost constraints applied; B08-T06.01 and B08-T07.01 report from their results. Nothing in the comparison is a confirmatory or ranking claim.
 
 ## B09 — Replication and stress (Slice 6), conditional
 
@@ -1128,7 +1131,7 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
 
 - [ ] **B08-T02.01 — Development-stage tuning on dev questions only**
   - **Files:** `palladion-benchmark/configs/benchmark.yaml`, `palladion-benchmark/configs/comparators.yaml`, `palladion-benchmark/configs/evaluation.yaml`.
-  - **Depends:** B04-T05.01, B05-T06.01, B06-T06.01, B07-T09.01, B08-T01.01, B08-T01.02.
+  - **Depends:** B04-T05.01, B05-T06.01, B06-T06.01, B07-T09.01, B08-T01.01, B08-T01.02, B08-T08.01.
   - **Change:** Tune K, candidate pools, reranker cutoff, graph depth, critic activation and thresholds one lever at a time using a held-out calibration split for confidence work; log every trial; never read test results; define per-arm eligibility in comparators.yaml.
   - **Proof:** MEASUREMENT; BG-PREREG; each configuration change cites a dev result; access to locked-test annotations is not used.
   - **Evidence:** Not yet executed.
@@ -1173,7 +1176,7 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
 
 - [ ] **B08-T05.01 — Ablations and factorial interactions**
   - **Files:** `palladion-benchmark/docs/development/EVIDENCE_LOG.md`, `palladion-benchmark/configs/comparators.yaml`.
-  - **Depends:** B08-T04.01.
+  - **Depends:** B08-T04.01, B08-T08.01.
   - **Change:** Run the preregistered A01-A16 and declared factorials, labeling A09 and A14 as system ablations and A15 as fixtures-only; any ablation Palladion cannot express without code changes is FEATURE_NOT_SUPPORTED, and ablations not in the sealed list are exploratory. Palladion exposes graph hop depth and counter-search limits but no switch for the critic, gate, preflight, authority check, parser or temporal resolver today.
   - **Proof:** MEASUREMENT; BG-ABLATION; each ablation removes exactly one component against a stated base; interactions reported.
   - **Evidence:** Not yet executed.
@@ -1191,9 +1194,63 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
 
 - [ ] **B08-T07.01 — Final audit and publication package**
   - **Files:** `palladion-benchmark/docs/reproducibility.md`, `palladion-benchmark/docs/dataset_card.md`, `palladion-benchmark/README.md`.
-  - **Depends:** B08-T05.01, B08-T06.01, OQ09.
+  - **Depends:** B08-T05.01, B08-T06.01, B08-T08.06, OQ09.
   - **Change:** Error attribution, developer-effort observations (first-build hours, adapter count, setup failures, tuning time per arm), final reproducibility checklist, dataset card and README; a reader can reconstruct a run from its manifest.
   - **Proof:** DOC; BG-REPRO, BG-REPORT; independent end review; claims limited to measured strata.
+  - **Evidence:** Not yet executed.
+
+<a id="b08-t08-01"></a>
+
+- [ ] **B08-T08.01 — Re-pin Palladion and re-run the gates**
+  - **Files:** `palladion-benchmark/configs/comparators.yaml`, `palladion-benchmark/docs/development/EVIDENCE_LOG.md`.
+  - **Depends:** B07-T09.01, BADR-0043.
+  - **Change:** Move the Palladion pin from `eec4ba5` to `dd70c0e` (clock and recall fixes, key handling), rebuild the isolated runtime, and record what the new pin changes for R7a, R7b, E3 and E4.
+  - **Proof:** INTEGRATION; BG-ADAPTER, BG-REPRO; the benchmark suite and the Palladion integration tests pass at the new pin; the pin appears in every later run manifest.
+  - **Evidence:** Not yet executed.
+
+<a id="b08-t08-02"></a>
+
+- [ ] **B08-T08.02 — Track A comparison on the full S tier (no model, no quota)**
+  - **Files:** `palladion-benchmark/scripts/run_track_a.py`, `palladion-benchmark/scripts/score_track_a.py`, `palladion-benchmark/docs/development/EVIDENCE_LOG.md`.
+  - **Depends:** B08-T08.01, B04-T05.01, B06-T05.01.
+  - **Change:** Run R0 to R3, R7a and, if the pinned Palladion offers graph routes, R7b over all smoke and dev questions of the S tier under C1 and C2, one arm at a time; score with the paired statistics and the default pairing R7 against R3; withdrawn questions are listed.
+  - **Proof:** MEASUREMENT; BG-TRACKA, BG-FAIR; every pair is accounted for (run states beside scores); the validator passes; locked-test questions are not read.
+  - **Evidence:** Not yet executed.
+
+<a id="b08-t08-03"></a>
+
+- [ ] **B08-T08.03 — Track B comparison on a matched subset over several days**
+  - **Files:** `palladion-benchmark/scripts/run_track_b.py`, `palladion-benchmark/scripts/score_track_b.py`, `palladion-benchmark/docs/development/EVIDENCE_LOG.md`.
+  - **Depends:** B08-T08.02, B05-T06.01.
+  - **Change:** Fix one matched question list before the first spend, give every retriever (R0 to R3, R7a) the same generator, prompt and budget, and spend each day's quota (BADR-0043 item 5) on the next unanswered part of the list until it is done or the owner stops it; one model per run, the per-call model recorded.
+  - **Proof:** MEASUREMENT; BG-TRACKB; intention-to-treat and conditional tables side by side; per-day spend, daily-limit stops and invalid answers reported, none dropped.
+  - **Evidence:** Not yet executed.
+
+<a id="b08-t08-04"></a>
+
+- [ ] **B08-T08.04 — Track C comparison of E0, E1, E3 and E4 on a matched episode subset**
+  - **Files:** `palladion-benchmark/scripts/run_track_c.py`, `palladion-benchmark/benchmark/track_c.py`, `palladion-benchmark/docs/development/EVIDENCE_LOG.md`.
+  - **Depends:** B08-T08.01, B07-T09.01.
+  - **Change:** Run the same episode and mutation-case lists on E3 and E4 (each on a freshly prepared runtime, one arm per invocation) and on E0 and E1, spreading the quota over days; E2 stays NOT_RUN; report the memory, update, tool-use and mutation measures each run can feed, and the counting proxies' totals.
+  - **Proof:** MEASUREMENT; BG-TRACKC, BG-ADAPTER; counts come from the proxy books and the saved rows agree (`check_books`); NOT_OBSERVABLE is never shown as zero.
+  - **Evidence:** Not yet executed.
+
+<a id="b08-t08-05"></a>
+
+- [ ] **B08-T08.05 — Graph comparators R4 to R6 as quota allows**
+  - **Files:** `palladion-benchmark/scripts/run_graph_arms.py`, `palladion-benchmark/scripts/comparators.py`, `palladion-benchmark/docs/development/EVIDENCE_LOG.md`.
+  - **Depends:** B08-T08.02, B06-T06.01.
+  - **Change:** Resume the cold-state indexing of R4, R5 and R6 on the 60-document subset across days under the limits of BADR-0032 to BADR-0036 and run the matched query list once an index is complete; an index that does not complete is reported with the chunks done and the spend.
+  - **Proof:** MEASUREMENT; BG-ADAPTER, BG-TRACKA; the proxy stops at the daily limit; partial indexes are named; no system is scored on queries it did not answer without saying so.
+  - **Evidence:** Not yet executed.
+
+<a id="b08-t08-06"></a>
+
+- [ ] **B08-T08.06 — Descriptive comparison report with the cost axis**
+  - **Files:** `palladion-benchmark/benchmark/analysis/reports.py`, `palladion-benchmark/docs/development/EVIDENCE_LOG.md`, `palladion-benchmark/docs/development/PROGRESS.md`.
+  - **Depends:** B08-T08.02, B08-T08.03, B08-T08.04, B08-T08.05, B08-T06.01.
+  - **Change:** One report of Palladion beside the other systems per stratum: quality measures with intervals, calls, tokens and latency from the proxy books, run states, failures and fairness deviations, each system's coverage of the matched lists, and the limits in force; marked exploratory with the reasons (no seal, delegated labels, free tier).
+  - **Proof:** MEASUREMENT; BG-REPORT; every figure traces to a run directory; no composite winner; dominated systems are marked from data; unmeasured cells say NOT_RUN or NOT_OBSERVABLE.
   - **Evidence:** Not yet executed.
 
 ### Atomic tasks — B09

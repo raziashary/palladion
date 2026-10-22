@@ -37,7 +37,7 @@ Still open and tracked: OQ03 (read Palladion's interface at B04), OQ09 (license,
 | B05 | DONE | Built and audited, E-B05-001 to E-B05-005; the first live pass (16 calls) is descriptive only |
 | B06 | DONE | Built and audited, E-B06-001 to E-B06-005; the live graph pilot is partial (R6 63 of 103 chunks, no query answered; R4 and R5 not attempted; BR39) and no graph arm has a measured result |
 | B07 | DONE | E-B07-001 to E-B07-004; the live pilot is partial (E3 3 of 8 turns, E4 NOT_RUN, E0 and E1 not live; BR47) and no system arm has a measured ranking result |
-| B08 | PLANNED | Depends on B04–B07 exits |
+| B08 | RE-PLANNED | BADR-0043: a descriptive, exploratory comparison of Palladion with the other systems under the free tier (cards B08-T08.01 to T08.06: re-pin, Track A, Track B, Track C, graph arms, report); T01 to T05 are not run on this path |
 | B09 | DEFERRED | Conditional replication and stress |
 
 ## Gate state
@@ -68,4 +68,4 @@ B08-T07.01 on OQ09 (dataset license, owner deferred; must be answered before the
 
 ## Next action
 
-Palladion's limits are split into what we mitigate and what its contributor must fix in [PALLADION_FIXES](PALLADION_FIXES.md) (BADR-0027, E-B04-006). Next: B05 needs its own pre-phase adversary and scope authorization. The owner may relabel the packet with the [labelling guide](OWNER_LABELLING_GUIDE.md) at any time. B05 needs its own pre-phase adversary and scope. Open decisions that gate later work: OQ09, OQ10 and OQ12.
+BADR-0043 (2026-10-22): start with B08-T08.01 (re-pin Palladion to `dd70c0e`, re-run the gates), then B08-T08.02 (Track A on the full S tier: no model, no quota). Live days (Track B, Track C, graph arms) run under the BADR-0042 caps; the live-day order and the matched lists are fixed before the first spend. Open and unchanged: OQ09, OQ10, OQ13 (defaults accepted for the exploratory path).
