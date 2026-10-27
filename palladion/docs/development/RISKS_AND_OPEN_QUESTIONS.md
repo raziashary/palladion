@@ -172,6 +172,7 @@ End-review R4 identified invalid@5/10/20 labels on a final top4 packet. ADR0086 
 ## P11 retained limits (2026-10-28)
 
 - **Re-indexing hides a live revision.** Indexing a READY revision again points it at a new generation that is not READY until reconciled, and chunks with equal spans share a point ID, so the old generation cannot be served meanwhile. It fails closed (the revision is absent, never wrong). The proper fix is generation-scoped point IDs with a cleanup after the switch. Owner: P11 follow-up; destination: a card in the next phase that touches the index.
+- **The hot cache re-runs its loader on every read** (`memory/hotcache.py`), so a cache hit saves nothing; the resolver's per-read digest check is the cost it was meant to avoid. Candidate for P11-T05 (cache verified bytes per digest in a request).
 - **Blocking work in the message handler.** `api/routes.py` `message` is `async` and runs synchronous SQLite and file reads on the event loop; one slow request stalls others. Needs per-call connections before it can use threads. Owner: later phase.
 - **A single inconsistent Qdrant point fails the whole search** (`IndexConsistencyError`, by design fail closed). Revisit with the P11-T05 audit change.
 - **`Candidate.channel` is written and never read** but is part of the evaluation study's frozen candidate files; removed only with that artifact's next version.

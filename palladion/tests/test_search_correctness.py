@@ -42,7 +42,7 @@ def test_expired_near_duplicates_cannot_take_the_candidate_slots_from_the_curren
     result = corpus.search.search(corpus.uploader, "case-1", query, as_of=at("2026-10-18T00:00:00"), limit=5)
     assert corpus.revisions_of(result) == [current]
     assert set(corpus.index.generation_filters[-1]) == {corpus.generation_of(current)}
-    assert result.excluded == {"NOT_ELIGIBLE": 0, "INTEGRITY_CONFLICT": 0}
+    assert result.excluded == {"NOT_ELIGIBLE": 0, "INTEGRITY_CONFLICT": 0}, "the prefilter, not the resolver, removed them"
 
 
 def test_without_the_prefilter_the_same_corpus_loses_the_current_revision(corpus, monkeypatch):
@@ -62,9 +62,11 @@ def test_a_revision_revoked_after_indexing_is_never_offered_or_returned(corpus):
     revision = corpus.add("SOP", "Hold settlement until confirmation arrives.")
     assert corpus.revisions_of(corpus.search.search(corpus.uploader, "case-1", "hold settlement confirmation")) == [
         revision]
+    asked = len(corpus.index.generation_filters)
     corpus.registry.revoke_source(corpus.admin, revision)
     result = corpus.search.search(corpus.uploader, "case-1", "hold settlement confirmation")
-    assert result.passages == () and corpus.index.generation_filters[-1] == (), "the index was offered nothing"
+    assert result.passages == () and "NO_ELIGIBLE_SOURCES" in result.warnings
+    assert len(corpus.index.generation_filters) == asked, "with nothing that could apply the index is not asked"
 
 
 def test_a_search_with_only_ineligible_hits_says_so_instead_of_returning_a_clean_empty_ok(corpus):
@@ -271,14 +273,15 @@ def test_the_search_tool_offers_the_model_no_time_argument():
 def test_the_ledger_derives_instants_from_the_case_and_fresh_verified_transaction_times(corpus):
     from evidence_agent.retrieval.evidence import RequestLedger
     ledger = RequestLedger(corpus.search, corpus.reader, "case-1", "trace-1")
-    opened = ledger.applicability_instants()
+    opened = ledger.applicability().also
     assert len(opened) == 1 and opened[0].tzinfo is not None, "the case opening is always a trusted instant"
+    assert ledger.applicability().primary == NOW, "the evaluation instant is the registry's injected clock"
     fresh = {"kind": "LIVE_OBSERVATION", "operation": "get_transaction_status", "valid": True,
              "data": {"transaction_occurred_at": "2025-06-01T00:00:00+00:00"}}
     stale = {**fresh, "valid": False, "data": {"transaction_occurred_at": "2024-01-01T00:00:00+00:00"}}
     other = {**fresh, "operation": "get_settlement_status", "data": {"transaction_occurred_at": "2023-01-01T00:00:00+00:00"}}
     ledger.records.update(live_a=fresh, live_b=stale, live_c=other)
-    instants = ledger.applicability_instants()
+    instants = ledger.applicability().also
     assert at("2025-06-01T00:00:00") in instants
     assert at("2024-01-01T00:00:00") not in instants and at("2023-01-01T00:00:00") not in instants
 
@@ -305,7 +308,7 @@ def test_a_cited_older_version_stays_readable_by_the_ledger_at_the_same_instants
 def test_the_search_tool_asks_for_enough_ranked_passages_and_tells_the_model_its_defaults():
     from evidence_agent.agent.tools import DEFAULT_SEARCH_LIMIT, KnowledgeArgs, definitions
     args = KnowledgeArgs(query="reversal window")
-    assert (args.limit, args.search_mode) == (DEFAULT_SEARCH_LIMIT, "reranked") and DEFAULT_SEARCH_LIMIT >= 6
+    assert (args.limit, args.search_mode) == (DEFAULT_SEARCH_LIMIT, "reranked") and DEFAULT_SEARCH_LIMIT == 8
     schema = next(d for d in definitions() if d["function"]["name"] == "search_knowledge")["function"]["parameters"]
     assert schema["properties"]["limit"]["default"] == DEFAULT_SEARCH_LIMIT
     assert schema["properties"]["search_mode"]["default"] == "reranked"

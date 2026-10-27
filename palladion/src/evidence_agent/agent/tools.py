@@ -20,7 +20,7 @@ from evidence_agent.live.gateway import LiveGateway
 from evidence_agent.memory.store import CaseStore
 from evidence_agent.policy.engine import PolicyEngine
 from evidence_agent.policy.registry import PolicyRegistry
-from evidence_agent.retrieval.evidence import RequestLedger, model_view
+from evidence_agent.retrieval.evidence import LedgerBound, RequestLedger, model_view
 
 if TYPE_CHECKING:
     from evidence_agent.agent.evaluator_log import EvaluatorLog
@@ -96,13 +96,20 @@ class Tools:
             principal, case = self.ledger.principal, self.ledger.case_id
             data: Any
             recall_incomplete = False
+            omitted_passages = 0
             if isinstance(args, KnowledgeArgs):
+                applicability = self.ledger.applicability()  # validated here, so a bound error is not "worker down"
                 async with self.search_slots:
                     result = await search(self.ledger.search, principal.principal_id, case,
                                           args.query, args.search_mode, args.limit,
                                           require_graph=args.require_graph or self.graph_required,
-                                          also_at=self.ledger.applicability_instants())
-                data = [self.ledger.add(p.citation_id) for p in result.passages]
+                                          applicability=applicability)
+                data = []
+                for passage in result.passages:
+                    try:
+                        data.append(self.ledger.add(passage.citation_id))
+                    except LedgerBound:
+                        omitted_passages += 1  # the ledger is full: the model is told, the call does not fail
                 if any(w in {"INDEX_UNAVAILABLE", "RERANK_UNAVAILABLE", "GRAPH_REQUIRED_UNAVAILABLE"} for w in result.warnings):
                     self.ledger.failures.append("KNOWLEDGE_UNAVAILABLE")
                 self.ledger.tool_status[name] = result.status
@@ -150,6 +157,7 @@ class Tools:
             if isinstance(args, KnowledgeArgs):
                 result_payload["graph_navigation"] = [p.model_dump(mode="json") for p in result.graph_paths]
                 result_payload["retrieval_warnings"] = list(result.warnings)
+                result_payload["omitted_passages"] = omitted_passages
             self.store.append("TOOL_RESULT", correlation, {"tool": name, "status": "SUCCEEDED",
                 "evidence_ids": list(self.ledger.records),
                 "retrieval_trace_id": result.trace_id if isinstance(args, KnowledgeArgs) else None,

@@ -482,3 +482,28 @@ def test_warm_cache_rechecks_canonical_state_after_lookup(tmp_path, monkeypatch,
             coverage.source_coverage(registry,uploader,"case-1",index,reuse_physical_audit=True)
     finally:
         database.close()
+
+
+def test_the_approve_response_reports_the_aliases_it_registered(handoff):
+    client = handoff.client
+    body = {"case_id": "case-42", "family_id": "ALIAS-SOP", "filename": "ALIAS-SOP.md", "mime_type": "text/markdown",
+            "content": "# ALIAS-SOP\n\nCites MS-1954 and ERR-77.", "owner_id": "uploader-a"}
+    revision = client.post("/sources", headers={"Authorization": "Bearer uploader"}, json=body).json()["revision_id"]
+    approved = client.post(f"/sources/{revision}/approve", headers={"Authorization": "Bearer admin"})
+    assert approved.status_code == 200, approved.text
+    aliases = approved.json()["aliases"]
+    assert aliases["registered"] >= 4 and aliases["truncated"] is False, "family, revision and the two codes"
+
+
+def test_reading_a_citation_back_takes_seven_extra_instants_and_not_eight(handoff):
+    revision = upload_approved(handoff, valid_from="2020-01-01T00:00:00Z")
+    headers = {"Authorization": "Bearer reader"}
+    passage = handoff.client.post("/search", headers=headers,
+                                  json={"case_id": "case-42", "query": "HANDOFF-SOP"}).json()["passages"][0]
+    assert passage["revision_id"] == revision
+    route = "/evidence/" + passage["citation_id"]
+    seven = [f"2025-01-0{day}T00:00:00Z" for day in range(1, 8)]
+    assert handoff.client.get(route, headers=headers,
+                              params={"case_id": "case-42", "applicability_instants": seven}).status_code == 200
+    assert handoff.client.get(route, headers=headers, params={
+        "case_id": "case-42", "applicability_instants": [*seven, "2025-01-08T00:00:00Z"]}).status_code == 422

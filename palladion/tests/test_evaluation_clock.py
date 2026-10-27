@@ -151,6 +151,7 @@ def test_two_requests_at_different_real_times_see_the_same_instant(p03):
 def test_the_search_subprocess_is_told_the_registry_instant(p03, monkeypatch):
     from evidence_agent.agent.search_worker import worker_payload
     from evidence_agent.retrieval.hybrid import HybridSearch
+    from evidence_agent.storage.applicability import Applicability
     from evidence_agent.storage.catalog import Catalog
     from evidence_agent.storage.qdrant import QdrantIndex
 
@@ -158,10 +159,9 @@ def test_the_search_subprocess_is_told_the_registry_instant(p03, monkeypatch):
     try:
         owner = HybridSearch(Catalog(p03.registry), index)
         freeze(monkeypatch, p03)
-        payload = worker_payload(owner, "reader-a", "case-42", "query", "hybrid", 3, False)
-        assert datetime.fromisoformat(payload["as_of"]) == FROZEN
-        monkeypatch.undo()
-        wall = datetime.fromisoformat(worker_payload(owner, "reader-a", "case-42", "query", "hybrid", 3, False)["as_of"])
-        assert abs((wall - datetime.now(timezone.utc)).total_seconds()) < 5
+        earlier = FROZEN - timedelta(days=30)
+        payload = worker_payload(owner, "reader-a", "case-42", "query", "hybrid", 3, False,
+                                 Applicability.at(FROZEN, [earlier]))
+        assert datetime.fromisoformat(payload["as_of"]) == FROZEN and payload["also_at"] == [earlier.isoformat()]
     finally:
         index.close()

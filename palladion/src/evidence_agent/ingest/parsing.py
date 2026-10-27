@@ -53,7 +53,7 @@ def parser_version(filename: str) -> str:
     """Preserve legacy text identities; new opaque formats have their own parser identity."""
     source_mime(filename)
     suffix = PurePosixPath(filename.replace("\\", "/")).suffix.lower()
-    return PARSER_VERSION if suffix in {".md", ".markdown", ".txt"} else "utf8-verbatim-v1"
+    return PARSER_VERSION if suffix in {".md", ".markdown", ".txt"} else "utf8-verbatim-v2"
 
 
 def validate_source(content: bytes, filename: str, content_type: str) -> str:

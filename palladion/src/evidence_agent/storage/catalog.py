@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import sqlite3
-from collections.abc import Mapping, Sequence
+from collections.abc import Collection, Mapping, Sequence
 from dataclasses import dataclass
 
 from evidence_agent.core.errors import PermissionDenied, ResourceConflict, ValidationFailure
@@ -472,12 +472,14 @@ class Catalog:
                  for key, alias, chunk_id in normalized],
             )
 
-    def alias_hits(self, principal: Principal, case_id: str, alias: str, *,
-                   limit: int | None = None) -> tuple[AliasHit, ...]:
+    def alias_hits(self, principal: Principal, case_id: str, alias: str, *, limit: int | None = None,
+                   generations: Collection[str] | None = None) -> tuple[AliasHit, ...]:
         """Resolve only exact normalized aliases within the caller's case scope, defining chunks first.
 
         Order is stable and meaningful: chunks of a revision the alias names (its family or revision ID) before chunks
         that merely mention it, then revision, then position in the document. The alias row records which it is.
+        Given `generations` (the prefilter's answer), a hit whose revision is served from another generation is
+        left out before `limit` counts, so a superseded version cannot crowd out the one that applies.
         """
         self.registry.access.authorize(
             principal,
@@ -488,20 +490,22 @@ class Catalog:
         if limit is not None and not 1 <= limit <= 101:
             raise ValidationFailure
         rows = self.database.connection.execute(
-            "SELECT aliases.chunk_id, aliases.revision_id, aliases.defining "
+            "SELECT aliases.chunk_id, aliases.revision_id, aliases.defining, revisions.index_generation "
             "FROM exact_aliases AS aliases "
             "JOIN document_revisions AS revisions "
             "ON revisions.tenant_id = aliases.tenant_id AND revisions.revision_id = aliases.revision_id "
             "JOIN p02_chunks AS chunks ON chunks.tenant_id = aliases.tenant_id AND chunks.chunk_id = aliases.chunk_id "
             "WHERE aliases.tenant_id = ? AND aliases.case_id = ? AND aliases.normalized_alias = ? "
             "AND revisions.approval_status = 'APPROVED' AND revisions.index_state = 'READY' "
-            "AND (json_array_length(json_extract(revisions.acl_json,'$.allowed_principal_ids'))=0 "
+            "AND (COALESCE(json_array_length(json_extract(revisions.acl_json,'$.allowed_principal_ids')), 0)=0 "
             "OR EXISTS(SELECT 1 FROM json_each(revisions.acl_json,'$.allowed_principal_ids') WHERE value=?)) "
             "ORDER BY aliases.defining DESC, aliases.revision_id, chunks.start_byte, aliases.chunk_id LIMIT ?",
             (principal.tenant_id, case_id, _normalize_alias(alias), principal.principal_id, MAX_ALIAS_ROWS),
         ).fetchall()
         result: list[AliasHit] = []
         for row in rows:
+            if generations is not None and row["index_generation"] not in generations:
+                continue
             hit = AliasHit(row["chunk_id"], row["revision_id"], bool(row["defining"]))
             if limit is not None and len(result) >= limit:
                 break
@@ -512,13 +516,14 @@ class Catalog:
             result.append(hit)
         return tuple(result)
 
-    def effective_supersessions(self, tenant_id: str, case_id: str,
+    def effective_supersessions(self, tenant_id: str, case_id: str, fingerprint: str,
                                 revision_id: str | None = None) -> dict[str, list[str]]:
         """When each predecessor in the case stops applying, by predecessor revision.
 
-        An edge counts once its successor can be served: while the successor is approved but still indexing (or its
-        indexing failed) the predecessor keeps answering, and a revoked successor still retires it (ADR-0108). One
-        revision's edges when `revision_id` is given.
+        An edge counts once its successor can be served under the serving representation `fingerprint`: while the
+        successor is approved but still indexing, failed, or indexed under another representation, the predecessor
+        keeps answering, and a revoked successor still retires it (ADR-0108). One revision's edges when
+        `revision_id` is given.
         """
         effective: dict[str, list[str]] = {}
         for edge in self.database.connection.execute(
@@ -530,8 +535,12 @@ class Catalog:
             "AND successor.revision_id = edges.successor_revision_id "
             "WHERE edges.tenant_id = ? AND predecessors.case_id = ? "
             "AND (? IS NULL OR edges.predecessor_revision_id = ?) "
-            "AND NOT (successor.approval_status = 'APPROVED' AND successor.index_state <> 'READY')",
-            (tenant_id, case_id, revision_id, revision_id)):
+            "AND NOT (successor.approval_status = 'APPROVED' AND NOT (successor.index_state = 'READY' AND EXISTS("
+            "SELECT 1 FROM index_generations AS generations WHERE generations.tenant_id = successor.tenant_id "
+            "AND generations.revision_id = successor.revision_id "
+            "AND generations.generation = successor.index_generation AND generations.state = 'READY' "
+            "AND generations.fingerprint = ?)))",
+            (tenant_id, case_id, revision_id, revision_id, fingerprint)):
             if json.loads(edge[1]).get("case_id") == case_id:
                 effective.setdefault(edge[0], []).append(edge[2])
         return effective
@@ -561,7 +570,7 @@ class Catalog:
         ).fetchall()
         if len(rows) > MAX_ELIGIBLE_REVISIONS:
             return None
-        superseded = self.effective_supersessions(principal.tenant_id, case_id)
+        superseded = self.effective_supersessions(principal.tenant_id, case_id, fingerprint)
         return tuple(
             row["index_generation"] for row in rows
             if acl_allows(row["acl_json"], principal.principal_id)

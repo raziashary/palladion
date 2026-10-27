@@ -158,7 +158,7 @@ For a seeded case, the search JSON body is:
 Search modes are `lexical`, `dense`, `hybrid` and `reranked`. Start the API with
 `scripts/serve.py --rerank` to enable its optional local cross-encoder. Discovery and
 reranking have explicit candidate budgets; HTTP defaults to12 passages and allows up to40;
-the model's search tool asks for 8 reranked passages unless it names another limit (at most12). Reranked
+the model's search tool asks for 8 reranked passages unless it names another limit (at most12); when the request ledger (12 documents) cannot take them all, the tool result says how many were left out (`omitted_passages`). Reranked
 mode returns the ranked passages first and uses at most a quarter of the limit for context: exception-linked
 chunks and same-section neighbours. Expected
 reranker failures produce a degraded result with warnings. Index coverage, external

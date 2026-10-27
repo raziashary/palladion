@@ -5,13 +5,13 @@ import asyncio
 import json
 import os
 import sys
-from collections.abc import Sequence
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 from evidence_agent.core.errors import DependencyUnavailable
 from evidence_agent.retrieval.hybrid import HybridSearch, SearchResult
+from evidence_agent.storage.applicability import Applicability
 
 _ENVIRONMENT = {"SYSTEMROOT", "WINDIR", "TEMP", "TMP", "PATH", "PATHEXT", "USERPROFILE",
                 "LOCALAPPDATA", "APPDATA", "HOMEDRIVE", "HOMEPATH", "PROCESSOR_ARCHITECTURE",
@@ -69,7 +69,7 @@ async def _run(command: tuple[str, ...], payload: bytes) -> bytes:
 
 
 def worker_payload(owner: HybridSearch, principal_id: str, case_id: str, query: str, mode: str, limit: int,
-                   require_graph: bool, also_at: Sequence[datetime] = ()) -> dict[str, Any]:
+                   require_graph: bool, applicability: Applicability) -> dict[str, Any]:
     """What the search subprocess is told, including the instant the registry's clock gives (ADR-0101)."""
     from evidence_agent.retrieval.rerank import FastEmbedReranker
     from evidence_agent.storage.qdrant import QdrantIndex
@@ -85,14 +85,14 @@ def worker_payload(owner: HybridSearch, principal_id: str, case_id: str, query: 
         "reranker": ranker.worker_configuration if ranker else {"enabled": False},
         "graph": {"backend":owner.graph.backend.worker_configuration,
             "limits":owner.graph.limits.model_dump(mode="json")} if owner.graph else None,
-        "require_graph":require_graph, "as_of": owner.registry.clock().isoformat(),
-        "also_at": [instant.isoformat() for instant in also_at]}
+        "require_graph":require_graph, "as_of": applicability.primary.isoformat(),
+        "also_at": [instant.isoformat() for instant in applicability.also]}
 
 
 async def search(owner: HybridSearch, principal_id: str, case_id: str,
-                 query: str, mode: str, limit: int, *, require_graph: bool = False,
-                 also_at: Sequence[datetime] = ()) -> SearchResult:
-    payload = worker_payload(owner, principal_id, case_id, query, mode, limit, require_graph, also_at)
+                 query: str, mode: str, limit: int, applicability: Applicability, *,
+                 require_graph: bool = False) -> SearchResult:
+    payload = worker_payload(owner, principal_id, case_id, query, mode, limit, require_graph, applicability)
     try:
         result = await _run((sys.executable, "-X", "utf8", "-m",
             "evidence_agent.agent.search_worker"), json.dumps(payload).encode())

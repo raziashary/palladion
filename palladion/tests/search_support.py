@@ -7,7 +7,7 @@ from pathlib import Path
 
 from evidence_agent.core.retrieval import Candidate
 from evidence_agent.ingest.pipeline import IngestPipeline
-from evidence_agent.retrieval.hybrid import HybridSearch
+from evidence_agent.retrieval.hybrid import HybridSearch, Ranker
 from evidence_agent.retrieval.rerank import FastEmbedReranker
 from evidence_agent.storage.exact import ExactIndex
 
@@ -61,7 +61,7 @@ class LeakyIndex(RankedIndex):
 
 
 class Corpus:
-    def __init__(self, tmp_path: Path, index: RankedIndex | None = None) -> None:
+    def __init__(self, tmp_path: Path, index: RankedIndex | None = None, ranker: Ranker | None = None) -> None:
         self.database, self.registry, self.catalog, self.uploader, first, _ = _setup(tmp_path)
         self.registry.clock = lambda: NOW  # the registry's injected evaluation clock (ADR-0101), not the wall clock
         self.admin = self.registry.access.authenticate("approver")
@@ -73,7 +73,7 @@ class Corpus:
         self.admin = self.registry.bootstrap_membership(self.admin, "case-2")
         self.index = index or RankedIndex()
         self.pipeline = IngestPipeline(self.catalog, self.index)
-        self.search = HybridSearch(self.catalog, self.index, FastEmbedReranker(enabled=False))
+        self.search = HybridSearch(self.catalog, self.index, ranker or FastEmbedReranker(enabled=False))
         self.first = first
 
     def add(self, family: str, text: str, *, valid_from: str | None = None, valid_to: str | None = None,

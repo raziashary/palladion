@@ -11,6 +11,7 @@ from evidence_agent.core.models import Principal
 from evidence_agent.storage.registry import Registry
 from evidence_agent.storage.sqlite import utc_now
 
+MAX_AUDITED_GENERATIONS = 40  # a search returns at most 40 passages, so at most 40 generations
 _FIELDS = {"mode", "generation", "generations", "fingerprint", "candidate_count", "returned_count", "elapsed_ms",
            "excluded_count", "failure", "stage_counts", "index_coverage"}
 
@@ -30,7 +31,7 @@ class AuditLog:
                 raise ValueError("Unknown failure label")
             if key == "generation" and (not isinstance(value, str) or len(value) > 100):
                 raise ValueError("Invalid generation")
-            if key == "generations" and (not isinstance(value, tuple) or len(value) > 12 or
+            if key == "generations" and (not isinstance(value, tuple) or len(value) > MAX_AUDITED_GENERATIONS or
                     any(not isinstance(item, str) or not re.fullmatch(r"gen_[0-9a-f]{64}", item)
                         for item in value)):
                 raise ValueError("Invalid generations")

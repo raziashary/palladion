@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Collection
 from dataclasses import dataclass
 
 from evidence_agent.core.models import Principal
@@ -37,7 +38,8 @@ class ExactIndex:
     def __init__(self, catalog: Catalog) -> None:
         self.catalog = catalog
 
-    def _collect(self, principal: Principal, case_id: str, query: str) -> tuple[dict[str, list[AliasHit]], bool]:
+    def _collect(self, principal: Principal, case_id: str, query: str,
+                 generations: Collection[str] | None = None) -> tuple[dict[str, list[AliasHit]], bool]:
         """Alias hits per identifier in lookup order; at most MAX_EXACT_CANDIDATES distinct chunks in all."""
         identifiers = dict.fromkeys((query.strip(), *_CODE.findall(query)))
         found: dict[str, list[AliasHit]] = {}
@@ -49,7 +51,8 @@ class ExactIndex:
                 break
             if not identifier or len(identifier) > MAX_ALIAS_LENGTH:
                 continue
-            hits = self.catalog.alias_hits(principal, case_id, identifier, limit=MAX_EXACT_CANDIDATES + 1)
+            hits = self.catalog.alias_hits(principal, case_id, identifier, limit=MAX_EXACT_CANDIDATES + 1,
+                                           generations=generations)
             truncated |= len(hits) > MAX_EXACT_CANDIDATES
             found[identifier] = []
             for hit in hits:
@@ -65,9 +68,14 @@ class ExactIndex:
         found, _ = self._collect(principal, case_id, query)
         return tuple(dict.fromkeys(hit.chunk_id for hits in found.values() for hit in hits))
 
-    def hits(self, principal: Principal, case_id: str, query: str) -> ExactHits:
-        """Exact-lane chunks split into those that lead the ranking and those that trail the semantic hits."""
-        found, truncated = self._collect(principal, case_id, query)
+    def hits(self, principal: Principal, case_id: str, query: str,
+             generations: Collection[str] | None = None) -> ExactHits:
+        """Exact-lane chunks split into those that lead the ranking and those that trail the semantic hits.
+
+        `generations` is the eligibility prefilter's answer (None: no restriction), so the lane offers only what the
+        index may offer and its candidate bound is spent on revisions that can apply.
+        """
+        found, truncated = self._collect(principal, case_id, query, generations)
         leading: dict[str, None] = {}
         trailing: dict[str, None] = {}
         for hits in found.values():

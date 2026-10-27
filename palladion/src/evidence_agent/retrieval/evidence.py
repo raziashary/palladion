@@ -58,6 +58,11 @@ class EvidenceResolver:
                 raise PermissionDenied
             if generation is not None and row["index_generation"] != generation:
                 raise PermissionDenied
+            if connection.execute("SELECT 1 FROM index_generation_chunks WHERE tenant_id=? AND revision_id=? "
+                                  "AND generation=? AND chunk_id=?",
+                                  (chunk.tenant_id, chunk.revision_id, row["index_generation"],
+                                   chunk.chunk_id)).fetchone() is None:
+                raise PermissionDenied  # a chunk of an earlier chunking is not part of what is served now
             approval = connection.execute("SELECT status FROM approval_records WHERE "
                                           "approval_record_id=? AND tenant_id=? AND revision_id=?",
                                           (row["approval_record_id"], chunk.tenant_id,
@@ -66,7 +71,8 @@ class EvidenceResolver:
                 raise PermissionDenied
             if not acl_allows(row["acl_json"], principal.principal_id):
                 raise PermissionDenied
-            supersessions = self.catalog.effective_supersessions(chunk.tenant_id, case_id, chunk.revision_id)
+            supersessions = self.catalog.effective_supersessions(chunk.tenant_id, case_id, self.fingerprint,
+                                                                 chunk.revision_id)
             if not applicability.admits(row["valid_from"], row["valid_to"], supersessions.get(chunk.revision_id, [])):
                 raise PermissionDenied
             try:
@@ -93,6 +99,10 @@ class EvidenceResolver:
         return self.catalog.get_chunk(principal, passage.citation_id)
 
 
+class LedgerBound(ValueError):
+    """The request ledger already holds as much evidence as one request may carry."""
+
+
 class RequestLedger:
     """Current-request handles; every release re-reads the original domain authority."""
 
@@ -111,12 +121,13 @@ class RequestLedger:
         self.failures: list[str] = []
         self.tool_status: dict[str, str] = {}
 
-    def applicability_instants(self) -> tuple[datetime, ...]:
-        """Trusted case instants besides the clock (ADR-0102): when the case opened, its named domain events and
-        the verified transaction times of fresh live observations already in this request.
+    def applicability(self) -> Applicability:
+        """The clock plus the case's trusted instants (ADR-0102): when it opened, its named domain events and the
+        verified transaction times of fresh live observations already in this request.
 
-        The backend derives them; the model never supplies one. The temporal resolver, not search, still decides
-        which version governs.
+        The backend derives them; the model chooses neither a value nor a field. More instants than the bound
+        fail visibly (ValueError) instead of dropping one that might govern. The temporal resolver, not search,
+        still decides which version governs.
         """
         from evidence_agent.live.gateway import read_scope
         registry = self.search.registry
@@ -133,14 +144,13 @@ class RequestLedger:
                 occurred = (data.get("data") or {}).get("transaction_occurred_at")
                 if isinstance(occurred, str):
                     found.append(datetime.fromisoformat(occurred))
-        return tuple(sorted(set(found)))
+        return Applicability.at(registry.clock(), sorted(set(found)))
 
     def read(self, identifier: str) -> dict[str, Any]:
         def load() -> dict[str, Any]:
             return read_runtime_evidence(self.search, self.principal, self.case_id, identifier,
                 freshness_seconds=self.freshness_seconds,
-                applicability=Applicability.at(self.search.registry.clock(), self.applicability_instants())
-                if identifier.startswith("chunk_") else None)
+                applicability=self.applicability() if identifier.startswith("chunk_") else None)
         if self.hotcache is not None and identifier.startswith("chunk_"):
             from evidence_agent.memory.store import CaseStore
             epoch = CaseStore(self.search.registry, self.principal, self.case_id).memory().epoch()
@@ -149,11 +159,11 @@ class RequestLedger:
 
     def add(self, identifier: str) -> dict[str, Any]:
         if identifier not in self.records and len(self.records) >= 32:
-            raise ValueError("Ledger bound exceeded")
+            raise LedgerBound("Ledger bound exceeded")
         data = self.read(identifier)
         if (data["kind"] == "DOCUMENT" and identifier not in self.records and
                 sum(d["kind"] == "DOCUMENT" for d in self.records.values()) >= 12):
-            raise ValueError("Source passage bound exceeded")
+            raise LedgerBound("Source passage bound exceeded")
         from evidence_agent.core.models import (
             AccessScope,
             EvidenceAuthority,

@@ -23,6 +23,8 @@ from evidence_agent.telemetry.audit import AuditLog
 
 CONTEXT_SHARE = 4  # at most one slot in four of the limit may hold context rather than a ranked passage (ADR-0104)
 CONTEXT_REFERENCES = 4  # linked and adjacent references considered for each ranked passage
+CANDIDATE_POOL = 40  # candidates asked of the index before the canonical checks and the rerank
+FROZEN_CANDIDATE_LIMIT = 100  # an evaluator's frozen candidate list may not exceed this
 
 
 @dataclass
@@ -117,8 +119,9 @@ class HybridSearch:
         watch = _Stopwatch()
         warnings: list[str] = []
         candidates: list[tuple[str, str | None]] = []
+        eligible: tuple[str, ...] | None = None  # None: no prefilter, from a frozen list or a bounded case
         try:
-            if evaluator_candidates is not None and len(evaluator_candidates)>100:
+            if evaluator_candidates is not None and len(evaluator_candidates) > FROZEN_CANDIDATE_LIMIT:
                 raise ValueError("Frozen evaluator candidate bound exceeded")
             if evaluator_candidates is not None:
                 discovered: Sequence[Candidate] = evaluator_candidates
@@ -131,15 +134,17 @@ class HybridSearch:
                 if eligible is None:
                     warnings.append("ELIGIBILITY_PREFILTER_BOUNDED")
                 elif not eligible:
-                    warnings.append("NO_ELIGIBLE_SOURCES")  # the index is not asked; nothing could apply
+                    warnings.append("NO_ELIGIBLE_SOURCES")  # nothing could apply, so the index is not asked
                 with watch.stage("index"):
-                    discovered = self.index.query(query, principal, case_id,
-                        "hybrid" if mode == "reranked" else mode, limit=40, generations=eligible)
+                    discovered = () if eligible == () else self.index.query(
+                        query, principal, case_id, "hybrid" if mode == "reranked" else mode,
+                        limit=CANDIDATE_POOL, generations=eligible)
             candidates.extend((hit.chunk_id, hit.generation) for hit in discovered)
         except DependencyUnavailable:
             warnings.append("INDEX_UNAVAILABLE")
+            eligible = None
         with watch.stage("exact"):
-            exact = self.exact.hits(principal, case_id, query)
+            exact = self.exact.hits(principal, case_id, query, eligible)
         if exact.truncated:
             warnings.append("EXACT_CANDIDATES_TRUNCATED")
         # An unknown structured code is labelled, never silently replaced by a near identifier (ADR-0105).
@@ -152,11 +157,14 @@ class HybridSearch:
         resolved: dict[str, Passage] = {}
         exclusions = _Exclusions()
         with watch.stage("resolve"):
+            tried: set[tuple[str, str | None]] = set()  # an offer made twice is judged, and counted, once
             for chunk_id, generation in candidates:
-                if chunk_id not in resolved:
-                    passage = self._release(principal, case_id, chunk_id, applicability, exclusions, generation)
-                    if passage is not None:
-                        resolved[chunk_id] = passage
+                if chunk_id in resolved or (chunk_id, generation) in tried:
+                    continue
+                tried.add((chunk_id, generation))
+                passage = self._release(principal, case_id, chunk_id, applicability, exclusions, generation)
+                if passage is not None:
+                    resolved[chunk_id] = passage
         ordered = list(resolved.values())
         resolved_count = len(ordered)
         if mode == "reranked":
@@ -177,7 +185,9 @@ class HybridSearch:
         graph_paths: tuple[GraphPath,...] = ()
         if self.graph is not None:
             try:
-                expansion=self.graph.expand(self.resolver,principal,case_id,tuple(selected),applicability=applicability)
+                with watch.stage("graph"):
+                    expansion = self.graph.expand(self.resolver, principal, case_id, tuple(selected),
+                                                  applicability=applicability)
                 # Preserve the primary anchor; source-linked neighbors get the next slots.
                 # This explicit treatment ordering is measured against unchanged B2.
                 combined=selected[:1]+list(expansion.passages)+selected[1:]
@@ -204,7 +214,8 @@ class HybridSearch:
             kept: list[Passage] = []
             used = 0
             for passage in selected:
-                count = tokenizer.count("\n\n".join(p.text for p in (*kept, passage)))
+                with watch.stage("budget"):
+                    count = tokenizer.count("\n\n".join(p.text for p in (*kept, passage)))
                 if count > token_budget:
                     break  # Ranked prefix only; never rewrite canonical text/spans.
                 kept.append(passage)
@@ -275,19 +286,27 @@ class HybridSearch:
         for passage in primaries:
             if len(context) >= reserve:
                 break
-            chunk = self.resolver.chunk(principal, passage)
-            linked = self.catalog.context_links(principal, chunk.chunk_id)
+            try:
+                chunk = self.resolver.chunk(principal, passage)
+                linked = self.catalog.context_links(principal, chunk.chunk_id)
+            except PermissionDenied as error:  # revoked since it was ranked
+                exclusions.record(error)
+                continue
             for neighbor in (*linked, *chunk.neighbor_ids)[:CONTEXT_REFERENCES]:
                 if len(context) >= reserve:
                     break
                 if neighbor in taken:
                     continue
-                item = self._release(principal, case_id, neighbor, applicability, exclusions)
-                if item is None:
+                try:
+                    section_id = self.catalog.get_chunk(principal, neighbor).section_id
+                except PermissionDenied as error:
+                    exclusions.record(error)
                     continue
-                if neighbor not in linked and item.section_id != passage.section_id:
+                if neighbor not in linked and section_id != passage.section_id:
                     continue  # position alone does not make another section relevant
-                taken.add(item.citation_id)
-                context.append(item)
+                item = self._release(principal, case_id, neighbor, applicability, exclusions)
+                if item is not None:
+                    taken.add(item.citation_id)
+                    context.append(item)
         refill = [p for p in ordered[len(primaries):] if p.citation_id not in taken][:reserve - len(context)]
         return primaries + refill + context

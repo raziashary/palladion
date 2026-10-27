@@ -44,7 +44,7 @@ def test_verbatim_formats_actual_upload_approve_citation(api, p03, filename, mim
     revision = response.json()["revision_id"]
     assert client.post(f"/sources/{revision}/approve", headers={"Authorization": "Bearer admin-test"}).status_code == 200
     chunks = Catalog(p03.registry).chunks_for_revision(p03.reader, revision)
-    assert Catalog(p03.registry).eligible_generation_metadata(p03.reader, revision)["parser_version"] == "utf8-verbatim-v1"
+    assert Catalog(p03.registry).eligible_generation_metadata(p03.reader, revision)["parser_version"] == "utf8-verbatim-v2"
     for chunk in chunks:
         result = client.get(f"/evidence/{chunk.chunk_id}", params={"case_id": "case-42"},
                             headers={"Authorization": "Bearer reader-test"})

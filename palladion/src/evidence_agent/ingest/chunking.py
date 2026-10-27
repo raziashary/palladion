@@ -47,7 +47,8 @@ def chunk_blocks(
 
     Exception clauses stay with the preceding rule when their exact source span
     fits the target. A heading or an untitled preamble (a banner above the first heading) joins the block that
-    follows it, and the chunk takes that block's section; a heading with nothing after it is kept as its own chunk. Oversized blocks are split at Unicode
+    follows it when the two fit together in one chunk, and the chunk takes that block's section; otherwise, or when
+    nothing follows, it is kept as its own chunk. Oversized blocks are split at Unicode
     character boundaries, preferring a line break, then a sentence end, then a space.
     """
     if not blocks or max_chars < 1:
@@ -166,12 +167,13 @@ def _bounded_blocks(block: ParsedBlock, max_chars: int) -> tuple[ParsedBlock, ..
     pieces: list[ParsedBlock] = []
     char_start = 0
     byte_start = block.start_byte
+    lines_before = 0  # newlines in the text before this piece, counted as pieces are cut
     while char_start < len(block.text):
         char_end = _cut(block.text, char_start, max_chars)
         text = block.text[char_start:char_end]
         byte_end = byte_start + len(text.encode("utf-8"))
-        prefix = block.text[:char_start]
-        piece_line_start = block.line_start + prefix.count("\n")
+        piece_line_start = block.line_start + lines_before
+        lines_before += text.count("\n")
         piece_line_end = piece_line_start + text.count("\n") - int(text.endswith("\n"))
         pieces.append(
             ParsedBlock(

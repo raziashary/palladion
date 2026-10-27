@@ -1,12 +1,14 @@
 """P11-T01 negative controls: what the search must refuse, and the bounds it must keep (ADR-0102 to ADR-0108)."""
 from __future__ import annotations
 
+import asyncio
 from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
 
-from evidence_agent.core.errors import ResourceConflict
+from evidence_agent.core.errors import PermissionDenied, ResourceConflict
+from evidence_agent.core.retrieval import Candidate
 from evidence_agent.ingest.pipeline import IngestPipeline
 from evidence_agent.retrieval.evidence import RequestLedger
 from evidence_agent.retrieval.hybrid import HybridSearch
@@ -158,7 +160,7 @@ def test_the_case_opening_and_its_named_domain_events_are_trusted_instants(p03) 
     ledger = RequestLedger(HybridSearch(Catalog(p03.registry), MemoryIndex()), p03.reader, "case-42", "trace-scope")
     event = read_scope(p03.registry, p03.reader, "case-42").domain_events["dispute_submitted"]
     opened = p03.registry.case_opened_at(p03.reader, "case-42")
-    assert set(ledger.applicability_instants()) == {opened, event}
+    assert set(ledger.applicability().also) == {opened, event}
 
 
 # ------------------------------------------------ ADR-0108: a successor that never became servable retires nobody
@@ -218,3 +220,174 @@ def test_a_search_reports_the_time_of_each_stage_it_ran(corpus) -> None:
     assert all(ms >= 0 for ms in result.stage_ms.values()) and sum(result.stage_ms.values()) <= result.elapsed_ms + 1
     hybrid = corpus.search.search(corpus.uploader, "case-1", "hold settlement", mode="hybrid", as_of=NOW)
     assert "rerank" not in hybrid.stage_ms and "context" not in hybrid.stage_ms
+
+
+# ------------------------------------------------ the agent path: instants, bounds, defaults
+
+
+class _Store:
+    """The two members of the case store the knowledge tool uses."""
+
+    def authorize(self) -> None:
+        return None
+
+    def append(self, *args: object, **kwargs: object) -> None:
+        return None
+
+
+def test_two_default_searches_fill_the_ledger_and_tell_the_model_what_did_not_fit(corpus, monkeypatch) -> None:
+    from evidence_agent.agent import tools as tools_module
+    for number in range(16):
+        corpus.add(f"DOC-{number}", f"{'first' if number < 8 else 'second'} rule number{number} applies.")
+    ledger = RequestLedger(corpus.search, corpus.reader, "case-1", "trace-tools")
+    seen: list[Applicability] = []
+
+    async def in_process(owner, principal_id, case_id, query, mode, limit, applicability, *, require_graph=False):  # type: ignore[no-untyped-def]
+        seen.append(applicability)
+        return owner.search(corpus.reader, case_id, query, mode=mode, limit=limit, as_of=applicability.primary,
+                            also_at=applicability.also)
+
+    monkeypatch.setattr(tools_module, "search", in_process)
+    tools = tools_module.Tools(ledger, None, _Store())  # type: ignore[arg-type]
+    first = asyncio.run(tools.execute("search_knowledge", '{"query": "first rule"}'))
+    second = asyncio.run(tools.execute("search_knowledge", '{"query": "second rule"}'))
+    assert first["status"] == second["status"] == "SUCCEEDED"
+    assert len(first["data"]) == 8 and first["omitted_passages"] == 0
+    assert len(second["data"]) == 4 and second["omitted_passages"] == 4, "twelve documents is the ledger bound"
+    assert [a.also for a in seen] == [ledger.applicability().also] * 2, "the worker is given the ledger instants"
+
+
+def test_a_ledger_that_cannot_bound_its_instants_fails_the_call_in_plain_words(corpus, monkeypatch) -> None:
+    from evidence_agent.agent import tools as tools_module
+    ledger = RequestLedger(corpus.search, corpus.reader, "case-1", "trace-bound")
+    for number in range(MAX_APPLICABILITY_INSTANTS):
+        ledger.records[f"live_{number}"] = {
+            "kind": "LIVE_OBSERVATION", "operation": "get_transaction_status", "valid": True,
+            "data": {"transaction_occurred_at": f"2025-01-0{number + 1}T00:00:00+00:00"}}
+
+    async def never(*args, **kwargs):  # type: ignore[no-untyped-def]
+        raise AssertionError("the worker must not be started for a request that cannot be bounded")
+
+    monkeypatch.setattr(tools_module, "search", never)
+    tools = tools_module.Tools(ledger, None, _Store())  # type: ignore[arg-type]
+    result = asyncio.run(tools.execute("search_knowledge", '{"query": "rule"}'))
+    assert result["status"] == "FAILED" and result["error_code"] == "VALIDATION_ERROR"
+
+
+# ------------------------------------------------ chunks of an earlier chunking, generations and integrity
+
+
+def test_points_left_by_an_earlier_generation_are_offered_by_a_careless_index_and_still_refused(tmp_path: Path) -> None:
+    corpus = Corpus(tmp_path, LeakyIndex())
+    try:
+        revision = corpus.add("SOP", "Hold settlement until confirmation arrives.")
+        corpus.index.fingerprint = "b" * 64  # the search representation changed: the revision is indexed again
+        changed = HybridSearch(corpus.catalog, corpus.index, corpus.search.ranker)
+        IngestPipeline(corpus.catalog, corpus.index).index(corpus.uploader, revision)
+        result = changed.search(corpus.uploader, "case-1", "hold settlement confirmation", as_of=NOW)
+        assert corpus.revisions_of(result) == [revision]
+        assert {p.generation for p in result.passages} == {corpus.generation_of(revision)}
+        assert result.excluded["NOT_ELIGIBLE"] == 1, "the earlier generation had a point; it was offered and refused"
+    finally:
+        corpus.close()
+
+
+def test_a_chunk_that_is_not_part_of_the_served_generation_is_not_released(corpus) -> None:
+    revision = corpus.add("SOP", "Hold settlement until confirmation arrives.\n\nA second paragraph follows here.")
+    kept = corpus.catalog.chunks_for_revision(corpus.uploader, revision)[0]
+    assert corpus.search.resolver.resolve(corpus.uploader, "case-1", kept.chunk_id)
+    corpus.database.connection.execute("DELETE FROM index_generation_chunks WHERE chunk_id = ?", (kept.chunk_id,))
+    with pytest.raises(PermissionDenied):
+        corpus.search.resolver.resolve(corpus.uploader, "case-1", kept.chunk_id)
+
+
+def test_a_stored_chunk_hash_that_no_longer_matches_its_bytes_is_an_integrity_conflict(corpus) -> None:
+    revision = corpus.add("SOP", "Hold settlement until confirmation arrives.")
+    chunk = corpus.catalog.chunks_for_revision(corpus.uploader, revision)[0]
+    assert corpus.search.resolver.resolve(corpus.uploader, "case-1", chunk.chunk_id).text == chunk.text
+    corpus.database.connection.execute(
+        "UPDATE p02_chunks SET content_sha256 = ? WHERE chunk_id = ?", ("0" * 64, chunk.chunk_id))
+    with pytest.raises(ResourceConflict):
+        corpus.search.resolver.resolve(corpus.uploader, "case-1", chunk.chunk_id)
+
+
+# ------------------------------------------------ supersession needs a successor servable under the fingerprint
+
+
+def test_a_successor_not_yet_indexed_under_a_new_representation_retires_nobody(corpus) -> None:
+    old = corpus.add("POL", "Reversal window policy twenty four hours.", valid_from="2025-01-01T00:00:00Z")
+    corpus.add("POL", "Reversal window policy forty eight hours.", valid_from="2026-01-01T00:00:00Z", supersedes=old)
+    corpus.index.fingerprint = "b" * 64  # the representation changed; only the predecessor is indexed again so far
+    IngestPipeline(corpus.catalog, corpus.index).index(corpus.uploader, old)
+    changed = HybridSearch(corpus.catalog, corpus.index, corpus.search.ranker)
+    served = changed.search(corpus.uploader, "case-1", "reversal window policy hours", as_of=NOW)
+    assert corpus.revisions_of(served) == [old]
+
+
+# ------------------------------------------------ the exact lane spends its bound on what can apply
+
+
+def test_a_superseded_version_cannot_use_up_the_exact_lane_candidate_bound(corpus, monkeypatch) -> None:
+    monkeypatch.setattr("evidence_agent.storage.exact.MAX_EXACT_CANDIDATES", 2)
+    old = corpus.add("POL-6", "# POL-6\n\n## A\n\nOld one.\n\n## B\n\nOld two.\n\n## C\n\nOld three.",
+                     valid_from="2025-01-01T00:00:00Z", register_aliases=True)
+    new = corpus.add("POL-6", "# POL-6\n\nThe rule that applies now.", valid_from="2026-01-01T00:00:00Z",
+                     supersedes=old, register_aliases=True)
+    exact = ExactIndex(corpus.catalog)
+    unfiltered = exact.hits(corpus.uploader, "case-1", "POL-6")
+    eligible = corpus.catalog.eligible_generations(corpus.uploader, "case-1", Applicability.at(NOW),
+                                                   fingerprint=corpus.index.fingerprint)
+    filtered = exact.hits(corpus.uploader, "case-1", "POL-6", eligible)
+    new_chunks = {c.chunk_id for c in corpus.catalog.chunks_for_revision(corpus.uploader, new)}
+    assert set(filtered.leading) == new_chunks and not filtered.truncated
+    assert set(unfiltered.leading) != new_chunks, "without the filter the bound is spent on the superseded version"
+
+
+# ------------------------------------------------ what the reranker reads, and many generations in one answer
+
+
+def test_the_reranker_is_given_the_heading_path_and_its_order_is_the_result(tmp_path: Path) -> None:
+    from evidence_agent.core.retrieval import index_text
+    from evidence_agent.retrieval.rerank import FastEmbedReranker
+
+    class Ascending:
+        def __init__(self) -> None:
+            self.texts: list[str] = []
+
+        def rerank(self, query: str, texts: list[str], batch_size: int) -> list[float]:
+            self.texts = list(texts)
+            return [float(n) for n in range(len(texts))]  # the last input scores highest
+
+    model = Ascending()
+    ranker = FastEmbedReranker(enabled=True)
+    ranker._load = lambda: model  # type: ignore[method-assign]  # a test double for the loaded cross-encoder
+    corpus = Corpus(tmp_path, ranker=ranker)
+    try:
+        for family in ("ALPHA", "BETA", "GAMMA"):
+            corpus.add(family, f"# Policy {family}\n\n## Window\n\nreversal window clause for {family}.")
+        result = corpus.search.search(corpus.uploader, "case-1", "reversal window clause", mode="reranked",
+                                      as_of=NOW, limit=3)
+        chunks = {c.chunk_id: c for row in corpus.database.connection.execute(
+            "SELECT revision_id FROM document_revisions").fetchall()
+            for c in corpus.catalog.chunks_for_revision(corpus.admin, row[0])}
+        assert sorted(model.texts) == sorted(index_text(c) for c in chunks.values())
+        assert all(text.startswith("Policy ") for text in model.texts), "each text begins with its heading path"
+        assert [index_text(chunks[p.citation_id]) for p in result.passages] == list(reversed(model.texts))
+    finally:
+        corpus.close()
+
+
+def test_an_answer_may_draw_on_more_than_twelve_generations(corpus) -> None:
+    for number in range(14):
+        corpus.add(f"DOC-{number}", f"Reversal rule everybody shares number{number}.")
+    result = corpus.search.search(corpus.uploader, "case-1", "reversal rule everybody shares", limit=14, as_of=NOW)
+    assert len(result.passages) == 14 and len({p.generation for p in result.passages}) == 14
+
+
+def test_an_offer_made_twice_is_judged_and_counted_once(corpus) -> None:
+    revision = corpus.add("SOP", "Hold settlement until confirmation arrives.")
+    chunk = corpus.catalog.chunks_for_revision(corpus.uploader, revision)[0]
+    offer = Candidate(chunk_id=chunk.chunk_id, generation=corpus.generation_of(revision), score=1, channel="frozen")
+    corpus.registry.revoke_source(corpus.admin, revision)
+    result = corpus.search.search(corpus.uploader, "case-1", "hold", evaluator_candidates=(offer, offer, offer))
+    assert result.excluded["NOT_ELIGIBLE"] == 1 and result.stage_counts["excluded"] == 1

@@ -454,6 +454,9 @@ class Database:
         if version >= 8 and (
             "heading_path_json" not in {row[1] for row in self.connection.execute("PRAGMA table_info(p02_chunks)")}
             or "defining" not in {row[1] for row in self.connection.execute("PRAGMA table_info(exact_aliases)")}
+            or self.connection.execute(
+                "SELECT 1 FROM sqlite_master WHERE type = 'index' AND name = 'exact_alias_order_idx'").fetchone()
+            is None
         ):
             raise DatabaseSchemaError("Palladion schema version 8 is missing chunk heading paths or alias roles")
 

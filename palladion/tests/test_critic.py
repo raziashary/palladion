@@ -108,7 +108,7 @@ def test_counter_search_uses_shared_budget_and_actual_followup_review(p03, monke
     assert result.status == "PASS" and fixture.runtime.budget.critic_used == 2
     assert len(queries) == fixture.runtime.budget.critic_search_used == fixture.runtime.budget.tools_used == 2
     assert all(set(q) == {"query", "limit"} for q in queries)
-    assert all(q["limit"] == COUNTER_SEARCH_LIMIT >= 6 for q in queries), "a counter-search sees enough passages"
+    assert all(q["limit"] == COUNTER_SEARCH_LIMIT == 6 for q in queries), "a counter-search sees enough passages"
     assert "CRITIC_SEARCH_BUDGET_EXHAUSTED" in fixture.ledger.failures
 
 

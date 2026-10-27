@@ -152,9 +152,14 @@ def test_v8_populated_upgrade_keeps_chunks_gives_them_an_empty_path_and_rolls_ba
     catalog = Catalog(p03.registry)
     revision = p03.revisions["SOP-2026-B"]
     IngestPipeline(catalog, MemoryIndex()).index(p03.admin, revision)
+    chunk = catalog.chunks_for_revision(p03.admin, revision)[0]
+    family = str(p03.registry.source_metadata(p03.admin, revision)["family_id"])
+    catalog.add_aliases(p03.admin, revision, [(family, chunk.chunk_id), (revision, chunk.chunk_id),
+                                              ("ERR-5", chunk.chunk_id)])
     before = [tuple(row) for row in p03.registry.database.connection.execute(
         "SELECT chunk_id, section_id, text, neighbor_ids_json FROM p02_chunks ORDER BY chunk_id")]
     assert before
+    aliases = {family.casefold(): 1, revision.casefold(): 1, "err-5": 0}  # what the alias roles must come to
     path = tmp_path / "populated-v7.sqlite"
     with sqlite3.connect(path) as target:
         p03.registry.database.connection.backup(target)
@@ -170,6 +175,8 @@ def test_v8_populated_upgrade_keeps_chunks_gives_them_an_empty_path_and_rolls_ba
         with sqlite3.connect(path) as db:
             assert db.execute("PRAGMA user_version").fetchone()[0] == 7
             assert "heading_path_json" not in {row[1] for row in db.execute("PRAGMA table_info(p02_chunks)")}
+            assert "defining" not in {row[1] for row in db.execute("PRAGMA table_info(exact_aliases)")}
+            assert sorted(r[0] for r in db.execute("SELECT normalized_alias FROM exact_aliases")) == sorted(aliases)
     else:
         with owner:
             assert owner.connection.execute("PRAGMA user_version").fetchone()[0] == 8
@@ -177,6 +184,8 @@ def test_v8_populated_upgrade_keeps_chunks_gives_them_an_empty_path_and_rolls_ba
                 "SELECT chunk_id, section_id, text, neighbor_ids_json FROM p02_chunks ORDER BY chunk_id")]
             assert rows == before
             assert {row[0] for row in owner.connection.execute("SELECT heading_path_json FROM p02_chunks")} == {"[]"}
+            roles = dict(owner.connection.execute("SELECT normalized_alias, defining FROM exact_aliases").fetchall())
+            assert roles == aliases, "an alias naming its family or revision defines; a plain identifier only mentions"
     assert owner.backup_path
     with sqlite3.connect(owner.backup_path) as db:
         assert db.execute("PRAGMA user_version").fetchone()[0] == 7
