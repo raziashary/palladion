@@ -93,7 +93,8 @@ class MemoryIndex:
             actual["unexpected-chunk"] = "0" * 64
         return actual
 
-    def query(self, query: str, principal: Principal, case_id: str, mode: str = "hybrid", limit: int = 20, exact: bool = False):
+    def query(self, query: str, principal: Principal, case_id: str, mode: str = "hybrid", limit: int = 20,
+              exact: bool = False, generations: tuple[str, ...] | None = None):
         raise NotImplementedError
 
 
@@ -199,10 +200,10 @@ def test_catalog_exact_alias_and_exception_link_are_scoped_and_audited(tmp_path:
     approver = registry.get_principal("approver")
     assert approver is not None
     with pytest.raises(PermissionDenied):
-        catalog.add_alias(uploader, "ERR-DEMO-429", revision, rule.chunk_id)
-    catalog.add_alias(approver, "ERR-DEMO-429", revision, rule.chunk_id)
-    assert catalog.lookup_alias(uploader, "case-1", "err-demo-429") == (rule.chunk_id,)
-    assert catalog.lookup_alias(uploader, "case-1", "ERR-DEMO-42") == ()
+        catalog.add_aliases(uploader, revision, [("ERR-DEMO-429", rule.chunk_id)])
+    catalog.add_aliases(approver, revision, [("ERR-DEMO-429", rule.chunk_id)])
+    assert [hit.chunk_id for hit in catalog.alias_hits(uploader, "case-1", "err-demo-429")] == [rule.chunk_id]
+    assert catalog.alias_hits(uploader, "case-1", "ERR-DEMO-42") == ()
 
     appendix = b"# Appendix\n\nException: duplicate capture is confirmed.\n"
     appendix_revision = registry.register_source(
@@ -267,7 +268,7 @@ def test_exact_alias_write_rechecks_revocation_inside_transaction(tmp_path, monk
                 yield connection
         monkeypatch.setattr(database,"transaction",revoke_before_begin)
         with pytest.raises(PermissionDenied):
-            catalog.add_alias(actor,"RACE-GUARD",revision,chunk.chunk_id)
+            catalog.add_aliases(actor,revision,[("RACE-GUARD",chunk.chunk_id)])
         assert not database.connection.execute("SELECT 1 FROM exact_aliases WHERE alias='RACE-GUARD'").fetchall()
     finally:
         database.close()

@@ -37,7 +37,7 @@ class AuditLog:
             if key == "fingerprint" and (not isinstance(value, str) or not re.fullmatch(r"[0-9a-f]{64}", value)):
                 raise ValueError("Invalid representation fingerprint")
             if key == "stage_counts" and (not isinstance(value, dict) or
-                    any(k not in {"discovered", "resolved", "reranked", "expanded", "graph_paths"} or
+                    any(k not in {"discovered", "resolved", "excluded", "reranked", "expanded", "graph_paths"} or
                         type(v) is not int or v < 0 for k, v in value.items())):
                 raise ValueError("Invalid stage counts")
             if key not in {"mode", "failure", "generation", "generations", "fingerprint", "stage_counts"} and (

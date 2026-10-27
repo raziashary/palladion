@@ -22,6 +22,12 @@ from .sqlite import Database, utc_now
 _GRANTS = {"document:upload", "document:approve", "source:read", "case:read"}
 
 
+def acl_allows(acl_json: str, principal_id: str) -> bool:
+    """An empty allow-list means every member of the case; otherwise only the listed principals."""
+    allowed = json.loads(acl_json).get("allowed_principal_ids", [])
+    return not allowed or principal_id in allowed
+
+
 class Registry:
     """Persist identities, case scope, source registration and approval evidence.
 
@@ -278,6 +284,15 @@ class Registry:
                     "CASE_MEMBERSHIP_REVOKED",
                     {"principal_id": principal_id, "case_id": case_id},
                 )
+
+    def case_opened_at(self, principal: Principal, case_id: str) -> datetime:
+        """When the case was opened: the trusted time of CASE_OPENED_AT policies and of document applicability."""
+        self.access.authorize(principal, tenant_id=principal.tenant_id, case_id=case_id, grant="case:read")
+        row = self.database.connection.execute(
+            "SELECT created_at FROM cases WHERE tenant_id=? AND case_id=?", (principal.tenant_id, case_id)).fetchone()
+        if row is None:
+            raise PermissionDenied
+        return datetime.fromisoformat(row[0])
 
     def source_metadata(self, principal: Principal, revision_id: str) -> dict[str, object]:
         """Read source scope and status under current source authorization."""

@@ -45,6 +45,10 @@ C:/palladion/                         Git root, main; initial revision 9b167a2
         check_docs.py               Links/IDs, atomic metadata/dependencies, planned-file coverage
 ```
 
+## Evidence path after P11 (2026-10-28)
+
+`ingest/parsing.py` and `ingest/chunking.py` produce chunks with a heading path (schema 8); `storage/qdrant.py` indexes `core/retrieval.index_text`; `retrieval/hybrid.py` asks `Catalog.eligible_generations(Applicability)` which generations may be offered, queries the index with that filter, adds the exact lane (`storage/exact.py`: defining chunks first, widely cited ones after), resolves every candidate through `retrieval/evidence.py` (one read snapshot, no write lock, `Applicability.admits`), reranks, adds a bounded context share and releases again. The agent reaches it through `agent/search_worker.py`; `RequestLedger.applicability_instants` supplies the case's instants; `GET /evidence` takes the same instants.
+
 ## Ingestion/retrieval now implemented (P02, verified with audit resolution)
 
 `ingest/` parses original spans, chunks structural context and stages exact generations.

@@ -98,6 +98,29 @@ def test_historical_cutoff_and_citation_keep_current_revocation(handoff):
     assert handoff.client.get(route, headers=headers, params=params).status_code == 403
 
 
+def test_http_applicability_instants_return_the_older_version_and_its_citation(handoff):
+    older = upload_approved(handoff, valid_from="2020-01-01T00:00:00Z", valid_to="2024-01-01T00:00:00Z")
+    newer = upload_approved(handoff, content="# HANDOFF-SOP\n\nNew scoped evidence.", valid_from="2024-01-01T00:00:00Z")
+    headers = {"Authorization":"Bearer reader"}
+    body = {"case_id":"case-42", "query":"HANDOFF-SOP"}
+    now_only = handoff.client.post("/search", headers=headers, json=body).json()["passages"]
+    assert {p["revision_id"] for p in now_only} == {newer}
+    instant = "2023-01-01T00:00:00Z"
+    both = handoff.client.post("/search", headers=headers, json={**body, "applicability_instants":[instant]})
+    assert both.status_code == 200, both.text
+    passages = both.json()["passages"]
+    assert {p["revision_id"] for p in passages} == {older, newer}
+    old = next(p for p in passages if p["revision_id"] == older)
+    route = "/evidence/"+old["citation_id"]
+    assert handoff.client.get(route, headers=headers, params={"case_id":"case-42"}).status_code == 403
+    assert handoff.client.get(route, headers=headers,
+        params={"case_id":"case-42", "applicability_instants":[instant]}).status_code == 200
+    assert handoff.client.post("/search", headers=headers,
+        json={**body, "applicability_instants":["2023-01-01T00:00:00"]}).status_code == 422
+    assert handoff.client.post("/search", headers=headers,
+        json={**body, "applicability_instants":[f"2023-01-0{day}T00:00:00Z" for day in range(1, 9)]}).status_code == 422
+
+
 def test_http_whole_passage_budget_preserves_bytes_and_discloses_tokenizer(handoff):
     upload_approved(handoff, content="# HANDOFF-SOP\n\n" + "Evidence preserves source bytes. "*50)
     headers = {"Authorization":"Bearer reader"}

@@ -122,7 +122,7 @@ def run(url: str, *, live: bool = False, model_name: str = "openai/gpt-oss-20b")
                 # Frozen paired input/scope; retain timings without a throughput claim.
                 for query, expected in QUERIES:
                     reference = (
-                        set(catalog.lookup_alias(principal, "case-42", expected))
+                        {hit.chunk_id for hit in catalog.alias_hits(principal, "case-42", expected)}
                         if expected
                         else set()
                     )

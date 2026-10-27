@@ -158,7 +158,9 @@ For a seeded case, the search JSON body is:
 Search modes are `lexical`, `dense`, `hybrid` and `reranked`. Start the API with
 `scripts/serve.py --rerank` to enable its optional local cross-encoder. Discovery and
 reranking have explicit candidate budgets; HTTP defaults to12 passages and allows up to40;
-the model's search tool remains capped at12. Expected
+the model's search tool asks for 8 reranked passages unless it names another limit (at most12). Reranked
+mode returns the ranked passages first and uses at most a quarter of the limit for context: exception-linked
+chunks and same-section neighbours. Expected
 reranker failures produce a degraded result with warnings. Index coverage, external
 inventory attestation and answer sufficiency remain separate concepts.
 
@@ -384,11 +386,21 @@ procedural experience never becomes approved policy or executable instructions.
 ## Search and administrative contracts
 
 `POST /search` accepts case_id, query, mode, limit (default12, maximum40), optional
-`as_of` and optional `token_budget`. The model's search tool remains capped12.
+`as_of`, optional `applicability_instants` (up to seven more aware instants) and optional `token_budget`.
+The model's search tool defaults to 8 reranked passages and is capped12.
 `as_of` must include a timezone and selects document applicability only; it cannot
 supply trusted transaction time or restore revoked approval, membership or source ACL.
-Use the same cutoff with `GET /evidence/{chunk_id}?case_id=...&as_of=...` for historical
-original-byte readback. Defaults continue to select current applicable sources.
+A revision is returned when it is inside its validity window and not yet superseded at `as_of` or at any
+of the extra instants, so the older version that governed an earlier case time can be found; which
+version governs is still decided only by the policy engine. The agent's search takes these instants from
+the case (when it was opened, its named domain events and verified transaction times), never from the model.
+Use the same instants with `GET /evidence/{chunk_id}?case_id=...&as_of=...&applicability_instants=...` for
+historical original-byte readback. Defaults continue to select current applicable sources.
+
+A result lists `excluded` counts (`NOT_ELIGIBLE`, `INTEGRITY_CONFLICT`) and warnings such as
+`ALL_CANDIDATES_EXCLUDED`, `NO_ELIGIBLE_SOURCES` and `EXACT_IDENTIFIER_NOT_FOUND`, so candidates dropped by the
+canonical checks never look like a search that matched nothing. A query that is only an unregistered code returns nothing; a question that contains one keeps its
+ranked passages and names the code in `unmatched_identifiers`.
 
 `token_budget` keeps a ranked prefix of complete passages. It never truncates canonical
 text or changes spans/hashes. Response evidence_budget records requested/returned counts,

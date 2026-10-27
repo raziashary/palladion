@@ -169,6 +169,16 @@ record and obtain the owner's direction under Rule4. No further main push is aut
 
 End-review R4 identified invalid@5/10/20 labels on a final top4 packet. ADR0086 withdraws those labels, preserves raw artifacts and exposes only observed packet metrics. Candidate/fused/reranked-stage metrics remain unavailable for this pilot; a new separately frozen full-stage run is required for new claims, alongside independent semantic labels. This limitation is explicit rather than inferred zero or a claimed retrieval result.
 
+## P11 retained limits (2026-10-28)
+
+- **Re-indexing hides a live revision.** Indexing a READY revision again points it at a new generation that is not READY until reconciled, and chunks with equal spans share a point ID, so the old generation cannot be served meanwhile. It fails closed (the revision is absent, never wrong). The proper fix is generation-scoped point IDs with a cleanup after the switch. Owner: P11 follow-up; destination: a card in the next phase that touches the index.
+- **Blocking work in the message handler.** `api/routes.py` `message` is `async` and runs synchronous SQLite and file reads on the event loop; one slow request stalls others. Needs per-call connections before it can use threads. Owner: later phase.
+- **A single inconsistent Qdrant point fails the whole search** (`IndexConsistencyError`, by design fail closed). Revisit with the P11-T05 audit change.
+- **`Candidate.channel` is written and never read** but is part of the evaluation study's frozen candidate files; removed only with that artifact's next version.
+- **Chunking limits.** Chunks do not overlap (the catalog requires non-overlapping spans) and a table's header row is not repeated in continuation chunks.
+- **Aliases beyond 1,000 chunks or 64 identifiers per chunk** are not registered; the approval response says `truncated`.
+- **P11 results are source-level.** The effect on retrieval quality and speed is not claimed until the benchmark re-measures at the new commit (P11-T06.01).
+
 ## P09 current owner decisions and retained limits
 
 ADR0087–89 explicitly approved: scoped retrieval contracts, non-admin provisioning and

@@ -12,7 +12,7 @@ from fastembed.rerank.cross_encoder import TextCrossEncoder
 from huggingface_hub import snapshot_download
 
 from evidence_agent.core.errors import DependencyUnavailable
-from evidence_agent.core.retrieval import Chunk
+from evidence_agent.core.retrieval import Chunk, index_text
 
 RERANKER_NAME = "Xenova/ms-marco-MiniLM-L-6-v2"
 RERANKER_REVISION = "a09144355adeed5f58c8ed011d209bf8ee5a1fec"
@@ -129,7 +129,7 @@ class FastEmbedReranker:
             return tuple(chunks)
 
         try:
-            scores = list(self._load().rerank(query, [chunk.text for chunk in chunks], batch_size=16))
+            scores = list(self._load().rerank(query, [index_text(chunk) for chunk in chunks], batch_size=16))
         except _BACKEND_ERRORS as exc:
             raise DependencyUnavailable("Reranker inference unavailable") from exc
         if len(scores) != len(chunks):

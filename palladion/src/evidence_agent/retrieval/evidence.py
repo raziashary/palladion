@@ -10,7 +10,10 @@ from evidence_agent.core.errors import PermissionDenied, ResourceConflict
 from evidence_agent.core.models import Principal, VersionedModel
 from evidence_agent.core.retrieval import Chunk
 from evidence_agent.memory.hotcache import HotCache
+from evidence_agent.storage.applicability import Applicability
 from evidence_agent.storage.catalog import Catalog
+from evidence_agent.storage.originals import OriginalIntegrityError, OriginalNotFound
+from evidence_agent.storage.registry import acl_allows
 
 
 class Passage(VersionedModel):
@@ -25,6 +28,7 @@ class Passage(VersionedModel):
     text: str
     sha256: str
     pdf_provenance: dict[str, Any] | None = None
+    heading_path: tuple[str, ...] = ()
 
 
 class EvidenceResolver:
@@ -34,15 +38,14 @@ class EvidenceResolver:
         self.fingerprint = fingerprint
 
     def resolve(self, principal: Principal, case_id: str, chunk_id: str, *,
-                generation: str | None = None, as_of: datetime | None = None) -> Passage:
+                generation: str | None = None, applicability: Applicability | None = None) -> Passage:
+        """Release one chunk if it applies at the registry clock, or at the instants of `applicability`."""
         chunk = self.catalog.get_chunk(principal, chunk_id)
         if chunk.case_id != case_id:
             raise PermissionDenied
-        instant = as_of or self.registry.clock()
-        if instant.tzinfo is None or instant.utcoffset() is None:
-            raise ValueError("Source applicability requires an aware instant")
-        # One SQLite transaction holds source/ACL/version metadata stable through byte read.
-        with self.registry.database.transaction() as connection:
+        applicability = applicability or Applicability.at(self.registry.clock())
+        # One read snapshot holds source/ACL/version metadata stable through the byte read, and takes no write lock.
+        with self.registry.database.read_transaction() as connection:
             self.registry.access.authorize(principal, tenant_id=chunk.tenant_id,
                                            case_id=case_id, grant="source:read")
             row = connection.execute("SELECT * FROM document_revisions WHERE tenant_id=? "
@@ -55,31 +58,25 @@ class EvidenceResolver:
                 raise PermissionDenied
             if generation is not None and row["index_generation"] != generation:
                 raise PermissionDenied
-            for field, lower in (("valid_from", True), ("valid_to", False)):
-                if row[field] is not None:
-                    boundary = datetime.fromisoformat(row[field])
-                    if (lower and instant < boundary) or (not lower and instant >= boundary):
-                        raise PermissionDenied
             approval = connection.execute("SELECT status FROM approval_records WHERE "
                                           "approval_record_id=? AND tenant_id=? AND revision_id=?",
                                           (row["approval_record_id"], chunk.tenant_id,
                                            chunk.revision_id)).fetchone()
             if approval is None or approval["status"] != "APPROVED":
                 raise PermissionDenied
-            acl = json.loads(row["acl_json"])
-            if acl.get("allowed_principal_ids") and principal.principal_id not in acl["allowed_principal_ids"]:
+            if not acl_allows(row["acl_json"], principal.principal_id):
                 raise PermissionDenied
-            for edge in connection.execute("SELECT applicability_scope_json,valid_from FROM "
-                                           "supersession_edges WHERE tenant_id=? AND "
-                                           "predecessor_revision_id=?", (chunk.tenant_id, chunk.revision_id)):
-                scope = json.loads(edge[0])
-                if scope.get("case_id") == case_id and datetime.fromisoformat(edge[1]) <= instant:
-                    raise PermissionDenied
-            original = self.registry.originals.read(row["content_sha256"])
+            supersessions = self.catalog.effective_supersessions(chunk.tenant_id, case_id, chunk.revision_id)
+            if not applicability.admits(row["valid_from"], row["valid_to"], supersessions.get(chunk.revision_id, [])):
+                raise PermissionDenied
+            try:
+                original = self.registry.originals.read(row["content_sha256"])  # verifies the whole digest
+            except (OriginalIntegrityError, OriginalNotFound) as error:
+                raise ResourceConflict from error
             text_bytes = original[chunk.start_byte:chunk.end_byte]
             if (chunk.end_byte > len(original) or not text_bytes or
                     hashlib.sha256(text_bytes).hexdigest() != chunk.content_sha256 or
-                    hashlib.sha256(original).hexdigest() != chunk.source_sha256):
+                    row["content_sha256"] != chunk.source_sha256):
                 raise ResourceConflict
             provenance = self.registry.extraction_provenance(principal, chunk.revision_id)
             if provenance is not None:
@@ -90,7 +87,7 @@ class EvidenceResolver:
                        start_byte=chunk.start_byte, end_byte=chunk.end_byte,
                        line_start=chunk.line_start, line_end=chunk.line_end,
                        text=text_bytes.decode("utf-8"), sha256=chunk.content_sha256,
-                       pdf_provenance=provenance)
+                       pdf_provenance=provenance, heading_path=chunk.heading_path)
 
     def chunk(self, principal: Principal, passage: Passage) -> Chunk:
         return self.catalog.get_chunk(principal, passage.citation_id)
@@ -114,10 +111,36 @@ class RequestLedger:
         self.failures: list[str] = []
         self.tool_status: dict[str, str] = {}
 
+    def applicability_instants(self) -> tuple[datetime, ...]:
+        """Trusted case instants besides the clock (ADR-0102): when the case opened, its named domain events and
+        the verified transaction times of fresh live observations already in this request.
+
+        The backend derives them; the model never supplies one. The temporal resolver, not search, still decides
+        which version governs.
+        """
+        from evidence_agent.live.gateway import read_scope
+        registry = self.search.registry
+        registry.access.authorize(self.principal, tenant_id=self.principal.tenant_id,
+                                  case_id=self.case_id, grant="case:read")
+        found = [registry.case_opened_at(self.principal, self.case_id)]
+        try:
+            found.extend(read_scope(registry, self.principal, self.case_id).domain_events.values())
+        except PermissionDenied:
+            pass  # access was checked above, so this is a case with no live scope registered: no domain events
+        for data in self.records.values():
+            if (data.get("kind") == "LIVE_OBSERVATION" and data.get("operation") == "get_transaction_status"
+                    and data.get("valid")):
+                occurred = (data.get("data") or {}).get("transaction_occurred_at")
+                if isinstance(occurred, str):
+                    found.append(datetime.fromisoformat(occurred))
+        return tuple(sorted(set(found)))
+
     def read(self, identifier: str) -> dict[str, Any]:
         def load() -> dict[str, Any]:
             return read_runtime_evidence(self.search, self.principal, self.case_id, identifier,
-                freshness_seconds=self.freshness_seconds)
+                freshness_seconds=self.freshness_seconds,
+                applicability=Applicability.at(self.search.registry.clock(), self.applicability_instants())
+                if identifier.startswith("chunk_") else None)
         if self.hotcache is not None and identifier.startswith("chunk_"):
             from evidence_agent.memory.store import CaseStore
             epoch = CaseStore(self.search.registry, self.principal, self.case_id).memory().epoch()
@@ -191,7 +214,8 @@ class RequestLedger:
 
 
 def read_runtime_evidence(search: object, principal: Principal, case_id: str,
-                          identifier: str, *, freshness_seconds: dict[str, int] | None = None) -> dict[str, Any]:
+                          identifier: str, *, freshness_seconds: dict[str, int] | None = None,
+                          applicability: Applicability | None = None) -> dict[str, Any]:
     """Canonical citation reader for all P04 kinds; no caller-supplied payloads."""
     from evidence_agent.core.models import LiveOperationStatus, PolicyDecisionStatus
     from evidence_agent.live.gateway import read_observation, read_scope
@@ -216,9 +240,12 @@ def read_runtime_evidence(search: object, principal: Principal, case_id: str,
         return {"evidence_id": identifier, "kind": "CASE_EVENT", "event": event,
                 "valid": False, "authority": "NONE", "occurred_at": event["at"]}
     if identifier.startswith("chunk_"):
-        item = search.resolver.resolve(principal, case_id, identifier)
+        item = search.resolver.resolve(principal, case_id, identifier, applicability=applicability)
+        source = registry.source_metadata(principal, item.revision_id)
         return {"evidence_id": identifier, "kind": "DOCUMENT", "text": item.text,
             "revision_id": item.revision_id, "section_id": item.section_id,
+            "family_id": source["family_id"], "valid_from": source["valid_from"], "valid_to": source["valid_to"],
+            "heading_path": list(item.heading_path),
             "generation": item.generation, "start_byte": item.start_byte, "end_byte": item.end_byte,
             "content_sha256": item.sha256,
             **({"pdf_provenance": item.pdf_provenance} if item.pdf_provenance is not None else {})}
@@ -318,7 +345,9 @@ def model_view(item: dict[str, Any]) -> dict[str, Any]:
     view = dict(item)
     view.pop("content_sha256", None)
     if item.get("kind") == "DOCUMENT":
-        view = {k: v for k, v in item.items() if k in {"evidence_id", "kind", "section_id"}}
+        # What a reader needs to tell a policy from a ticket and one version from another (ADR-0107).
+        view = {k: v for k, v in item.items() if k in {"evidence_id", "kind", "section_id", "family_id",
+                                                        "heading_path", "valid_from", "valid_to"}}
         text = str(item["text"])
         view.update(text_preview=text[:800], text_truncated=len(text) > 800)
     elif item.get("kind") == "POLICY_DECISION":

@@ -24,7 +24,7 @@ class Database:
     """
 
     APPLICATION_ID = 0x50414C4C  # ASCII "PALL"
-    SCHEMA_VERSION = 7
+    SCHEMA_VERSION = 8
 
     def __init__(self, path: str | Path) -> None:
         self.path = str(path)
@@ -98,6 +98,18 @@ class Database:
         else:
             connection.commit()
 
+    @contextmanager
+    def read_transaction(self) -> Iterator[sqlite3.Connection]:
+        """Read one stable snapshot without taking the write lock, so readers never queue behind writers."""
+        connection = self.connection
+        if connection.in_transaction:
+            raise RuntimeError("nested database transactions are not supported")
+        connection.execute("BEGIN")
+        try:
+            yield connection
+        finally:
+            connection.rollback()
+
     def _initialize_or_upgrade(self) -> None:
         user_version = self._preflight_schema()
         if user_version == 0:
@@ -144,6 +156,8 @@ class Database:
         schema_path = Path(__file__).with_name("schema.sql")
         statements = _read_sql_statements(schema_path.read_text(encoding="utf-8"))
         with self.transaction() as connection:
+            if int(connection.execute("PRAGMA user_version").fetchone()[0]) != 0:
+                return  # another opener created the schema between our check and this write lock
             connection.execute(f"PRAGMA application_id = {self.APPLICATION_ID}")
             for statement in statements:
                 connection.execute(statement)
@@ -176,11 +190,16 @@ class Database:
             self._migration_6_to_7(connection)
             connection.execute("INSERT INTO schema_versions VALUES (?, ?)", (7, utc_now()))
             connection.execute("PRAGMA user_version = 7")
+            self._migration_7_to_8(connection)
+            connection.execute("INSERT INTO schema_versions VALUES (?, ?)", (8, utc_now()))
+            connection.execute("PRAGMA user_version = 8")
 
     def _apply_migration(self, current: int, target: int) -> None:
-        if (current, target) not in {(1, 2), (2, 3), (3, 4), (4, 5), (5, 6), (6, 7)}:
+        if (current, target) not in {(1, 2), (2, 3), (3, 4), (4, 5), (5, 6), (6, 7), (7, 8)}:
             raise DatabaseSchemaError(f"no forward migration from version {current} to {target}")
         with self.transaction() as connection:
+            if int(connection.execute("PRAGMA user_version").fetchone()[0]) != current:
+                return  # another opener already applied this step
             if (current, target) == (1, 2):
                 self._migration_1_to_2(connection)
             elif target == 3:
@@ -191,8 +210,10 @@ class Database:
                 self._migration_4_to_5(connection)
             elif target == 6:
                 self._migration_5_to_6(connection)
-            else:
+            elif target == 7:
                 self._migration_6_to_7(connection)
+            else:
+                self._migration_7_to_8(connection)
             connection.execute(
                 "INSERT INTO schema_versions(version, applied_at) VALUES (?, ?)",
                 (target, utc_now()),
@@ -341,6 +362,27 @@ class Database:
         for statement in _read_sql_statements(script):
             connection.execute(statement)
 
+    @staticmethod
+    def _migration_7_to_8(connection: sqlite3.Connection) -> None:
+        """Chunks keep their heading path, and an alias records whether it names its own revision (ADR-0105, 0106).
+
+        Existing chunks get an empty path. Their generations were indexed without that context; the search
+        representation fingerprint changed with it, so they are not served until indexed again. Existing aliases
+        are classified here with the same normalisation (strip, casefold) the catalog applies when it writes one.
+        """
+        connection.execute("ALTER TABLE p02_chunks ADD COLUMN heading_path_json TEXT NOT NULL DEFAULT '[]'")
+        connection.execute(
+            "ALTER TABLE exact_aliases ADD COLUMN defining INTEGER NOT NULL DEFAULT 0 CHECK (defining IN (0, 1))")
+        names = connection.execute(
+            "SELECT aliases.rowid, aliases.normalized_alias, revisions.family_id, revisions.revision_id "
+            "FROM exact_aliases AS aliases JOIN document_revisions AS revisions "
+            "ON revisions.tenant_id = aliases.tenant_id AND revisions.revision_id = aliases.revision_id").fetchall()
+        for rowid, key, family_id, revision_id in names:
+            if key in (family_id.strip().casefold(), revision_id.strip().casefold()):
+                connection.execute("UPDATE exact_aliases SET defining = 1 WHERE rowid = ?", (rowid,))
+        connection.execute(
+            "CREATE INDEX exact_alias_order_idx ON exact_aliases(tenant_id, case_id, normalized_alias, defining)")
+
     def _validate_schema_shape(self, version: int) -> None:
         expected = {
             "schema_versions",
@@ -409,6 +451,11 @@ class Database:
             raise DatabaseSchemaError("Palladion schema version 6 is missing promotion tables")
         if version >= 7 and "source_extractions" not in actual:
             raise DatabaseSchemaError("Palladion schema version 7 is missing extraction provenance")
+        if version >= 8 and (
+            "heading_path_json" not in {row[1] for row in self.connection.execute("PRAGMA table_info(p02_chunks)")}
+            or "defining" not in {row[1] for row in self.connection.execute("PRAGMA table_info(exact_aliases)")}
+        ):
+            raise DatabaseSchemaError("Palladion schema version 8 is missing chunk heading paths or alias roles")
 
 
 

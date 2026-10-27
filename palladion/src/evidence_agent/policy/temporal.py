@@ -91,10 +91,7 @@ class TemporalResolver:
             if spec.time_basis is TimeBasis.EVALUATION_AT:
                 instant = evaluation_time or now
             elif spec.time_basis is TimeBasis.CASE_OPENED_AT:
-                row = self.registry.database.connection.execute(
-                    "SELECT created_at FROM cases WHERE tenant_id=? AND case_id=?",
-                    (principal.tenant_id, case_id)).fetchone()
-                instant = datetime.fromisoformat(row[0])
+                instant = self.registry.case_opened_at(principal, case_id)
             elif spec.time_basis is TimeBasis.DOMAIN_EVENT_AT:
                 if spec.domain_event not in scope.domain_events:
                     return Selection("MISSING_TIME_INPUT", trace=("NAMED_DOMAIN_EVENT_MISSING",))

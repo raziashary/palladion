@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import time
 import uuid
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Literal, Protocol, Sequence
 
@@ -13,9 +14,34 @@ from evidence_agent.graph.relations import GraphPath
 from evidence_agent.retrieval.coverage import Coverage, source_coverage
 from evidence_agent.retrieval.evidence import EvidenceResolver, Passage
 from evidence_agent.retrieval.graph_expand import GraphExpansion
+from evidence_agent.storage.applicability import Applicability
 from evidence_agent.storage.catalog import Catalog
 from evidence_agent.storage.exact import ExactIndex
 from evidence_agent.telemetry.audit import AuditLog
+
+CONTEXT_SHARE = 4  # at most one slot in four of the limit may hold context rather than a ranked passage (ADR-0104)
+CONTEXT_REFERENCES = 4  # linked and adjacent references considered for each ranked passage
+
+
+@dataclass
+class _Exclusions:
+    """Why candidates were dropped by the canonical checks; owned by one search and counted only through `record`."""
+
+    not_eligible: int = 0
+    integrity_conflict: int = 0
+
+    def record(self, error: PermissionDenied | ResourceConflict) -> None:
+        if isinstance(error, ResourceConflict):
+            self.integrity_conflict += 1
+        else:
+            self.not_eligible += 1
+
+    @property
+    def total(self) -> int:
+        return self.not_eligible + self.integrity_conflict
+
+    def as_dict(self) -> dict[str, int]:
+        return {"NOT_ELIGIBLE": self.not_eligible, "INTEGRITY_CONFLICT": self.integrity_conflict}
 
 
 class Ranker(Protocol):
@@ -36,6 +62,8 @@ class SearchResult(VersionedModel):
     elapsed_ms: float
     graph_paths: tuple[GraphPath, ...] = ()
     evidence_budget: dict[str, Any] | None = None
+    excluded: dict[str, int] = {}  # candidates dropped by canonical checks, by reason
+    unmatched_identifiers: tuple[str, ...] = ()  # code-shaped query tokens with no registered alias
 
 
 class HybridSearch:
@@ -52,6 +80,7 @@ class HybridSearch:
     def search(self, principal: Principal, case_id: str, query: str, *,
                mode: Literal["lexical", "dense", "hybrid", "reranked"] = "hybrid",
                limit: int = 12, as_of: datetime | None = None,
+               also_at: Sequence[datetime] = (),
                require_graph: bool = False,
                token_budget: int | None = None,
                reuse_physical_audit: bool = False,
@@ -65,35 +94,46 @@ class HybridSearch:
         self.registry.access.authorize(principal, tenant_id=principal.tenant_id,
                                        case_id=case_id, grant="source:read")
         started = time.perf_counter()
+        # Validity is judged at the evaluation instant and at each trusted case instant (ADR-0102).
+        applicability = Applicability.at(as_of or self.registry.clock(), also_at)
         warnings: list[str] = []
         candidates: list[tuple[str, str | None]] = []
         try:
             if evaluator_candidates is not None and len(evaluator_candidates)>100:
                 raise ValueError("Frozen evaluator candidate bound exceeded")
-            discovered = (evaluator_candidates if evaluator_candidates is not None else
-                self.index.query(query, principal, case_id,
-                                 "hybrid" if mode == "reranked" else mode, limit=40))
+            if evaluator_candidates is not None:
+                discovered: Sequence[Candidate] = evaluator_candidates
+            else:
+                # The index may only offer index generations that can apply, so stale near-duplicates and the leftover points
+                # of earlier generations never take a slot (ADR-0103).
+                eligible = self.catalog.eligible_generations(principal, case_id, applicability,
+                                                              fingerprint=self.index.fingerprint)
+                if eligible is None:
+                    warnings.append("ELIGIBILITY_PREFILTER_BOUNDED")
+                elif not eligible:
+                    warnings.append("NO_ELIGIBLE_SOURCES")  # the index is not asked; nothing could apply
+                discovered = self.index.query(query, principal, case_id,
+                    "hybrid" if mode == "reranked" else mode, limit=40, generations=eligible)
             candidates.extend((hit.chunk_id, hit.generation) for hit in discovered)
         except DependencyUnavailable:
             warnings.append("INDEX_UNAVAILABLE")
-        exact_ids = self.exact.lookup(principal, case_id, query)
-        if self.exact.truncated:
+        exact = self.exact.hits(principal, case_id, query)
+        if exact.truncated:
             warnings.append("EXACT_CANDIDATES_TRUNCATED")
-        # A recognized but unknown structured code cannot silently return a near identifier.
-        if self.exact.identifiers(query) and not exact_ids:
+        # An unknown structured code is labelled, never silently replaced by a near identifier (ADR-0105).
+        if exact.unmatched:
             warnings.append("EXACT_IDENTIFIER_NOT_FOUND")
-            candidates = []
-        candidates = [(chunk_id, None) for chunk_id in exact_ids] + candidates
+        if exact.unknown_lookup:
+            candidates = []  # a bare unknown code asks for that code; similar-looking neighbours would substitute it
+        candidates = ([(chunk_id, None) for chunk_id in exact.leading] + candidates
+                      + [(chunk_id, None) for chunk_id in exact.trailing])
         resolved: dict[str, Passage] = {}
-        excluded = 0
+        exclusions = _Exclusions()
         for chunk_id, generation in candidates:
-            if chunk_id in resolved:
-                continue
-            try:
-                resolved[chunk_id] = self.resolver.resolve(principal, case_id, chunk_id,
-                                                         generation=generation, as_of=as_of)
-            except (PermissionDenied, ResourceConflict):
-                excluded += 1
+            if chunk_id not in resolved:
+                passage = self._release(principal, case_id, chunk_id, applicability, exclusions, generation)
+                if passage is not None:
+                    resolved[chunk_id] = passage
         ordered = list(resolved.values())
         resolved_count = len(ordered)
         if mode == "reranked":
@@ -106,26 +146,12 @@ class HybridSearch:
                 except DependencyUnavailable:
                     warnings.append("RERANK_UNAVAILABLE")
         selected = ordered[:limit]
-        # Every expanded reference is independently resolved; no adjacent payload text is trusted.
         if mode == "reranked":
-            expanded: dict[str, Passage] = {}
-            for passage in selected:
-                expanded[passage.citation_id] = passage
-                chunk = self.resolver.chunk(principal, passage)
-                neighbors = self.catalog.context_links(principal, chunk.chunk_id) + chunk.neighbor_ids
-                for neighbor in neighbors[:4]:
-                    if len(expanded) >= limit:
-                        break
-                    try:
-                        item = self.resolver.resolve(principal, case_id, neighbor, as_of=as_of)
-                        expanded[item.citation_id] = item
-                    except (PermissionDenied, ResourceConflict):
-                        excluded += 1
-            selected = list(expanded.values())[:limit]
+            selected = self._with_context(principal, case_id, ordered, limit, applicability, exclusions)
         graph_paths: tuple[GraphPath,...] = ()
         if self.graph is not None:
             try:
-                expansion=self.graph.expand(self.resolver,principal,case_id,tuple(selected),as_of=as_of)
+                expansion=self.graph.expand(self.resolver,principal,case_id,tuple(selected),applicability=applicability)
                 # Preserve the primary anchor; source-linked neighbors get the next slots.
                 # This explicit treatment ordering is measured against unchanged B2.
                 combined=selected[:1]+list(expansion.passages)+selected[1:]
@@ -141,8 +167,9 @@ class HybridSearch:
         if require_graph and "GRAPH_UNAVAILABLE" in warnings:
             warnings.append("GRAPH_REQUIRED_UNAVAILABLE")
         # Recheck again at release, including references fetched before a mid-request revocation.
-        selected = [self.resolver.resolve(principal, case_id, p.citation_id,
-                                         generation=p.generation, as_of=as_of) for p in selected]
+        selected = [released for released in (
+            self._release(principal, case_id, passage.citation_id, applicability, exclusions, passage.generation)
+            for passage in selected) if released is not None]
         budget_info = None
         if token_budget is not None:
             from evidence_agent.retrieval.embeddings import PassageTokenizer
@@ -163,18 +190,22 @@ class HybridSearch:
             returned = {p.citation_id for p in selected}
             graph_paths = tuple(p for p in graph_paths if p.target_chunk_id in returned
                 and set(p.evidence_ids).issubset(returned))
-        coverage = source_coverage(self.registry, principal, case_id, self.index, as_of=as_of,
-                                   reuse_physical_audit=reuse_physical_audit)
+        coverage = source_coverage(self.registry, principal, case_id, self.index,
+                                   as_of=applicability.primary, reuse_physical_audit=reuse_physical_audit)
         warnings.extend(coverage.warnings)
+        if exclusions.integrity_conflict:
+            warnings.append("INTEGRITY_CONFLICT")
+        if not selected and exclusions.total:
+            warnings.append("ALL_CANDIDATES_EXCLUDED")
         elapsed = (time.perf_counter() - started) * 1000
-        stages = {"discovered": len(candidates), "resolved": resolved_count,
+        stages = {"discovered": len(candidates), "resolved": resolved_count, "excluded": exclusions.total,
                   "reranked": len(ordered), "expanded": len(selected), "graph_paths":len(graph_paths)}
         trace_id = f"retrieval_{uuid.uuid4().hex}"
         AuditLog(self.registry).append(principal, trace_id, {
             "generations": tuple(sorted({passage.generation for passage in selected})),
             "fingerprint": self.index.fingerprint,
             "mode": mode, "candidate_count": len(candidates), "returned_count": len(selected),
-            "excluded_count": excluded, "elapsed_ms": elapsed, "stage_counts": stages,
+            "excluded_count": exclusions.total, "elapsed_ms": elapsed, "stage_counts": stages,
             "failure": "INDEX_UNAVAILABLE" if "INDEX_UNAVAILABLE" in warnings else
                        "RERANK_UNAVAILABLE" if "RERANK_UNAVAILABLE" in warnings else
                        "GRAPH_UNAVAILABLE" if "GRAPH_UNAVAILABLE" in warnings else "NONE",
@@ -187,4 +218,47 @@ class HybridSearch:
         return SearchResult(trace_id=trace_id, status=status, mode=mode, passages=tuple(selected),
                             coverage=coverage, warnings=tuple(dict.fromkeys(warnings)),
                             stage_counts=stages, elapsed_ms=elapsed,graph_paths=graph_paths,
-                            evidence_budget=budget_info)
+                            evidence_budget=budget_info, excluded=exclusions.as_dict(),
+                            unmatched_identifiers=exact.unmatched)
+
+    def _release(self, principal: Principal, case_id: str, chunk_id: str, applicability: Applicability,
+                 exclusions: _Exclusions, generation: str | None = None) -> Passage | None:
+        """The passage if the canonical checks release it now; otherwise None, with the reason counted."""
+        try:
+            return self.resolver.resolve(principal, case_id, chunk_id, generation=generation,
+                                         applicability=applicability)
+        except (PermissionDenied, ResourceConflict) as error:
+            exclusions.record(error)
+            return None
+
+    def _with_context(self, principal: Principal, case_id: str, ordered: Sequence[Passage], limit: int,
+                      applicability: Applicability, exclusions: _Exclusions) -> list[Passage]:
+        """Ranked passages first, then a bounded share of context, never displacing a ranked passage (ADR-0104).
+
+        Context is the exception-linked chunks of the best passages and their same-section neighbours; each is
+        resolved independently, so no adjacent payload text is trusted. A reserved slot with no context goes to
+        the next ranked passage.
+        """
+        reserve = limit // CONTEXT_SHARE
+        primaries = list(ordered[:limit - reserve])
+        taken = {passage.citation_id for passage in primaries}
+        context: list[Passage] = []
+        for passage in primaries:
+            if len(context) >= reserve:
+                break
+            chunk = self.resolver.chunk(principal, passage)
+            linked = self.catalog.context_links(principal, chunk.chunk_id)
+            for neighbor in (*linked, *chunk.neighbor_ids)[:CONTEXT_REFERENCES]:
+                if len(context) >= reserve:
+                    break
+                if neighbor in taken:
+                    continue
+                item = self._release(principal, case_id, neighbor, applicability, exclusions)
+                if item is None:
+                    continue
+                if neighbor not in linked and item.section_id != passage.section_id:
+                    continue  # position alone does not make another section relevant
+                taken.add(item.citation_id)
+                context.append(item)
+        refill = [p for p in ordered[len(primaries):] if p.citation_id not in taken][:reserve - len(context)]
+        return primaries + refill + context

@@ -16,6 +16,8 @@ from evidence_agent.storage.originals import OriginalIntegrityError, OriginalSto
 from evidence_agent.storage.registry import Registry
 from evidence_agent.storage.sqlite import Database, DatabaseSchemaError
 
+from .legacy_schema import without_v8
+
 
 def _principal(
     principal_id: str,
@@ -51,6 +53,7 @@ def _remove_v4_fixture(connection: sqlite3.Connection) -> None:
         connection.execute(f"DROP TABLE IF EXISTS {table}")
     connection.execute("DROP INDEX IF EXISTS memory_scope_idx")
     connection.execute("DELETE FROM schema_versions WHERE version>=4")
+    without_v8(connection)
 
 
 def _downgrade_to_v1(path: Path, *, populated: bool) -> None:

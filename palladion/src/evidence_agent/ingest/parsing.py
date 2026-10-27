@@ -8,7 +8,7 @@ from pathlib import PurePosixPath
 
 from evidence_agent.core.errors import ValidationFailure
 
-PARSER_VERSION = "mdtxt-v1"
+PARSER_VERSION = "mdtxt-v2"  # v2: lead blocks join the next chunk, sentence-aware splits (ADR-0106)
 MAX_SOURCE_BYTES = 10 * 1024 * 1024
 _MIME_BY_SUFFIX = {
     ".md": "text/markdown",

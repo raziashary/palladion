@@ -5,13 +5,13 @@ from __future__ import annotations
 import hashlib
 import time
 from dataclasses import dataclass
-from datetime import datetime
 
 from evidence_agent.core.errors import DependencyUnavailable, PermissionDenied, ResourceConflict
 from evidence_agent.core.models import Principal
 from evidence_agent.graph.registry import GraphRegistry
 from evidence_agent.graph.relations import GraphPath, TraversalLimits
 from evidence_agent.retrieval.evidence import EvidenceResolver, Passage
+from evidence_agent.storage.applicability import Applicability
 from evidence_agent.storage.neo4j import Neo4jIndex
 
 
@@ -33,7 +33,7 @@ class GraphExpansion:
         case_id: str,
         anchors: tuple[Passage, ...],
         *,
-        as_of: datetime | None = None,
+        applicability: Applicability | None = None,
     ) -> Expansion:
         control = GraphRegistry(resolver.catalog, principal, case_id)
         control.authorize()
@@ -108,13 +108,13 @@ class GraphExpansion:
                             continue
                         # No Neo4j payload text or inferred assertion enters evidence.
                         for proof in evidence:
-                            resolver.resolve(principal, case_id, proof, as_of=as_of)
+                            resolver.resolve(principal, case_id, proof, applicability=applicability)
                         passage = resolver.resolve(
                             principal,
                             case_id,
                             identifier,
                             generation=row.get("generation"),
-                            as_of=as_of,
+                            applicability=applicability,
                         )
                     except (PermissionDenied, ResourceConflict):
                         continue
@@ -140,7 +140,7 @@ class GraphExpansion:
         # Revalidate again after traversal, including any mid-request ACL tightening.
         for path in paths:
             for identifier in path.evidence_ids:
-                resolver.resolve(principal, case_id, identifier, as_of=as_of)
+                resolver.resolve(principal, case_id, identifier, applicability=applicability)
         if time.monotonic() - started >= self.limits.timeout_seconds:
             raise DependencyUnavailable("Graph traversal deadline exceeded")
         return Expansion(tuple(admitted.values()), tuple(paths), bounded or fanout_reached)

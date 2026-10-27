@@ -13,6 +13,7 @@ from evidence_agent.core.retrieval import Chunk
 from .parsing import ParsedBlock
 
 DEFAULT_MAX_CHARS = 2400
+_SENTENCE_END = re.compile(r"[.!?\u3002][\"')\]]*\s")
 _EXCEPTION = re.compile(
     r"\b(?:except(?:ion)?|unless|however|provided that|notwithstanding|only if)\b",
     re.IGNORECASE,
@@ -23,6 +24,7 @@ _EXCEPTION = re.compile(
 class _ChunkSpan:
     chunk_id: str
     section_id: str
+    heading_path: tuple[str, ...]
     start_byte: int
     end_byte: int
     line_start: int
@@ -44,7 +46,9 @@ def chunk_blocks(
     """Group contiguous parsed blocks while retaining exact source spans.
 
     Exception clauses stay with the preceding rule when their exact source span
-    fits the target. Oversized blocks are split at Unicode character boundaries.
+    fits the target. A heading or an untitled preamble (a banner above the first heading) joins the block that
+    follows it, and the chunk takes that block's section; a heading with nothing after it is kept as its own chunk. Oversized blocks are split at Unicode
+    character boundaries, preferring a line break, then a sentence end, then a space.
     """
     if not blocks or max_chars < 1:
         raise ValueError("blocks and a positive max_chars are required")
@@ -55,6 +59,7 @@ def chunk_blocks(
             current = groups[-1] if groups else None
             attached_exception = bool(current and _EXCEPTION.search(block.text))
             same_section = bool(current and current[-1].section_id == block.section_id)
+            only_lead = bool(current and all(_is_lead(item) for item in current))
             contiguous = bool(current and block.start_byte >= current[-1].end_byte)
             combined_size = (
                 len(source_bytes[current[0].start_byte : block.end_byte].decode("utf-8"))
@@ -65,7 +70,7 @@ def chunk_blocks(
                 current
                 and contiguous
                 and combined_size <= max_chars
-                and (attached_exception or same_section)
+                and (attached_exception or same_section or only_lead)
             ):
                 current.append(block)
             else:
@@ -75,13 +80,15 @@ def chunk_blocks(
     for group in groups:
         start = group[0].start_byte
         end = group[-1].end_byte
-        section_id = group[0].section_id
+        content = next((item for item in group if not _is_lead(item)), group[0])
+        section_id = content.section_id
         text = source_bytes[start:end].decode("utf-8", errors="strict")
         identifier = chunk_id(tenant_id, revision_id, start, end)
         raw.append(
             _ChunkSpan(
                 chunk_id=identifier,
                 section_id=section_id,
+                heading_path=content.heading_path,
                 start_byte=start,
                 end_byte=end,
                 line_start=group[0].line_start,
@@ -121,9 +128,34 @@ def chunk_blocks(
                 source_sha256=source_sha256,
                 parent_id=parent_id,
                 neighbor_ids=neighbors,
+                heading_path=record.heading_path,
             )
         )
     return tuple(output)
+
+
+def _is_lead(block: ParsedBlock) -> bool:
+    """A heading or an untitled preamble says nothing alone; it belongs to the text that follows."""
+    return block.kind == "heading" or (not block.heading_path and block.kind != "verbatim")
+
+
+def _cut(text: str, start: int, max_chars: int) -> int:
+    """End of the next piece: the last line break, else sentence end, else space in the window's second half."""
+    limit = min(start + max_chars, len(text))
+    if limit == len(text):
+        return limit
+    floor = start + max_chars // 2
+    window = text[start:limit]
+    newline = window.rfind("\n") + 1
+    if start + newline > floor:
+        return start + newline
+    sentence_end = max((m.end() for m in _SENTENCE_END.finditer(window)), default=0)
+    if start + sentence_end > floor:
+        return start + sentence_end
+    space = window.rfind(" ") + 1
+    if start + space > floor:
+        return start + space
+    return limit
 
 
 def _bounded_blocks(block: ParsedBlock, max_chars: int) -> tuple[ParsedBlock, ...]:
@@ -135,7 +167,7 @@ def _bounded_blocks(block: ParsedBlock, max_chars: int) -> tuple[ParsedBlock, ..
     char_start = 0
     byte_start = block.start_byte
     while char_start < len(block.text):
-        char_end = min(char_start + max_chars, len(block.text))
+        char_end = _cut(block.text, char_start, max_chars)
         text = block.text[char_start:char_end]
         byte_end = byte_start + len(text.encode("utf-8"))
         prefix = block.text[:char_start]

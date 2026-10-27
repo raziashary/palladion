@@ -18,7 +18,7 @@ from qdrant_client.http.models import PointStruct
 
 from evidence_agent.core.errors import DependencyUnavailable
 from evidence_agent.core.models import Principal
-from evidence_agent.core.retrieval import Candidate, Chunk
+from evidence_agent.core.retrieval import TEXT_REPRESENTATION, Candidate, Chunk, index_text
 from evidence_agent.retrieval.embeddings import DenseEncoder, FastEmbedDenseEncoder
 
 _HASH_RE = re.compile(r"^[0-9a-f]{64}$")
@@ -150,6 +150,7 @@ class QdrantIndex:
             "bm25_model": "Qdrant/bm25",
             "bm25_profile": self.bm25_profile,
             "bm25_options": self._bm25.model_dump(mode="json", exclude_none=True),
+            "text_representation": TEXT_REPRESENTATION,
             "qdrant_client_version": importlib.metadata.version("qdrant-client"),
             "qdrant_server_version": self._get_server_version(),
             "rrf_k": 60,
@@ -159,19 +160,26 @@ class QdrantIndex:
         if not self._call_qdrant(
             self._client.collection_exists, collection_name=self.collection_name
         ):
-            self._call_qdrant(
-                self._client.create_collection,
-                collection_name=self.collection_name,
-                vectors_config={
-                    _DENSE_VECTOR: models.VectorParams(
-                        size=self._encoder.dimension, distance=models.Distance.COSINE
-                    )
-                },
-                sparse_vectors_config={
-                    _SPARSE_VECTOR: models.SparseVectorParams(modifier=models.Modifier.IDF)
-                },
-                replication_factor=1,
-            )
+            try:
+                self._call_qdrant(
+                    self._client.create_collection,
+                    collection_name=self.collection_name,
+                    vectors_config={
+                        _DENSE_VECTOR: models.VectorParams(
+                            size=self._encoder.dimension, distance=models.Distance.COSINE
+                        )
+                    },
+                    sparse_vectors_config={
+                        _SPARSE_VECTOR: models.SparseVectorParams(modifier=models.Modifier.IDF)
+                    },
+                    replication_factor=1,
+                )
+            except UnexpectedResponse as error:
+                # Another caller created it first; the schema validation below judges what it created.
+                if error.status_code != 409 or not self._call_qdrant(
+                    self._client.collection_exists, collection_name=self.collection_name
+                ):
+                    raise
 
         info = self._call_qdrant(
             self._client.get_collection, collection_name=self.collection_name
@@ -240,7 +248,7 @@ class QdrantIndex:
         if len(identities) != len(set(identities)):
             raise ValueError("upsert batch contains duplicate chunk identities")
         self.ensure_collection()
-        dense_vectors = self._encoder.embed_documents(chunk.text for chunk in chunks)
+        dense_vectors = self._encoder.embed_documents(index_text(chunk) for chunk in chunks)
         if dense_vectors is None or len(dense_vectors) != len(chunks):
             raise IndexConsistencyError("dense encoder returned a vector count different from input")
         fingerprint = self.fingerprint
@@ -261,7 +269,7 @@ class QdrantIndex:
                     vector={
                         _DENSE_VECTOR: dense,
                         _SPARSE_VECTOR: models.Document(
-                            text=chunk.text,
+                            text=index_text(chunk),
                             model="Qdrant/bm25",
                             options=self._bm25,
                         ),
@@ -378,7 +386,9 @@ class QdrantIndex:
         mode: Literal["lexical", "dense", "hybrid"] = "hybrid",
         limit: int = 20,
         exact: bool = False,
+        generations: Sequence[str] | None = None,
     ) -> tuple[Candidate, ...]:
+        """Ranked candidates of the caller's scope; `generations` restricts them to those index generations (None: no restriction; empty: no hits)."""
         if not query.strip():
             raise ValueError("query must not be empty")
         if not 1 <= limit <= _MAX_QUERY_LIMIT:
@@ -389,7 +399,9 @@ class QdrantIndex:
             raise PermissionError("principal is not authorized for the requested case")
         if not principal.tenant_id or not principal.principal_id:
             raise PermissionError("principal has no valid tenant identity")
-        query_filter = self._scope_filter(principal, case_id)
+        if generations is not None and not generations:
+            return ()
+        query_filter = self._scope_filter(principal, case_id, generations)
         response = self._query_points(query, query_filter, mode, limit, exact)
         candidates: list[Candidate] = []
         for point in response.points:
@@ -427,13 +439,21 @@ class QdrantIndex:
             )
         return tuple(candidates)
 
-    def _scope_filter(self, principal: Principal, case_id: str) -> models.Filter:
+    def _scope_filter(
+        self, principal: Principal, case_id: str, generations: Sequence[str] | None = None
+    ) -> models.Filter:
         must: list[models.Condition] = [
             models.FieldCondition(
                 key="tenant_id", match=models.MatchValue(value=principal.tenant_id)
             ),
             models.FieldCondition(key="case_id", match=models.MatchValue(value=case_id)),
         ]
+        if generations is not None:
+            must.append(
+                models.FieldCondition(
+                    key="index_generation", match=models.MatchAny(any=list(generations))
+                )
+            )
         if self.active_generation is not None:
             must.append(
                 models.FieldCondition(

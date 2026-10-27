@@ -27,10 +27,14 @@ if TYPE_CHECKING:
     from evidence_agent.memory.vector import VectorMemory
 
 
+DEFAULT_SEARCH_LIMIT = 8
+MAX_PARALLEL_SEARCHES = 2
+
+
 class KnowledgeArgs(VersionedModel):
     query: str = Field(min_length=1, max_length=2048)
-    search_mode: Literal["lexical", "dense", "hybrid", "reranked"] = "hybrid"
-    limit: int = Field(default=2, ge=1, le=12)
+    search_mode: Literal["lexical", "dense", "hybrid", "reranked"] = "reranked"
+    limit: int = Field(default=DEFAULT_SEARCH_LIMIT, ge=1, le=12)
     require_graph: bool = False
 
 
@@ -64,7 +68,7 @@ DESCRIPTIONS = {
 def definitions() -> list[dict[str, Any]]:
     def compact(value: Any) -> Any:
         if isinstance(value, dict):
-            return {k: compact(v) for k, v in value.items() if k not in {"title", "default"}}
+            return {k: compact(v) for k, v in value.items() if k != "title"}  # defaults stay: the model sees them
         if isinstance(value, list):
             return [compact(v) for v in value]
         return value
@@ -78,6 +82,7 @@ class Tools:
         self.ledger, self.gateway, self.store = ledger, gateway, store
         self.log = log  # evaluator mode only (ADR-0100); never read by the runtime
         self.memory_enabled = True
+        self.search_slots = asyncio.Semaphore(MAX_PARALLEL_SEARCHES)  # each search is a process that loads models
         self.graph_required = False
         self.memory_vector: VectorMemory | None = None
 
@@ -92,9 +97,11 @@ class Tools:
             data: Any
             recall_incomplete = False
             if isinstance(args, KnowledgeArgs):
-                result = await search(self.ledger.search, principal.principal_id, case,
-                                      args.query, args.search_mode, args.limit,
-                                      require_graph=args.require_graph or self.graph_required)
+                async with self.search_slots:
+                    result = await search(self.ledger.search, principal.principal_id, case,
+                                          args.query, args.search_mode, args.limit,
+                                          require_graph=args.require_graph or self.graph_required,
+                                          also_at=self.ledger.applicability_instants())
                 data = [self.ledger.add(p.citation_id) for p in result.passages]
                 if any(w in {"INDEX_UNAVAILABLE", "RERANK_UNAVAILABLE", "GRAPH_REQUIRED_UNAVAILABLE"} for w in result.warnings):
                     self.ledger.failures.append("KNOWLEDGE_UNAVAILABLE")

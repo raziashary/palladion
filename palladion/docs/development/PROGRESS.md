@@ -1,6 +1,8 @@
 # Current progress
 
-Current checkpoint 2026-10-20: all 13 P10 cards complete against published feature checkpoint c3c0950 and E-P10-006–008. Source 458 PASS/32 explicit SKIP, installed 91 PASS/2 explicit SKIP, native PDF 1 PASS; additional parser controls pass in overlapping 11-test source/installed runs. Final 70-file package comparison, static/docs gates, current-phase Luna Medium review and owned cleanup pass. 125 of 126 total cards are checked; only P09-T02.07/PF03 performance acceptance remains OPEN. No full historical-document audit or production/semantic efficacy claim is made.
+Current checkpoint 2026-10-28: P11 (evidence-path remediation from the benchmark's findings) is IN PROGRESS. P11-T01–T04 (search applicability and eligibility, bounded context and the identifier lane, chunk context and schema 8, agent defaults, atomic publication) are implemented and verified at the source level (E-P11-001: source 574 PASS/33 explicit SKIP, 19 of 19 planted mutants killed, ADR-0102–0108); P11-T05 (speed, ADR-0109) and P11-T06 (benchmark re-measurement at the new commit, end review, checkpoint) are open. No retrieval-quality or latency improvement is claimed until the benchmark measures it at the new commit. P09/PF03 performance acceptance stays open.
+
+Previous checkpoint 2026-10-20: all 13 P10 cards complete against published feature checkpoint c3c0950 and E-P10-006–008. Source 458 PASS/32 explicit SKIP, installed 91 PASS/2 explicit SKIP, native PDF 1 PASS; additional parser controls pass in overlapping 11-test source/installed runs. Final 70-file package comparison, static/docs gates, current-phase Luna Medium review and owned cleanup pass. 125 of 126 total cards are checked; only P09-T02.07/PF03 performance acceptance remains OPEN. No full historical-document audit or production/semantic efficacy claim is made.
 
 Historical P09 checkpoint: P09 audit and benchmark-handoff remediation ACTIVE. P00–P08 are historical completed pilot work (98 cards); independent reaudit identified and corrected gate/evaluation proof gaps; P09 remains active for PF03 performance acceptance. See evidence/P09_AUDIT_AND_HANDOFF.md and ADR-0087–0095; PF03 performance remains open after owner-rejected0091 closure; opaque IDs and opt-in5second audit reuse are approved and implemented. Benchmark implementation/editor work, UI and enterprise writes remain excluded; owner authorized a scoped verified main push.
 
@@ -198,6 +200,7 @@ Human gold-label adjudication, retrieval, citation API and model behavior are no
 | P06 | DONE | E-P06-001/002; all6 cards,307disjoint checks, installed/live proofs and sole review resolution; neutral pilot retained |
 | P07 | DONE | All11cards, source/installed/CLI/provider proof and sole audit resolution; graph defaultoff after neutral pilot; E-P07-001/002 |
 | P08 | DONE (PILOT) | All12cards; E-P08-001–003; current24controls and sole end-review resolution; negative outcomes and unknown stage/semantic metrics retained |
+| P11 | IN_PROGRESS | P11-T01–T04 done at E-P11-001 (source level); P11-T05 speed and P11-T06 benchmark re-measurement, review and checkpoint open |
 | X01 | DEFERRED | External comparators; baseline/ remains empty |
 
 ## Gate state

@@ -286,7 +286,7 @@ def self_test(documents: dict[str, str]) -> int:
         "empty accepted ADR answer": (adr_key, re.sub(
             r"(?m)^\*\*My answer \(editable\):\*\*[^\n]*", "**My answer (editable):**", ledger, count=1)),
         "unanswered risk decision": (DEV + "RISKS_AND_OPEN_QUESTIONS.md", documents[
-            DEV + "RISKS_AND_OPEN_QUESTIONS.md"].replace("ADR-0012", "ADR-0099", 1)),
+            DEV + "RISKS_AND_OPEN_QUESTIONS.md"].replace("ADR-0012", "ADR-9999", 1)),
         "unapproved root file owner": (plan_key, plan.replace(
             "`AGENTS.md`, `README.md`, `.gitignore`", "`AGENTS.md`, `unrelated.txt`, `.gitignore`", 1)),
         "runtime task owning root navigation": (plan_key, plan.replace(

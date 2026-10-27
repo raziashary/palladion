@@ -24,6 +24,7 @@ from evidence_agent.core.fixtures import load_fixtures
 from evidence_agent.core.models import Principal
 from evidence_agent.retrieval.hybrid import HybridSearch
 from evidence_agent.retrieval.rerank import FastEmbedReranker
+from evidence_agent.storage.applicability import Applicability
 from evidence_agent.storage.catalog import Catalog
 from evidence_agent.storage.originals import OriginalStore
 from evidence_agent.storage.qdrant import QdrantIndex
@@ -56,8 +57,8 @@ def _canonicalize(
     excluded = 0
     for hit in hits:
         try:
-            search.resolver.resolve(principal, case_id, hit.chunk_id,
-                                    generation=hit.generation, as_of=as_of)
+            search.resolver.resolve(principal, case_id, hit.chunk_id, generation=hit.generation,
+                                    applicability=Applicability.at(as_of) if as_of else None)
         except (PermissionDenied, ResourceConflict):
             excluded += 1
             continue
@@ -71,7 +72,7 @@ def _reference_ids(
 ) -> list[str]:
     ids: list[str] = []
     for reference in references:
-        ids.extend(catalog.lookup_alias(admin, case_id, reference["clause_id"]))
+        ids.extend(hit.chunk_id for hit in catalog.alias_hits(admin, case_id, reference["clause_id"]))
     return list(dict.fromkeys(ids))
 
 

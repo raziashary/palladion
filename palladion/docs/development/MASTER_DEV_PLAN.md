@@ -1526,6 +1526,91 @@ Current owner GO2026-10-20; ADR0096–0098 explicitly accepted. P09/PF03 accepta
   - **Change:** Stack/source/installed/actual service gates, one LunaMedium end reviewer/resolution, current docs/handoff completion, backup/own-port cleanup and scoped descriptive checkpoint; preserve PF03 and foreign work.
   - **Proof:** SMOKE; G-E2E, G-DOC; actual entrypoints and immutable source/provenance readback, review receipt, no stale claims or unverified completion.
 
+## P11 — Evidence-path remediation from the benchmark's findings
+
+Owner GO 2026-10-27 (benchmark investigation; "all of the fixes ... an actual fix not a monkey patch"); ADR-0102–ADR-0109. The benchmark found Palladion's retriever returning almost none of the governing policy evidence on version, exception and conflict questions, and about 1.9 s per search. Six read-only investigations and three independent reviews (Haiku 5.5, High) traced it to execution defects in the evidence path, not to the retrieval design: an applicability instant that could not reach an older governing version, neighbour expansion that spent the result slots, eligibility applied after a fixed top 40, an identifier lane that ranked citing tickets ahead of the defining policy and discarded every semantic result for an unknown code, chunks that carried no title, agent defaults of two passages, and publication steps that were not atomic. The blueprint's flow is unchanged; locked decisions are refined, not removed (ADR-0102 amends ADR-0101 and ADR-0087; ADR-0105 keeps the no-near-substitute rule for a bare unknown code). Subagents for this phase are read-only Haiku 5.5 High reviewers, as many as needed, under the owner's message of 2026-10-27 (replacing the Luna Medium start/end-only rule for this phase). No separate pre-phase adversary was dispatched: the six investigations that preceded the phase were the challenge of the baseline, and three independent reviewers (dead and stacked code, object-oriented design, test strength) read the first implementation group; their findings and dispositions are in E-P11-001.
+
+| Task | Outcome | Exit |
+|---|---|---|
+| P11-T01 | Search returns the governing evidence: applicability instants, eligibility prefilter, bounded context, defining-first identifier lane | G-RETRIEVAL, G-SOURCE, G-SECURITY |
+| P11-T02 | Chunks carry their title; banners and headings join their text; the index reads that context; populated databases upgrade and re-index | G-SOURCE, G-CONTRACT, G-RETRIEVAL |
+| P11-T03 | The agent asks for enough ranked passages and sees which policy and version each comes from | G-RETRIEVAL, G-E2E |
+| P11-T04 | Publication is atomic and fails closed; readers take no write lock | G-SOURCE, G-SECURITY |
+| P11-T05 | Search speed: measured stage times, search-path audit, reranker | G-RETRIEVAL, G-BUDGET |
+| P11-T06 | End to end: stack gates, benchmark re-measurement at the new commit, final review and checkpoint | G-E2E, G-DOC |
+
+<a id="p11-t01-01"></a>
+
+- [x] **P11-T01.01 — Applicability value object and eligibility prefilter**
+  - **Files:** `palladion/src/evidence_agent/storage/applicability.py`, `palladion/src/evidence_agent/storage/catalog.py`, `palladion/src/evidence_agent/storage/registry.py`, `palladion/src/evidence_agent/retrieval/evidence.py`, `palladion/src/evidence_agent/core/retrieval.py`, `palladion/src/evidence_agent/storage/qdrant.py`, `palladion/tests/search_support.py`, `palladion/tests/test_search_correctness.py`, `palladion/tests/test_search_guards.py`, `palladion/tests/test_retrieval.py`.
+  - **Depends:** P10-T06.
+  - **Change:** One `Applicability` rule shared by the resolver, the prefilter and coverage; candidates are offered only from index generations that can apply; the resolver reads one snapshot, takes no write lock and keeps the canonical checks as the authority; exclusions are counted by reason.
+  - **Proof:** INTEGRATION; G-RETRIEVAL, G-SOURCE, G-SECURITY; positive and negative controls (near-duplicate crowding, an index that ignores the filter, restricted and foreign-case revisions, tampered original) and 19 planted mutants killed; E-P11-001.
+
+<a id="p11-t01-02"></a>
+
+- [x] **P11-T01.02 — Search orchestration: bounded context and the identifier lane**
+  - **Files:** `palladion/src/evidence_agent/retrieval/hybrid.py`, `palladion/src/evidence_agent/storage/exact.py`, `palladion/src/evidence_agent/storage/catalog.py`, `palladion/src/evidence_agent/retrieval/graph_expand.py`, `palladion/src/evidence_agent/retrieval/coverage.py`, `palladion/src/evidence_agent/telemetry/audit.py`, `palladion/tests/test_search_correctness.py`, `palladion/tests/test_search_guards.py`.
+  - **Depends:** P11-T01.01.
+  - **Change:** Ranked passages first with a bounded context share; defining chunks lead, widely cited codes trail, an unknown code is named without discarding semantic results and a bare unknown code returns nothing; nothing the lane did not reach is called unknown; an empty eligible set and all-excluded results are warned.
+  - **Proof:** INTEGRATION; G-RETRIEVAL, G-SECURITY; exact-lane order isolated with a frozen semantic candidate, the 5/6 mention boundary and the truncation case; E-P11-001.
+
+<a id="p11-t01-03"></a>
+
+- [x] **P11-T01.03 — The case's instants reach the agent, the HTTP routes and the ledger**
+  - **Files:** `palladion/src/evidence_agent/agent/search_worker.py`, `palladion/src/evidence_agent/agent/tools.py`, `palladion/src/evidence_agent/api/routes.py`, `palladion/src/evidence_agent/api/schemas.py`, `palladion/src/evidence_agent/policy/temporal.py`, `palladion/tests/test_handoff.py`, `palladion/tests/test_search_guards.py`.
+  - **Depends:** P11-T01.01.
+  - **Change:** The backend derives the case's trusted instants (opening, named domain events, fresh verified transaction times) for search and for reading a citation back; the model has no argument for them; more than the bound fails visibly; one reader of the case's opening time.
+  - **Proof:** INTEGRATION; G-RETRIEVAL, G-SECURITY; the older citation reads back only with its instants; `KnowledgeArgs` forbids any time field; E-P11-001.
+
+<a id="p11-t02-01"></a>
+
+- [x] **P11-T02.01 — Chunk context, heading path and boundary-aware cuts**
+  - **Files:** `palladion/src/evidence_agent/ingest/parsing.py`, `palladion/src/evidence_agent/ingest/chunking.py`, `palladion/src/evidence_agent/core/retrieval.py`, `palladion/src/evidence_agent/storage/qdrant.py`, `palladion/src/evidence_agent/retrieval/rerank.py`, `palladion/tests/test_chunk_context.py`.
+  - **Depends:** P11-T01.01.
+  - **Change:** Banners and headings join the block below them, chunks keep a heading path, the encoder, BM25 and reranker read it while citation text stays the original bytes, oversized blocks are cut at a line, sentence or space, and the representation fingerprint pins the text form.
+  - **Proof:** INTEGRATION; G-SOURCE, G-RETRIEVAL; E-P11-001.
+
+<a id="p11-t02-02"></a>
+
+- [x] **P11-T02.02 — Schema 8 and safe re-indexing**
+  - **Files:** `palladion/src/evidence_agent/storage/sqlite.py`, `palladion/src/evidence_agent/storage/catalog.py`, `palladion/tests/test_storage.py`, `palladion/tests/test_ingest.py`, `palladion/tests/test_memory_promotion.py`, `palladion/tests/legacy_schema.py`.
+  - **Depends:** P11-T02.01.
+  - **Change:** `p02_chunks.heading_path_json` and `exact_aliases.defining` with a backfilling migration; a stored chunk may be relabelled once per parser version but its span, text and hashes never change; earlier generations are not served until indexed again.
+  - **Proof:** INTEGRATION; G-SOURCE, G-CONTRACT; fresh creation, populated v7 upgrade with rollback, relabel and conflict controls, the unserved-until-reindexed cliff; E-P11-001.
+
+<a id="p11-t03-01"></a>
+
+- [x] **P11-T03.01 — Agent defaults and the model's view of a passage**
+  - **Files:** `palladion/src/evidence_agent/agent/tools.py`, `palladion/src/evidence_agent/agent/critic.py`, `palladion/src/evidence_agent/retrieval/evidence.py`, `palladion/tests/test_critic.py`, `palladion/tests/test_search_correctness.py`.
+  - **Depends:** P11-T01.03.
+  - **Change:** Default limit 8 and reranked, defaults visible in the schema, the critic counter-search asks for 6, a bounded number of parallel search processes, and a document passage shows its family, heading path and validity window.
+  - **Proof:** INTEGRATION; G-RETRIEVAL, G-E2E; E-P11-001.
+
+<a id="p11-t04-01"></a>
+
+- [x] **P11-T04.01 — Atomic publication and race guards**
+  - **Files:** `palladion/src/evidence_agent/storage/catalog.py`, `palladion/src/evidence_agent/storage/exact.py`, `palladion/src/evidence_agent/storage/sqlite.py`, `palladion/src/evidence_agent/storage/qdrant.py`, `palladion/src/evidence_agent/api/routes.py`, `palladion/tests/test_search_guards.py`, `palladion/tests/test_search_correctness.py`, `palladion/tests/test_storage.py`, `palladion/tests/test_retrieval.py`.
+  - **Depends:** P11-T01.01.
+  - **Change:** A predecessor keeps answering until its successor can be served, aliases are written all together and reported when bounded, schema steps and collection creation are safe against a second opener, readers take no write lock.
+  - **Proof:** INTEGRATION; G-SOURCE, G-SECURITY; E-P11-001.
+
+<a id="p11-t05-01"></a>
+
+- [ ] **P11-T05.01 — Measure, then speed up the search path**
+  - **Files:** `palladion/src/evidence_agent/retrieval/coverage.py`, `palladion/src/evidence_agent/retrieval/rerank.py`, `palladion/src/evidence_agent/agent/search_worker.py`, `palladion/tests/test_handoff.py`.
+  - **Depends:** P11-T01.02.
+  - **Change:** Per-stage timing on the real runtime first; then the audit on the search path, the reranker settings and the per-search worker, each only as far as the measurement shows (ADR-0109, owner-approved direction).
+  - **Proof:** MEASUREMENT; G-RETRIEVAL, G-BUDGET; before and after timings on the same corpus, ranking unchanged unless disclosed.
+
+<a id="p11-t06-01"></a>
+
+- [ ] **P11-T06.01 — Verify end to end, re-measure in the benchmark and close**
+  - **Files:** `palladion/docs/development/MASTER_DEV_PLAN.md`, `palladion/docs/development/PROGRESS.md`, `palladion/docs/development/EVIDENCE_LOG.md`, `palladion/docs/development/GOAL.md`.
+  - **Depends:** P11-T05.01, P11-T04.01, P11-T03.01, P11-T02.02.
+  - **Change:** Stack gates, actual entry-point smoke, the benchmark's Track A and Track B re-run for the Palladion arms at the new commit, end review and resolution, scoped commit.
+  - **Proof:** SMOKE; G-E2E, G-DOC; benchmark evidence pointers and no stale claims.
+
 ## Definition of done
 
 A task is done only when acceptance, relevant gates, runnable smoke, review findings,

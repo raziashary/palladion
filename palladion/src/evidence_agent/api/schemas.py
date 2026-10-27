@@ -1,9 +1,10 @@
 """Bounded synthetic source/search HTTP inputs; identity is server supplied."""
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
 
 from evidence_agent.graph.relations import RelationType
+from evidence_agent.storage.applicability import MAX_EXTRA_INSTANTS
 
 
 class RequestModel(BaseModel):
@@ -31,6 +32,8 @@ class Search(RequestModel):
     limit: int = Field(default=12, ge=1, le=40)
     require_graph: bool = False
     as_of: AwareDatetime | None = Field(default=None, strict=False)
+    applicability_instants: list[Annotated[AwareDatetime, Field(strict=False)]] = Field(
+        default_factory=list, max_length=MAX_EXTRA_INSTANTS)
     token_budget: int | None = Field(default=None, ge=1, le=65536)
     reuse_physical_audit: bool = False
 

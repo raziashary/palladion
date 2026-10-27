@@ -190,10 +190,9 @@ def _bootstrap(registry: Registry, case: dict[str,Any], index: QdrantIndex,
     registry.approve_source(admin,revision)
     catalog = Catalog(registry)
     IngestPipeline(catalog,index,graph).index(admin,revision)
-    for chunk in catalog.chunks_for_revision(admin,revision):
-        catalog.add_alias(admin,case["family_id"],revision,chunk.chunk_id)
-        for alias in re.findall(r"^## ([A-Z0-9_-]+)",chunk.text,re.MULTILINE):
-            catalog.add_alias(admin,alias,revision,chunk.chunk_id)
+    catalog.add_aliases(admin,revision,[(alias,chunk.chunk_id)
+        for chunk in catalog.chunks_for_revision(admin,revision)
+        for alias in (case["family_id"],*re.findall(r"^## ([A-Z0-9_-]+)",chunk.text,re.MULTILINE))])
     for kind in ("retired","draft","restricted"):
         other = registry.register_source(uploader,tenant_id="tenant-a",case_id=case["case_id"],
             family_id=case["family_id"],content=case[kind+"_document"].encode(),
@@ -205,9 +204,9 @@ def _bootstrap(registry: Registry, case: dict[str,Any], index: QdrantIndex,
             continue
         registry.approve_source(admin,other)
         IngestPipeline(catalog,index,graph).index(admin,other)
-        for chunk in catalog.chunks_for_revision(admin,other):
-            for alias in re.findall(r"^## ([A-Z0-9_-]+)",chunk.text,re.MULTILINE):
-                catalog.add_alias(admin,alias,other,chunk.chunk_id)
+        catalog.add_aliases(admin,other,[(alias,chunk.chunk_id)
+            for chunk in catalog.chunks_for_revision(admin,other)
+            for alias in re.findall(r"^## ([A-Z0-9_-]+)",chunk.text,re.MULTILINE)])
     # A zero-input fictional routing policy exercises approved execution and time basis;
     # nonzero/missing/conflict predicates remain independently tested by T01–T24.
     clause = Clause(revision_id=revision,section_id="study",start_byte=0,end_byte=len(content),

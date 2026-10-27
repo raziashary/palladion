@@ -4,6 +4,10 @@ Current checkpoint 2026-10-20: all 13 P10 cards complete against published featu
 
 Updated 2026-10-20. Navigation aid only; user/vision/source/ADRs retain authority.
 
+## Current P11 checkpoint (2026-10-28)
+
+Source of truth for what changed and why: ADR-0102–0109 and E-P11-001. The evidence path is now: `Applicability` (storage/applicability.py) is the one rule for window and supersession, used by the resolver, the generation prefilter (`Catalog.eligible_generations`) and coverage; the agent's search takes the case's trusted instants from the request ledger, never from the model; `HybridSearch` returns ranked passages first with a quarter of the limit for context, defining chunks before citing ones, and counts why candidates were dropped; chunks keep a heading path and the index reads `index_text` (schema 8, representation fingerprint pins the text form, so earlier generations are unserved until indexed again). Recovery: if a deployment shows empty searches with `NO_ELIGIBLE_SOURCES`, index its revisions again. Open: P11-T05 speed (measure first), P11-T06 benchmark re-measurement. Reviewers for this phase are read-only Haiku 5.5 High.
+
 ## Current P10 verified checkpoint
 
 All13P10cards are complete against published source checkpoint c3c0950; only P09-T02.07/PF03 remains open (125/126checked, not readiness).

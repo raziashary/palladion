@@ -57,12 +57,12 @@ def seed(runtime_root: Path, fixture_root: Path, index: SearchIndex,
             IngestPipeline(catalog, index, graph).index(admin, revision)
             chunks = catalog.chunks_for_revision(admin, revision)
             indexed_chunks[source.source_id] = chunks
+            aliases = []
             for chunk in chunks:
-                catalog.add_alias(admin, source.source_id, revision, chunk.chunk_id)
-                catalog.add_alias(admin, source.family_id, revision, chunk.chunk_id)
-                for clause_id, clause in source.clauses.items():
-                    if chunk.start_byte <= clause.span_start < chunk.end_byte:
-                        catalog.add_alias(admin, clause_id, revision, chunk.chunk_id)
+                aliases += [(source.source_id, chunk.chunk_id), (source.family_id, chunk.chunk_id)]
+                aliases += [(clause_id, chunk.chunk_id) for clause_id, clause in source.clauses.items()
+                            if chunk.start_byte <= clause.span_start < chunk.end_byte]
+            catalog.add_aliases(admin, revision, aliases)
         admin = registry.access.authenticate("admin-a")
         if "SOP-2026-B" in indexed_chunks and "EX-2026-04" in indexed_chunks:
             origin = next(chunk for chunk in indexed_chunks["SOP-2026-B"] if "S26-REVERSAL" in chunk.text)

@@ -237,8 +237,7 @@ def test_p08_uploaded_injection_reaches_actual_model_as_data_without_private_lea
                     registry=Registry(database,OriginalStore(root/"originals"))
                     admin=registry.access.authenticate("admin-a")
                     chunks=Catalog(registry).chunks_for_revision(admin,revision)
-                    for chunk in chunks:
-                        Catalog(registry).add_alias(admin,family,revision,chunk.chunk_id)
+                    Catalog(registry).add_aliases(admin,revision,[(family,chunk.chunk_id) for chunk in chunks])
                     if family=="P08.PRIVATE":
                         forbidden=chunks[0].chunk_id
             denied=client.get(f"/evidence/{forbidden}?case_id=case-42",headers=auth("test-reader-a"))
@@ -364,7 +363,7 @@ def test_seed_reconcile_exact_scope_and_source_acl(runtime) -> None:
         admin = registry.access.authenticate("admin-a")
         chunk = next(c for c in catalog.chunks_for_revision(admin, revisions["SOP-2026-B"])
                      if "S26-REVERSAL" in c.text)
-        catalog.add_alias(admin, "POL-71", revisions["SOP-2026-B"], chunk.chunk_id)
+        catalog.add_aliases(admin, revisions["SOP-2026-B"], [("POL-71", chunk.chunk_id)])
     with TestClient(create_app(root, index, TOKENS)) as client:
         found = client.post("/search", json={"case_id": "case-42", "query": "SOP-2026-B"},
                             headers=auth("test-reader-a"))

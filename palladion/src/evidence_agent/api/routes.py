@@ -7,9 +7,9 @@ import hashlib
 import sqlite3
 from contextlib import closing, contextmanager
 from pathlib import Path
-from typing import Iterator
+from typing import Annotated, Iterator
 
-from fastapi import APIRouter, Header, HTTPException, Request
+from fastapi import APIRouter, Header, HTTPException, Query, Request
 from fastapi.responses import Response
 from pydantic import AwareDatetime
 
@@ -30,6 +30,7 @@ from evidence_agent.core.models import Principal
 from evidence_agent.ingest.metadata import validate_supersession_scope, validate_upload_metadata
 from evidence_agent.ingest.pipeline import IngestPipeline
 from evidence_agent.retrieval.hybrid import HybridSearch
+from evidence_agent.storage.applicability import MAX_EXTRA_INSTANTS, Applicability
 from evidence_agent.storage.catalog import Catalog
 from evidence_agent.storage.originals import OriginalStore
 from evidence_agent.storage.registry import Registry
@@ -246,7 +247,7 @@ def provision_membership(case_id: str, body: MembershipProvision, request: Reque
 @router.post("/sources/{revision_id}/approve")
 def approve(revision_id: str, request: Request,
             body: Approval | None = None,
-            authorization: str | None = Header(default=None)) -> dict[str, str]:
+            authorization: str | None = Header(default=None)) -> dict[str, object]:
     """Approve a scoped draft and publish its reconciled retrieval generation.
 
     Requires the existing independent source-approval authority and current source
@@ -276,8 +277,9 @@ def approve(revision_id: str, request: Request,
         generation = IngestPipeline(catalog, request.app.state.index,
             graph.backend if graph is not None else None).index(principal, revision_id)
         from evidence_agent.storage.exact import ExactIndex
-        ExactIndex(catalog).register_approved(principal, revision_id)
-        return {"revision_id": revision_id, "generation": generation, "state": "READY"}
+        aliases = ExactIndex(catalog).register_approved(principal, revision_id)
+        return {"revision_id": revision_id, "generation": generation, "state": "READY",
+                "aliases": {"registered": aliases.registered, "truncated": aliases.truncated}}
 
 
 @router.post("/sources/{revision_id}/revoke")
@@ -299,7 +301,9 @@ def search(body: Search, request: Request, authorization: str | None = Header(de
     Returns ranked canonical passages, coverage and degradation diagnostics. No LLM is
     invoked; ranking/no hits establish neither truth nor organization-wide absence.
     Optional as_of selects document applicability, never trusted operational event
-    time; current ACL/approval/revocation still apply. Optional token_budget counts
+    time; optional applicability_instants (at most seven) add instants at which a revision may
+    apply, so an older version that governed an earlier case time can be returned
+    (ADR-0102); current ACL/approval/revocation still apply. Optional token_budget counts
     whole returned passages with the disclosed retrieval tokenizer, not provider tokens.
     Explicit reuse_physical_audit may reuse a healthy audit for at most5seconds from
     its original start, with mode/time disclosed; current canonical checks still run.
@@ -307,7 +311,8 @@ def search(body: Search, request: Request, authorization: str | None = Header(de
     with services(request, authorization) as (_, catalog, principal):
         return HybridSearch(catalog, request.app.state.index, request.app.state.ranker,
             request.app.state.graph).search(principal, body.case_id, body.query, mode=body.mode,
-            limit=body.limit, as_of=body.as_of, token_budget=body.token_budget,
+            limit=body.limit, as_of=body.as_of, also_at=body.applicability_instants,
+            token_budget=body.token_budget,
             reuse_physical_audit=body.reuse_physical_audit,
             require_graph=body.require_graph or request.app.state.graph_required)
 
@@ -315,15 +320,17 @@ def search(body: Search, request: Request, authorization: str | None = Header(de
 @router.get("/evidence/{chunk_id}")
 def evidence(chunk_id: str, case_id: str, request: Request,
              as_of: AwareDatetime | None = None,
+             applicability_instants: Annotated[list[AwareDatetime] | None, Query(max_length=MAX_EXTRA_INSTANTS)] = None,
              authorization: str | None = Header(default=None)) -> object:
     """Resolve a P02 document citation to exact approved immutable bytes and metadata.
 
     Rechecks current case/source access, generation and hashes. Denied/stale references
     cannot expose source text. Other evidence kinds use the versioned reader below.
     """
-    with services(request, authorization) as (_, catalog, principal):
+    with services(request, authorization) as (registry, catalog, principal):
         return HybridSearch(catalog, request.app.state.index).resolver.resolve(
-            principal, case_id, chunk_id, as_of=as_of)
+            principal, case_id, chunk_id,
+            applicability=Applicability.at(as_of or registry.clock(), applicability_instants or ()))
 
 
 @router.get("/index-health")

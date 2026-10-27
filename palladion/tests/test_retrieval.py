@@ -269,6 +269,22 @@ def test_query_uses_native_rrf_once_and_prefilters_tenant_case_acl_generation() 
     ]
 
 
+def test_generation_filter_restricts_every_prefetch_and_an_empty_list_asks_the_index_nothing() -> None:
+    index, client = _index()
+    index.query("find this clause", _principal(), "case-a", limit=5, generations=("gen-1", "gen-2"))
+    request = [call[1] for call in client.calls if call[0] == "query_points"][-1]
+    assert len(request["prefetch"]) == 2, "the dense and the lexical prefetch both carry the filter"
+    for prefetch in request["prefetch"]:
+        generation = [c for c in prefetch.filter.must if c.key == "index_generation" and hasattr(c.match, "any")]
+        assert len(generation) == 1 and generation[0].match.any == ["gen-1", "gen-2"]
+    before = len(client.calls)
+    assert index.query("find this clause", _principal(), "case-a", limit=5, generations=()) == ()
+    assert len(client.calls) == before, "no eligible generation means no query is sent"
+    index.query("find this clause", _principal(), "case-a", limit=5)
+    unfiltered = [call[1] for call in client.calls if call[0] == "query_points"][-1]
+    assert not any(hasattr(c.match, "any") for c in unfiltered["prefetch"][0].filter.must)
+
+
 def test_lexical_and_dense_modes_do_not_invoke_hybrid_fusion() -> None:
     index, client = _index()
     for mode in ("lexical", "dense"):
@@ -300,6 +316,27 @@ def test_p08_native_qdrant_timeout_throttle_normalization_preserves_other_errors
     client.query_error=UnexpectedResponse.for_response(Response(status_code=status,content=b"diagnostic"))
     with pytest.raises(DependencyUnavailable if status in {408,429,503} else UnexpectedResponse):
         index.query("find clause",_principal(),"case-a")
+
+
+def test_a_collection_another_caller_created_first_is_not_an_error_but_other_failures_are() -> None:
+    class Racing(_Client):
+        def __init__(self, status: int, exists_afterwards: bool) -> None:
+            super().__init__()
+            self.status, self.exists_afterwards = status, exists_afterwards
+
+        def create_collection(self, **kwargs: Any) -> None:
+            super().create_collection(**kwargs)
+            self.created = self.exists_afterwards
+            raise UnexpectedResponse.for_response(Response(status_code=self.status, content=b"exists"))
+
+    for status, exists, raises in ((409, True, False), (409, False, True), (400, True, True)):
+        client = Racing(status, exists)
+        index = QdrantIndex(collection_name="race", client=client, encoder=_Encoder())  # type: ignore[arg-type]
+        if raises:
+            with pytest.raises(UnexpectedResponse):
+                index.ensure_collection()
+        else:
+            index.ensure_collection()
 
 
 def test_case_member_can_search_casewide_sources_but_not_another_principals_sources() -> None:

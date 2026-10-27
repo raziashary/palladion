@@ -1,10 +1,14 @@
 # Project goal
 
-Current checkpoint 2026-10-20: all 13 P10 cards complete against published feature checkpoint c3c0950 and E-P10-006–008. Source 458 PASS/32 explicit SKIP, installed 91 PASS/2 explicit SKIP, native PDF 1 PASS; additional parser controls pass in overlapping 11-test source/installed runs. Final 70-file package comparison, static/docs gates, current-phase Luna Medium review and owned cleanup pass. 125 of 126 total cards are checked; only P09-T02.07/PF03 performance acceptance remains OPEN. No full historical-document audit or production/semantic efficacy claim is made.
+Current checkpoint 2026-10-28: P11 (evidence-path remediation from the benchmark's findings) is IN PROGRESS. P11-T01–T04 (search applicability and eligibility, bounded context and the identifier lane, chunk context and schema 8, agent defaults, atomic publication) are implemented and verified at the source level (E-P11-001: source 574 PASS/33 explicit SKIP, 19 of 19 planted mutants killed, ADR-0102–0108); P11-T05 (speed, ADR-0109) and P11-T06 (benchmark re-measurement at the new commit, end review, checkpoint) are open. No retrieval-quality or latency improvement is claimed until the benchmark measures it at the new commit. P09/PF03 performance acceptance stays open.
+
+Previous checkpoint 2026-10-20: all 13 P10 cards complete against published feature checkpoint c3c0950 and E-P10-006–008. Source 458 PASS/32 explicit SKIP, installed 91 PASS/2 explicit SKIP, native PDF 1 PASS; additional parser controls pass in overlapping 11-test source/installed runs. Final 70-file package comparison, static/docs gates, current-phase Luna Medium review and owned cleanup pass. 125 of 126 total cards are checked; only P09-T02.07/PF03 performance acceptance remains OPEN. No full historical-document audit or production/semantic efficacy claim is made.
 
 As of2026-10-20 (Asia/Bangkok). Owner: user; coordinator maintains evidence.
 
 ## Development-suite outcomes
+
+P11 owner-approved outcomes (2026-10-27): search returns the governing evidence (the older version that governed an earlier case time, the defining policy ahead of the tickets that cite it, ranked passages never displaced by context), chunks carry their title, the agent asks for and sees enough, publication fails closed; speed follows measurement. Proof: P11 cards and E-P11-001, then the benchmark at the new commit.
 
 P10 owner-approved outcomes: provenance-backed graph links reach actual search;
 verbatim new text formats and bounded PDF originals/extractions reach current citation

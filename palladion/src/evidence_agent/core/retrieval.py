@@ -23,6 +23,19 @@ class Chunk(VersionedModel):
     source_sha256: str
     parent_id: str | None = None
     neighbor_ids: tuple[str, ...] = ()
+    heading_path: tuple[str, ...] = ()  # titles above the chunk, outermost first; context for search, never citation text
+
+
+TEXT_REPRESENTATION = "heading-path-v1"  # names what `index_text` builds; part of the index fingerprint
+
+
+def index_text(chunk: Chunk) -> str:
+    """What the dense encoder, BM25 and the reranker read: the heading path, then the exact chunk text.
+
+    The canonical text, spans and hashes stay the chunk's own; only the search representation is contextual, so a
+    clause that does not repeat its policy's name is still found and ranked by it (ADR-0106).
+    """
+    return f"{' > '.join(chunk.heading_path)}\n\n{chunk.text}" if chunk.heading_path else chunk.text
 
 
 class Candidate(VersionedModel):
@@ -47,4 +60,5 @@ class SearchIndex(Protocol):
                  generation: str) -> dict[str, str]: ...
     def query(self, query: str, principal: Principal, case_id: str,
               mode: Literal["lexical", "dense", "hybrid"] = "hybrid",
-              limit: int = 20, exact: bool = False) -> tuple[Candidate, ...]: ...
+              limit: int = 20, exact: bool = False,
+              generations: Sequence[str] | None = None) -> tuple[Candidate, ...]: ...

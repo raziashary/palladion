@@ -6,15 +6,35 @@ import hashlib
 import json
 import sqlite3
 from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
 
 from evidence_agent.core.errors import PermissionDenied, ResourceConflict, ValidationFailure
 from evidence_agent.core.ids import chunk_id as canonical_chunk_id
 from evidence_agent.core.models import Principal
 from evidence_agent.core.retrieval import Chunk
-from evidence_agent.storage.registry import Registry
+from evidence_agent.storage.applicability import Applicability
+from evidence_agent.storage.registry import Registry, acl_allows
 from evidence_agent.storage.sqlite import utc_now
 
 MAX_COVERAGE_CHUNKS = 100000
+MAX_ELIGIBLE_REVISIONS = 10000
+# Columns of a stored chunk row in `_chunk_values` order; the span columns are canonical and never change.
+_CHUNK_COLUMNS = ("tenant_id", "revision_id", "case_id", "section_id", "start_byte", "end_byte", "line_start",
+                  "line_end", "text", "content_sha256", "source_sha256", "parent_id", "neighbor_ids_json",
+                  "parser_version", "heading_path_json")
+_SPAN_COLUMNS = ("tenant_id", "revision_id", "case_id", "start_byte", "end_byte", "line_start", "line_end", "text",
+                 "content_sha256", "source_sha256")
+MAX_ALIAS_ROWS = 5000
+MAX_ALIAS_LENGTH = 256
+
+
+@dataclass(frozen=True)
+class AliasHit:
+    """A chunk reached through an exact alias; `defining` when the alias is its revision's own family or revision ID."""
+
+    chunk_id: str
+    revision_id: str
+    defining: bool
 
 
 class Catalog:
@@ -134,7 +154,7 @@ class Catalog:
                 existing_chunk = connection.execute(
                     "SELECT tenant_id, revision_id, case_id, section_id, start_byte, end_byte, "
                     "line_start, line_end, text, content_sha256, source_sha256, parent_id, "
-                    "neighbor_ids_json, parser_version FROM p02_chunks WHERE chunk_id = ?",
+                    "neighbor_ids_json, parser_version, heading_path_json FROM p02_chunks WHERE chunk_id = ?",
                     (chunk.chunk_id,),
                 ).fetchone()
                 values = _chunk_values(chunk, parser_version)
@@ -143,12 +163,24 @@ class Catalog:
                         "INSERT INTO p02_chunks "
                         "(chunk_id, tenant_id, revision_id, case_id, section_id, start_byte, end_byte, "
                         "line_start, line_end, text, content_sha256, source_sha256, parent_id, "
-                        "neighbor_ids_json, parser_version) "
-                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                        "neighbor_ids_json, parser_version, heading_path_json) "
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                         (chunk.chunk_id, *values),
                     )
                 elif tuple(existing_chunk) != values:
-                    raise ResourceConflict
+                    # The span, text and hashes are canonical and never change. How a newer parser labels and links
+                    # the same span (section, parent, neighbours, heading path) may, once, per parser version.
+                    named = dict(zip(_CHUNK_COLUMNS, values))
+                    if existing_chunk["parser_version"] == parser_version or any(
+                        existing_chunk[column] != named[column] for column in _SPAN_COLUMNS
+                    ):
+                        raise ResourceConflict
+                    connection.execute(
+                        "UPDATE p02_chunks SET section_id = ?, parent_id = ?, neighbor_ids_json = ?, "
+                        "parser_version = ?, heading_path_json = ? WHERE chunk_id = ?",
+                        (named["section_id"], named["parent_id"], named["neighbor_ids_json"],
+                         named["parser_version"], named["heading_path_json"], chunk.chunk_id),
+                    )
                 connection.execute(
                     "INSERT OR IGNORE INTO index_generation_chunks "
                     "(tenant_id, revision_id, generation, chunk_id, content_sha256) VALUES (?, ?, ?, ?, ?)",
@@ -411,13 +443,14 @@ class Catalog:
             "SELECT item_id,sha256 FROM index_graph_expectations WHERE tenant_id=? AND revision_id=? AND generation=?",
             (principal.tenant_id,revision_id,generation))}
 
-    def add_alias(
-        self, principal: Principal, alias: str, revision_id: str, chunk_id: str
+    def add_aliases(
+        self, principal: Principal, revision_id: str, pairs: Sequence[tuple[str, str]]
     ) -> None:
-        """Register an explicit exact alias for a canonical authorized chunk."""
-        normalized = _normalize_alias(alias)
+        """Register exact aliases of one revision's chunks all together or not at all, retry-safely."""
+        normalized = [(_normalize_alias(alias), alias, chunk_id) for alias, chunk_id in pairs]
         with self.database.transaction() as connection:
             source = self.registry.source_metadata(principal, revision_id)
+            names = {_normalize_alias(str(source["family_id"])), _normalize_alias(revision_id)}
             self._require_approved(source)
             self.registry.access.authorize(
                 principal,
@@ -426,21 +459,26 @@ class Catalog:
                 grant="document:approve",
                 role="admin",
             )
-            chunk = self.database.connection.execute(
-                "SELECT case_id FROM p02_chunks WHERE tenant_id = ? AND revision_id = ? AND chunk_id = ?",
-                (principal.tenant_id, revision_id, chunk_id),
-            ).fetchone()
-            if chunk is None:
+            known = {row[0] for row in connection.execute(
+                "SELECT chunk_id FROM p02_chunks WHERE tenant_id = ? AND revision_id = ?",
+                (principal.tenant_id, revision_id))}
+            if any(chunk_id not in known for _, _, chunk_id in normalized):
                 raise ValidationFailure
-            connection.execute(
+            connection.executemany(
                 "INSERT OR IGNORE INTO exact_aliases "
-                "(tenant_id, case_id, normalized_alias, alias, revision_id, chunk_id) "
-                "VALUES (?, ?, ?, ?, ?, ?)",
-                (principal.tenant_id, source["case_id"], normalized, alias, revision_id, chunk_id),
+                "(tenant_id, case_id, normalized_alias, alias, revision_id, chunk_id, defining) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                [(principal.tenant_id, source["case_id"], key, alias, revision_id, chunk_id, int(key in names))
+                 for key, alias, chunk_id in normalized],
             )
 
-    def lookup_alias(self, principal: Principal, case_id: str, alias: str, *, limit: int | None = None) -> tuple[str, ...]:
-        """Resolve only exact normalized aliases within the caller's case scope."""
+    def alias_hits(self, principal: Principal, case_id: str, alias: str, *,
+                   limit: int | None = None) -> tuple[AliasHit, ...]:
+        """Resolve only exact normalized aliases within the caller's case scope, defining chunks first.
+
+        Order is stable and meaningful: chunks of a revision the alias names (its family or revision ID) before chunks
+        that merely mention it, then revision, then position in the document. The alias row records which it is.
+        """
         self.registry.access.authorize(
             principal,
             tenant_id=principal.tenant_id,
@@ -450,25 +488,85 @@ class Catalog:
         if limit is not None and not 1 <= limit <= 101:
             raise ValidationFailure
         rows = self.database.connection.execute(
-            "SELECT DISTINCT aliases.chunk_id, aliases.revision_id "
-            "FROM exact_aliases AS aliases JOIN document_revisions AS revisions "
+            "SELECT aliases.chunk_id, aliases.revision_id, aliases.defining "
+            "FROM exact_aliases AS aliases "
+            "JOIN document_revisions AS revisions "
             "ON revisions.tenant_id = aliases.tenant_id AND revisions.revision_id = aliases.revision_id "
+            "JOIN p02_chunks AS chunks ON chunks.tenant_id = aliases.tenant_id AND chunks.chunk_id = aliases.chunk_id "
             "WHERE aliases.tenant_id = ? AND aliases.case_id = ? AND aliases.normalized_alias = ? "
             "AND revisions.approval_status = 'APPROVED' AND revisions.index_state = 'READY' "
             "AND (json_array_length(json_extract(revisions.acl_json,'$.allowed_principal_ids'))=0 "
             "OR EXISTS(SELECT 1 FROM json_each(revisions.acl_json,'$.allowed_principal_ids') WHERE value=?)) "
-            "ORDER BY aliases.revision_id, aliases.chunk_id LIMIT ?",
-            (principal.tenant_id, case_id, _normalize_alias(alias), principal.principal_id,
-                -1 if limit is None else limit),
+            "ORDER BY aliases.defining DESC, aliases.revision_id, chunks.start_byte, aliases.chunk_id LIMIT ?",
+            (principal.tenant_id, case_id, _normalize_alias(alias), principal.principal_id, MAX_ALIAS_ROWS),
         ).fetchall()
-        result: list[str] = []
+        result: list[AliasHit] = []
         for row in rows:
+            hit = AliasHit(row["chunk_id"], row["revision_id"], bool(row["defining"]))
+            if limit is not None and len(result) >= limit:
+                break
             try:
-                self.registry.source_metadata(principal, row["revision_id"])
+                self.registry.source_metadata(principal, hit.revision_id)
             except PermissionDenied:
                 continue
-            result.append(row["chunk_id"])
+            result.append(hit)
         return tuple(result)
+
+    def effective_supersessions(self, tenant_id: str, case_id: str,
+                                revision_id: str | None = None) -> dict[str, list[str]]:
+        """When each predecessor in the case stops applying, by predecessor revision.
+
+        An edge counts once its successor can be served: while the successor is approved but still indexing (or its
+        indexing failed) the predecessor keeps answering, and a revoked successor still retires it (ADR-0108). One
+        revision's edges when `revision_id` is given.
+        """
+        effective: dict[str, list[str]] = {}
+        for edge in self.database.connection.execute(
+            "SELECT edges.predecessor_revision_id, edges.applicability_scope_json, edges.valid_from "
+            "FROM supersession_edges AS edges "
+            "JOIN document_revisions AS predecessors ON predecessors.tenant_id = edges.tenant_id "
+            "AND predecessors.revision_id = edges.predecessor_revision_id "
+            "JOIN document_revisions AS successor ON successor.tenant_id = edges.tenant_id "
+            "AND successor.revision_id = edges.successor_revision_id "
+            "WHERE edges.tenant_id = ? AND predecessors.case_id = ? "
+            "AND (? IS NULL OR edges.predecessor_revision_id = ?) "
+            "AND NOT (successor.approval_status = 'APPROVED' AND successor.index_state <> 'READY')",
+            (tenant_id, case_id, revision_id, revision_id)):
+            if json.loads(edge[1]).get("case_id") == case_id:
+                effective.setdefault(edge[0], []).append(edge[2])
+        return effective
+
+    def eligible_generations(self, principal: Principal, case_id: str, applicability: Applicability, *,
+                             fingerprint: str) -> tuple[str, ...] | None:
+        """Index generations of the case's revisions the caller may read that the applicability admits.
+
+        Returns None past the bound. A generation names exactly one revision, so this also leaves out the points of
+        the earlier generations of a revision that was indexed again. It uses the predicates the evidence resolver
+        enforces (approved record, READY revision and generation of the serving fingerprint, window, supersession,
+        ACL). The resolver still decides every returned passage, so this only decides what the index may offer.
+        """
+        self.registry.access.authorize(principal, tenant_id=principal.tenant_id, case_id=case_id, grant="source:read")
+        rows = self.database.connection.execute(
+            "SELECT revisions.revision_id, revisions.index_generation, revisions.valid_from, revisions.valid_to, "
+            "revisions.acl_json "
+            "FROM document_revisions AS revisions "
+            "JOIN approval_records AS approvals ON approvals.approval_record_id = revisions.approval_record_id "
+            "AND approvals.tenant_id = revisions.tenant_id AND approvals.revision_id = revisions.revision_id "
+            "JOIN index_generations AS generations ON generations.tenant_id = revisions.tenant_id "
+            "AND generations.revision_id = revisions.revision_id AND generations.generation = revisions.index_generation "
+            "WHERE revisions.tenant_id = ? AND revisions.case_id = ? AND revisions.approval_status = 'APPROVED' "
+            "AND revisions.index_state = 'READY' AND approvals.status = 'APPROVED' "
+            "AND generations.state = 'READY' AND generations.fingerprint = ? LIMIT ?",
+            (principal.tenant_id, case_id, fingerprint, MAX_ELIGIBLE_REVISIONS + 1),
+        ).fetchall()
+        if len(rows) > MAX_ELIGIBLE_REVISIONS:
+            return None
+        superseded = self.effective_supersessions(principal.tenant_id, case_id)
+        return tuple(
+            row["index_generation"] for row in rows
+            if acl_allows(row["acl_json"], principal.principal_id)
+            and applicability.admits(row["valid_from"], row["valid_to"], superseded.get(row["revision_id"], ()))
+        )
 
     def add_context_link(
         self,
@@ -546,7 +644,7 @@ class Catalog:
 
 
 def _normalize_alias(alias: str) -> str:
-    if not isinstance(alias, str) or not alias.strip() or len(alias) > 256:
+    if not isinstance(alias, str) or not alias.strip() or len(alias) > MAX_ALIAS_LENGTH:
         raise ValidationFailure
     return alias.strip().casefold()
 
@@ -572,6 +670,7 @@ def _chunk_values(chunk: Chunk, parser_version: str) -> tuple[object, ...]:
         chunk.parent_id,
         json.dumps(chunk.neighbor_ids, separators=(",", ":")),
         parser_version,
+        json.dumps(chunk.heading_path, separators=(",", ":"), ensure_ascii=False),
     )
 
 
@@ -591,6 +690,7 @@ def _to_chunk(row: sqlite3.Row) -> Chunk:
         source_sha256=row["source_sha256"],
         parent_id=row["parent_id"],
         neighbor_ids=tuple(json.loads(row["neighbor_ids_json"])),
+        heading_path=tuple(json.loads(row["heading_path_json"])),
     )
 
 

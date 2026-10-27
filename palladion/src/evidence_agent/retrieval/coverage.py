@@ -25,9 +25,10 @@ from evidence_agent.retrieval.audit_cache import (
     read_audit,
     write_audit,
 )
+from evidence_agent.storage.applicability import Applicability
 from evidence_agent.storage.catalog import MAX_COVERAGE_CHUNKS, Catalog
 from evidence_agent.storage.qdrant import IndexConsistencyError
-from evidence_agent.storage.registry import Registry
+from evidence_agent.storage.registry import Registry, acl_allows
 
 
 class Coverage(VersionedModel):
@@ -110,16 +111,10 @@ def source_coverage(registry: Registry, principal: Principal, case_id: str,
             (principal.tenant_id, case_id, principal.principal_id)).fetchall()
     if len(rows) > 10000:
         warnings.append("COVERAGE_SCOPE_TRUNCATED")
-    visible = []
-    for row in rows[:10000]:
-        allowed = json.loads(row["acl_json"]).get("allowed_principal_ids", [])
-        if allowed and principal.principal_id not in allowed:
-            continue
-        if row["valid_from"] and now < datetime.fromisoformat(row["valid_from"]):
-            continue
-        if row["valid_to"] and now >= datetime.fromisoformat(row["valid_to"]):
-            continue
-        visible.append(row)
+    at_now = Applicability.at(now)
+    visible = [row for row in rows[:10000]
+               if acl_allows(row["acl_json"], principal.principal_id)
+               and at_now.admits(row["valid_from"], row["valid_to"], ())]
     accepted = len(visible)
     physical: dict[tuple[str, str], dict[str, str]] = {}
     failed_batches: set[str] = set()

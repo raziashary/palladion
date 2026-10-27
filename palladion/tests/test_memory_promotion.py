@@ -22,6 +22,7 @@ from evidence_agent.memory.store import CaseStore, MemorySpec
 from evidence_agent.storage.catalog import Catalog
 from evidence_agent.storage.sqlite import Database
 
+from .legacy_schema import without_v8
 from .test_pipeline import MemoryIndex
 
 
@@ -36,6 +37,7 @@ def remove_v6(connection):
     ):
         connection.execute(f"DROP TABLE {table}")
     connection.execute("DELETE FROM schema_versions WHERE version>=6")
+    without_v8(connection)
     connection.execute("PRAGMA user_version=5")
 
 
