@@ -1201,21 +1201,21 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
 
 <a id="b08-t08-01"></a>
 
-- [ ] **B08-T08.01 — Re-pin Palladion and re-run the gates**
+- [x] **B08-T08.01 — Re-pin Palladion and re-run the gates**
   - **Files:** `palladion-benchmark/configs/comparators.yaml`, `palladion-benchmark/scripts/palladion_runtime.py`, `palladion-benchmark/tests/test_config_loader.py`, `palladion-benchmark/tests/test_palladion_runtime.py`, `palladion-benchmark/docs/development/EVIDENCE_LOG.md`.
   - **Depends:** B07-T09.01, BADR-0044.
   - **Change:** Move the Palladion pin from `eec4ba5` to `dd70c0e` in all three places it lives (`PINNED_COMMIT`, the YAML pins, the config test), add a test that the YAML pin equals `PINNED_COMMIT`, rebuild the isolated worktree and runtime, re-evaluate the PF02 and PF05 workarounds recorded in B07-T00.04 for the new pin, and check the launcher's `--key-env` path after the key-handling fix.
   - **Proof:** INTEGRATION; BG-ADAPTER, BG-REPRO; the benchmark suite and the real-runtime tests pass at the new pin, with Palladion tests skipped at that commit counted as NOT_RUN, not passed; a planted mismatch between the YAML pin and `PINNED_COMMIT` fails the new test.
-  - **Evidence:** Not yet executed.
+  - **Evidence:** E-B08-002 (pin dd70c0e; gates pass; Palladion's 33 skipped tests are NOT_RUN).
 
 <a id="b08-t08-07"></a>
 
-- [ ] **B08-T08.07 — Daily-limit refusals are QUOTA_BLOCKED, resumable and never a zero**
+- [x] **B08-T08.07 — Daily-limit refusals are QUOTA_BLOCKED, resumable and never a zero**
   - **Files:** `palladion-benchmark/benchmark/generator.py`, `palladion-benchmark/benchmark/runner.py`, `palladion-benchmark/benchmark/contracts.py`, `palladion-benchmark/benchmark/results_check.py`, `palladion-benchmark/tests/test_generator_pool.py`, `palladion-benchmark/tests/test_runner.py`, `palladion-benchmark/tests/test_validate_results.py`.
   - **Depends:** B08-T08.01, BADR-0044.
   - **Change:** A provider refusal whose quota window is a day becomes a `QUOTA_BLOCKED` call outcome (NOT_RUN kind, harness-attributed): the pair is not finalised, the run stops starting new provider calls, and resuming the same run directory on a later day attempts the pending pairs again with both attempts kept in the ledger; the validator and the scorer count quota-blocked pairs apart from arm failures and from zeros. Per-minute refusals keep their handling.
   - **Proof:** UNIT; BG-HARNESS, BG-TRACKB; a scripted provider that refuses with a daily window leaves pairs pending, a resumed run completes them and the ledger shows both attempts; a per-minute refusal is unchanged; no INVALID_RUN is caused by a daily limit; a validator run on a directory with a hole that is not quota-blocked still fails.
-  - **Evidence:** Not yet executed.
+  - **Evidence:** E-B08-003 (QUOTA_BLOCKED, resumable; 219 tests pass).
 
 <a id="b08-t08-08"></a>
 

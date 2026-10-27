@@ -80,6 +80,11 @@ def main(argv: list[str] | None = None) -> int:
         "--allow-failover", action="store_true", help="on a rate limit move down the approved model list (recorded)"
     )
     parser.add_argument("--pace-seconds", type=float, default=0.0, help="minimum time between provider calls")
+    parser.add_argument(
+        "--close-quota-blocked",
+        action="store_true",
+        help="after the run, close pairs a provider's daily limit left pending as NOT_RUN QUOTA_BLOCKED (final)",
+    )
     parser.add_argument("--case-deadline-seconds", type=float, default=None, help="replaces the configured deadline")
     parser.add_argument("--qdrant-url", default=DEFAULT_URL)
     parser.add_argument("--start-qdrant", action="store_true")
@@ -141,6 +146,7 @@ def main(argv: list[str] | None = None) -> int:
             options.run_id, options.split, options.k, options.budget, options.root, options.out,
             condition=condition.value, live=live, tokens_per_question=options.tokens_per_question, withdrawn=withdrawn,
             question_ids=subset, case_deadline_seconds=options.case_deadline_seconds, pace_seconds=options.pace_seconds,
+            close_quota_blocked=options.close_quota_blocked,
         )  # fmt: skip
         plan = plan_assignment(asked_records(records, withdrawn, subset), generator, spec, seed)
         options.out.mkdir(parents=True, exist_ok=True)
@@ -169,6 +175,7 @@ def main(argv: list[str] | None = None) -> int:
                     "unassigned": len(outcome.unassigned),
                     "generator": label,
                     "status_counts": dict(outcome.summary.status_counts),
+                    "quota_blocked_pairs": outcome.summary.quota_blocked_pairs,
                 },
                 indent=2,
             )

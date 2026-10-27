@@ -58,6 +58,11 @@ class ErrorOrigin(StrEnum):
     ARM = "ARM"
 
 
+QUOTA_BLOCKED_CODE = "QUOTA_BLOCKED"
+"""A provider's daily limit stopped a call. It is the harness's, never an arm's: the pair stays pending and is
+attempted again after the quota resets, or is closed as NOT_RUN with this code (BADR-0044)."""
+
+
 class EvidenceStatus(StrEnum):
     SUPPORTED = "SUPPORTED"
     PARTIALLY_SUPPORTED = "PARTIALLY_SUPPORTED"

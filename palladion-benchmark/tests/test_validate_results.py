@@ -210,6 +210,22 @@ def test_a_ledger_hole_is_rejected(clean_run: Path, s_root: Path, tmp_path: Path
     assert "not a complete record of the run" in rules(validate_run(planted(clean_run, tmp_path, plant), root=s_root))
 
 
+def test_a_run_a_daily_limit_stopped_is_reported_as_paused_not_as_a_hole(
+    clean_run: Path, s_root: Path, tmp_path: Path
+) -> None:
+    def plant(run: Path) -> None:
+        def change(rows: list[dict[str, object]]) -> list[dict[str, object]]:
+            last = dict(rows[-1])
+            last.update(is_final=False, status="NOT_RUN", origin="HARNESS", code="QUOTA_BLOCKED", payload=None)
+            last.update(initial_status=None, attempts=None, duration_ms=None)
+            return [*rows[:-1], last]
+
+        edit_ledger(run, change)
+
+    reported = rules(validate_run(planted(clean_run, tmp_path, plant), root=s_root))
+    assert "the run is paused" in reported and "not a complete record" not in reported
+
+
 def test_a_record_that_does_not_match_its_manifest_is_rejected(clean_run: Path, s_root: Path, tmp_path: Path) -> None:
     def plant(run: Path) -> None:
         def change(rows: list[dict[str, object]]) -> list[dict[str, object]]:

@@ -513,6 +513,68 @@ def test_completeness_check_fails_when_a_pair_is_missing(tmp_path: Path) -> None
         world.ledger.verify_complete([("R0", qid(1)), ("R0", qid(2)), ("R0", qid(3))])
 
 
+# ----------------------------------------------------------------------------- a daily limit is a pause, not a failure
+
+
+def daily_limit() -> BaseException:
+    from benchmark.generator import GenerationError
+
+    return GenerationError("QUOTA_BLOCKED")
+
+
+def test_a_daily_limit_leaves_the_pair_pending_and_a_later_run_of_the_directory_finishes_it(tmp_path: Path) -> None:
+    stopped = Scripted(script=[daily_limit()] * 2)
+    first = build(tmp_path, {"R0": Good(), "R1": stopped}).run(2)
+    assert first.quota_blocked_pairs == 2 and first.executed_pairs == 2 and first.status_counts == {"OK": 2}
+    blocked = [r for r in RunLedger(tmp_path / "ledger.jsonl").records if r.arm == "R1"]
+    assert [(r.is_final, r.status, r.origin, r.code) for r in blocked] == [
+        (False, RunStatus.NOT_RUN, ErrorOrigin.HARNESS, "QUOTA_BLOCKED")
+    ] * 2
+    assert RunLedger(tmp_path / "ledger.jsonl").quota_blocked_pairs() == {("R1", qid(1)), ("R1", qid(2))}
+
+    second = build(tmp_path, {"R0": Good(), "R1": Scripted()}).run(2)  # the quota is back
+    assert second.quota_blocked_pairs == 0 and second.status_counts == {"OK": 2} and second.skipped_pairs == 2
+    reopened = RunLedger(tmp_path / "ledger.jsonl")
+    assert reopened.quota_blocked_pairs() == frozenset()
+    final = next(r for r in reopened.records if r.arm == "R1" and r.question_id == qid(1) and r.is_final)
+    assert (final.status, final.attempt, final.initial_status) == (RunStatus.OK, 2, RunStatus.OK)
+    assert len([r for r in reopened.records if (r.arm, r.question_id) == ("R1", qid(1))]) == 2  # both attempts kept
+
+
+def test_a_daily_limit_is_never_counted_as_an_arm_failure_or_a_zero(tmp_path: Path) -> None:
+    world = build(tmp_path, {"R0": Scripted(script=[daily_limit()] * 3)})
+    summary = world.run(3)
+    assert summary.status_counts == {} and summary.executed_pairs == 0 and summary.quota_blocked_pairs == 3
+    assert not any(r.is_final for r in world.ledger.records)
+    assert not any(r.status is RunStatus.INVALID_RUN for r in world.ledger.records)
+
+
+def test_a_pair_that_is_pending_for_another_reason_is_still_an_incomplete_ledger(tmp_path: Path) -> None:
+    world = build(tmp_path, {"R0": Good()})
+    world.run(1)
+    with pytest.raises(RunnerError, match="not complete"):
+        world.ledger.verify_complete([("R0", qid(1)), ("R0", qid(2))], pending=[("R0", qid(3))])
+    world.ledger.verify_complete([("R0", qid(1)), ("R0", qid(2))], pending=[("R0", qid(2))])
+
+
+def test_closing_gives_a_stopped_pair_a_final_not_run_and_keeps_the_first_real_outcome_unset(tmp_path: Path) -> None:
+    world = build(tmp_path, {"R0": Good(), "R1": Scripted(script=[daily_limit()] * 2)})
+    cases = [RunnerCase(request(i)) for i in (1, 2)]
+    world.runner.run(cases, split="pilot")
+    assert world.runner.close_quota_blocked(cases, split="pilot") == 2
+    closed = [r for r in world.ledger.records if r.arm == "R1" and r.is_final]
+    assert [(r.status, r.origin, r.code, r.initial_status) for r in closed] == [
+        (RunStatus.NOT_RUN, ErrorOrigin.HARNESS, "QUOTA_BLOCKED", RunStatus.NOT_RUN)
+    ] * 2
+    world.ledger.verify_complete([(a, qid(i)) for a in ("R0", "R1") for i in (1, 2)])
+
+
+def test_closing_refuses_a_pair_that_was_never_stopped_by_a_limit(tmp_path: Path) -> None:
+    world = build(tmp_path, {"R0": Good()})
+    with pytest.raises(RunnerError, match="not stopped by a daily limit"):
+        world.runner.close_quota_blocked([RunnerCase(request(1))], split="pilot")
+
+
 # ----------------------------------------------------------------------------- preflight
 
 

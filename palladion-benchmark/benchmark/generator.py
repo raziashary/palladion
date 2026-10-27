@@ -31,6 +31,7 @@ import httpx
 
 from benchmark.config import APPROVED_MODELS, GeneratorSettings, load_benchmark_config
 from benchmark.contracts import (
+    QUOTA_BLOCKED_CODE,
     ContractError,
     ErrorOrigin,
     RunStatus,
@@ -65,6 +66,7 @@ _CLASSIFICATION: Mapping[str, tuple[RunStatus, ErrorOrigin]] = {
     "MALFORMED_RESPONSE": (RunStatus.INVALID_RUN, ErrorOrigin.PROVIDER),
     "GENERATION_DEADLINE": (RunStatus.TIMEOUT, ErrorOrigin.PROVIDER),
     "BUDGET_EXHAUSTED": (RunStatus.NOT_RUN, ErrorOrigin.HARNESS),
+    QUOTA_BLOCKED_CODE: (RunStatus.NOT_RUN, ErrorOrigin.HARNESS),
     "DISABLED": (RunStatus.NOT_RUN, ErrorOrigin.HARNESS),
     "NO_CREDENTIAL": (RunStatus.NOT_RUN, ErrorOrigin.HARNESS),
     "ASSIGNMENT_MISSING": (RunStatus.NOT_RUN, ErrorOrigin.HARNESS),
@@ -296,6 +298,7 @@ _WINDOWS = (
     ("requests per day", "REQUESTS_DAILY"),
     ("requests per minute", "REQUESTS_MINUTE"),
 )
+DAILY_WINDOWS = frozenset({"TOKENS_DAILY", "REQUESTS_DAILY"})
 
 
 def _quota_window(body: bytes) -> tuple[str, float | None]:
@@ -349,6 +352,7 @@ class GeneratorPool:
         self._wall_clock = wall_clock or (lambda: datetime.now(UTC))
         self._records: list[GenerationRecord] = []
         self._mixed: set[str] = set()
+        self._quota_blocked: set[str] = set()
         self._lock = threading.Lock()
 
     @classmethod
@@ -393,6 +397,12 @@ class GeneratorPool:
             return frozenset(self._mixed)
 
     @property
+    def quota_blocked_models(self) -> frozenset[str]:
+        """Models a provider's daily limit stopped in this process; a later process asks the provider again."""
+        with self._lock:
+            return frozenset(self._quota_blocked)
+
+    @property
     def budget_violations(self) -> int:
         return len(self._budget.violations)
 
@@ -419,6 +429,8 @@ class GeneratorPool:
         model = self._assignment.get(question_id)
         if model is None:
             raise GenerationError("ASSIGNMENT_MISSING")
+        if model in self.quota_blocked_models:  # no request is made for a model the provider has stopped for the day
+            raise GenerationError(QUOTA_BLOCKED_CODE)
         cap = self.settings.max_completion_tokens if max_completion_tokens is None else max_completion_tokens
         if type(cap) is not int or not 1 <= cap <= self.settings.max_completion_tokens:
             raise ContractError("max_completion_tokens exceeds the configured cap")
@@ -467,6 +479,10 @@ class GeneratorPool:
                     with self._lock:
                         self._mixed.add(question_id)
                     continue
+            if record.quota_window in DAILY_WINDOWS:
+                with self._lock:
+                    self._quota_blocked.add(model)
+                raise GenerationError(QUOTA_BLOCKED_CODE)
             raise error
 
     def _pace_before_dispatch(self, deadline: float | None) -> None:

@@ -282,6 +282,49 @@ def test_the_suggested_wait_in_the_error_body_is_used_when_no_header_exists() ->
     assert sleeps == [90.5] and instance.records[0].quota_window == "TOKENS_DAILY"
 
 
+DAILY = "Rate limit reached for model on tokens per day (TPD): Limit 200000, Used 199900. Please try again in 6h12m3s."
+
+
+def test_a_daily_limit_with_a_long_wait_is_quota_blocked_not_an_invalid_run() -> None:
+    from benchmark.contracts import classify_exception
+
+    sleeps: list[float] = []
+    instance, transport = pool([limited(None, message=DAILY)], sleeps=sleeps)
+    with pytest.raises(GenerationError) as caught:
+        instance.complete(Q1, MESSAGES)
+    assert caught.value.code == "QUOTA_BLOCKED" and sleeps == [] and len(transport.payloads) == 1
+    status, origin, label = classify_exception(caught.value)
+    assert (status.value, origin.value, label) == ("NOT_RUN", "HARNESS", "QUOTA_BLOCKED")
+    assert [(r.status, r.quota_window) for r in instance.records] == [("RATE_LIMITED", "TOKENS_DAILY")]
+    assert instance.quota_blocked_models == frozenset({QWEN})
+
+
+def test_a_blocked_model_is_not_asked_again_but_the_others_still_answer() -> None:
+    instance, transport = pool([limited(None, message=DAILY), ok(GPT120)])
+    with pytest.raises(GenerationError):
+        instance.complete(Q1, MESSAGES)
+    with pytest.raises(GenerationError) as again:
+        instance.complete(Q1, MESSAGES)  # the same model: refused without a request
+    assert again.value.code == "QUOTA_BLOCKED" and len(transport.payloads) == 1
+    assert instance.complete(Q2, MESSAGES).text == "ready"  # the other model has its own quota
+    assert [p["model"] for p in transport.payloads] == [QWEN, GPT120]
+
+
+def test_a_per_minute_limit_keeps_its_provider_fault_classification() -> None:
+    instance, _ = pool([limited("500")])
+    with pytest.raises(GenerationError) as caught:
+        instance.complete(Q1, MESSAGES)
+    assert caught.value.code == "RATE_LIMITED" and instance.quota_blocked_models == frozenset()
+
+
+def test_a_new_pool_does_not_inherit_a_block_and_asks_the_provider_again() -> None:
+    first, _ = pool([limited(None, message=DAILY)])
+    with pytest.raises(GenerationError):
+        first.complete(Q1, MESSAGES)
+    second, transport = pool([ok(QWEN)])
+    assert second.complete(Q1, MESSAGES).text == "ready" and len(transport.payloads) == 1
+
+
 def test_explicit_failover_switches_model_records_it_and_marks_the_question_mixed() -> None:
     settings = replace(SETTINGS, allow_automatic_failover=True)
     instance, transport = pool([limited("1")] * 3 + [ok(GPT120)], settings=settings)
@@ -612,6 +655,7 @@ def test_zero_limits_are_refused_not_crashed(
         ("NO_CREDENTIAL", ("NOT_RUN", "HARNESS")),
         ("ASSIGNMENT_MISSING", ("NOT_RUN", "HARNESS")),
         ("REQUEST_TOO_LARGE", ("INVALID_RUN", "HARNESS")),
+        ("QUOTA_BLOCKED", ("NOT_RUN", "HARNESS")),
         ("MODEL_NOT_APPROVED", ("INVALID_RUN", "ARM")),
     ],
 )

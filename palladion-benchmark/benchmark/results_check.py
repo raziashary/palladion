@@ -183,12 +183,26 @@ def _check_comparators(run_dir: Path, config: Mapping[str, Any], arms: Sequence[
     return findings
 
 
+def _paused(ledger: RunLedger) -> Finding | None:
+    """A run a provider's daily limit stopped is neither complete nor failed: it waits for the quota or is closed."""
+    pending = ledger.quota_blocked_pairs()
+    if not pending:
+        return None
+    return Finding(
+        f"the run is paused: {len(pending)} pairs were stopped by a provider's daily limit; resume it after the "
+        "quota resets or close them as NOT_RUN QUOTA_BLOCKED",
+        "ledger.jsonl",
+    )
+
+
 def _check_ledger(
     run_dir: Path, config: Mapping[str, Any], arms: Sequence[str], records: Sequence[GoldRecord]
 ) -> list[Finding]:
     findings: list[Finding] = []
     try:
         ledger = RunLedger(run_dir / "ledger.jsonl")
+        if paused := _paused(ledger):
+            return [paused]
         ledger.verify_complete([(arm, r.question_id) for arm in arms for r in records])
     except RunnerError as exc:
         return [Finding(f"the ledger is not a complete record of the run: {str(exc)[:120]}", "ledger.jsonl")]
@@ -249,6 +263,8 @@ def _check_answer_ledger(run_dir: Path, arms: Sequence[str], asked: Sequence[Gol
     findings: list[Finding] = []
     try:
         ledger = RunLedger(run_dir / "ledger.jsonl")
+        if paused := _paused(ledger):
+            return [paused]
         ledger.verify_complete([(arm, r.question_id) for arm in arms for r in asked])
     except RunnerError as exc:
         return [Finding(f"the ledger is not a complete record of the run: {str(exc)[:120]}", "ledger.jsonl")]

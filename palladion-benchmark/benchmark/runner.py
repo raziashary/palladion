@@ -23,7 +23,7 @@ import random
 import threading
 import time
 from collections import Counter
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Collection, Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
 from pathlib import Path
@@ -31,6 +31,7 @@ from typing import Any
 
 from benchmark.config import BenchmarkConfig, RetryPolicy
 from benchmark.contracts import (
+    QUOTA_BLOCKED_CODE,
     ArmUnavailable,
     CapabilityUnsupported,
     CaseRequest,
@@ -160,10 +161,15 @@ class RunLedger:
             )
 
     def first_status(self, arm: str, question_id: str) -> RunStatus | None:
-        """Status of the first recorded attempt of a pair, if any."""
+        """Status of the first attempt that reached the arm; a quota-blocked attempt did not and is not counted."""
         with self._lock:
-            first = [r for r in self._records if (r.arm, r.question_id, r.attempt) == (arm, question_id, 1)]
-            return first[0].status if first else None
+            made = [r for r in self._records if (r.arm, r.question_id) == (arm, question_id) and not _quota_blocked(r)]
+            return min(made, key=lambda r: r.attempt).status if made else None
+
+    def quota_blocked_pairs(self) -> frozenset[tuple[str, str]]:
+        """Pairs with a quota-blocked attempt and no final outcome yet."""
+        with self._lock:
+            return frozenset((r.arm, r.question_id) for r in self._records if _quota_blocked(r)) - self._final_keys
 
     def timed_out_arms(self) -> dict[str, str]:
         """Arms with a TIMEOUT outcome on record, with the question that timed them out."""
@@ -187,17 +193,24 @@ class RunLedger:
             if record.is_final:
                 self._final_keys.add(key)
 
-    def verify_complete(self, planned: Sequence[tuple[str, str]]) -> None:
-        """Intention to treat: every planned pair has exactly one final record and nothing else is final."""
+    def verify_complete(self, planned: Sequence[tuple[str, str]], *, pending: Collection[tuple[str, str]] = ()) -> None:
+        """Intention to treat: every planned pair has exactly one final record and nothing else is final.
+
+        ``pending`` names pairs a daily limit left unfinished; they are the only pairs allowed to lack a final record.
+        """
         with self._lock:
             finals = Counter((r.arm, r.question_id) for r in self._records if r.is_final)
-        missing = sorted(set(planned) - set(finals))
+        missing = sorted(set(planned) - set(finals) - set(pending))
         extra = sorted(set(finals) - set(planned))
         duplicated = sorted(k for k, n in finals.items() if n > 1)
         if missing or extra or duplicated:
             raise RunnerError(
                 f"ledger is not complete: missing {missing[:3]}, extra {extra[:3]}, duplicated {duplicated[:3]}"
             )
+
+
+def _quota_blocked(record: LedgerRecord) -> bool:
+    return record.code == QUOTA_BLOCKED_CODE and record.origin is ErrorOrigin.HARNESS
 
 
 class PlanRegistry:
@@ -319,6 +332,7 @@ class RunSummary:
     unusable_arms: tuple[str, ...]
     censored_questions: tuple[str, ...]
     flag_counts: Mapping[str, int]
+    quota_blocked_pairs: int = 0  # unfinished because a daily limit stopped them; a later run of this directory resumes
 
 
 @dataclass
@@ -529,7 +543,8 @@ class Runner:
 
     # -- one pair -----------------------------------------------------------
 
-    def _run_pair(self, binding: ArmBinding, case: RunnerCase, digest: str) -> RunStatus:
+    def _run_pair(self, binding: ArmBinding, case: RunnerCase, digest: str) -> RunStatus | None:
+        """The pair's final status, or None when a daily limit left it pending (the attempt is kept, not final)."""
         arm, qid = binding.arm_id, case.question_id
         if arm in self._unusable:
             return self._final_without_call(
@@ -540,6 +555,9 @@ class Runner:
         first_status = self.ledger.first_status(arm, qid)
         while True:
             outcome = self._attempt(binding, case)
+            if outcome.code == QUOTA_BLOCKED_CODE and outcome.origin is ErrorOrigin.HARNESS:
+                self.ledger.append(self._record(arm, qid, digest, attempt, False, outcome, outcome.status, attempt))
+                return None
             first_status = first_status or outcome.status
             can_retry = outcome.retryable and attempt < policy.max_attempts and outcome.status is not RunStatus.OK
             if outcome.status is RunStatus.TIMEOUT and arm in self._unusable:
@@ -616,6 +634,7 @@ class Runner:
         executed = skipped = 0
         counts: Counter[str] = Counter()
         censored: list[str] = []
+        pending_pairs: set[tuple[str, str]] = set()
         for qid in self.case_order(list(by_id)):
             over = (
                 self.settings.run_deadline_seconds is not None
@@ -627,6 +646,7 @@ class Runner:
                 censored.append(qid)
             for arm in pending:
                 digest = manifests[arm][1]
+                status: RunStatus | None
                 if over:
                     status = self._final_without_call(
                         arm, qid, digest, RunStatus.NOT_RUN, ErrorOrigin.HARNESS, "RUN_DEADLINE"
@@ -635,10 +655,13 @@ class Runner:
                     status = self._final_without_call(arm, qid, digest, *blocked[arm])
                 else:
                     status = self._run_pair(bindings[arm], by_id[qid], digest)
+                if status is None:
+                    pending_pairs.add((arm, qid))
+                    continue
                 counts[status.value] += 1
                 executed += 1
         planned = [(arm, qid) for qid in by_id for arm in arm_ids]
-        self.ledger.verify_complete(planned)
+        self.ledger.verify_complete(planned, pending=pending_pairs)
         with self._late_lock:
             late = self._late
         flag_counts = Counter(f for r in self.ledger.records if r.is_final and r.run_id == self.run_id for f in r.flags)
@@ -652,4 +675,28 @@ class Runner:
             tuple(sorted(self._unusable)),
             tuple(sorted(censored)),
             dict(flag_counts),
+            len(pending_pairs),
         )
+
+    def close_quota_blocked(self, cases: Sequence[RunnerCase], *, split: str) -> int:
+        """Give every pair a daily limit left pending its final outcome: NOT_RUN, harness-attributed, QUOTA_BLOCKED.
+
+        Used when the quota will not return for this run. A pair that was never attempted is refused: closing is for
+        pairs the provider stopped, not a way to skip work. Returns the number of pairs closed.
+        """
+        manifests = self._verified_manifests(split)
+        closed = 0
+        pending = self.ledger.quota_blocked_pairs()
+        for case in cases:
+            for binding in self.arms:
+                key = (binding.arm_id, case.question_id)
+                if self.ledger.has_final(*key):
+                    continue
+                if key not in pending:
+                    raise RunnerError(f"{key[0]}/{key[1]} has no final outcome and was not stopped by a daily limit")
+                self._final_without_call(
+                    *key, manifests[binding.arm_id][1], RunStatus.NOT_RUN, ErrorOrigin.HARNESS, QUOTA_BLOCKED_CODE
+                )
+                closed += 1
+        self.ledger.verify_complete([(a.arm_id, c.question_id) for c in cases for a in self.arms])
+        return closed

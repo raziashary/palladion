@@ -18,6 +18,7 @@ from benchmark.contracts import (
     CaseRequest,
     CaseResponse,
     ContractError,
+    ErrorOrigin,
     EvidenceCandidate,
     EvidenceStatus,
     RetrievalRequest,
@@ -602,6 +603,80 @@ def test_a_subset_run_asks_only_those_questions_and_is_scored_and_validated(
     config = json.loads((out / "run_config.json").read_text(encoding="utf-8"))
     assert config["asked"] == sorted(ids) and config["case_deadline_seconds"] == 300.0
     assert score_answer_run(run_dir=out, root=s_root).arms == ["R2"]
+    assert validate_run(out, root=s_root) == []
+
+
+def test_a_daily_limit_pauses_the_run_and_a_second_invocation_of_the_directory_completes_it(
+    s_root: Path, s_published_corpus: PublishedCorpus, s_questions: tuple[GoldRecord, ...], tmp_path: Path
+) -> None:
+    from benchmark.eval.score_answers import score_answer_run
+    from benchmark.generator import TransportResponse
+    from benchmark.results_check import validate_run
+    from benchmark.track_b import asked_records, pick_subset
+
+    eligible = [q for q in s_questions if "controlled_qa" in q.track_eligibility]
+    ids = tuple(pick_subset(eligible, 3, seed=7))
+    message = "Rate limit reached for tokens per day (TPD). Please try again in 5h3m."
+    refusal = TransportResponse(429, {}, json.dumps({"error": {"message": message}}).encode())
+
+    class Refusing:
+        def post(self, payload: Any) -> TransportResponse:
+            return refusal
+
+    out = tmp_path / "paused"
+    spec = TrackBSpec("run-b-0007", "smoke", 10, 4000, s_root, out, question_ids=ids)
+    plan = plan_assignment(asked_records(s_questions, None, ids), GENERATOR, spec, 7)
+    arms = {"R2": GoldRetriever("R2", s_published_corpus, s_questions)}
+    first = execute_track_b(
+        spec, arms, make_pool(out, dict(plan.assigned), Refusing()), plan, s_published_corpus, GENERATOR,
+        pool_label="offline-stub",
+    )  # fmt: skip
+    assert first.summary.quota_blocked_pairs == 3 and first.summary.status_counts == {}
+    assert any("the run is paused" in f.render() for f in validate_run(out, root=s_root))
+
+    second = execute_track_b(
+        spec, arms, make_pool(out, dict(plan.assigned), ExtractiveStubTransport()), plan, s_published_corpus,
+        GENERATOR, pool_label="offline-stub",
+    )  # fmt: skip
+    assert second.summary.quota_blocked_pairs == 0 and second.summary.status_counts == {"OK": 3}
+    rows = [json.loads(line) for line in (out / "ledger.jsonl").read_text(encoding="utf-8").splitlines()]
+    assert sorted((r["question_id"], r["attempt"], r["is_final"], r["code"]) for r in rows) == sorted(
+        [(q, 1, False, "QUOTA_BLOCKED") for q in ids] + [(q, 2, True, None) for q in ids]
+    )
+    assert score_answer_run(run_dir=out, root=s_root).arms == ["R2"]
+    assert validate_run(out, root=s_root) == []
+
+
+def test_closing_a_paused_run_makes_it_complete_with_not_run_quota_blocked_pairs(
+    s_root: Path, s_published_corpus: PublishedCorpus, s_questions: tuple[GoldRecord, ...], tmp_path: Path
+) -> None:
+    from benchmark.generator import TransportResponse
+    from benchmark.results_check import validate_run
+    from benchmark.track_b import asked_records, pick_subset
+
+    eligible = [q for q in s_questions if "controlled_qa" in q.track_eligibility]
+    ids = tuple(pick_subset(eligible, 2, seed=7))
+    message = "Rate limit reached for tokens per day (TPD). Please try again in 5h3m."
+    refusal = TransportResponse(429, {}, json.dumps({"error": {"message": message}}).encode())
+
+    class Refusing:
+        def post(self, payload: Any) -> TransportResponse:
+            return refusal
+
+    out = tmp_path / "closed"
+    spec = TrackBSpec("run-b-0008", "smoke", 10, 4000, s_root, out, question_ids=ids, close_quota_blocked=True)
+    plan = plan_assignment(asked_records(s_questions, None, ids), GENERATOR, spec, 7)
+    arms = {"R2": GoldRetriever("R2", s_published_corpus, s_questions)}
+    outcome = execute_track_b(
+        spec, arms, make_pool(out, dict(plan.assigned), Refusing()), plan, s_published_corpus, GENERATOR,
+        pool_label="offline-stub",
+    )  # fmt: skip
+    assert outcome.summary.quota_blocked_pairs == 2
+    finals = [r for r in RunLedger(out / "ledger.jsonl").records if r.is_final]
+    assert [(r.status, r.origin, r.code) for r in finals] == [
+        (RunStatus.NOT_RUN, ErrorOrigin.HARNESS, "QUOTA_BLOCKED")
+    ] * 2
+    assert json.loads((out / "run_config.json").read_text(encoding="utf-8"))["quota_blocked_closed"] == 2
     assert validate_run(out, root=s_root) == []
 
 

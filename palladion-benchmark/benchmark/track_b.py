@@ -481,6 +481,7 @@ class TrackBSpec:
     question_ids: tuple[str, ...] | None = None  # a subset of the eligible questions, recorded in the run
     case_deadline_seconds: float | None = None  # replaces the configured case deadline for a paced live run
     pace_seconds: float = 0.0  # recorded; the pool does the pacing
+    close_quota_blocked: bool = False  # give up on pairs a daily limit left pending: NOT_RUN, QUOTA_BLOCKED (BADR-0044)
 
 
 @dataclass(frozen=True)
@@ -702,7 +703,9 @@ def execute_track_b(
         PlanRegistry(spec.out / "plans.jsonl"),
         default_registry(),
     )
-    summary = runner.run([RunnerCase(r) for r in requests], split=spec.split)
+    cases = [RunnerCase(r) for r in requests]
+    summary = runner.run(cases, split=spec.split)
+    closed = runner.close_quota_blocked(cases, split=spec.split) if spec.close_quota_blocked else 0
     (spec.out / "read_log.json").write_text(json.dumps(read_log.to_dict(), indent=2, sort_keys=True), encoding="utf-8")
     (spec.out / "run_config.json").write_text(
         json.dumps(
@@ -718,6 +721,7 @@ def execute_track_b(
                 "asked": None if spec.question_ids is None else sorted(spec.question_ids),
                 "case_deadline_seconds": settings.case_deadline_seconds,
                 "pace_seconds": spec.pace_seconds,
+                "quota_blocked_closed": closed,
                 "withdrawn": sorted(spec.withdrawn or ()),
                 "generator_pool": pool_label,
                 "live": spec.live,
