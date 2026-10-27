@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import re
 import sys
+from collections.abc import Callable
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
@@ -216,7 +217,7 @@ def anchors(text: str) -> set[str]:
 def atomic_tasks(plan: str) -> dict[str, dict[str, str]]:
     found: dict[str, dict[str, str]] = {}
     for _, ident, _, body in CARD.findall(plan):
-        found[ident] = dict(re.findall(r"^  - \*\*(Files|Palladion files|Depends|Change|Proof):\*\* (.+)$", body, re.MULTILINE))
+        found[ident] = dict(re.findall(r"^  - \*\*(Files|Palladion files|Depends|Change|Proof|Deferred):\*\* (.+)$", body, re.MULTILINE))
     return found
 
 
@@ -392,7 +393,7 @@ def table_ids(text: str, pattern: str) -> list[str]:
     return re.findall(pattern, prose(text), re.MULTILINE)
 
 
-def validate(documents: dict[str, str]) -> list[str]:
+def validate(documents: dict[str, str], exists: Callable[[str], bool] | None = None) -> list[str]:
     errors = [f"Missing required document: {path}" for path in REQUIRED if path not in documents]
     if errors:
         return errors
@@ -483,6 +484,13 @@ def validate(documents: dict[str, str]) -> list[str]:
 
     # Status consistency between the plan, GOAL and PROGRESS.
     state = checked_tasks(plan)
+    # A deferred card is not done and not forgotten: it names the decision that set it aside (BADR-0043).
+    deferred = {ident for ident, fields in tasks.items() if "Deferred" in fields}
+    for ident in sorted(deferred):
+        if state.get(ident):
+            errors.append(f"{ident}: a checked card cannot also be deferred")
+        if not re.search(r"\bBADR-\d{4}\b", tasks[ident]["Deferred"]):
+            errors.append(f"{ident}: a deferred card must cite the decision that deferred it")
     progress = documents[DEV + "PROGRESS.md"]
     rows = dict(re.findall(r"^\| (B\d{2}) \| ([A-Z_]+) \|", progress, re.MULTILINE))
     for phase in PHASES:
@@ -491,7 +499,8 @@ def validate(documents: dict[str, str]) -> list[str]:
             continue
         children = [i for i in state if i.startswith(phase + "-")]
         done = [i for i in children if state[i]]
-        if rows[phase] == "DONE" and len(done) != len(children):
+        left = [i for i in children if not state[i] and i not in deferred]
+        if rows[phase] == "DONE" and left:
             errors.append(f"{phase} is DONE in PROGRESS but has unchecked cards")
         if rows[phase] in {"PLANNED", "DEFERRED"} and done:
             errors.append(f"{phase} is {rows[phase]} in PROGRESS but has checked cards")
@@ -508,7 +517,7 @@ def validate(documents: dict[str, str]) -> list[str]:
     for ident, fields in tasks.items():
         if state.get(ident) and "Files" in fields:
             for path in re.findall(r"`([^`]+)`", fields["Files"] + " " + fields.get("Palladion files", "")):
-                if not (REPO / path).exists():
+                if not (exists or (lambda name: (REPO / name).exists()))(path):
                     errors.append(f"{ident}: checked but file does not exist: {path}")
     return errors
 
@@ -517,15 +526,48 @@ def self_test(documents: dict[str, str]) -> int:
     gates, plan = DEV + "TESTING_GATES.md", DEV + "MASTER_DEV_PLAN.md"
     adr, trace = DEV + "ADR_LOG.md", DEV + "REQUIREMENTS_TRACEABILITY.md"
     risks, progress = DEV + "RISKS_AND_OPEN_QUESTIONS.md", DEV + "PROGRESS.md"
-    open_cards = {ident for ident, done in checked_tasks(documents[plan]).items() if not done}
-    # Checking a card whose files already exist would not be rejected, so plant the mutation on one that lacks a file.
-    open_card = next(
-        ident
-        for ident, fields in atomic_tasks(documents[plan]).items()
-        if ident in open_cards
-        and any(not (REPO / path).exists() for path in re.findall(r"`([^`]+)`", fields.get("Files", "")))
+    state = checked_tasks(documents[plan])
+    tasks = atomic_tasks(documents[plan])
+    # A phase that is not DONE and still has an unchecked card, undeferred: calling it DONE must be rejected.
+    unfinished = next(
+        p
+        for p in PHASES
+        if re.search(rf"^\| {p} \| (?!DONE)", documents[progress], re.M)
+        and any(i.startswith(p + "-") and not state[i] and "Deferred" not in tasks[i] for i in state)
     )
-    planned = next(p for p in PHASES if re.search(rf"^\| {p} \| PLANNED \|", documents[progress], re.M))
+    state_of = re.search(rf"^\| {unfinished} \| ([A-Z_]+) \|", documents[progress], re.M)
+    assert state_of is not None
+    planned = unfinished
+    # The checked-card rule is tested with a validator told that one owned file of a checked card is gone.
+    checked_card = next(i for i, done in state.items() if done and "Files" in tasks[i])
+    gone = re.findall(r"`([^`]+)`", tasks[checked_card]["Files"])[0]
+    if not validate(documents, exists=lambda name: name != gone and (REPO / name).exists()):
+        print("FAIL: validator did not reject a checked card whose file is missing")
+        return 1
+    def without_decision(body: str) -> str:
+        """The first open-question row with every decision reference taken out of it."""
+        row = re.search(r"^\| OQ\d{2} \|.*$", body, re.MULTILINE)
+        assert row is not None
+        return body.replace(row.group(0), re.sub(r"BADR-\d{4}", "none", row.group(0)), 1)
+
+    marker = f"- [ ] **{next(i for i in tasks if not state[i] and 'Deferred' not in tasks[i])} "
+    checked_marker = f"- [x] **{next(i for i in tasks if state[i])} "
+
+    def with_deferral(card_marker: str, text: str) -> str:
+        body = documents[plan]
+        at = body.index("  - **Files:**", body.index(card_marker))
+        return body[:at] + f"  - **Deferred:** {text}\n" + body[at:]
+
+    # Positive control: a phase whose every open card is deferred under a decision may be called DONE.
+    accepted = documents[plan]
+    for ident in (i for i in tasks if i.startswith(unfinished + "-") and not state[i]):
+        at = accepted.index("  - **Files:**", accepted.index(f"- [ ] **{ident} "))
+        accepted = accepted[:at] + "  - **Deferred:** set aside by BADR-0043 for the self-test.\n" + accepted[at:]
+    closed = {**documents, plan: accepted}
+    closed[progress] = documents[progress].replace(f"| {planned} | {state_of.group(1)} |", f"| {planned} | DONE |", 1)
+    if validate(closed):
+        print("FAIL: validator rejected a phase whose open cards are all deferred under a decision")
+        return 1
     vision_tree = documents[VISION].replace("│   ├── tracing.py", "│   ├── tracing_renamed.py", 1)
     mutations = {
         "broken local link": (gates, documents[gates] + "\n[bad](missing-proof.md)\n"),
@@ -592,10 +634,8 @@ def self_test(documents: dict[str, str]) -> int:
                 1,
             ),
         ),
-        "checked card with missing file": (
-            plan,
-            documents[plan].replace(f"- [ ] **{open_card} ", f"- [x] **{open_card} ", 1),
-        ),
+        "deferral without a decision": (plan, with_deferral(marker, "later, with no decision cited.")),
+        "checked card also deferred": (plan, with_deferral(checked_marker, "set aside by BADR-0043.")),
         "missing ADR question": (adr, documents[adr].replace("**Question:**", "**Omitted question:**", 1)),
         "missing ADR authority": (adr, documents[adr].replace("**Authority:**", "**Omitted authority:**", 1)),
         "accepted ADR with OPEN answer": (
@@ -610,10 +650,10 @@ def self_test(documents: dict[str, str]) -> int:
             adr,
             documents[adr].replace("**Status:** ACCEPTED; 2026-10-18.", "**Status:** PROPOSED; 2026-10-18.", 1),
         ),
-        "open question without decision": (risks, documents[risks].replace("| BADR-0006 | OPEN", "| none | OPEN", 1)),
+        "open question without decision": (risks, without_decision(documents[risks])),
         "PROGRESS done with unchecked cards": (
             progress,
-            documents[progress].replace(f"| {planned} | PLANNED |", f"| {planned} | DONE |", 1),
+            documents[progress].replace(f"| {planned} | {state_of.group(1)} |", f"| {planned} | DONE |", 1),
         ),
         "PROGRESS gate removed": (
             progress,
@@ -684,6 +724,9 @@ def main() -> int:
         )
         if blockers and not state.get(ident):
             print(f"NOTICE: {ident} waits on unanswered {', '.join(blockers)}")
+    for ident, fields in atomic_tasks(plan).items():
+        if "Deferred" in fields:
+            print(f"NOTICE: {ident} is deferred: {fields['Deferred'][:140]}")
     print(
         f"PASS: {len(state)} atomic tasks ({sum(state.values())} checked); fields, acyclic dependencies and "
         f"ownership of all {len(tree)} protocol-tree files verified"

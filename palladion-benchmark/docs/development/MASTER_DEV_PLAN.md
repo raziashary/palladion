@@ -1116,6 +1116,7 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
   - **Depends:** B07-T07.01, B02-T07.02, B05-T07.01.
   - **Change:** Generate 12,000 documents, 1,000 single-turn questions and 100 episodes with actual composition reports.
   - **Proof:** SMOKE; BG-FIXTURE, BG-GOLD; actual document mix, language shares and partition counts are reported from the output; 10, 30 and 60 questions per stratum for smoke, dev and test are verified by count; human-authored question variants are added to the audit sample (OQ08).
+  - **Deferred:** BADR-0043 and BADR-0044: not run on the descriptive path; the card belongs to a sealed confirmatory run, which needs a budget and answers (OQ13) the owner has not given.
   - **Evidence:** Not yet executed.
 
 <a id="b08-t01-02"></a>
@@ -1125,6 +1126,7 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
   - **Depends:** B08-T01.01, BADR-0009.
   - **Change:** Optional rewriting through the shared generator accepted only when IDs, dates, thresholds and negations are unchanged.
   - **Proof:** UNIT; BG-FIXTURE; a paraphrase that drops a negation is rejected; rejected rewrites keep the template text.
+  - **Deferred:** BADR-0043 and BADR-0044: not run on the descriptive path; the card belongs to a sealed confirmatory run, which needs a budget and answers (OQ13) the owner has not given.
   - **Evidence:** Not yet executed.
 
 <a id="b08-t02-01"></a>
@@ -1134,6 +1136,7 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
   - **Depends:** B04-T05.01, B05-T06.01, B06-T06.01, B07-T09.01, B08-T01.01, B08-T01.02, B08-T08.01.
   - **Change:** Tune K, candidate pools, reranker cutoff, graph depth, critic activation and thresholds one lever at a time using a held-out calibration split for confidence work; log every trial; never read test results; define per-arm eligibility in comparators.yaml.
   - **Proof:** MEASUREMENT; BG-PREREG; each configuration change cites a dev result; access to locked-test annotations is not used.
+  - **Deferred:** BADR-0043 and BADR-0044: not run on the descriptive path; the card belongs to a sealed confirmatory run, which needs a budget and answers (OQ13) the owner has not given.
   - **Evidence:** Not yet executed.
 
 <a id="b08-t02-02"></a>
@@ -1143,6 +1146,7 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
   - **Depends:** B08-T02.01, B03-T04.01, B08-T01.02.
   - **Change:** Estimate disagreement and cluster correlation from pilot and dev only; simulate paired power; size the targeted security suite from the zero-failure bound.
   - **Proof:** MEASUREMENT; BG-STATS; locked-test data is not read; underpowered endpoints are declared.
+  - **Deferred:** BADR-0043 and BADR-0044: not run on the descriptive path; the card belongs to a sealed confirmatory run, which needs a budget and answers (OQ13) the owner has not given.
   - **Evidence:** Not yet executed.
 
 <a id="b08-t02-03"></a>
@@ -1152,6 +1156,7 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
   - **Depends:** B08-T02.02, B07-T07.01.
   - **Change:** Generate the dedicated tenant, role, injection and authority-spoof suite at the size B08-T02.02 derives from the zero-failure bound, partitioned by family and sealed with the other test material.
   - **Proof:** UNIT; BG-SECURITY, BG-GOLD; suite size follows the recorded bound; a planted leak in a stub arm is counted.
+  - **Deferred:** BADR-0043 and BADR-0044: not run on the descriptive path; the card belongs to a sealed confirmatory run, which needs a budget and answers (OQ13) the owner has not given.
   - **Evidence:** Not yet executed.
 
 <a id="b08-t03-01"></a>
@@ -1161,6 +1166,7 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
   - **Depends:** B08-T02.03, OQ10, OQ13.
   - **Change:** Complete the protocol checklist, freeze methods, code, prompts, the ablation list with its base treatments, minimum meaningful effects and the calibration plan, seal test manifests with SHA-256, lock primary pairings, equivalence margin and multiplicity procedure. Before the seal the owner either relabels the 30-item pilot packet or accepts the delegated reading in writing, and the synthesis golds are corrected at the generator (BADR-0026, BR29).
   - **Proof:** DOC; BG-PREREG; sealed hashes verify; an edit after sealing is detected and flags later results exploratory.
+  - **Deferred:** BADR-0043 and BADR-0044: not run on the descriptive path; the card belongs to a sealed confirmatory run, which needs a budget and answers (OQ13) the owner has not given.
   - **Evidence:** Not yet executed.
 
 <a id="b08-t04-01"></a>
@@ -1170,6 +1176,7 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
   - **Depends:** B08-T03.01.
   - **Change:** Run all eligible arms on the sealed 600 test questions and 100 episodes in both the common-chunk and native-ingestion tracks; at least three repetitions of the stochastic subset; no selective reruns.
   - **Proof:** MEASUREMENT; BG-TRACKA, BG-TRACKB, BG-TRACKC; initial and post-retry outcomes both reported; every failure preserved.
+  - **Deferred:** BADR-0043 and BADR-0044: not run on the descriptive path; the card belongs to a sealed confirmatory run, which needs a budget and answers (OQ13) the owner has not given.
   - **Evidence:** Not yet executed.
 
 <a id="b08-t05-01"></a>
@@ -1179,6 +1186,7 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
   - **Depends:** B08-T04.01, B08-T08.01.
   - **Change:** Run the preregistered A01-A16 and declared factorials, labeling A09 and A14 as system ablations and A15 as fixtures-only; any ablation Palladion cannot express without code changes is FEATURE_NOT_SUPPORTED, and ablations not in the sealed list are exploratory. Palladion exposes graph hop depth and counter-search limits but no switch for the critic, gate, preflight, authority check, parser or temporal resolver today.
   - **Proof:** MEASUREMENT; BG-ABLATION; each ablation removes exactly one component against a stated base; interactions reported.
+  - **Deferred:** BADR-0043 and BADR-0044: not run on the descriptive path; the card belongs to a sealed confirmatory run, which needs a budget and answers (OQ13) the owner has not given.
   - **Evidence:** Not yet executed.
 
 <a id="b08-t06-01"></a>
