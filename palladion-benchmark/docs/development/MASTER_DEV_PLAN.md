@@ -236,7 +236,7 @@ Goal O08. Read protocol §13, §14, §15, §19 and §22. Depends on B04–B07 ex
 | B08-T05 | Ablations A01–A16 | One component removed against a stated base |
 | B08-T06 | Plots and reports | No single composite winner |
 | B08-T07 | Final audit and publication package | Claims bounded to measured strata |
-| B08-T08 | Descriptive comparison of Palladion with the other systems (BADR-0043) | Matched lists, cost axis, exploratory label |
+| B08-T08 | Descriptive comparison of Palladion with the other systems (BADR-0043, BADR-0044) | Matched lists, cost axis, exploratory label |
 
 Exit: sealed, reproducible results with confidence intervals and failures. A null or adverse result is a completed experiment (protocol §19.4).
 
@@ -1185,7 +1185,7 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
 
 - [ ] **B08-T06.01 — Plots and report generation**
   - **Files:** `palladion-benchmark/benchmark/analysis/plots.py`, `palladion-benchmark/benchmark/analysis/reports.py`.
-  - **Depends:** B03-T06.01, B08-T04.01.
+  - **Depends:** B03-T06.01, B08-T08.10.
   - **Change:** Risk-coverage, quality-cost Pareto and per-stratum figures; versioned Markdown or HTML reports with sections for negative findings and fairness deviations.
   - **Proof:** UNIT; BG-REPORT; dominated arms are marked from data; no single composite is presented as the winner.
   - **Evidence:** Not yet executed.
@@ -1202,46 +1202,82 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
 <a id="b08-t08-01"></a>
 
 - [ ] **B08-T08.01 — Re-pin Palladion and re-run the gates**
-  - **Files:** `palladion-benchmark/configs/comparators.yaml`, `palladion-benchmark/docs/development/EVIDENCE_LOG.md`.
-  - **Depends:** B07-T09.01, BADR-0043.
-  - **Change:** Move the Palladion pin from `eec4ba5` to `dd70c0e` (clock and recall fixes, key handling), rebuild the isolated runtime, and record what the new pin changes for R7a, R7b, E3 and E4.
-  - **Proof:** INTEGRATION; BG-ADAPTER, BG-REPRO; the benchmark suite and the Palladion integration tests pass at the new pin; the pin appears in every later run manifest.
+  - **Files:** `palladion-benchmark/configs/comparators.yaml`, `palladion-benchmark/scripts/palladion_runtime.py`, `palladion-benchmark/tests/test_config_loader.py`, `palladion-benchmark/tests/test_palladion_runtime.py`, `palladion-benchmark/docs/development/EVIDENCE_LOG.md`.
+  - **Depends:** B07-T09.01, BADR-0044.
+  - **Change:** Move the Palladion pin from `eec4ba5` to `dd70c0e` in all three places it lives (`PINNED_COMMIT`, the YAML pins, the config test), add a test that the YAML pin equals `PINNED_COMMIT`, rebuild the isolated worktree and runtime, re-evaluate the PF02 and PF05 workarounds recorded in B07-T00.04 for the new pin, and check the launcher's `--key-env` path after the key-handling fix.
+  - **Proof:** INTEGRATION; BG-ADAPTER, BG-REPRO; the benchmark suite and the real-runtime tests pass at the new pin, with Palladion tests skipped at that commit counted as NOT_RUN, not passed; a planted mismatch between the YAML pin and `PINNED_COMMIT` fails the new test.
+  - **Evidence:** Not yet executed.
+
+<a id="b08-t08-07"></a>
+
+- [ ] **B08-T08.07 — Daily-limit refusals are QUOTA_BLOCKED, resumable and never a zero**
+  - **Files:** `palladion-benchmark/benchmark/generator.py`, `palladion-benchmark/benchmark/runner.py`, `palladion-benchmark/benchmark/contracts.py`, `palladion-benchmark/benchmark/results_check.py`, `palladion-benchmark/tests/test_generator_pool.py`, `palladion-benchmark/tests/test_runner.py`, `palladion-benchmark/tests/test_validate_results.py`.
+  - **Depends:** B08-T08.01, BADR-0044.
+  - **Change:** A provider refusal whose quota window is a day becomes a `QUOTA_BLOCKED` call outcome (NOT_RUN kind, harness-attributed): the pair is not finalised, the run stops starting new provider calls, and resuming the same run directory on a later day attempts the pending pairs again with both attempts kept in the ledger; the validator and the scorer count quota-blocked pairs apart from arm failures and from zeros. Per-minute refusals keep their handling.
+  - **Proof:** UNIT; BG-HARNESS, BG-TRACKB; a scripted provider that refuses with a daily window leaves pairs pending, a resumed run completes them and the ledger shows both attempts; a per-minute refusal is unchanged; no INVALID_RUN is caused by a daily limit; a validator run on a directory with a hole that is not quota-blocked still fails.
+  - **Evidence:** Not yet executed.
+
+<a id="b08-t08-08"></a>
+
+- [ ] **B08-T08.08 — R7a identity, evaluation time and in-pool access filter**
+  - **Files:** `palladion-benchmark/benchmark/adapters/palladion.py`, `palladion-benchmark/scripts/palladion_runtime.py`, `palladion-benchmark/tests/test_palladion_adapter.py`, `palladion-benchmark/tests/test_palladion_runtime.py`.
+  - **Depends:** B08-T08.01.
+  - **Change:** Provision one Palladion reader per benchmark principal through the scoped-admin routes (PF05), send the case's evaluation time as `as_of` (PF01), and apply the neutral access filter to Palladion's candidates inside the candidate pool the adapter requests rather than after the cut, recording how many candidates the filter removed; anything that still cannot be made equal is recorded as a capability difference.
+  - **Proof:** INTEGRATION; BG-ADAPTER, BG-FAIR; against the real isolated Palladion, two principals of different tenants see different results for one query, a version superseded before the evaluation time is not returned as current, and a planted over-broad filter changes the count of removed candidates; the adapter's request body contains `as_of`.
+  - **Evidence:** Not yet executed.
+
+<a id="b08-t08-09"></a>
+
+- [ ] **B08-T08.09 — Plan digest, cross-run guard, quota ledger and frozen matched lists**
+  - **Files:** `palladion-benchmark/benchmark/quota.py`, `palladion-benchmark/benchmark/runner.py`, `palladion-benchmark/benchmark/results_check.py`, `palladion-benchmark/tests/test_quota.py`, `palladion-benchmark/tests/test_runner.py`.
+  - **Depends:** B08-T08.07, B08-T08.08.
+  - **Change:** The plan digest includes the system-under-test commit, K, evidence budget, condition and model assignment; the validator and the report refuse to pool runs that differ in any of them; a per-model, per-provider-day token ledger is read from the counting proxies' books and gives the day's remaining quota and the planned days; the matched question and episode lists are frozen into a file with its digest before the first spend and recorded in every manifest.
+  - **Proof:** UNIT; BG-REPRO, BG-FAIR; runs that differ in pin, K, budget, condition or model are refused, and an identical pair is accepted; the ledger recomputes a day's spend from saved rows and flags a book that disagrees with its totals; editing a frozen list changes its digest and is refused at run time.
+  - **Evidence:** Not yet executed.
+
+<a id="b08-t08-10"></a>
+
+- [ ] **B08-T08.10 — Paired statistics across runs and harm metrics over every eligible pair**
+  - **Files:** `palladion-benchmark/benchmark/eval/score_run.py`, `palladion-benchmark/benchmark/analysis/tables.py`, `palladion-benchmark/scripts/score_track_a.py`, `palladion-benchmark/scripts/score_track_b.py`, `palladion-benchmark/tests/test_score_run.py`, `palladion-benchmark/tests/test_tables.py`.
+  - **Depends:** B08-T08.09, B04-T05.01.
+  - **Change:** Score two or more run directories that passed the cross-run guard as paired arms on the same question ids, with the primary pairing R7a against R3 (and E4 against E3 for Track C), exact McNemar and clustered bootstrap intervals, Holm across the exploratory pairs, strata with too few clusters marked descriptive; harm metrics get an all-eligible-pairs value with a "not completed" count beside the conditional rate.
+  - **Proof:** UNIT; BG-STATS, BG-METRIC, BG-REPORT; hand-computed pairs match, a quota-blocked pair is neither a harm nor a zero, a pair from a different pin is refused, perfect, empty and shuffled arms separate.
   - **Evidence:** Not yet executed.
 
 <a id="b08-t08-02"></a>
 
-- [ ] **B08-T08.02 — Track A comparison on the full S tier (no model, no quota)**
+- [ ] **B08-T08.02 — Track A comparison on the S tier (no model, no quota)**
   - **Files:** `palladion-benchmark/scripts/run_track_a.py`, `palladion-benchmark/scripts/score_track_a.py`, `palladion-benchmark/docs/development/EVIDENCE_LOG.md`.
-  - **Depends:** B08-T08.01, B04-T05.01, B06-T05.01.
-  - **Change:** Run R0 to R3, R7a and, if the pinned Palladion offers graph routes, R7b over all smoke and dev questions of the S tier under C1 and C2, one arm at a time; score with the paired statistics and the default pairing R7 against R3; withdrawn questions are listed.
-  - **Proof:** MEASUREMENT; BG-TRACKA, BG-FAIR; every pair is accounted for (run states beside scores); the validator passes; locked-test questions are not read.
+  - **Depends:** B08-T08.10, B04-T05.01, B06-T05.01.
+  - **Change:** Run R0 to R3 and R7a (R7b is FEATURE_NOT_SUPPORTED, E2 NOT_RUN) over the 97 scoreable questions of the S tier under C1 and C2, one arm at a time in separate run directories at K 10 and the 4,000-word budget, then score them as paired arms; withdrawn questions are listed; the 10 native-only questions are excluded and the list is stated.
+  - **Proof:** MEASUREMENT; BG-TRACKA, BG-FAIR; every pair is accounted for; the validator passes; the cross-run guard accepts the set; R7a's removed-candidate counts and capability differences are reported; results at earlier pins are not pooled.
   - **Evidence:** Not yet executed.
 
 <a id="b08-t08-03"></a>
 
-- [ ] **B08-T08.03 — Track B comparison on a matched subset over several days**
+- [ ] **B08-T08.03 — Track B comparison on a frozen matched list over several days**
   - **Files:** `palladion-benchmark/scripts/run_track_b.py`, `palladion-benchmark/scripts/score_track_b.py`, `palladion-benchmark/docs/development/EVIDENCE_LOG.md`.
   - **Depends:** B08-T08.02, B05-T06.01.
-  - **Change:** Fix one matched question list before the first spend, give every retriever (R0 to R3, R7a) the same generator, prompt and budget, and spend each day's quota (BADR-0043 item 5) on the next unanswered part of the list until it is done or the owner stops it; one model per run, the per-call model recorded.
-  - **Proof:** MEASUREMENT; BG-TRACKB; intention-to-treat and conditional tables side by side; per-day spend, daily-limit stops and invalid answers reported, none dropped.
+  - **Change:** Freeze a seeded, stratum-balanced list of 40 of the 87 eligible questions, assign each question one approved model before the first call, and run R0 to R3 and R7a on it under C2 at K 10 and the 4,000-word budget with one completion cap of 2,000, no failover, a pace read from the provider's headers, and the daily caps of BADR-0044; each day resumes the same run directory; a quota-blocked pair is retried on a later day.
+  - **Proof:** MEASUREMENT; BG-TRACKB, BG-FAIR; every question is answered by the same model in every arm; per-day spend and quota-blocked counts are reported; intention-to-treat and conditional tables side by side; no INVALID_RUN is caused by a daily limit; no key appears in any output.
   - **Evidence:** Not yet executed.
 
 <a id="b08-t08-04"></a>
 
-- [ ] **B08-T08.04 — Track C comparison of E0, E1, E3 and E4 on a matched episode subset**
+- [ ] **B08-T08.04 — Track C comparison of E0, E1, E3 and E4 on a frozen episode list**
   - **Files:** `palladion-benchmark/scripts/run_track_c.py`, `palladion-benchmark/benchmark/track_c.py`, `palladion-benchmark/docs/development/EVIDENCE_LOG.md`.
-  - **Depends:** B08-T08.01, B07-T09.01.
-  - **Change:** Run the same episode and mutation-case lists on E3 and E4 (each on a freshly prepared runtime, one arm per invocation) and on E0 and E1, spreading the quota over days; E2 stays NOT_RUN; report the memory, update, tool-use and mutation measures each run can feed, and the counting proxies' totals.
-  - **Proof:** MEASUREMENT; BG-TRACKC, BG-ADAPTER; counts come from the proxy books and the saved rows agree (`check_books`); NOT_OBSERVABLE is never shown as zero.
+  - **Depends:** B08-T08.09, B07-T09.01.
+  - **Change:** Freeze 2 episodes and the cases M01, M13, M14, then run E3 and E4 (each on a freshly prepared runtime, one arm per invocation) and E0 and E1 on the same episodes with qwen as the one model, spreading the quota over days; E0 and E1 mutation cases are NOT_RUN and their live-status turns are a capability difference; E2 stays NOT_RUN.
+  - **Proof:** MEASUREMENT; BG-TRACKC, BG-ADAPTER; counts come from the proxy books and agree with the saved rows (`check_books`); NOT_OBSERVABLE is never shown as zero; an episode that cannot finish is reported with the turns done.
   - **Evidence:** Not yet executed.
 
 <a id="b08-t08-05"></a>
 
-- [ ] **B08-T08.05 — Graph comparators R4 to R6 as quota allows**
+- [ ] **B08-T08.05 — Graph comparators: R6 cold, then R4 and R5 with leftover quota**
   - **Files:** `palladion-benchmark/scripts/run_graph_arms.py`, `palladion-benchmark/scripts/comparators.py`, `palladion-benchmark/docs/development/EVIDENCE_LOG.md`.
-  - **Depends:** B08-T08.02, B06-T06.01.
-  - **Change:** Resume the cold-state indexing of R4, R5 and R6 on the 60-document subset across days under the limits of BADR-0032 to BADR-0036 and run the matched query list once an index is complete; an index that does not complete is reported with the chunks done and the spend.
-  - **Proof:** MEASUREMENT; BG-ADAPTER, BG-TRACKA; the proxy stops at the daily limit; partial indexes are named; no system is scored on queries it did not answer without saying so.
+  - **Depends:** B08-T08.02, B08-T08.09, B06-T06.01.
+  - **Change:** Restart R6 from an empty index on qwen under the limits of BADR-0032 to BADR-0036 and resume it across days until it answers the matched queries or the horizon ends, then R4 and R5 with whatever quota is left after Tracks B and C; run R0 to R3 and R7a on the same 60-document subset so the graph table has matched rivals; an index that does not finish is reported with chunks done and spend.
+  - **Proof:** MEASUREMENT; BG-ADAPTER, BG-TRACKA; the proxy stops at the daily limit and records it; a partial index is named as such; graph results are in their own table with the corpus named and never pooled with the full-S results.
   - **Evidence:** Not yet executed.
 
 <a id="b08-t08-06"></a>
@@ -1249,8 +1285,8 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
 - [ ] **B08-T08.06 — Descriptive comparison report with the cost axis**
   - **Files:** `palladion-benchmark/benchmark/analysis/reports.py`, `palladion-benchmark/docs/development/EVIDENCE_LOG.md`, `palladion-benchmark/docs/development/PROGRESS.md`.
   - **Depends:** B08-T08.02, B08-T08.03, B08-T08.04, B08-T08.05, B08-T06.01.
-  - **Change:** One report of Palladion beside the other systems per stratum: quality measures with intervals, calls, tokens and latency from the proxy books, run states, failures and fairness deviations, each system's coverage of the matched lists, and the limits in force; marked exploratory with the reasons (no seal, delegated labels, free tier).
-  - **Proof:** MEASUREMENT; BG-REPORT; every figure traces to a run directory; no composite winner; dominated systems are marked from data; unmeasured cells say NOT_RUN or NOT_OBSERVABLE.
+  - **Change:** One report of Palladion beside the other systems per stratum and per track: quality measures with intervals, calls, tokens and latency from the proxy books, offline build cost apart from query cost, run states (quota-blocked, NOT_RUN, unsupported) beside scores, each system's coverage of the frozen lists, fairness deviations and capability differences, the limits in force, and the statement that every generative result is a single run; marked exploratory with the reasons (no seal, delegated labels, free tier, 97 questions).
+  - **Proof:** MEASUREMENT; BG-REPORT; every figure traces to a run directory and its manifest; no composite winner; dominated systems are marked from data; unmeasured cells say NOT_RUN or NOT_OBSERVABLE; a report refuses runs from different pins.
   - **Evidence:** Not yet executed.
 
 ### Atomic tasks — B09

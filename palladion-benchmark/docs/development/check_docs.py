@@ -100,6 +100,8 @@ EXTRA_FILES = {
     ROOT + "benchmark/fixtures/mutations.py",
     ROOT + "benchmark/mutations_apply.py",
     ROOT + "benchmark/track_c.py",
+    ROOT + "benchmark/quota.py",
+    ROOT + "tests/test_quota.py",
     ROOT + "benchmark/eval/observable.py",
     ROOT + "benchmark/scripted_provider.py",
     ROOT + "tests/test_langchain.py",

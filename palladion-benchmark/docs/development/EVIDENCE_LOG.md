@@ -665,3 +665,32 @@ Total over the six: 410 provider calls (202 HTTP-200 replies, of which the 13 of
 | L2, L3, L4, L6, L7, L8, L13 | Retry label, latency summary, registry text, barrier coverage, byte-identical claim, remaining wall reads, unwired surface | Yes | Recorded as limits (E-B07-002), BR49; L8 in ADR-0101; no code change |
 
 **Refuted:** none. **Could not be verified by the auditor** and still unverified: the Palladion test counts it did not run (I ran them: 514 passed, 33 skipped at `dd70c0e`), runtime identity of the "fresh" runtimes (the entry point cannot record it), the `CITATIONS_NOT_PUBLISHED` causes (answers were not saved).
+
+
+## E-B08-001 — B08 pre-phase adversary (Haiku 5.5, medium): receipt and dispositions
+
+2026-10-27. One read-only Haiku 5.5 reviewer (medium effort) read the complete protocol, AGENTS, the master plan, the cited ADRs, risks, gates and evidence, and the source; no credentials, no git, no run. It returned 19 findings; I verified the load-bearing ones by reading the source before acting.
+
+| Finding | Verdict | Verified how | Disposition |
+|---|---|---|---|
+| adv-1 quota arithmetic (HIGH) | Confirmed | E-B05-005 gives 2,362 prompt tokens per Track B call and E-B07-003 14,204 per Palladion turn; 87 x 5 arms alone is about 1.1 million tokens | BADR-0044 items 1, 2; ledger card B08-T08.09 |
+| adv-2 daily-limit stop is a final INVALID_RUN (HIGH) | Confirmed | `generator.py` maps every 429 to RATE_LIMITED (line 64) and retries only when the wait is short (line 451); `runner.py` skips finalised pairs | BADR-0044 item 4; card B08-T08.07 |
+| adv-3 one model per run against one model per question (HIGH) | Confirmed | `assign_models` (`generator.py` line 240) | BADR-0044 item 3 (owner chose per-question assignment, one equal cap) |
+| adv-4 pin move incomplete and unguarded (HIGH) | Confirmed | pin in `palladion_runtime.py` line 41, `comparators.yaml`, `tests/test_config_loader.py` line 188; plan digest omits pin | cards B08-T08.01, B08-T08.09 |
+| adv-5 R7a filtered after ranking, one reader (HIGH) | Confirmed | `adapters/palladion.py` line 392 (`filtered_after_ranking`), `PrincipalMap` | BADR-0044 item 5; card B08-T08.08 |
+| adv-6 R7a sends no as-of time (HIGH) | Confirmed | request body at `adapters/palladion.py` line 411 has no `as_of`; Palladion accepts one (`api/schemas.py` line 33; PF01) | card B08-T08.08 |
+| adv-7 pairing and Holm not wired (MEDIUM) | Confirmed | R7 unpinned; `holm` has no caller outside tests | BADR-0044 item 6; card B08-T08.10 |
+| adv-8 harm metrics lack an intention-to-treat value (MEDIUM) | Confirmed | `analysis/tables.py` | BADR-0044 item 7; card B08-T08.10 |
+| adv-9 Track A and B question sets differ (MEDIUM) | Confirmed: 97 in Track A, 87 in Track B | `track_b.py` filters native-only questions | BADR-0044 item 2; lists frozen per track |
+| adv-10 Track B settings unstated (MEDIUM) | Confirmed | pilot used completion 700 and failover | card B08-T08.03 states C2, K 10, completion 2,000, no failover |
+| adv-11 E0 and E1 cannot run mutation cases or live-status turns (MEDIUM) | Confirmed | E-B07-002 | BADR-0044 item 9 |
+| adv-12 graph arms not cold, mixed corpora (HIGH) | Confirmed | E-B06-004 | owner chose a cold restart of R6 on qwen; BADR-0044 item 2; card B08-T08.05 |
+| adv-13 cost axis omits offline cost (MEDIUM) | Confirmed | proxy counts LLM calls only | BADR-0044 item 10 |
+| adv-14 required code not built (MEDIUM) | Confirmed | `benchmark/analysis/` holds `tables.py` only | cards B08-T06.01, B08-T08.09, B08-T08.10 |
+| adv-15 R7b "if supported" (MEDIUM) | Confirmed | `comparators.yaml` line 19 | FEATURE_NOT_SUPPORTED, BADR-0044 item 9 |
+| adv-16 repetitions (LOW) | Confirmed | protocol §14.4 | BADR-0044 item 11 |
+| adv-17 locked-test premise (LOW) | Partly refuted: `annotations_test` exists and is empty | listing | episode TEST filter kept; stated precisely in the report |
+| adv-18 pace (LOW) | Confirmed | E-B07-003 | pace set from observed headers per card |
+| adv-19 governance (LOW) | Confirmed | | this entry; Haiku-only rule restated |
+
+**Refuted:** none outright; adv-17's premise correction is the only partial refutation. **Not verified by me:** the adversary's token total for the whole path (5 to 7 million) is its arithmetic from measured per-call costs, not a measurement.
