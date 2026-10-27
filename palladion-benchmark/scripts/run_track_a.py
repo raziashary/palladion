@@ -23,11 +23,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import palladion_runtime
 
+from benchmark import matched as matched_lists
 from benchmark.adapters.common import AdapterError, Condition, PublishedView
 from benchmark.adapters.dense import DEFAULT_URL
 from benchmark.adapters.palladion import CASE, TABLE_FILE, PalladionArm, PrincipalMap
 from benchmark.config import load_all
 from benchmark.fixtures.manifest import Layout, Namespace
+from benchmark.matched import MatchedListError
 from benchmark.run_manifest import tree_state
 from benchmark.track_a import (
     LOCAL_ARMS,
@@ -38,6 +40,7 @@ from benchmark.track_a import (
     build_local_arms,
     execute,
     load_pinned_models,
+    read_annotations,
 )
 
 PROJECT = Path(__file__).resolve().parents[1]
@@ -112,6 +115,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--palladion-mode", choices=["lexical", "dense", "hybrid", "reranked"], default="hybrid")
     parser.add_argument("--load-palladion", action="store_true", help="load the corpus into Palladion first (once)")
     parser.add_argument("--models-dir", type=Path, default=PROJECT / "artifacts" / "models")
+    parser.add_argument("--matched-list", type=Path, default=None, help="the frozen lists this run must match")
     options = parser.parse_args(argv)
     condition = Condition(options.condition)
     arms = [a for a in options.arms.split(",") if a]
@@ -140,12 +144,19 @@ def main(argv: list[str] | None = None) -> int:
             runtime = palladion_runtime.PalladionRuntime(rerank=options.palladion_mode == "reranked")
             adapters["R7a"] = palladion_arm(view, runtime, options, condition, index_dir, builds)
             trees["R7a"] = tree_state(palladion_runtime.application_dir(), label="palladion")
-        spec = RunSpec(options.run_id, options.split, condition, options.k, options.budget, options.root, options.out)
+        matched = matched_lists.load(options.matched_list) if options.matched_list else None
+        if matched is not None:
+            asked = [r.question_id for r in read_annotations(options.root, options.split)[0]]
+            matched.require("track_a", asked)
+        spec = RunSpec(
+            options.run_id, options.split, condition, options.k, options.budget, options.root, options.out,
+            matched_list_sha256=matched.digest if matched else None,
+        )  # fmt: skip
         outcome = execute(spec, adapters, builds=builds, system_trees=trees)
         print(json.dumps({"run_dir": str(outcome.run_dir), "questions": outcome.questions, "arms": outcome.arms,
                           "status_counts": dict(outcome.summary.status_counts)}, indent=2))  # fmt: skip
         return 0
-    except (AdapterError, TrackAError, palladion_runtime.PalladionRuntimeError) as exc:
+    except (AdapterError, TrackAError, MatchedListError, palladion_runtime.PalladionRuntimeError) as exc:
         print(f"refused: {exc}", file=sys.stderr)
         return 2
     finally:

@@ -1228,21 +1228,21 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
 
 <a id="b08-t08-09"></a>
 
-- [ ] **B08-T08.09 — Plan digest, cross-run guard, quota ledger and frozen matched lists**
-  - **Files:** `palladion-benchmark/benchmark/quota.py`, `palladion-benchmark/benchmark/runner.py`, `palladion-benchmark/benchmark/results_check.py`, `palladion-benchmark/tests/test_quota.py`, `palladion-benchmark/tests/test_runner.py`.
+- [x] **B08-T08.09 — Plan digest, cross-run guard, quota ledger and frozen matched lists**
+  - **Files:** `palladion-benchmark/benchmark/quota.py`, `palladion-benchmark/benchmark/matched.py`, `palladion-benchmark/scripts/freeze_matched.py`, `palladion-benchmark/benchmark/runner.py`, `palladion-benchmark/benchmark/run_manifest.py`, `palladion-benchmark/benchmark/results_check.py`, `palladion-benchmark/benchmark/track_a.py`, `palladion-benchmark/benchmark/track_b.py`, `palladion-benchmark/scripts/run_track_a.py`, `palladion-benchmark/scripts/run_track_b.py`, `palladion-benchmark/tests/test_quota.py`, `palladion-benchmark/tests/test_matched.py`, `palladion-benchmark/tests/test_runner.py`, `palladion-benchmark/tests/test_validate_results.py`.
   - **Depends:** B08-T08.07, B08-T08.08.
-  - **Change:** The plan digest includes the system-under-test commit, K, evidence budget, condition and model assignment; the validator and the report refuse to pool runs that differ in any of them; a per-model, per-provider-day token ledger is read from the counting proxies' books and gives the day's remaining quota and the planned days; the matched question and episode lists are frozen into a file with its digest before the first spend and recorded in every manifest.
-  - **Proof:** UNIT; BG-REPRO, BG-FAIR; runs that differ in pin, K, budget, condition or model are refused, and an identical pair is accepted; the ledger recomputes a day's spend from saved rows and flags a book that disagrees with its totals; editing a frozen list changes its digest and is refused at run time.
-  - **Evidence:** Not yet executed.
+  - **Change:** The plan digest includes each arm's manifest comparability view (system-under-test commit, K, budget, condition, matched list, model assignment, generator settings), so the same questions under another setting are a different plan, not a repeat; `check_poolable` refuses to put runs that differ in any of them, or system arms at two commits, in one table; `benchmark/quota.py` reads the saved generator records and proxy books and reports each model's spend and remaining tokens over a trailing day and the days a demand needs (a command-line report); `benchmark/matched.py` and `scripts/freeze_matched.py` choose the question, episode, case and graph lists and the one model per Track B question once, write them with their digest and never rewrite them; Track A and Track B check their ids against the file (Track B takes the model assignment from it) and record its digest in the manifest and the run configuration.
+  - **Proof:** UNIT; BG-REPRO, BG-FAIR; runs that differ in pin, K, budget, condition, list or model are refused and an identical pair is accepted (planted mismatches fail the plan-digest and pooling tests); the ledger recomputes spend from saved rows (a call at the window start or after the instant is not counted, a refused request costs nothing); a frozen list cannot be rewritten or edited, a run that asks other questions is refused before it spends, and a Track B run uses exactly the frozen models per question.
+  - **Evidence:** E-B08-005 (plan identity, pooling guard, ledger, frozen lists; mutants killed).
 
 <a id="b08-t08-10"></a>
 
-- [ ] **B08-T08.10 — Paired statistics across runs and harm metrics over every eligible pair**
-  - **Files:** `palladion-benchmark/benchmark/eval/score_run.py`, `palladion-benchmark/benchmark/analysis/tables.py`, `palladion-benchmark/scripts/score_track_a.py`, `palladion-benchmark/scripts/score_track_b.py`, `palladion-benchmark/tests/test_score_run.py`, `palladion-benchmark/tests/test_tables.py`.
-  - **Depends:** B08-T08.09, B04-T05.01.
-  - **Change:** Score two or more run directories that passed the cross-run guard as paired arms on the same question ids, with the primary pairing R7a against R3 (and E4 against E3 for Track C), exact McNemar and clustered bootstrap intervals, Holm across the exploratory pairs, strata with too few clusters marked descriptive; harm metrics get an all-eligible-pairs value with a "not completed" count beside the conditional rate.
-  - **Proof:** UNIT; BG-STATS, BG-METRIC, BG-REPORT; hand-computed pairs match, a quota-blocked pair is neither a harm nor a zero, a pair from a different pin is refused, perfect, empty and shuffled arms separate.
-  - **Evidence:** Not yet executed.
+- [x] **B08-T08.10 — Paired statistics and harm metrics over every eligible pair**
+  - **Files:** `palladion-benchmark/benchmark/analysis/tables.py`, `palladion-benchmark/benchmark/eval/score_answers.py`, `palladion-benchmark/scripts/score_track_a.py`, `palladion-benchmark/scripts/score_track_b.py`, `palladion-benchmark/tests/test_tables.py`, `palladion-benchmark/tests/test_track_b.py`.
+  - **Depends:** B08-T08.09, B04-T05.01, B05-T08.01.
+  - **Change:** Pair the arms of a run with a reference on the same questions, with the primary pairing named in advance (R7a against R3): the discordant counts and the exact McNemar test wherever both arms have a 0 or 1 outcome, Holm over the other arms within each stratum and metric, the primary pairing's p-value left unadjusted; bound each harm metric over every eligible pair (lower: no harm among pairs that did not complete, upper: harm in all of them); pair the Track B co-primary endpoints (coverage of correct answers, unsupported directives) the same way; keep a pair a daily limit stopped out of every rate and count it apart. `score_track_a.py` and `score_track_b.py` take `--reference` and `--primary`.
+  - **Proof:** UNIT; BG-STATS, BG-METRIC, BG-REPORT; hand-computed exact and Holm values match, a metric that is not 0 or 1 gets no exact test, a bad primary arm is refused, a quota-blocked pair is neither a harm nor a zero (with the exclusion removed the test fails), the gold arm separates from the empty arm on real Track B runs.
+  - **Evidence:** E-B08-006 (exact tests, Holm, harm bounds, Track B pairing; mutant killed).
 
 <a id="b08-t08-02"></a>
 

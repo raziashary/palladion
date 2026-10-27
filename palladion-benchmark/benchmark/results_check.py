@@ -124,6 +124,42 @@ def validate_run(
     return findings
 
 
+def comparability_findings(views: Mapping[str, Mapping[str, Any]]) -> list[Finding]:
+    """Why runs must not share one table: any setting that differs, and system arms that name different commits.
+
+    ``views`` maps a label (run directory and arm) to the manifest's comparability view. Every key but the system under
+    test must be equal everywhere; a system arm's commit must be one commit.
+    """
+    findings: list[Finding] = []
+    if not views:
+        return [Finding("there is no manifest to compare", "runs")]
+    keys = sorted({key for view in views.values() for key in view} - {"system_under_test"})
+    for key in keys:
+        seen = {json.dumps(view.get(key), sort_keys=True): label for label, view in sorted(views.items())}
+        if len(seen) > 1:
+            findings.append(Finding(f"{key} differs between runs ({' / '.join(sorted(seen.values())[:3])})", "runs"))
+    commits = {view["system_under_test"] for view in views.values() if view.get("system_under_test")}
+    if len(commits) > 1:
+        findings.append(Finding(f"system arms name {len(commits)} different Palladion commits", "runs"))
+    return findings
+
+
+def check_poolable(run_dirs: Sequence[Path]) -> list[Finding]:
+    """Whether the runs in these directories may be scored and reported together (BADR-0044 item 8)."""
+    views: dict[str, Mapping[str, Any]] = {}
+    findings: list[Finding] = []
+    for run_dir in run_dirs:
+        found = sorted(run_dir.glob("manifest-*.json"))
+        if not found:
+            findings.append(Finding("the directory has no arm manifest", run_dir.name))
+        for path in found:
+            try:
+                views[f"{run_dir.name}/{path.stem.removeprefix('manifest-')}"] = read_verified(path).comparability()
+            except (ManifestError, ContractError, OSError, ValueError):
+                findings.append(Finding("the manifest is missing or does not verify", f"{run_dir.name}/{path.name}"))
+    return findings + comparability_findings(views) if views else findings
+
+
 def _check_reads(read_log: Mapping[str, Any], root: Path) -> list[Finding]:
     findings: list[Finding] = []
     split = str(read_log.get("split"))

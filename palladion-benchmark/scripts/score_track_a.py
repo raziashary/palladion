@@ -22,6 +22,7 @@ from benchmark.analysis.tables import build_scorecard, render_markdown
 from benchmark.config import load_evaluation_config
 from benchmark.eval.retrieval import RETRIEVAL_METRICS
 from benchmark.eval.score_run import ScoreRunError, score_run
+from benchmark.eval.statistics import StatisticsError
 from benchmark.fixtures.manifest import Layout, Namespace, read_identity
 from benchmark.runner import RunnerError
 from benchmark.track_a import RUNNABLE_SPLITS, WITHDRAWN, read_withdrawn
@@ -43,6 +44,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--k", type=int, required=True)
     parser.add_argument("--reference", default=None, help="arm to compare the others against")
+    parser.add_argument("--primary", default=None, help="the arm whose pairing with the reference was fixed in advance")
     parser.add_argument(
         "--withdrawn", type=Path, default=WITHDRAWN, help="questions left out of the scores, with reasons"
     )
@@ -66,7 +68,11 @@ def main(argv: list[str] | None = None) -> int:
             withdrawn=read_withdrawn(options.withdrawn),
         )
         card = build_scorecard(
-            score, metrics=RETRIEVAL_METRICS, stats=evaluation.statistics, reference=options.reference
+            score,
+            metrics=RETRIEVAL_METRICS,
+            stats=evaluation.statistics,
+            reference=options.reference,
+            primary=options.primary,
         )
         (options.run_dir / "scorecard.md").write_text(
             withdrawn_note(score.withdrawn) + render_markdown(card), encoding="utf-8"
@@ -89,7 +95,7 @@ def main(argv: list[str] | None = None) -> int:
             f"scorecard in {options.run_dir / 'scorecard.md'}"
         )
         return 0
-    except (ScoreRunError, RunnerError, OSError, KeyError, ValueError) as exc:
+    except (ScoreRunError, RunnerError, StatisticsError, OSError, KeyError, ValueError) as exc:
         print(f"refused: {str(exc)[:300]}", file=sys.stderr)
         return 2
 

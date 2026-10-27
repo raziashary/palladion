@@ -15,7 +15,14 @@ import pytest
 from benchmark.adapters.common import Condition, PublishedView
 from benchmark.adapters.palladion import CASE, TABLE_FILE, PalladionArm, PrincipalMap
 from benchmark.config import load_comparators_config
-from benchmark.contracts import ArmUnavailable, CapabilityUnsupported, RetrievalRequest, RunStatus, classify_exception
+from benchmark.contracts import (
+    ArmUnavailable,
+    CapabilityUnsupported,
+    EvidenceCandidate,
+    RetrievalRequest,
+    RunStatus,
+    classify_exception,
+)
 from benchmark.fixtures.manifest import ManifestRecord
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -244,9 +251,12 @@ def test_a_real_palladion_keeps_a_restricted_document_from_a_forbidden_reader_an
         try:
             arm.load_corpus(tmp_path / TABLE_FILE)
             title = " ".join(IDENTIFIER_SHAPE.sub(" ", restricted.title).split())
-            ask = lambda who, query, when: arm.retrieve(  # noqa: E731
-                RetrievalRequest("q-0000000000000001", query, who, "snap", when, None, {}, 10, 100000)
-            )
+
+            def ask(who: str, query: str, when: str) -> list[EvidenceCandidate]:
+                return arm.retrieve(
+                    RetrievalRequest("q-0000000000000001", query, who, "snap", when, None, {}, 10, 100000)
+                )
+
             assert restricted.doc_id in {c.source_document_id for c in ask(seeing, title, "2026-10-18T03:00:00Z")}
             hidden = ask(blind, title, "2026-10-18T03:00:00Z")
             assert restricted.doc_id not in {c.source_document_id for c in hidden}
@@ -254,6 +264,7 @@ def test_a_real_palladion_keeps_a_restricted_document_from_a_forbidden_reader_an
             assert arm.verify_acl()["leaks"] == 0
             lapsed = " ".join(IDENTIFIER_SHAPE.sub(" ", expired.title).split())
             inside = f"{expired.valid_from[:10]}T12:00:00Z" if expired.valid_from else "2025-07-01T12:00:00Z"
+            assert expired.valid_to is not None
             after = f"{expired.valid_to[:4]}-12-31T12:00:00Z"
             assert expired.doc_id in {c.source_document_id for c in ask(seeing, lapsed, inside)}
             assert expired.doc_id not in {c.source_document_id for c in ask(seeing, lapsed, after)}

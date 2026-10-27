@@ -22,12 +22,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import palladion_runtime
 import run_track_a
 
+from benchmark import matched as matched_lists
 from benchmark.adapters.common import AdapterError, Condition, PublishedView
 from benchmark.adapters.dense import DEFAULT_URL
 from benchmark.config import load_benchmark_config
 from benchmark.eval.normalize import PublishedCorpus
 from benchmark.fixtures.manifest import Layout, Namespace
-from benchmark.generator import GenerationError, GeneratorPool
+from benchmark.generator import AssignmentPlan, GenerationError, GeneratorPool
+from benchmark.matched import MatchedListError
 from benchmark.run_manifest import tree_state
 from benchmark.runner import RunnerError
 from benchmark.track_a import (
@@ -76,6 +78,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--tokens-per-question", type=int, default=TOKENS_PER_QUESTION)
     parser.add_argument("--withdrawn", type=Path, default=WITHDRAWN)
     parser.add_argument("--limit-questions", type=int, default=None, help="ask a seeded, stratum-balanced subset")
+    parser.add_argument("--matched-list", type=Path, default=None, help="the frozen lists this run must match")
     parser.add_argument(
         "--allow-failover", action="store_true", help="on a rate limit move down the approved model list (recorded)"
     )
@@ -137,18 +140,30 @@ def main(argv: list[str] | None = None) -> int:
         withdrawn = read_withdrawn(options.withdrawn)
         records, _ = read_annotations(options.root, options.split)
         seed = benchmark_config.default_seed
-        subset = (
-            None
-            if options.limit_questions is None
-            else tuple(pick_subset(eligible_records(records, withdrawn), options.limit_questions, seed))
-        )
+        if options.matched_list and options.limit_questions is not None:
+            print("refused: a matched list and --limit-questions both choose the questions", file=sys.stderr)
+            return 2
+        matched = matched_lists.load(options.matched_list) if options.matched_list else None
+        if matched is not None:
+            subset: tuple[str, ...] | None = matched.lists["track_b"]
+        elif options.limit_questions is not None:
+            subset = tuple(pick_subset(eligible_records(records, withdrawn), options.limit_questions, seed))
+        else:
+            subset = None
         spec = TrackBSpec(
             options.run_id, options.split, options.k, options.budget, options.root, options.out,
             condition=condition.value, live=live, tokens_per_question=options.tokens_per_question, withdrawn=withdrawn,
             question_ids=subset, case_deadline_seconds=options.case_deadline_seconds, pace_seconds=options.pace_seconds,
             close_quota_blocked=options.close_quota_blocked,
+            matched_list_sha256=matched.digest if matched else None,
         )  # fmt: skip
-        plan = plan_assignment(asked_records(records, withdrawn, subset), generator, spec, seed)
+        asked = asked_records(records, withdrawn, subset)
+        if matched is not None:  # the frozen file owns the assignment: one model per question for every arm
+            if {r.question_id for r in asked} != set(matched.assignment):
+                raise MatchedListError("the frozen model assignment does not cover exactly the questions asked")
+            plan = AssignmentPlan(dict(matched.assignment), ())
+        else:
+            plan = plan_assignment(asked, generator, spec, seed)
         options.out.mkdir(parents=True, exist_ok=True)
         record_path, prompt_path = make_pool_paths(options.out)
         pool: GeneratorPool
@@ -181,7 +196,14 @@ def main(argv: list[str] | None = None) -> int:
             )
         )
         return 0
-    except (AdapterError, TrackAError, GenerationError, RunnerError, palladion_runtime.PalladionRuntimeError) as exc:
+    except (
+        AdapterError,
+        TrackAError,
+        GenerationError,
+        RunnerError,
+        MatchedListError,
+        palladion_runtime.PalladionRuntimeError,
+    ) as exc:
         print(f"refused: {exc}", file=sys.stderr)
         return 2
     finally:

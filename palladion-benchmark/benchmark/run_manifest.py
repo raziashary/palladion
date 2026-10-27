@@ -359,6 +359,28 @@ class RunManifest:
             view.pop(name, None)
         return view
 
+    def comparability(self) -> dict[str, Any]:
+        """What two runs must share for their results to sit in one table: the data, the settings that decide what an
+        arm is asked and what a generator may do, and the model assignment. The system under test is named apart
+        because only a system arm has one; every system arm in a table must name the same commit.
+        """
+        config = self.retrieval_config
+        generator = config.get("generator")
+        return {
+            "split": self.split,
+            "source": self.source_manifest_sha256,
+            "questions": self.question_manifest_sha256,
+            "gold": self.gold_manifest_sha256,
+            "k": config.get("k"),
+            "budget_words": config.get("budget_words"),
+            "metadata_condition": config.get("metadata_condition"),
+            "matched_list": config.get("matched_list_sha256"),
+            "prompt": self.prompt_digest,
+            "generator_assignment": self.generator_assignment_sha256,
+            "generator": thaw(generator) if isinstance(generator, Mapping) else None,
+            "system_under_test": self.system_under_test.commit if self.system_under_test else None,
+        }
+
     def digest(self) -> str:
         return sha256_of(self.to_dict())
 

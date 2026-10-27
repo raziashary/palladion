@@ -11,7 +11,7 @@ import pytest
 
 from benchmark.adapters.common import Condition, PublishedView
 from benchmark.fixtures.questions import GoldRecord
-from benchmark.results_check import Finding, gold_texts, validate_run
+from benchmark.results_check import Finding, check_poolable, comparability_findings, gold_texts, validate_run
 from benchmark.track_a import RunSpec, build_local_arms, execute
 
 K, BUDGET = 10, 4000
@@ -320,3 +320,64 @@ def test_gold_text_is_also_looked_for_as_it_reads_inside_a_json_file(s_questions
     texts = gold_texts([record])
     assert awkward in texts and json.dumps(awkward)[1:-1] in texts
     assert json.dumps({"content": awkward}).count(json.dumps(awkward)[1:-1]) == 1
+
+
+# --------------------------------------------------------------------------- may these runs share a table (B08-T08.09)
+
+
+BASE_VIEW = {
+    "split": "smoke", "source": "s" * 64, "questions": "q" * 64, "gold": "g" * 64, "k": 10, "budget_words": 4000,
+    "metadata_condition": "C2", "matched_list": "m" * 64, "prompt": None, "generator_assignment": None,
+    "generator": None, "system_under_test": None,
+}  # fmt: skip
+
+
+def test_runs_that_agree_on_everything_may_share_a_table_and_a_system_arm_has_one_commit() -> None:
+    views = {"a/R0": BASE_VIEW, "b/R7a": {**BASE_VIEW, "system_under_test": "d" * 40}, "c/R1": BASE_VIEW}
+    assert comparability_findings(views) == []
+
+
+@pytest.mark.parametrize(
+    ("change", "named"),
+    [
+        ({"k": 5}, "k differs"),
+        ({"budget_words": 100}, "budget_words differs"),
+        ({"metadata_condition": "C1"}, "metadata_condition differs"),
+        ({"questions": "x" * 64}, "questions differs"),
+        ({"matched_list": "x" * 64}, "matched_list differs"),
+        ({"generator_assignment": "x" * 64}, "generator_assignment differs"),
+        ({"generator": {"max_completion_tokens": 700}}, "generator differs"),
+    ],
+)
+def test_a_setting_that_differs_keeps_runs_out_of_one_table(change: dict[str, object], named: str) -> None:
+    findings = comparability_findings({"a/R0": BASE_VIEW, "b/R7a": {**BASE_VIEW, **change}})
+    assert [f.rule.split(" (")[0] for f in findings] == [f"{named} between runs"]
+
+
+def test_system_arms_at_two_commits_are_not_pooled() -> None:
+    views = {
+        "a/R7a": {**BASE_VIEW, "system_under_test": "d" * 40},
+        "b/E4": {**BASE_VIEW, "system_under_test": "e" * 40},
+    }
+    assert [f.rule for f in comparability_findings(views)] == ["system arms name 2 different Palladion commits"]
+
+
+def test_nothing_to_compare_is_a_finding_not_a_pass() -> None:
+    assert [f.rule for f in comparability_findings({})] == ["there is no manifest to compare"]
+
+
+def test_real_runs_at_one_setting_pool_and_runs_at_another_k_do_not(
+    clean_run: Path, s_root: Path, tmp_path: Path
+) -> None:
+    view = PublishedView.load(s_root / "published")
+    other = tmp_path / "k5"
+    arms, builds = build_local_arms(view, ["R0"], condition=Condition.C2, index_dir=other / "index")
+    execute(RunSpec("run-v-0002", "smoke", Condition.C2, 5, BUDGET, s_root, other), arms, builds=builds)
+    same = tmp_path / "copy"
+    shutil.copytree(clean_run, same)
+    assert check_poolable([clean_run, same]) == []
+    mixed = " | ".join(f.render() for f in check_poolable([clean_run, other]))
+    assert "k differs" in mixed
+    empty = tmp_path / "empty"
+    empty.mkdir()
+    assert any("no arm manifest" in f.rule for f in check_poolable([empty]))

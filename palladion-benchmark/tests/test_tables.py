@@ -126,3 +126,81 @@ def test_few_families_give_a_descriptive_interval() -> None:
 def test_an_unknown_reference_is_refused() -> None:
     with pytest.raises(StatisticsError):
         card([pair("base", 1)], reference="ghost")
+
+
+# --------------------------------------------------------------------------- paired tests and harm bounds (B08-T08.10)
+
+
+def binary_pairs(arm: str, wins: set[int], total: int = 10) -> list[PairScore]:
+    return [pair(arm, i, value=1.0 if i in wins else 0.0) for i in range(total)]
+
+
+def test_the_exact_test_is_computed_on_the_discordant_questions_and_matches_a_hand_value() -> None:
+    # the arm alone is right on questions 0-7, the reference alone on 8-9: 8 against 2
+    pairs = binary_pairs("arm", set(range(8))) + binary_pairs("base", {8, 9})
+    effect = next(e for e in card(pairs).effects if e.stratum == ALL_STRATA and e.metric == "complete_set_at_k")
+    assert (effect.only_arm, effect.only_reference) == (8, 2)
+    assert effect.p_value == pytest.approx(2 * (1 + 10 + 45) / 1024)  # two-sided exact binomial, hand computed
+    assert effect.pairs == 10 and effect.difference.estimate == pytest.approx(0.6)
+
+
+def test_a_metric_that_is_not_zero_or_one_has_a_difference_and_no_exact_test() -> None:
+    pairs = [pair("arm", i, value=0.5) for i in range(10)] + [pair("base", i, value=0.25) for i in range(10)]
+    effect = next(e for e in card(pairs).effects if e.stratum == ALL_STRATA and e.metric == "complete_set_at_k")
+    assert effect.p_value is None and effect.only_arm is None and effect.difference.estimate == pytest.approx(0.25)
+
+
+def test_holm_adjusts_the_other_arms_together_and_leaves_the_primary_pairing_alone() -> None:
+    pairs = binary_pairs("base", set(), 20)
+    pairs += binary_pairs("lead", set(range(8)), 20)  # 8 against 0: p = 2 / 256
+    pairs += binary_pairs("mid", set(range(5)), 20)  # 5 against 0: p = 2 / 32
+    pairs += binary_pairs("low", {0}, 20)  # 1 against 0: p = 1
+    result = build_scorecard(
+        score(pairs), metrics=("complete_set_at_k",), stats=STATS, reference="base", primary="lead"
+    )
+    by_arm = {e.arm: e for e in result.effects if e.stratum == ALL_STRATA}
+    assert by_arm["lead"].primary and by_arm["lead"].adjusted_p is None
+    assert by_arm["lead"].p_value == pytest.approx(2 / 256)
+    # mid and low are adjusted together (two tests): the smaller p times 2, the larger kept at least that, capped at 1
+    assert by_arm["mid"].adjusted_p == pytest.approx(min(1.0, 2 * (2 / 32)))
+    assert by_arm["low"].adjusted_p == pytest.approx(1.0)
+    assert not by_arm["mid"].primary and not by_arm["low"].primary
+    text = render_markdown(result)
+    assert "primary (unadjusted)" in text and "only arm / only ref" in text
+
+
+def test_a_primary_arm_that_is_not_in_the_run_or_is_the_reference_is_refused() -> None:
+    pairs = binary_pairs("arm", {0}) + binary_pairs("base", {1})
+    for primary in ("ghost", "base"):
+        with pytest.raises(StatisticsError, match="primary arm"):
+            build_scorecard(
+                score(pairs), metrics=("complete_set_at_k",), stats=STATS, reference="base", primary=primary
+            )
+    with pytest.raises(StatisticsError, match="primary arm"):
+        build_scorecard(score(pairs), metrics=("complete_set_at_k",), stats=STATS, reference=None, primary="arm")
+
+
+def test_a_harm_is_bounded_over_every_eligible_pair_and_never_imputed() -> None:
+    pairs = [pair("arm", i, exposed=1 if i < 3 else 0) for i in range(30)]
+    pairs += [pair("arm", 30 + i, RunStatus.TIMEOUT) for i in range(10)]
+    pairs += [pair("base", i) for i in range(40)]
+    result = card(pairs)
+    harmed = result.cell(ALL_STRATA, "arm", "forbidden_source_exposure")
+    assert harmed.harm_bounds == pytest.approx((3 / 40, 13 / 40))  # none of the 10 unfinished / all of them
+    assert harmed.conditional is not None and harmed.conditional.estimate == pytest.approx(0.1)
+    clean = result.cell(ALL_STRATA, "base", "forbidden_source_exposure")
+    assert clean.harm_bounds == (0.0, 0.0), (
+        "zero observed harm over a complete run is a bound of zero, not a claim of safety"
+    )
+    assert result.cell(ALL_STRATA, "arm", "complete_set_at_k").harm_bounds is None
+    text = render_markdown(result)
+    assert "Harm over every eligible pair" in text and "0.075" in text and "0.325" in text
+
+
+def test_a_pair_that_never_ran_widens_the_upper_bound_only() -> None:
+    complete = [pair("arm", i) for i in range(20)]
+    cut = [pair("arm", i) for i in range(10)] + [pair("arm", 10 + i, RunStatus.NOT_RUN) for i in range(10)]
+    full = build_scorecard(score(complete), metrics=("forbidden_source_exposure",), stats=STATS)
+    short = build_scorecard(score(cut), metrics=("forbidden_source_exposure",), stats=STATS)
+    assert full.cell(ALL_STRATA, "arm", "forbidden_source_exposure").harm_bounds == (0.0, 0.0)
+    assert short.cell(ALL_STRATA, "arm", "forbidden_source_exposure").harm_bounds == (0.0, 0.5)

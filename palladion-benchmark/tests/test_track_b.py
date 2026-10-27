@@ -691,3 +691,93 @@ def test_the_command_line_takes_a_subset_and_records_failover(s_root: Path, tmp_
     assert config["failover"] is True and len(config["asked"]) == 5
     manifest = read_verified(out / "manifest-R0.json")
     assert manifest.retrieval_config["generator"]["failover"] is True
+
+
+# ------------------------------------------------------------------ paired endpoints and the daily limit (B08-T08.10)
+
+
+def stats_settings() -> Any:
+    from benchmark.config import load_evaluation_config
+
+    return load_evaluation_config(ROOT / "configs" / "evaluation.yaml").statistics
+
+
+def loss_matrix() -> Any:
+    from benchmark.config import load_evaluation_config
+
+    return load_evaluation_config(ROOT / "configs" / "evaluation.yaml").loss_matrix
+
+
+def test_the_co_primary_endpoints_are_paired_with_the_reference_on_the_same_questions(
+    s_root: Path, s_published_corpus: PublishedCorpus, s_questions: tuple[GoldRecord, ...], tmp_path: Path
+) -> None:
+    from benchmark.analysis.tables import answer_effects, render_answer_scorecard
+    from benchmark.eval.abstention import loss_sweep
+    from benchmark.eval.score_answers import score_answer_run, summarize_arm
+    from benchmark.eval.statistics import StatisticsError
+
+    arms = {
+        "R2": GoldRetriever("R2", s_published_corpus, s_questions),
+        "R3": GoldRetriever("R3", s_published_corpus, s_questions, empty=True),
+        "R4": GoldRetriever("R4", s_published_corpus, s_questions, empty=True),
+    }
+    out, _ = run(s_root, tmp_path, s_published_corpus, s_questions, arms)
+    score = score_answer_run(run_dir=out, root=s_root)
+    settings = stats_settings()
+    effects = answer_effects(score, reference="R3", primary="R2", stats=settings)
+    coverage = next(e for e in effects if e.arm == "R2" and e.metric == "correct_answer")
+    assert coverage.primary and coverage.only_arm is not None and coverage.only_reference is not None
+    assert coverage.only_arm > coverage.only_reference == 0, (
+        "the arm with the evidence answers what the empty one cannot"
+    )
+    assert coverage.difference.estimate > 0 and coverage.p_value is not None and coverage.adjusted_p is None
+    twin = next(e for e in effects if e.arm == "R4" and e.metric == "correct_answer")
+    assert twin.difference.estimate == 0 and twin.only_arm == twin.only_reference == 0 and twin.adjusted_p is not None
+    with pytest.raises(StatisticsError, match="primary arm"):
+        answer_effects(score, reference="R3", primary="R3", stats=settings)
+    with pytest.raises(StatisticsError, match="reference arm"):
+        answer_effects(score, reference="R9", primary=None, stats=settings)
+    summaries = [summarize_arm(score, arm, loss_matrix()) for arm in score.arms]
+    text = render_answer_scorecard(score, summaries, loss_sweep({}, {}, ()), effects)
+    assert "paired with the reference" in text and "primary (unadjusted)" in text
+
+
+def test_a_pair_a_daily_limit_stopped_is_in_no_rate_and_is_counted_apart(
+    s_root: Path, s_published_corpus: PublishedCorpus, s_questions: tuple[GoldRecord, ...], tmp_path: Path
+) -> None:
+    from benchmark.analysis.tables import answer_effects
+    from benchmark.eval.score_answers import score_answer_run, summarize_arm
+    from benchmark.generator import TransportResponse
+    from benchmark.track_b import asked_records, pick_subset
+
+    eligible = [q for q in s_questions if "controlled_qa" in q.track_eligibility]
+    ids = tuple(pick_subset(eligible, 4, seed=7))
+    refusal = TransportResponse(
+        429,
+        {},
+        json.dumps(
+            {"error": {"message": "Rate limit reached for tokens per day (TPD). Please try again in 5h."}}
+        ).encode(),
+    )
+
+    class Refusing:
+        def post(self, payload: Any) -> TransportResponse:
+            return refusal
+
+    out = tmp_path / "blocked"
+    spec = TrackBSpec("run-b-0009", "smoke", 10, 4000, s_root, out, question_ids=ids, close_quota_blocked=True)
+    plan = plan_assignment(asked_records(s_questions, None, ids), GENERATOR, spec, 7)
+    arms = {
+        "R2": GoldRetriever("R2", s_published_corpus, s_questions),
+        "R3": GoldRetriever("R3", s_published_corpus, s_questions, empty=True),
+    }
+    execute_track_b(
+        spec, arms, make_pool(out, dict(plan.assigned), Refusing()), plan, s_published_corpus, GENERATOR,
+        pool_label="offline-stub",
+    )  # fmt: skip
+    score = score_answer_run(run_dir=out, root=s_root)
+    summary = summarize_arm(score, "R2", loss_matrix())
+    assert summary.pairs == 4 and summary.quota_blocked == 4 and summary.states == {"QUOTA_BLOCKED": 4}
+    endpoints = summary.endpoints
+    assert endpoints.pairs == 0 and endpoints.coverage_itt is None and endpoints.directive_rate_worst_case is None
+    assert answer_effects(score, reference="R3", primary="R2", stats=stats_settings()) == []

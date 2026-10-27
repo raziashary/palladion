@@ -187,6 +187,8 @@ def write_manifest(
     run_id: str = RUN_ID,
     track: Track = Track.RETRIEVAL_ONLY,
     split: str = "pilot",
+    retrieval_config: dict[str, Any] | None = None,
+    commit: str | None = None,
 ) -> None:
     reasons = {
         k: "not applicable in this test"
@@ -208,11 +210,11 @@ def write_manifest(
         question_manifest_sha256="b" * 64,
         gold_manifest_sha256="c" * 64,
         benchmark=TreeState("benchmark", "1" * 40, "d" * 64, ()),
-        system_under_test=None,
+        system_under_test=TreeState("palladion", commit, "e" * 64, ()) if commit else None,
         container_image_digest=None,
         method_version=None,
         model_versions={},
-        retrieval_config={},
+        retrieval_config=retrieval_config or {},
         prompt_digest=None,
         hardware={},
         pricing_snapshot=None,
@@ -485,6 +487,47 @@ def test_a_new_run_id_on_the_same_plan_is_refused(tmp_path: Path) -> None:
     (tmp_path / "third").mkdir()
     different_plan = build(tmp_path / "third", arms, run_id="run-0003", plans=shared)
     assert different_plan.run(4).executed_pairs == 4  # a genuinely different plan is a different experiment
+
+
+@pytest.mark.parametrize(
+    ("config", "commit"),
+    [({"k": 5}, None), ({"budget_words": 100}, None), ({"metadata_condition": "C1"}, None), ({}, "a" * 40)],
+)
+def test_the_same_questions_under_another_setting_or_commit_are_a_different_plan_not_a_repeat(
+    tmp_path: Path, config: dict[str, Any], commit: str | None
+) -> None:
+    shared = tmp_path / "plans.jsonl"
+    base = {"k": 10, "budget_words": 4000, "metadata_condition": "C2"}
+    (tmp_path / "first").mkdir()
+    write_manifest(tmp_path / "first" / "manifest-R0.json", "R0", settings(), retrieval_config=base, commit="b" * 40)
+    build(tmp_path / "first", {"R0": Good()}, plans=shared).run(2)
+    (tmp_path / "second").mkdir()
+    write_manifest(
+        tmp_path / "second" / "manifest-R0.json", "R0", settings(), run_id="run-0002",
+        retrieval_config={**base, **config}, commit=commit or "b" * 40,
+    )  # fmt: skip
+    again = build(tmp_path / "second", {"R0": Good()}, run_id="run-0002", plans=shared)
+    assert again.run(2).executed_pairs == 2, (
+        "another setting is a different experiment, so it is not refused as a repeat"
+    )
+
+
+def test_the_same_questions_with_the_same_settings_are_still_a_repeat(tmp_path: Path) -> None:
+    shared = tmp_path / "plans.jsonl"
+    same = {"k": 10, "budget_words": 4000, "metadata_condition": "C2"}
+    for name, run_id in (("first", RUN_ID), ("second", "run-0002")):
+        (tmp_path / name).mkdir()
+        write_manifest(
+            tmp_path / name / "manifest-R0.json",
+            "R0",
+            settings(),
+            run_id=run_id,
+            retrieval_config=same,
+            commit="b" * 40,
+        )
+    build(tmp_path / "first", {"R0": Good()}, plans=shared).run(2)
+    with pytest.raises(PlanAlreadyRunError):
+        build(tmp_path / "second", {"R0": Good()}, run_id="run-0002", plans=shared).run(2)
 
 
 def test_the_ledger_refuses_duplicate_finals_and_attempts(tmp_path: Path) -> None:

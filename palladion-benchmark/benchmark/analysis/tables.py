@@ -7,20 +7,36 @@ that never ran cannot be charged with a harm; they appear in the conditional tab
 
 Run states (NOT_RUN, UNSUPPORTED, FEATURE_NOT_SUPPORTED, INVALID_RUN, TIMEOUT) are listed beside accuracy, as counts,
 and never as zeros inside it.
+
+A harm metric is also reported over every eligible pair as a pair of bounds: the lower assumes no pair that did not
+complete would have caused the harm, the upper that every one would. A pair is never imputed in between.
+
+Where both arms have a 0 or 1 outcome on a question, the paired table adds the exact McNemar test on the discordant
+questions. The arm named as the primary pairing keeps its unadjusted p-value; the others are adjusted together by
+Holm within their stratum and metric (protocol 14.2).
 """
 
 from __future__ import annotations
 
 from collections import Counter
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from benchmark.config import StatisticsSettings
 from benchmark.contracts import RunStatus
 from benchmark.eval.abstention import Sweep
-from benchmark.eval.score_answers import AnswerRunScore, ArmAnswerSummary
+from benchmark.eval.score_answers import AnswerPair, AnswerRunScore, ArmAnswerSummary
 from benchmark.eval.score_run import HARM_METRICS, PairScore, RunScore
-from benchmark.eval.statistics import Interval, StatisticsError, cluster_bootstrap_mean, paired_cluster_difference
+from benchmark.eval.statistics import (
+    Interval,
+    StatisticsError,
+    cluster_bootstrap_mean,
+    discordant_counts,
+    holm,
+    mcnemar_exact,
+    paired_cluster_difference,
+)
+from benchmark.fixtures.questions import Answerability
 
 ALL_STRATA = "ALL"
 
@@ -37,6 +53,9 @@ class Cell:
     completed: int
     conditional: Interval | None
     excluded: int  # eligible pairs the conditional table dropped because they did not complete
+    # A harm metric over every eligible pair: (no harm among the pairs that did not complete, harm in every one of
+    # them). None for a benefit metric or when nothing is eligible.
+    harm_bounds: tuple[float, float] | None = None
 
 
 @dataclass(frozen=True)
@@ -49,6 +68,11 @@ class Effect:
     metric: str
     pairs: int
     difference: Interval
+    only_arm: int | None = None  # questions the arm got right and the reference did not (binary outcomes only)
+    only_reference: int | None = None
+    p_value: float | None = None  # exact McNemar on those discordant questions
+    adjusted_p: float | None = None  # Holm over the non-primary arms of this stratum and metric
+    primary: bool = False
 
 
 @dataclass(frozen=True)
@@ -98,6 +122,10 @@ def _cell(stratum: str, arm: str, metric: str, pairs: Sequence[PairScore], stats
     eligible = [p for p in pairs if metric in p.applicable or metric in p.metrics]
     itt = [(p, v) for p in eligible if (v := _itt_value(p, metric)) is not None]
     done = [(p, p.metrics[metric]) for p in eligible if p.status is RunStatus.OK and metric in p.metrics]
+    harm = None
+    if metric in HARM_METRICS and eligible:
+        events = sum(v > 0 for _, v in done)
+        harm = (events / len(eligible), (events + len(eligible) - len(done)) / len(eligible))
     return Cell(
         stratum=stratum,
         arm=arm,
@@ -107,6 +135,7 @@ def _cell(stratum: str, arm: str, metric: str, pairs: Sequence[PairScore], stats
         completed=len(done),
         conditional=_interval([v for _, v in done], [p.scenario_family for p, _ in done], stats) if done else None,
         excluded=len(eligible) - len(done),
+        harm_bounds=harm,
     )
 
 
@@ -136,26 +165,55 @@ def _effect(
 ) -> Effect | None:
     a = {p.question_id: v for p in mine if (v := _itt_value(p, metric)) is not None}
     b = {p.question_id: v for p in theirs if (v := _itt_value(p, metric)) is not None}
+    return paired_effect(stratum, arm, reference, metric, a, b, {p.question_id: p.scenario_family for p in mine}, stats)
+
+
+def paired_effect(
+    stratum: str,
+    arm: str,
+    reference: str,
+    metric: str,
+    a: Mapping[str, float],
+    b: Mapping[str, float],
+    family: Mapping[str, str],
+    stats: StatisticsSettings,
+) -> Effect | None:
+    """The paired difference ``a - b`` on the questions both have a value for; the exact test when all are 0 or 1."""
     shared = sorted(set(a) & set(b))
     if not shared:
         return None
-    family = {p.question_id: p.scenario_family for p in mine}
-    return Effect(
-        stratum,
-        arm,
-        reference,
-        metric,
-        len(shared),
-        paired_cluster_difference(
-            {q: a[q] for q in shared},
-            {q: b[q] for q in shared},
-            family,
-            resamples=stats.bootstrap_resamples,
-            confidence=stats.confidence,
-            seed=stats.bootstrap_seed,
-            min_clusters=stats.min_clusters,
-        ),
+    difference = paired_cluster_difference(
+        {q: a[q] for q in shared},
+        {q: b[q] for q in shared},
+        family,
+        resamples=stats.bootstrap_resamples,
+        confidence=stats.confidence,
+        seed=stats.bootstrap_seed,
+        min_clusters=stats.min_clusters,
     )
+    effect = Effect(stratum, arm, reference, metric, len(shared), difference)
+    if all(a[q] in (0.0, 1.0) and b[q] in (0.0, 1.0) for q in shared):
+        only_arm, only_reference = discordant_counts({q: a[q] == 1.0 for q in shared}, {q: b[q] == 1.0 for q in shared})
+        effect = replace(
+            effect, only_arm=only_arm, only_reference=only_reference, p_value=mcnemar_exact(only_arm, only_reference)
+        )
+    return effect
+
+
+def adjust_effects(effects: Sequence[Effect], primary: str | None) -> list[Effect]:
+    """Holm-adjust the p-values of the non-primary arms within each stratum and metric.
+
+    The primary pairing keeps its own, unadjusted p-value.
+    """
+    families: dict[tuple[str, str], dict[str, float]] = {}
+    for e in effects:
+        if e.p_value is not None and e.arm != primary:
+            families.setdefault((e.stratum, e.metric), {})[e.arm] = e.p_value
+    adjusted = {key: holm(p_values) for key, p_values in families.items()}
+    return [
+        replace(e, primary=e.arm == primary, adjusted_p=adjusted.get((e.stratum, e.metric), {}).get(e.arm))
+        for e in effects
+    ]
 
 
 def build_scorecard(
@@ -164,10 +222,16 @@ def build_scorecard(
     metrics: Sequence[str],
     stats: StatisticsSettings,
     reference: str | None = None,
+    primary: str | None = None,
 ) -> Scorecard:
-    """Cells for every stratum (and ALL) by arm by metric; effects against ``reference`` when one is named."""
+    """Cells for every stratum (and ALL) by arm by metric; effects against ``reference`` when one is named.
+
+    ``primary`` names the arm whose pairing with the reference was fixed in advance; its p-value is not adjusted.
+    """
     if reference is not None and reference not in score.arms:
         raise StatisticsError(f"reference arm {reference} is not in the run")
+    if primary is not None and (reference is None or primary not in score.arms or primary == reference):
+        raise StatisticsError("the primary arm must be an arm of the run other than the reference")
     strata = [*sorted({p.stratum for p in score.pairs}), ALL_STRATA]
     cells: list[Cell] = []
     effects: list[Effect] = []
@@ -184,7 +248,11 @@ def build_scorecard(
                     effect = _effect(stratum, arm, reference, metric, mine, theirs, stats)
                     if effect is not None:
                         effects.append(effect)
-    return Scorecard(score.run_id, score.k, tuple(cells), tuple(effects), tuple(states))
+    return Scorecard(score.run_id, score.k, tuple(cells), tuple(adjust_effects(effects, primary)), tuple(states))
+
+
+def _p(value: float | None) -> str:
+    return "n/a" if value is None else f"{value:.4f}"
 
 
 def _fmt(interval: Interval | None) -> str:
@@ -213,13 +281,32 @@ def render_markdown(card: Scorecard) -> str:
                 f"| {c.stratum} | {c.arm} | {c.metric} | {c.eligible} | {_fmt(value)} | {c.completed} | {c.excluded} |"
             )
         lines.append("")
+    harm = [c for c in card.cells if c.harm_bounds is not None]
+    if harm:
+        lines += ["## Harm over every eligible pair (bounds, not an estimate)", ""]
+        lines += ["| stratum | arm | metric | eligible | completed | harm among completed | lower | upper |"]
+        lines += ["|---|---|---|---|---|---|---|---|"]
+        for c in harm:
+            assert c.harm_bounds is not None
+            lower, upper = c.harm_bounds
+            lines.append(
+                f"| {c.stratum} | {c.arm} | {c.metric} | {c.eligible} | {c.completed} | {_fmt(c.conditional)} |"
+                f" {lower:.3f} | {upper:.3f} |"
+            )
+        lines.append("")
     if card.effects:
         lines += ["## Paired difference against the reference (intention to treat)", ""]
-        lines += ["| stratum | arm | reference | metric | pairs | difference |", "|---|---|---|---|---|---|"]
         lines += [
-            f"| {e.stratum} | {e.arm} | {e.reference} | {e.metric} | {e.pairs} | {_fmt(e.difference)} |"
-            for e in card.effects
+            "| stratum | arm | reference | metric | pairs | difference | only arm / only ref | exact p | Holm p |",
+            "|---|---|---|---|---|---|---|---|---|",
         ]
+        for e in card.effects:
+            split = "n/a" if e.only_arm is None else f"{e.only_arm} / {e.only_reference}"
+            holm_p = "primary (unadjusted)" if e.primary else _p(e.adjusted_p)
+            lines.append(
+                f"| {e.stratum} | {e.arm} | {e.reference} | {e.metric} | {e.pairs} | {_fmt(e.difference)} |"
+                f" {split} | {_p(e.p_value)} | {holm_p} |"
+            )
         lines.append("")
     lines += ["## Run states and severe failures (beside, not inside, accuracy)", ""]
     lines += ["| stratum | arm | completed | states | forbidden source | authority confusion | wrong vintage |"]
@@ -249,7 +336,56 @@ def _of(value: float | None, denominator: int) -> str:
     return "n/a" if value is None else f"{value:.3f} (of {denominator})"
 
 
-def render_answer_scorecard(score: AnswerRunScore, summaries: Sequence[ArmAnswerSummary], sweep: Sweep) -> str:
+ANSWER_ENDPOINTS = ("correct_answer", "unsupported_directive")
+
+
+def answer_effects(
+    score: AnswerRunScore, *, reference: str, primary: str | None, stats: StatisticsSettings
+) -> list[Effect]:
+    """The two co-primary endpoints of every arm paired with the reference on the same questions.
+
+    ``correct_answer`` is over the answerable questions both arms were asked: a pair that did not complete counts as not
+    answered correctly (intention to treat). ``unsupported_directive`` is over the questions both completed, because a
+    pair that never ran cannot be charged with a directive. A pair a daily limit stopped is in neither.
+    """
+    if reference not in score.arms:
+        raise StatisticsError(f"reference arm {reference} is not in the run")
+    if primary is not None and (primary not in score.arms or primary == reference):
+        raise StatisticsError("the primary arm must be an arm of the run other than the reference")
+    family = {p.question_id: p.scenario_family for p in score.pairs}
+    theirs = {p.question_id: p for p in score.arm_pairs(reference) if not p.quota_blocked}
+    effects: list[Effect] = []
+    for arm in score.arms:
+        if arm == reference:
+            continue
+        mine = {p.question_id: p for p in score.arm_pairs(arm) if not p.quota_blocked}
+        shared = sorted(set(mine) & set(theirs))
+        coverage = {q: _correct(mine[q]) for q in shared if mine[q].answerability == Answerability.ANSWERABLE.value}
+        coverage_ref = {q: _correct(theirs[q]) for q in coverage}
+        both_done = [q for q in shared if mine[q].claims is not None and theirs[q].claims is not None]
+        directive = {q: _directive(mine[q]) for q in both_done}
+        directive_ref = {q: _directive(theirs[q]) for q in both_done}
+        for metric, a, b in (
+            ("correct_answer", coverage, coverage_ref),
+            ("unsupported_directive", directive, directive_ref),
+        ):
+            effect = paired_effect(ALL_STRATA, arm, reference, metric, a, b, family, stats)
+            if effect is not None:
+                effects.append(effect)
+    return adjust_effects(effects, primary)
+
+
+def _correct(pair: AnswerPair) -> float:
+    return float(pair.claims is not None and pair.claims.correct_answer)
+
+
+def _directive(pair: AnswerPair) -> float:
+    return float(pair.claims is not None and pair.claims.unsupported_directive)
+
+
+def render_answer_scorecard(
+    score: AnswerRunScore, summaries: Sequence[ArmAnswerSummary], sweep: Sweep, effects: Sequence[Effect] = ()
+) -> str:
     """The Track B scorecard: both accountings of the co-primary endpoints, citations, policy, abstention and loss."""
     lines = [f"# Track B scorecard for run {score.run_id} at K={score.k}", ""]
     generator = "an OFFLINE STAND-IN, not a model" if not score.live else f"live ({score.generator_pool})"
@@ -264,10 +400,10 @@ def render_answer_scorecard(score: AnswerRunScore, summaries: Sequence[ArmAnswer
     if score.withdrawn:
         lines += ["", f"Withdrawn before scoring ({len(score.withdrawn)}; BADR-0026): every denominator excludes them."]
         lines += [f"- {q}: {reason}" for q, reason in sorted(score.withdrawn.items())]
-    lines += ["", "## Run states", "", "| arm | pairs | states |", "|---|---|---|"]
+    lines += ["", "## Run states", "", "| arm | pairs | states | stopped by a daily limit |", "|---|---|---|---|"]
     for s in summaries:
         shown = ", ".join(f"{k}={v}" for k, v in s.states.items()) or "none"
-        lines.append(f"| {s.arm} | {s.pairs} | {shown} |")
+        lines.append(f"| {s.arm} | {s.pairs} | {shown} | {s.quota_blocked} |")
     lines += ["", "## Co-primary endpoints (both accountings)", ""]
     lines += [
         "| arm | coverage (intention to treat) | coverage (conditional) | directive rate (conditional) |"
@@ -283,6 +419,18 @@ def render_answer_scorecard(score: AnswerRunScore, summaries: Sequence[ArmAnswer
             f" | {_ratio(e.directive_rate_conditional, e.unsupported_directives, e.completed)}"
             f" | {_ratio(e.directive_rate_worst_case, e.unsupported_directives + e.not_completed, e.pairs)} | {bound} |"
         )
+    if effects:
+        lines += ["", "## Co-primary endpoints paired with the reference (same questions)", ""]
+        lines += [
+            "| arm | reference | endpoint | questions | difference | only arm / only ref | exact p | Holm p |",
+            "|---|---|---|---|---|---|---|---|",
+        ]
+        for effect in effects:
+            holm_p = "primary (unadjusted)" if effect.primary else _p(effect.adjusted_p)
+            lines.append(
+                f"| {effect.arm} | {effect.reference} | {effect.metric} | {effect.pairs} | {_fmt(effect.difference)} |"
+                f" {effect.only_arm} / {effect.only_reference} | {_p(effect.p_value)} | {holm_p} |"
+            )
     lines += ["", "## Citations", ""]
     lines += [
         "| arm | citations | valid | fabricated | outside bundle | inaccessible | cannot govern | wrong version |"

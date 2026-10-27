@@ -261,9 +261,23 @@ class PlanRegistry:
             os.fsync(handle.fileno())
 
 
-def plan_digest(arm_ids: Sequence[str], question_ids: Sequence[str], order_seed: int, split: str) -> str:
+def plan_digest(
+    arm_ids: Sequence[str],
+    question_ids: Sequence[str],
+    order_seed: int,
+    split: str,
+    settings: Mapping[str, Mapping[str, Any]] | None = None,
+) -> str:
+    """The identity of a plan. ``settings`` is each arm's manifest comparability view, so the same questions run at
+    another commit, K, budget, condition or model assignment are a different plan, not a repeat."""
     return sha256_of(
-        {"arms": sorted(arm_ids), "questions": sorted(question_ids), "order_seed": order_seed, "split": split}
+        {
+            "arms": sorted(arm_ids),
+            "questions": sorted(question_ids),
+            "order_seed": order_seed,
+            "split": split,
+            "settings": {arm: dict(view) for arm, view in sorted((settings or {}).items())},
+        }
     )
 
 
@@ -622,7 +636,13 @@ class Runner:
         blocked = self._blocked_arms()
         arm_ids = [a.arm_id for a in self.arms]
         self.plans.register(
-            plan_digest(arm_ids, list(by_id), self.settings.order_seed, split),
+            plan_digest(
+                arm_ids,
+                list(by_id),
+                self.settings.order_seed,
+                split,
+                {arm: manifest.comparability() for arm, (manifest, _) in manifests.items()},
+            ),
             self.run_id,
             split=split,
             arms=arm_ids,

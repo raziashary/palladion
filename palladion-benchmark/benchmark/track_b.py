@@ -482,6 +482,7 @@ class TrackBSpec:
     case_deadline_seconds: float | None = None  # replaces the configured case deadline for a paced live run
     pace_seconds: float = 0.0  # recorded; the pool does the pacing
     close_quota_blocked: bool = False  # give up on pairs a daily limit left pending: NOT_RUN, QUOTA_BLOCKED (BADR-0044)
+    matched_list_sha256: str | None = None  # the frozen list the run was checked against (BADR-0044)
 
 
 @dataclass(frozen=True)
@@ -591,6 +592,7 @@ def _manifest(
             "k": spec.k,
             "budget_words": spec.budget_words,
             "metadata_condition": spec.condition,
+            "matched_list_sha256": spec.matched_list_sha256,
             "generator": {
                 "pool": pool_label,
                 "live": spec.live,
@@ -717,6 +719,7 @@ def execute_track_b(
                 "k": spec.k,
                 "budget_words": spec.budget_words,
                 "metadata_condition": spec.condition,
+                "matched_list_sha256": spec.matched_list_sha256,
                 "questions": len(requests),
                 "asked": None if spec.question_ids is None else sorted(spec.question_ids),
                 "case_deadline_seconds": settings.case_deadline_seconds,

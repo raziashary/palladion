@@ -310,6 +310,7 @@ class RunSpec:
     out: Path
     order_seed: int | None = None
     config_dir: Path = Path(__file__).resolve().parents[1] / "configs"
+    matched_list_sha256: str | None = None  # the frozen list the run was checked against (BADR-0044)
 
 
 @dataclass(frozen=True)
@@ -378,6 +379,7 @@ def _manifest(
             "k": spec.k,
             "budget_words": spec.budget_words,
             "metadata_condition": spec.condition.value,
+            "matched_list_sha256": spec.matched_list_sha256,
         },
         prompt_digest=None,
         hardware=collect_hardware(),
@@ -449,6 +451,7 @@ def execute(
                 "k": spec.k,
                 "budget_words": spec.budget_words,
                 "metadata_condition": spec.condition.value,
+                "matched_list_sha256": spec.matched_list_sha256,
                 "questions": len(requests),
                 "builds": list(builds),
                 "notice": FICTION,

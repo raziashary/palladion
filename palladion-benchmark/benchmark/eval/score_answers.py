@@ -14,7 +14,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
-from benchmark.contracts import CaseResponse, ContractError, RunStatus
+from benchmark.contracts import QUOTA_BLOCKED_CODE, CaseResponse, ContractError, RunStatus
 from benchmark.eval.abstention import (
     AbstentionSummary,
     PairAbstention,
@@ -67,6 +67,11 @@ class AnswerPair:
     @property
     def scored(self) -> bool:
         return self.abstention is not None
+
+    @property
+    def quota_blocked(self) -> bool:
+        """A provider's daily limit stopped this pair. It was never asked, so it is in no accounting (BADR-0044)."""
+        return self.status is RunStatus.NOT_RUN and self.code == QUOTA_BLOCKED_CODE
 
 
 @dataclass(frozen=True)
@@ -313,33 +318,40 @@ class ArmAnswerSummary:
     abstention: AbstentionSummary
     loss_per_100: float | None
     mixed_model_pairs: int
+    quota_blocked: int = 0  # pairs a daily limit stopped; counted here and in no rate
+
+
+def _state_label(pair: AnswerPair) -> str:
+    if pair.quota_blocked:
+        return QUOTA_BLOCKED_CODE
+    return INVALID_ANSWER if pair.code == INVALID_ANSWER else pair.status.value
 
 
 def summarize_arm(
     score: AnswerRunScore, arm: str, weights: Mapping[str, float], confidence: float = 0.95
 ) -> ArmAnswerSummary:
     pairs = score.arm_pairs(arm)
-    done = [p for p in pairs if p.scored]
-    items = [EndpointItem(Answerability(p.answerability), p.status, p.claims) for p in pairs]
-    abstention = summarize_abstention([p.abstention for p in pairs])
+    asked = [p for p in pairs if not p.quota_blocked]
+    done = [p for p in asked if p.scored]
+    items = [EndpointItem(Answerability(p.answerability), p.status, p.claims) for p in asked]
+    abstention = summarize_abstention([p.abstention for p in asked])
     return ArmAnswerSummary(
         arm=arm,
         pairs=len(pairs),
-        states=dict(
-            sorted(Counter(p.status.value if p.code != INVALID_ANSWER else "INVALID_ANSWER" for p in pairs).items())
-        ),
+        states=dict(sorted(Counter(_state_label(p) for p in pairs).items())),
         endpoints=endpoints_from(items, confidence),
         citations=citation_totals([p.citations for p in done if p.citations is not None]),
         policy=summarize_policy([p.policy for p in done if p.policy is not None]),
         abstention=abstention,
         loss_per_100=expected_loss_per_100(abstention.events, abstention.completed, weights),
         mixed_model_pairs=sum(1 for p in pairs if p.mixed_model),
+        quota_blocked=len(pairs) - len(asked),
     )
 
 
 def sweep_for(score: AnswerRunScore, weights: Mapping[str, float], scales: Sequence[float]) -> Sweep:
     per_arm = {}
     for arm in score.arms:
-        summary = summarize_abstention([p.abstention for p in score.arm_pairs(arm)])
+        summary = summarize_abstention([p.abstention for p in score.arm_pairs(arm) if not p.quota_blocked])
         per_arm[arm] = (summary.events, summary.completed)
     return loss_sweep(per_arm, weights, scales)

@@ -18,11 +18,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from benchmark.analysis.tables import render_answer_scorecard
+from benchmark.analysis.tables import answer_effects, render_answer_scorecard
 from benchmark.config import load_evaluation_config
 from benchmark.contracts import ContractError
 from benchmark.eval.score_answers import score_answer_run, summarize_arm, sweep_for
 from benchmark.eval.score_run import ScoreRunError
+from benchmark.eval.statistics import StatisticsError
 from benchmark.runner import RunnerError
 from benchmark.track_a import WITHDRAWN, TrackAError, read_withdrawn
 
@@ -34,6 +35,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--run-dir", type=Path, required=True)
     parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--withdrawn", type=Path, default=WITHDRAWN)
+    parser.add_argument("--reference", default=None, help="arm to pair the others with on both co-primary endpoints")
+    parser.add_argument("--primary", default=None, help="the arm whose pairing with the reference was fixed in advance")
     options = parser.parse_args(argv)
     try:
         evaluation = load_evaluation_config(PROJECT / "configs" / "evaluation.yaml")
@@ -43,8 +46,13 @@ def main(argv: list[str] | None = None) -> int:
         confidence = evaluation.statistics.confidence
         summaries = [summarize_arm(score, arm, evaluation.loss_matrix, confidence) for arm in score.arms]
         sweep = sweep_for(score, evaluation.loss_matrix, evaluation.loss_sweep_scales)
+        effects = (
+            answer_effects(score, reference=options.reference, primary=options.primary, stats=evaluation.statistics)
+            if options.reference
+            else []
+        )
         (options.run_dir / "scorecard.md").write_text(
-            render_answer_scorecard(score, summaries, sweep), encoding="utf-8"
+            render_answer_scorecard(score, summaries, sweep, effects), encoding="utf-8"
         )
         table = [
             {
@@ -80,7 +88,16 @@ def main(argv: list[str] | None = None) -> int:
             f"scorecard in {options.run_dir / 'scorecard.md'}"
         )
         return 0
-    except (ScoreRunError, RunnerError, TrackAError, ContractError, OSError, KeyError, ValueError) as exc:
+    except (
+        ScoreRunError,
+        RunnerError,
+        TrackAError,
+        ContractError,
+        StatisticsError,
+        OSError,
+        KeyError,
+        ValueError,
+    ) as exc:
         print(f"refused: {str(exc)[:300]}", file=sys.stderr)
         return 2
 
