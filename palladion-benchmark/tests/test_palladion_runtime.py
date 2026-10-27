@@ -48,6 +48,15 @@ def test_the_pinned_worktree_is_clean_and_at_the_recorded_commit() -> None:
     assert state["commit"] == runtime.PINNED_COMMIT and state["dirty"] is False
 
 
+def test_every_palladion_pin_in_the_config_is_the_commit_the_runtime_checks_out() -> None:
+    config = load_comparators_config(ROOT / "configs" / "comparators.yaml")
+    pins = {a.arm_id: a.pin for a in config.arms if a.family == "system_under_test"}
+    pinned = {arm: pin.value for arm, pin in pins.items() if pin.kind == "commit"}
+    assert set(pinned) == {"R7a", "E3", "E4"}  # R7 and R7b are not built, so they carry no pin
+    assert set(pinned.values()) == {runtime.PINNED_COMMIT}
+    assert config.system_under_test.value == runtime.PINNED_COMMIT
+
+
 def test_palladions_pins_read_from_its_source_equal_the_benchmarks_pins() -> None:
     runtime.ensure_worktree()
     pins = runtime.pins_from_source()
