@@ -19,13 +19,14 @@ import hashlib
 import json
 import os
 import re
+import secrets
 import shutil
 import subprocess
 import sys
 import time
 import urllib.error
 import urllib.request
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -53,6 +54,7 @@ PALLADION_DEFAULT_PORT = 18080
 PALLADION_QDRANT = "http://127.0.0.1:16333"
 PALLADION_COLLECTION = "knowledge_chunks_v1"
 ADMIN = "admin-a"
+READER_GRANTS = ["source:read", "case:read"]
 HEALTH_TIMEOUT_SECONDS = 120.0
 MODEL_CACHES = (BENCH / "artifacts" / "models" / "embeddings", BENCH / "artifacts" / "models" / "reranker")
 
@@ -356,6 +358,34 @@ def post(base_url: str, path: str, token: str, body: dict[str, Any] | None = Non
             return response.status, json.loads(response.read())
     except urllib.error.HTTPError as exc:
         return exc.code, None
+
+
+def provision_readers(
+    base_url: str, keys: Sequence[str], *, case_id: str, root: Path = RUNTIME_ROOT
+) -> dict[str, tuple[str, str]]:
+    """One tenant-local reader per key, a member of ``case_id``, each with a bearer token of its own.
+
+    Returns key -> (Palladion's opaque principal id, token). A reader that already has a token keeps it, so a second
+    call changes nothing; a new token is written to the runtime's operator-owned token file, which a server reads when
+    it starts, so servers started afterwards accept it. Grants are the read grants only (Palladion's PF05 routes).
+    """
+    admin = load_tokens(root)[ADMIN]
+    path = root / "demo_auth.json"
+    mapping: dict[str, str] = json.loads(path.read_text(encoding="utf-8"))  # token -> principal id
+    held = {principal: token for token, principal in mapping.items()}
+    issued: dict[str, tuple[str, str]] = {}
+    for key in keys:
+        status, body = post(base_url, "/v1/admin/principals", admin, {"principal_id": key, "grants": READER_GRANTS})
+        if status != 200 or body is None:
+            raise PalladionRuntimeError(f"Palladion refused to provision a principal (HTTP {status})")
+        principal = str(body["principal_id"])
+        status, _ = post(base_url, f"/v1/admin/cases/{case_id}/memberships", admin, {"principal_id": principal})
+        if status != 200:
+            raise PalladionRuntimeError(f"Palladion refused a case membership (HTTP {status})")
+        issued[key] = (principal, held.get(principal) or "tok-" + secrets.token_hex(24))
+    mapping.update({token: principal for principal, token in issued.values()})
+    path.write_text(json.dumps(mapping), encoding="utf-8")
+    return issued
 
 
 def revoke_demo_sources(base_url: str, revisions: dict[str, str], tokens: dict[str, str]) -> None:

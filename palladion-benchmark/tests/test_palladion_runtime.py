@@ -13,7 +13,7 @@ from types import ModuleType
 import pytest
 
 from benchmark.adapters.common import Condition, PublishedView
-from benchmark.adapters.palladion import TABLE_FILE, PalladionArm
+from benchmark.adapters.palladion import CASE, TABLE_FILE, PalladionArm, PrincipalMap
 from benchmark.config import load_comparators_config
 from benchmark.contracts import ArmUnavailable, CapabilityUnsupported, RetrievalRequest, RunStatus, classify_exception
 from benchmark.fixtures.manifest import ManifestRecord
@@ -169,7 +169,7 @@ def test_a_real_call_loads_and_retrieves_the_published_corpus_over_http(
                 "unapproved and revoked documents are not retrievable"
             )
             with pytest.raises(CapabilityUnsupported) as caught:
-                arm.retrieve(request(probe, view.identity.principals[0].principal_id, limit=20))
+                arm.retrieve(request(probe, view.identity.principals[0].principal_id, limit=41))
             assert classify_exception(caught.value)[0] is RunStatus.FEATURE_NOT_SUPPORTED
             reranked = PalladionArm(view, server.base_url, tokens, mode="reranked", condition=Condition.C1)
             reranked.map_revisions({rev: doc for doc, rev in report.revisions.items()})
@@ -182,11 +182,90 @@ def test_a_real_call_loads_and_retrieves_the_published_corpus_over_http(
     assert runtime.live_state() == prepared["before"]
 
 
+def test_provisioning_readers_grants_read_only_reuses_a_held_token_and_writes_only_new_ones(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (tmp_path / "demo_auth.json").write_text(json.dumps({"tok-admin": runtime.ADMIN}), encoding="utf-8")
+    sent: list[tuple[str, dict[str, object] | None]] = []
+
+    def fake_post(base_url: str, path: str, token: str, body: dict[str, object] | None = None) -> tuple[int, object]:
+        assert token == "tok-admin"
+        sent.append((path, body))
+        if path == "/v1/admin/principals":
+            assert body is not None
+            return 200, {"principal_id": "opaque-" + str(body["principal_id"])}
+        return 200, {}
+
+    monkeypatch.setattr(runtime, "post", fake_post)
+    first = runtime.provision_readers("http://x", ["a", "b"], case_id="case-42", root=tmp_path)
+    assert set(first) == {"a", "b"} and first["a"][0] == "opaque-a" and first["a"][1] != first["b"][1]
+    grants = [body["grants"] for path, body in sent if path == "/v1/admin/principals" and body]
+    assert grants == [["source:read", "case:read"]] * 2, "a reader may read and nothing else"
+    assert ("/v1/admin/cases/case-42/memberships", {"principal_id": "opaque-a"}) in sent
+    second = runtime.provision_readers("http://x", ["a", "b", "c"], case_id="case-42", root=tmp_path)
+    assert second["a"] == first["a"] and second["b"] == first["b"], "a held token is kept"
+    stored = json.loads((tmp_path / "demo_auth.json").read_text(encoding="utf-8"))
+    assert sorted(stored.values()) == sorted([runtime.ADMIN, "opaque-a", "opaque-b", "opaque-c"])
+
+
+def test_a_refused_provisioning_names_the_status_and_leaves_the_token_file_alone(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    before = json.dumps({"tok-admin": runtime.ADMIN})
+    (tmp_path / "demo_auth.json").write_text(before, encoding="utf-8")
+    monkeypatch.setattr(runtime, "post", lambda *args, **kwargs: (403, None))
+    with pytest.raises(runtime.PalladionRuntimeError, match="HTTP 403"):
+        runtime.provision_readers("http://x", ["a"], case_id="case-42", root=tmp_path)
+    assert (tmp_path / "demo_auth.json").read_text(encoding="utf-8") == before
+
+
+def test_a_real_palladion_keeps_a_restricted_document_from_a_forbidden_reader_and_honours_as_of(
+    prepared: dict[str, object], s_published: Path, tmp_path: Path
+) -> None:
+    full = PublishedView.load(s_published)
+    used = {r.doc_id for r in mini_view(full).records}
+    unused = [r for r in reversed(full.records) if r.doc_id not in used and not IDENTIFIER_SHAPE.search(r.title)]
+    restricted = next(r for r in unused if r.registry_state == "approved" and r.acl_tenants)
+    expired = next(r for r in unused if r.registry_state == "retired" and not r.acl_tenants and r.valid_to)
+    view = PublishedView(
+        full.root, [restricted, expired], full.identity,
+        {r.doc_id: full.document(r.doc_id).text for r in (restricted, expired)},
+    )  # fmt: skip
+    everyone = [p.principal_id for p in full.identity.principals]
+    seeing = next(p for p in full.identity.principals if p.tenant_id in restricted.acl_tenants).principal_id
+    blind = next(p for p in full.identity.principals if p.tenant_id not in restricted.acl_tenants).principal_id
+    with runtime.PalladionRuntime(rerank=False) as provisioning:
+        issued = runtime.provision_readers(provisioning.base_url, everyone, case_id=CASE)
+    principals = PrincipalMap(overrides={key: (reader, CASE) for key, (reader, _) in issued.items()})
+    with runtime.PalladionRuntime(rerank=False) as server:
+        arm = PalladionArm(
+            view, server.base_url, runtime.load_tokens(), mode="lexical", condition=Condition.C2, principals=principals
+        )  # fmt: skip
+        try:
+            arm.load_corpus(tmp_path / TABLE_FILE)
+            title = " ".join(IDENTIFIER_SHAPE.sub(" ", restricted.title).split())
+            ask = lambda who, query, when: arm.retrieve(  # noqa: E731
+                RetrievalRequest("q-0000000000000001", query, who, "snap", when, None, {}, 10, 100000)
+            )
+            assert restricted.doc_id in {c.source_document_id for c in ask(seeing, title, "2026-10-18T03:00:00Z")}
+            hidden = ask(blind, title, "2026-10-18T03:00:00Z")
+            assert restricted.doc_id not in {c.source_document_id for c in hidden}
+            assert arm.last_notes["acl_leaked"] == 0, "Palladion's own access list, not a harness filter, kept it back"
+            assert arm.verify_acl()["leaks"] == 0
+            lapsed = " ".join(IDENTIFIER_SHAPE.sub(" ", expired.title).split())
+            inside = f"{expired.valid_from[:10]}T12:00:00Z" if expired.valid_from else "2025-07-01T12:00:00Z"
+            after = f"{expired.valid_to[:4]}-12-31T12:00:00Z"
+            assert expired.doc_id in {c.source_document_id for c in ask(seeing, lapsed, inside)}
+            assert expired.doc_id not in {c.source_document_id for c in ask(seeing, lapsed, after)}
+        finally:
+            arm.close()
+
+
 def test_an_unreachable_palladion_is_not_run_never_an_empty_list(
     prepared: dict[str, object], s_published: Path
 ) -> None:
     view = mini_view(PublishedView.load(s_published))
-    arm = PalladionArm(view, f"http://127.0.0.1:{runtime.PORT}", runtime.load_tokens())
+    arm = PalladionArm(view, f"http://127.0.0.1:{runtime.PORT}", runtime.load_tokens(), condition=Condition.C1)
     arm.map_revisions({"rev_unknown": view.records[0].doc_id})
     with pytest.raises(ArmUnavailable) as caught:
         arm.retrieve(request("anything", view.identity.principals[0].principal_id))

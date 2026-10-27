@@ -281,6 +281,10 @@ def flags_from_notes(notes: Mapping[str, Any]) -> tuple[str, ...]:
         flags.append(f"BUDGET_CUT={notes['cut_words']}")
     if notes.get("filtered_after_ranking"):
         flags.append(f"FILTERED_AFTER_RANKING={notes['filtered_after_ranking']}")
+    if notes.get("acl_leaked"):
+        flags.append(f"ACL_LEAKED={notes['acl_leaked']}")
+    if notes.get("foreign_dropped"):
+        flags.append(f"FOREIGN_DROPPED={notes['foreign_dropped']}")
     if notes.get("exact_key_chunks"):
         flags.append(f"EXACT_KEY_CHUNKS={len(notes['exact_key_chunks'])}")
     flags += [f"PALLADION_WARNING={w}"[:80] for w in notes.get("palladion_warnings", ())]

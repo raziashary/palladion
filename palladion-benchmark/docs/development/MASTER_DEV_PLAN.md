@@ -1219,12 +1219,12 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
 
 <a id="b08-t08-08"></a>
 
-- [ ] **B08-T08.08 — R7a identity, evaluation time and in-pool access filter**
+- [x] **B08-T08.08 — R7a identity, evaluation time and in-pool access filter**
   - **Files:** `palladion-benchmark/benchmark/adapters/palladion.py`, `palladion-benchmark/scripts/palladion_runtime.py`, `palladion-benchmark/tests/test_palladion_adapter.py`, `palladion-benchmark/tests/test_palladion_runtime.py`.
   - **Depends:** B08-T08.01.
-  - **Change:** Provision one Palladion reader per benchmark principal through the scoped-admin routes (PF05), send the case's evaluation time as `as_of` (PF01), and apply the neutral access filter to Palladion's candidates inside the candidate pool the adapter requests rather than after the cut, recording how many candidates the filter removed; anything that still cannot be made equal is recorded as a capability difference.
-  - **Proof:** INTEGRATION; BG-ADAPTER, BG-FAIR; against the real isolated Palladion, two principals of different tenants see different results for one query, a version superseded before the evaluation time is not returned as current, and a planted over-broad filter changes the count of removed candidates; the adapter's request body contains `as_of`.
-  - **Evidence:** Not yet executed.
+  - **Change:** Provision one Palladion reader per benchmark principal through the scoped-admin routes (PF05), upload each restricted document with the readers the neutral rule allows so Palladion's own access list works before ranking, send the case's evaluation time as `as_of` (PF01), stop masking Palladion's output and count any returned document the neutral rule would refuse as `acl_leaked`, and read the lists back with a positive control (BADR-0044 addendum); anything that still cannot be made equal is recorded as a capability difference.
+  - **Proof:** INTEGRATION; BG-ADAPTER, BG-FAIR; against the real isolated Palladion, two principals of different tenants see different results for one query, a document is returned inside its validity window at the case's evaluation time and not after it, and a planted empty access list fails the test; the adapter's request body contains `as_of`.
+  - **Evidence:** E-B08-004 (native access list, as_of, verify_acl; real-server test; mutant killed).
 
 <a id="b08-t08-09"></a>
 

@@ -5,11 +5,14 @@ Nothing here imports Palladion. The arm sends authenticated requests to a runnin
 
 What the arm declares rather than hides:
 
-* Palladion has no role-level access control that can express the benchmark's 17 principals, so every benchmark
-  principal is mapped to one Palladion reader in one case (``PrincipalMap``). Under condition C2 the neutral filter is
-  applied to Palladion's output (after its ranking), and the number of dropped candidates is recorded.
-* Palladion's search takes at most 12 results, no token budget and no clock. K above 12 is refused as unsupported, the
-  evidence budget is applied on the harness side, and validity follows Palladion's wall clock (BR22).
+* Under condition C2 every benchmark principal is a Palladion reader of its own (``PrincipalMap``; Palladion's PF05
+  routes) and each restricted document is uploaded with the readers allowed to see it, so Palladion's own access control
+  works before ranking, as the neutral filter does for R0 to R3. The arm does not mask Palladion's output: a returned
+  document the neutral filter would have refused is kept and counted (``acl_leaked``), so a difference between the two
+  rules shows as exposure and is not hidden. Under C1 every reader sees every document.
+* Palladion's search takes at most 40 results and no word budget. K above 40 is refused as unsupported and the
+  evidence budget is applied on the harness side. The request carries the case's evaluation time as ``as_of`` (PF01),
+  the same clock the fixture gives every arm.
 * A response is a run state when it is not a usable answer: an unreachable server, an index that cannot be read, or a
   reranked request on a server without the reranker is ``NOT_RUN``; a partial index is a transient fault. An empty
   list is returned only when Palladion itself reports an unknown identifier or finds nothing.
@@ -21,7 +24,7 @@ import hashlib
 import json
 import re
 import time
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal
@@ -48,7 +51,7 @@ from benchmark.contracts import (
 from benchmark.fixtures.manifest import ManifestRecord
 
 Mode = Literal["lexical", "dense", "hybrid", "reranked"]
-MAX_PALLADION_LIMIT = 12
+MAX_PALLADION_LIMIT = 40
 MAX_UPLOAD_CHARACTERS = 65536
 DEFAULT_VALID_FROM = "2026-01-01T00:00:00Z"
 READER = "reader-a"
@@ -78,6 +81,10 @@ class PrincipalMap:
 
     def resolve(self, benchmark_principal: str) -> tuple[str, str]:
         return self.overrides.get(benchmark_principal, (self.reader, self.case_id))
+
+    def covers(self, benchmark_principals: Sequence[str]) -> bool:
+        """Whether every benchmark principal has a reader of its own."""
+        return all(p in self.overrides for p in benchmark_principals)
 
 
 @dataclass(frozen=True)
@@ -128,6 +135,8 @@ class PalladionArm:
         self.condition = condition
         self.principals = principals or PrincipalMap()
         self.access = AccessFilter(view, condition)
+        if condition is Condition.C2 and not self.principals.covers([p.principal_id for p in view.identity.principals]):
+            raise AdapterError("condition C2 needs one Palladion reader for every benchmark principal")
         self._client = client or httpx.Client(timeout=timeout)
         self._owns_client = client is None
         self._revisions: dict[str, str] = {}  # Palladion revision id -> published document id
@@ -168,8 +177,9 @@ class PalladionArm:
             "condition": self.condition.value,
             "principal_map": {"reader": self.principals.reader, "case": self.principals.case_id},
             "max_limit": MAX_PALLADION_LIMIT,
-            "acl": "harness post-filter on Palladion output (C2); Palladion's own role ACL is not exercised",
-            "clock": "Palladion wall clock; no as-of parameter (BR22)",
+            "acl": "Palladion's own per-document access list before ranking (C2: one reader per benchmark principal, "
+            "output not masked, disagreement with the neutral filter counted as acl_leaked); none under C1",
+            "clock": "the case's evaluation time, sent as as_of (PF01)",
             "ingestion": "native: each document uploaded whole and chunked by Palladion",
             "corpus": "approved, retired, non_normative and withdrawn-then-revoked documents are approved in Palladion",
             "unapproved": "drafts and unapproved proposals are uploaded, never approved, and so not retrievable by R7a",
@@ -239,11 +249,12 @@ class PalladionArm:
         disk and any other view are not changed."""
         if record.doc_id in self._table_states:
             raise AdapterError(f"{record.doc_id} is already in Palladion; a change is a new document or a revoke")
-        revision = self._upload(record, text)
+        extended = self.view.with_document(record, text)  # a passage of it must map back to a document
+        access = AccessFilter(extended, self.condition)
+        revision = self._upload(record, text, access)
         self._revisions[revision] = record.doc_id
         self._table_states[record.doc_id] = "DRAFT"
-        self.view = self.view.with_document(record, text)  # a passage of it must map back to a document
-        self.access = AccessFilter(self.view, self.condition)
+        self.view, self.access = extended, access
         if record.registry_state in APPROVE_STATES:
             named = supersedes is not None and self._table_states.get(supersedes) == "APPROVED"
             body = {"supersedes_revision_id": self._revision_of(str(supersedes))} if named else None
@@ -283,7 +294,21 @@ class PalladionArm:
         marker = table_path.with_name(ALIASES_FILE)
         self._aliases = json.loads(marker.read_text(encoding="utf-8")) if marker.exists() else None
 
-    def _upload(self, record: ManifestRecord, text: str) -> str:
+    def _allowed_readers(self, record: ManifestRecord, access: AccessFilter) -> list[str]:
+        """The Palladion principals that may read ``record``; empty means every member of the case.
+
+        A restricted document also lists the uploader and the approver, who must still reach it to approve it.
+        """
+        if self.condition is Condition.C1:
+            return []
+        everyone = [p.principal_id for p in self.view.identity.principals]
+        allowed = [p for p in everyone if access.allows(p, record.doc_id)]
+        if len(allowed) == len(everyone):
+            return []
+        readers = {self.principals.resolve(p)[0] for p in allowed}
+        return sorted(readers | {UPLOADER, APPROVER})
+
+    def _upload(self, record: ManifestRecord, text: str, access: AccessFilter | None = None) -> str:
         body = {
             "case_id": self.principals.case_id,
             "family_id": record.family_id or record.doc_id,
@@ -291,6 +316,7 @@ class PalladionArm:
             "mime_type": "text/markdown",
             "content": text,
             "owner_id": UPLOADER,
+            "allowed_principal_ids": self._allowed_readers(record, access or self.access),
             "valid_from": record.valid_from or DEFAULT_VALID_FROM,
             "valid_to": record.valid_to,
             "sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
@@ -335,13 +361,8 @@ class PalladionArm:
             )  # Palladion refuses a query naming an unknown code
             if not probe:
                 continue
-            request = RetrievalRequest(
-                "q-0000000000000000", probe, principal, "load-check", "2026-10-18T03:00:00Z", None, {},
-                MAX_PALLADION_LIMIT, 100000,
-            )  # fmt: skip
-            hits = self._search(request, "lexical")
             checked += 1
-            reached += any(h.source_document_id == record.doc_id for h in hits)
+            reached += record.doc_id in self._found_by_title(probe, principal)
         if checked and not reached:
             raise AdapterError(
                 "none of the sampled documents can be found in Palladion; the revision table does not describe it"
@@ -352,6 +373,55 @@ class PalladionArm:
             "sampled": checked,
             "reachable_by_title": reached,
         }
+
+    def verify_acl(self, sample: int = 12) -> dict[str, Any]:
+        """Read the access lists back through Palladion: who can and who cannot find a restricted document.
+
+        For restricted approved documents, a principal the neutral filter allows must find the document by its title
+        (the positive control, so a silent search cannot pass), and principals it forbids are asked the same query. A
+        forbidden principal that finds the document is a leak: it is counted and reported, not raised, because it is a
+        finding about Palladion's access control, not a failure to load. Without any reachable document nothing was
+        checked, which raises.
+        """
+        if self.condition is Condition.C1:
+            return {"condition": "C1", "restricted_checked": 0, "note": "C1 has no access list"}
+        everyone = [p.principal_id for p in self.view.identity.principals]
+        restricted = [
+            r
+            for r in self.view.records
+            if self._table_state(r.doc_id) == "APPROVED" and not all(self.access.allows(p, r.doc_id) for p in everyone)
+        ]
+        step = max(1, len(restricted) // sample)
+        reachable = probes = leaks = 0
+        for record in restricted[::step][:sample]:
+            allowed = [p for p in everyone if self.access.allows(p, record.doc_id)]
+            forbidden = [p for p in everyone if not self.access.allows(p, record.doc_id)]
+            title = " ".join(IDENTIFIER_SHAPE.sub(" ", record.title).split())
+            if not title or not allowed:
+                continue
+            if record.doc_id not in self._found_by_title(title, allowed[0]):
+                continue
+            reachable += 1
+            for who in forbidden[:3]:
+                probes += 1
+                leaks += record.doc_id in self._found_by_title(title, who)
+        if restricted and not reachable:
+            raise AdapterError("no restricted document could be found by a principal allowed to see it")
+        return {
+            "condition": "C2",
+            "restricted_checked": len(restricted[::step][:sample]),
+            "reachable_by_allowed": reachable,
+            "forbidden_probes": probes,
+            "leaks": leaks,
+        }
+
+    def _found_by_title(self, title: str, principal: str) -> set[str]:
+        """The published documents a lexical search for ``title`` returns to a benchmark principal."""
+        request = RetrievalRequest(
+            "q-0000000000000000", title, principal, "load-check", "2026-10-18T03:00:00Z", None, {},
+            MAX_PALLADION_LIMIT, 100000,
+        )  # fmt: skip
+        return {h.source_document_id for h in self._search(request, "lexical") if h.source_document_id}
 
     def _table_state(self, doc_id: str) -> str:
         return self._table_states.get(doc_id, "APPROVED")
@@ -383,13 +453,14 @@ class PalladionArm:
         if not self._revisions:
             raise AdapterError("no revision table: load the corpus first")
         found = self._search(request, self.mode)
-        shown = [c for c in found if self._allowed(c, request.principal_id)]
-        dropped = len(found) - len(shown)
+        shown = [c for c in found if self._in_corpus(c)]
+        leaked = sum(1 for c in shown if not self._visible(c, request.principal_id))
         renumbered = [EvidenceCandidate.from_dict({**c.to_dict(), "rank": i}) for i, c in enumerate(shown, start=1)]
         bundle = enforce_budget(renumbered, request.max_evidence_tokens)
         self.last_notes = {
             **self.last_notes,
-            "filtered_after_ranking": dropped,
+            "foreign_dropped": len(found) - len(shown),
+            "acl_leaked": leaked,
             "truncated": bundle.truncated,
             "dropped": bundle.dropped,
             "cut_words": bundle.cut_words,
@@ -397,10 +468,13 @@ class PalladionArm:
         }
         return list(bundle.kept)
 
-    def _allowed(self, candidate: EvidenceCandidate, principal_id: str) -> bool:
-        if candidate.source_document_id is None:
-            return self.condition is Condition.C1
-        return self.access.allows(principal_id, candidate.source_document_id)
+    def _in_corpus(self, candidate: EvidenceCandidate) -> bool:
+        """A passage of a revision this corpus does not hold cannot be cited or scored; it is left out of C2 only."""
+        return candidate.source_document_id is not None or self.condition is Condition.C1
+
+    def _visible(self, candidate: EvidenceCandidate, principal_id: str) -> bool:
+        """What the neutral filter would say; under C1 it says yes to everything, so nothing is ever leaked."""
+        return candidate.source_document_id is None or self.access.allows(principal_id, candidate.source_document_id)
 
     def _search(self, request: RetrievalRequest, mode: Mode) -> list[EvidenceCandidate]:
         principal, case_id = self.principals.resolve(request.principal_id)
@@ -408,7 +482,13 @@ class PalladionArm:
             "POST",
             "/search",
             principal,
-            {"case_id": case_id, "query": request.query, "mode": mode, "limit": request.limit},
+            {
+                "case_id": case_id,
+                "query": request.query,
+                "mode": mode,
+                "limit": request.limit,
+                "as_of": request.evaluation_time,
+            },
         )
         if response.status_code >= 500:
             raise TransientInfrastructureError(f"Palladion answered HTTP {response.status_code}")

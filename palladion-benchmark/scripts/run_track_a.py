@@ -25,7 +25,7 @@ import palladion_runtime
 
 from benchmark.adapters.common import AdapterError, Condition, PublishedView
 from benchmark.adapters.dense import DEFAULT_URL
-from benchmark.adapters.palladion import TABLE_FILE, PalladionArm
+from benchmark.adapters.palladion import CASE, TABLE_FILE, PalladionArm, PrincipalMap
 from benchmark.config import load_all
 from benchmark.fixtures.manifest import Layout, Namespace
 from benchmark.run_manifest import tree_state
@@ -63,10 +63,18 @@ def palladion_arm(
 ) -> DescribedArm:
     """R7a over the isolated runtime. A setup failure is recorded; R7a stays in the run as not run, with its reason."""
     try:
+        principals = PrincipalMap()
+        if condition is Condition.C2:  # a reader per benchmark principal; a server reads its tokens when it starts
+            with palladion_runtime.PalladionRuntime(rerank=False) as provisioning:
+                issued = palladion_runtime.provision_readers(
+                    provisioning.base_url, [p.principal_id for p in view.identity.principals], case_id=CASE
+                )
+            principals = PrincipalMap(overrides={key: (reader, CASE) for key, (reader, _) in issued.items()})
         runtime.start()
         arm = PalladionArm(
-            view, runtime.base_url, palladion_runtime.load_tokens(), mode=options.palladion_mode, condition=condition
-        )
+            view, runtime.base_url, palladion_runtime.load_tokens(), mode=options.palladion_mode, condition=condition,
+            principals=principals,
+        )  # fmt: skip
         table = index_dir / TABLE_FILE
         index_dir.mkdir(parents=True, exist_ok=True)
         record: dict[str, Any] = {"arm": "R7a", "status": "BUILT"}
@@ -75,6 +83,7 @@ def palladion_arm(
             record["load"] = {"uploaded": report.uploaded, "approved": report.approved, "revoked": report.revoked}
         arm.read_table(table)
         record["verify"] = arm.verify_load()
+        record["acl"] = arm.verify_acl()
         arm.build_index(str(view.root), "track_a")
         builds.append(record)
         return arm

@@ -316,33 +316,11 @@ def provision(
     Returns (episode, heat) -> (Palladion principal id, bearer token). The tokens are written to the runtime's
     operator-owned token file so that servers started afterwards accept them.
     """
-    tokens = palladion_runtime.load_tokens()
-    admin = tokens[palladion_runtime.ADMIN]
-    issued: dict[tuple[str, Heat], tuple[str, str]] = {}
     wanted = [(episode.episode_id, heat) for episode in episodes for heat in heats]
     wanted.append((MUTATION_READER, Heat.COLD))  # mutation cases ask as a principal no episode used
-    for episode_id, heat in wanted:
-        key = f"{episode_id}-{heat.value}"
-        status, body = palladion_runtime.post(
-            runtime.base_url,
-            "/v1/admin/principals",
-            admin,
-            {"principal_id": key, "grants": ["source:read", "case:read"]},
-        )
-        if status != 200 or body is None:
-            raise TrackCRunError(f"Palladion refused to provision a principal (HTTP {status})")
-        principal = str(body["principal_id"])
-        status, _ = palladion_runtime.post(
-            runtime.base_url, f"/v1/admin/cases/{CASE}/memberships", admin, {"principal_id": principal}
-        )
-        if status != 200:
-            raise TrackCRunError(f"Palladion refused a case membership (HTTP {status})")
-        issued[(episode_id, heat)] = (principal, "tok-" + secrets.token_hex(24))
-    path = palladion_runtime.RUNTIME_ROOT / "demo_auth.json"
-    mapping = json.loads(path.read_text(encoding="utf-8"))
-    mapping.update({token: principal for principal, token in issued.values()})
-    path.write_text(json.dumps(mapping), encoding="utf-8")
-    return issued
+    keys = {(episode_id, heat): f"{episode_id}-{heat.value}" for episode_id, heat in wanted}
+    issued = palladion_runtime.provision_readers(runtime.base_url, list(keys.values()), case_id=CASE)
+    return {pair: issued[key] for pair, key in keys.items()}
 
 
 def palladion_arms(ctx: ArmContext, arm_ids: Sequence[str]) -> list[TrackCArm]:

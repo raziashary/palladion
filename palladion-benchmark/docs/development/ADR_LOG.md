@@ -931,3 +931,6 @@ Dispositions that change or narrow the wording above (E-B05-004): **item 7**: a 
 **My answer (editable):** Approved by the owner's chat answers above for items 1 to 4; items 5 to 12 are the coordinator's decisions on the adversary's evidence.
 
 **Verification:** E-B08-001; tests and run directories named in each card.
+
+**Addendum, 2026-10-27 (B08-T08.08):** item 5 said the neutral filter would be applied inside the candidate pool. Reading Palladion's source showed a better equivalent: Palladion enforces a per-document `allowed_principal_ids` list in its index filter before ranking, and PF05 lets the benchmark provision a reader per principal. Under C2 the arm therefore gives each principal a reader and uploads each restricted document with the readers the neutral rule allows, and it no longer masks Palladion's output; a returned document the neutral rule would refuse is counted as `acl_leaked` and stays in the output, so any disagreement is scored as exposure. The same three guarantees hold (access before ranking, same rule, no hidden filter), and the check that it works is read back through Palladion (`verify_acl`). The cost is that one Palladion corpus load serves one condition. `as_of` is the case's evaluation time (PF01). Verification: E-B08-004.
+

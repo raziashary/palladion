@@ -33,7 +33,11 @@ from benchmark.fixtures.entities import Principal
 from benchmark.fixtures.manifest import IdentityManifest, ManifestRecord
 
 ROOT = Path(__file__).resolve().parents[1]
-TOKENS = {"reader-a": "tok-reader", "uploader-a": "tok-uploader", "admin-a": "tok-admin"}
+TOKENS = {
+    "reader-a": "tok-reader", "uploader-a": "tok-uploader", "admin-a": "tok-admin",
+    "pal-p1": "tok-p1", "pal-p2": "tok-p2",
+}  # fmt: skip
+READERS = PrincipalMap(overrides={"P-1": ("pal-p1", "case-42"), "P-2": ("pal-p2", "case-42")})
 IDENTITY = IdentityManifest(
     (), (), (Principal("P-1", "T-1", "engineer", "One"), Principal("P-2", "T-2", "engineer", "Two"))
 )
@@ -91,6 +95,7 @@ class Palladion:
         self.calls: list[tuple[str, str, str]] = []  # (method, path, token)
         self.bodies: list[dict[str, Any]] = []  # the JSON body of each call, in the same order
         self.search_body: dict[str, Any] = {"status": "OK", "warnings": [], "passages": []}
+        self.search_by_token: dict[str, dict[str, Any]] = {}  # an answer for one reader, in place of search_body
         self.search_status = 200
         self.upload_status = 201
         self.counter = 0
@@ -100,7 +105,7 @@ class Palladion:
         self.calls.append((http.method, http.url.path, token))
         self.bodies.append(json.loads(http.content) if http.content else {})
         if http.url.path == "/search":
-            return httpx.Response(self.search_status, json=self.search_body)
+            return httpx.Response(self.search_status, json=self.search_by_token.get(token, self.search_body))
         if http.url.path == "/sources":
             self.counter += 1
             return httpx.Response(self.upload_status, json={"revision_id": f"rev_{self.counter}", "state": "STORED"})
@@ -113,6 +118,7 @@ class Palladion:
 
 def arm(server: Palladion, tmp_path: Path, **kwargs: Any) -> PalladionArm:
     client = httpx.Client(transport=httpx.MockTransport(server.handle))
+    kwargs.setdefault("principals", READERS)
     built = PalladionArm(view(tmp_path), "http://palladion.test", TOKENS, client=client, **kwargs)
     built.map_revisions({"rev_D1": "D1", "rev_D2": "D2", "rev_D3": "D3"})
     return built
@@ -138,7 +144,7 @@ def test_no_module_of_the_benchmark_imports_palladion() -> None:
 def test_k_above_palladions_limit_is_unsupported_not_capped(tmp_path: Path) -> None:
     server = Palladion()
     with pytest.raises(CapabilityUnsupported) as caught:
-        arm(server, tmp_path).retrieve(request(limit=20))
+        arm(server, tmp_path).retrieve(request(limit=41))
     assert classify_exception(caught.value)[0] is RunStatus.FEATURE_NOT_SUPPORTED
     assert server.calls == [], "no call is made for a request that cannot be honoured"
 
@@ -155,7 +161,7 @@ def test_an_unreachable_server_is_not_run_and_a_timeout_is_a_timeout(tmp_path: P
         (slow, TimeoutError, RunStatus.TIMEOUT),
     ):
         client = httpx.Client(transport=httpx.MockTransport(handler))
-        built = PalladionArm(view(tmp_path), "http://palladion.test", TOKENS, client=client)
+        built = PalladionArm(view(tmp_path), "http://palladion.test", TOKENS, client=client, principals=READERS)
         built.map_revisions({"rev_D1": "D1"})
         with pytest.raises(error) as caught:
             built.retrieve(request())
@@ -273,7 +279,9 @@ def test_a_passage_from_a_revision_outside_the_corpus_is_foreign_and_hidden_unde
     assert shown[0].additional_metadata["foreign"] is True and shown[0].source_document_id is None
 
 
-def test_the_neutral_filter_acts_after_palladions_ranking_and_says_how_many_it_dropped(tmp_path: Path) -> None:
+def test_palladions_output_is_not_masked_and_a_document_the_neutral_filter_refuses_is_counted_as_leaked(
+    tmp_path: Path,
+) -> None:
     server = Palladion()
     server.search_body = {
         "status": "OK",
@@ -281,9 +289,28 @@ def test_the_neutral_filter_acts_after_palladions_ranking_and_says_how_many_it_d
         "passages": [passage(TEXTS["D3"], "rev_D3", 0, 10), passage(TEXTS["D1"], "rev_D1", 0, 12)],
     }
     built = arm(server, tmp_path)
-    assert [c.source_document_id for c in built.retrieve(request(principal="P-1"))] == ["D1"]
-    assert built.last_notes["filtered_after_ranking"] == 1
-    assert [c.source_document_id for c in built.retrieve(request(principal="P-2"))] == ["D3", "D1"]
+    leaked = built.retrieve(request(principal="P-1"))  # D3 is for tenant T-2 only; P-1 is in T-1
+    assert [c.source_document_id for c in leaked] == ["D3", "D1"], "the arm does not hide what Palladion returned"
+    assert built.last_notes["acl_leaked"] == 1 and "ACL_LEAKED=1" in built.call_flags()
+    clean = built.retrieve(request(principal="P-2"))
+    assert [c.source_document_id for c in clean] == ["D3", "D1"] and built.last_notes["acl_leaked"] == 0
+    assert "ACL_LEAKED" not in " ".join(built.call_flags())
+
+
+def test_c2_needs_a_reader_for_every_benchmark_principal(tmp_path: Path) -> None:
+    with pytest.raises(AdapterError, match="one Palladion reader for every benchmark principal"):
+        PalladionArm(view(tmp_path), "http://x.test", TOKENS, condition=Condition.C2)
+    partial = PrincipalMap(overrides={"P-1": ("pal-p1", "case-42")})
+    with pytest.raises(AdapterError, match="one Palladion reader"):
+        PalladionArm(view(tmp_path), "http://x.test", TOKENS, condition=Condition.C2, principals=partial)
+    PalladionArm(view(tmp_path), "http://x.test", TOKENS, condition=Condition.C1).close()  # C1 has no access list
+
+
+def test_the_search_carries_the_cases_evaluation_time_as_as_of(tmp_path: Path) -> None:
+    server = Palladion()
+    arm(server, tmp_path).retrieve(request())
+    search = next(b for (method, path, _), b in zip(server.calls, server.bodies, strict=True) if path == "/search")
+    assert search["as_of"] == "2026-10-18T03:00:00Z" and search["limit"] == 10
 
 
 def test_the_budget_is_applied_on_the_harness_side(tmp_path: Path) -> None:
@@ -301,17 +328,23 @@ def test_the_budget_is_applied_on_the_harness_side(tmp_path: Path) -> None:
 def test_the_principal_map_and_tokens(tmp_path: Path) -> None:
     server = Palladion()
     server.search_body = {"status": "OK", "warnings": [], "passages": []}
-    mapped = arm(server, tmp_path, principals=PrincipalMap(overrides={"P-2": ("reader-a", "case-43")}))
+    mapped = arm(
+        server, tmp_path, principals=PrincipalMap(overrides={**READERS.overrides, "P-2": ("reader-a", "case-43")})
+    )
     mapped.retrieve(request(principal="P-2"))
     assert server.calls[-1][2] == "tok-reader"
     tokenless = PalladionArm(
-        view(tmp_path), "http://x.test", {}, client=httpx.Client(transport=httpx.MockTransport(server.handle))
+        view(tmp_path),
+        "http://x.test",
+        {},
+        client=httpx.Client(transport=httpx.MockTransport(server.handle)),
+        principals=READERS,
     )
     tokenless.map_revisions({"rev_D1": "D1"})
     with pytest.raises(AdapterError, match="no token"):
         tokenless.retrieve(request())
     assert isinstance(mapped, RetrieverAdapter)
-    assert mapped.describe()["max_limit"] == 12 and "wall clock" in mapped.describe()["clock"]
+    assert mapped.describe()["max_limit"] == 40 and "as_of" in mapped.describe()["clock"]
 
 
 # --------------------------------------------------------------------------- loading
@@ -334,6 +367,77 @@ def test_loading_mirrors_the_registry_states_with_a_distinct_uploader_and_approv
     assert table["revisions"] == dict(report.revisions)
 
 
+def test_a_restricted_document_is_uploaded_with_its_readers_and_an_open_one_with_none(tmp_path: Path) -> None:
+    server = Palladion()
+    arm(server, tmp_path).load_corpus(tmp_path / TABLE_FILE)
+    uploads = {
+        b["filename"]: b["allowed_principal_ids"]
+        for (_, path, _), b in zip(server.calls, server.bodies, strict=True)
+        if path == "/sources"
+    }
+    assert uploads["D1.md"] == [] and uploads["D2.md"] == [] and uploads["DRAFT.md"] == []  # everyone may read these
+    assert uploads["D3.md"] == ["admin-a", "pal-p2", "uploader-a"]  # tenant T-2 only, and the two who must approve it
+
+
+def test_under_c1_nothing_is_restricted(tmp_path: Path) -> None:
+    server = Palladion()
+    arm(server, tmp_path, condition=Condition.C1).load_corpus(tmp_path / TABLE_FILE)
+    lists = [
+        b["allowed_principal_ids"]
+        for (_, path, _), b in zip(server.calls, server.bodies, strict=True)
+        if path == "/sources"
+    ]
+    assert lists == [[]] * 5
+
+
+def test_a_document_published_later_gets_the_same_access_list(tmp_path: Path) -> None:
+    server = Palladion()
+    built = arm(server, tmp_path)
+    built.load_corpus(tmp_path / TABLE_FILE)
+    extra = replace(record("D3", "approved", tenants=("T-1",)), doc_id="D3B")
+    built.publish(extra, TEXTS["D3"])
+    sent = next(
+        b for (_, path, _), b in reversed(list(zip(server.calls, server.bodies, strict=True))) if path == "/sources"
+    )
+    assert sent["filename"] == "D3B.md" and sent["allowed_principal_ids"] == ["admin-a", "pal-p1", "uploader-a"]
+
+
+def acl_server(leak: bool = False, silent: bool = False) -> Palladion:
+    """A stand-in that serves D3 (tenant T-2 only) to the reader of P-2, and to P-1 too when it leaks."""
+    server = Palladion()
+    found = {"status": "OK", "warnings": [], "passages": [passage(TEXTS["D3"], "rev_3", 0, 10)]}  # the third upload
+    empty = {"status": "OK", "warnings": [], "passages": []}
+    server.search_by_token = {"tok-p2": empty if silent else found, "tok-p1": found if leak else empty}
+    return server
+
+
+def test_the_access_lists_are_read_back_with_a_positive_control(tmp_path: Path) -> None:
+    built = arm(acl_server(), tmp_path)
+    built.load_corpus(tmp_path / TABLE_FILE)
+    report = built.verify_acl()
+    assert report == {
+        "condition": "C2", "restricted_checked": 1, "reachable_by_allowed": 1, "forbidden_probes": 1, "leaks": 0,
+    }  # fmt: skip
+
+
+def test_a_leak_through_palladions_access_list_is_counted_not_hidden_or_raised(tmp_path: Path) -> None:
+    built = arm(acl_server(leak=True), tmp_path)
+    built.load_corpus(tmp_path / TABLE_FILE)
+    assert built.verify_acl()["leaks"] == 1
+
+
+def test_a_silent_search_cannot_pass_the_access_list_check(tmp_path: Path) -> None:
+    built = arm(acl_server(silent=True), tmp_path)
+    built.load_corpus(tmp_path / TABLE_FILE)
+    with pytest.raises(AdapterError, match="no restricted document could be found"):
+        built.verify_acl()
+
+
+def test_the_access_list_check_has_nothing_to_check_under_c1(tmp_path: Path) -> None:
+    built = arm(Palladion(), tmp_path, condition=Condition.C1)
+    assert built.verify_acl() == {"condition": "C1", "restricted_checked": 0, "note": "C1 has no access list"}
+
+
 def test_a_version_is_approved_after_the_one_it_supersedes_and_names_it(tmp_path: Path) -> None:
     successor = replace(record("D1", "approved"), supersedes="OLD")
     older = record("OLD", "withdrawn")
@@ -343,6 +447,7 @@ def test_a_version_is_approved_after_the_one_it_supersedes_and_names_it(tmp_path
         "http://palladion.test",
         TOKENS,
         client=httpx.Client(transport=httpx.MockTransport(server.handle)),
+        principals=READERS,
     )
     report = built.load_corpus(tmp_path / TABLE_FILE)
     steps = [
@@ -364,6 +469,7 @@ def test_a_predecessor_that_was_never_approved_is_not_named(tmp_path: Path) -> N
         "http://palladion.test",
         TOKENS,
         client=httpx.Client(transport=httpx.MockTransport(server.handle)),
+        principals=READERS,
     )
     report = built.load_corpus(tmp_path / TABLE_FILE)
     assert report.superseded == 0
@@ -391,6 +497,7 @@ def test_an_oversized_document_is_refused_by_name(tmp_path: Path) -> None:
         "http://palladion.test",
         TOKENS,
         client=httpx.Client(transport=httpx.MockTransport(server.handle)),
+        principals=READERS,
     )
     with pytest.raises(AdapterError, match="D1 exceeds"):
         built.load_corpus(tmp_path / TABLE_FILE)
@@ -481,7 +588,7 @@ def test_the_arm_reports_what_it_did_to_a_call_as_flags(tmp_path: Path) -> None:
     built = arm(server, tmp_path)
     built.retrieve(request(principal="P-1", budget=2))
     flags = built.call_flags()
-    assert "FILTERED_AFTER_RANKING=1" in flags and "PALLADION_WARNING=COVERAGE_SCOPE_TRUNCATED" in flags
+    assert "ACL_LEAKED=1" in flags and "PALLADION_WARNING=COVERAGE_SCOPE_TRUNCATED" in flags
     assert any(f.startswith("BUDGET_") for f in flags)
 
 
@@ -513,6 +620,7 @@ def test_the_load_probe_never_sends_a_code_that_palladion_would_refuse(tmp_path:
         "http://palladion.test",
         TOKENS,
         client=httpx.Client(transport=httpx.MockTransport(handler)),
+        principals=READERS,
     )
     built.map_revisions({"rev_1": "D1"})
     report = built.verify_load(sample=1)
