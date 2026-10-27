@@ -206,3 +206,15 @@ def test_an_identifier_past_the_candidate_bound_is_reported_as_truncated_not_as_
     assert exact.truncated and exact.unmatched == () and not exact.unknown_lookup
     result = corpus.search.search(corpus.uploader, "case-1", "POL-A ERR-B", as_of=NOW)
     assert "EXACT_CANDIDATES_TRUNCATED" in result.warnings and "EXACT_IDENTIFIER_NOT_FOUND" not in result.warnings
+
+
+# ------------------------------------------------ ADR-0109: a slow stage names itself
+
+
+def test_a_search_reports_the_time_of_each_stage_it_ran(corpus) -> None:
+    corpus.add("SOP", "Hold settlement until confirmation arrives.", register_aliases=True)
+    result = corpus.search.search(corpus.uploader, "case-1", "hold settlement SOP", mode="reranked", as_of=NOW)
+    assert {"eligibility", "index", "exact", "resolve", "rerank", "context", "release", "coverage"} == set(result.stage_ms)
+    assert all(ms >= 0 for ms in result.stage_ms.values()) and sum(result.stage_ms.values()) <= result.elapsed_ms + 1
+    hybrid = corpus.search.search(corpus.uploader, "case-1", "hold settlement", mode="hybrid", as_of=NOW)
+    assert "rerank" not in hybrid.stage_ms and "context" not in hybrid.stage_ms

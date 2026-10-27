@@ -3,7 +3,9 @@ from __future__ import annotations
 
 import time
 import uuid
-from dataclasses import dataclass
+from collections.abc import Iterator
+from contextlib import contextmanager
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Literal, Protocol, Sequence
 
@@ -44,6 +46,21 @@ class _Exclusions:
         return {"NOT_ELIGIBLE": self.not_eligible, "INTEGRITY_CONFLICT": self.integrity_conflict}
 
 
+@dataclass
+class _Stopwatch:
+    """Wall time per search stage in milliseconds, so a slow stage names itself; owned by one search."""
+
+    stages: dict[str, float] = field(default_factory=dict)
+
+    @contextmanager
+    def stage(self, name: str) -> Iterator[None]:
+        started = time.perf_counter()
+        try:
+            yield
+        finally:
+            self.stages[name] = self.stages.get(name, 0.0) + (time.perf_counter() - started) * 1000
+
+
 class Ranker(Protocol):
     @property
     def max_candidates(self) -> int: ...
@@ -64,6 +81,7 @@ class SearchResult(VersionedModel):
     evidence_budget: dict[str, Any] | None = None
     excluded: dict[str, int] = {}  # candidates dropped by canonical checks, by reason
     unmatched_identifiers: tuple[str, ...] = ()  # code-shaped query tokens with no registered alias
+    stage_ms: dict[str, float] = {}  # wall time of each search stage
 
 
 class HybridSearch:
@@ -96,6 +114,7 @@ class HybridSearch:
         started = time.perf_counter()
         # Validity is judged at the evaluation instant and at each trusted case instant (ADR-0102).
         applicability = Applicability.at(as_of or self.registry.clock(), also_at)
+        watch = _Stopwatch()
         warnings: list[str] = []
         candidates: list[tuple[str, str | None]] = []
         try:
@@ -106,18 +125,21 @@ class HybridSearch:
             else:
                 # The index may only offer index generations that can apply, so stale near-duplicates and the leftover points
                 # of earlier generations never take a slot (ADR-0103).
-                eligible = self.catalog.eligible_generations(principal, case_id, applicability,
-                                                              fingerprint=self.index.fingerprint)
+                with watch.stage("eligibility"):
+                    eligible = self.catalog.eligible_generations(principal, case_id, applicability,
+                                                                  fingerprint=self.index.fingerprint)
                 if eligible is None:
                     warnings.append("ELIGIBILITY_PREFILTER_BOUNDED")
                 elif not eligible:
                     warnings.append("NO_ELIGIBLE_SOURCES")  # the index is not asked; nothing could apply
-                discovered = self.index.query(query, principal, case_id,
-                    "hybrid" if mode == "reranked" else mode, limit=40, generations=eligible)
+                with watch.stage("index"):
+                    discovered = self.index.query(query, principal, case_id,
+                        "hybrid" if mode == "reranked" else mode, limit=40, generations=eligible)
             candidates.extend((hit.chunk_id, hit.generation) for hit in discovered)
         except DependencyUnavailable:
             warnings.append("INDEX_UNAVAILABLE")
-        exact = self.exact.hits(principal, case_id, query)
+        with watch.stage("exact"):
+            exact = self.exact.hits(principal, case_id, query)
         if exact.truncated:
             warnings.append("EXACT_CANDIDATES_TRUNCATED")
         # An unknown structured code is labelled, never silently replaced by a near identifier (ADR-0105).
@@ -129,11 +151,12 @@ class HybridSearch:
                       + [(chunk_id, None) for chunk_id in exact.trailing])
         resolved: dict[str, Passage] = {}
         exclusions = _Exclusions()
-        for chunk_id, generation in candidates:
-            if chunk_id not in resolved:
-                passage = self._release(principal, case_id, chunk_id, applicability, exclusions, generation)
-                if passage is not None:
-                    resolved[chunk_id] = passage
+        with watch.stage("resolve"):
+            for chunk_id, generation in candidates:
+                if chunk_id not in resolved:
+                    passage = self._release(principal, case_id, chunk_id, applicability, exclusions, generation)
+                    if passage is not None:
+                        resolved[chunk_id] = passage
         ordered = list(resolved.values())
         resolved_count = len(ordered)
         if mode == "reranked":
@@ -141,13 +164,16 @@ class HybridSearch:
                 warnings.append("RERANK_UNAVAILABLE")
             else:
                 try:
-                    chunks = tuple(self.resolver.chunk(principal, passage) for passage in ordered[:self.ranker.max_candidates])
-                    ordered = [resolved[chunk.chunk_id] for chunk in self.ranker.rank(query, chunks)]
+                    with watch.stage("rerank"):
+                        chunks = tuple(self.resolver.chunk(principal, passage)
+                                       for passage in ordered[:self.ranker.max_candidates])
+                        ordered = [resolved[chunk.chunk_id] for chunk in self.ranker.rank(query, chunks)]
                 except DependencyUnavailable:
                     warnings.append("RERANK_UNAVAILABLE")
         selected = ordered[:limit]
         if mode == "reranked":
-            selected = self._with_context(principal, case_id, ordered, limit, applicability, exclusions)
+            with watch.stage("context"):
+                selected = self._with_context(principal, case_id, ordered, limit, applicability, exclusions)
         graph_paths: tuple[GraphPath,...] = ()
         if self.graph is not None:
             try:
@@ -167,9 +193,10 @@ class HybridSearch:
         if require_graph and "GRAPH_UNAVAILABLE" in warnings:
             warnings.append("GRAPH_REQUIRED_UNAVAILABLE")
         # Recheck again at release, including references fetched before a mid-request revocation.
-        selected = [released for released in (
-            self._release(principal, case_id, passage.citation_id, applicability, exclusions, passage.generation)
-            for passage in selected) if released is not None]
+        with watch.stage("release"):
+            selected = [released for released in (
+                self._release(principal, case_id, passage.citation_id, applicability, exclusions, passage.generation)
+                for passage in selected) if released is not None]
         budget_info = None
         if token_budget is not None:
             from evidence_agent.retrieval.embeddings import PassageTokenizer
@@ -190,8 +217,9 @@ class HybridSearch:
             returned = {p.citation_id for p in selected}
             graph_paths = tuple(p for p in graph_paths if p.target_chunk_id in returned
                 and set(p.evidence_ids).issubset(returned))
-        coverage = source_coverage(self.registry, principal, case_id, self.index,
-                                   as_of=applicability.primary, reuse_physical_audit=reuse_physical_audit)
+        with watch.stage("coverage"):
+            coverage = source_coverage(self.registry, principal, case_id, self.index,
+                                       as_of=applicability.primary, reuse_physical_audit=reuse_physical_audit)
         warnings.extend(coverage.warnings)
         if exclusions.integrity_conflict:
             warnings.append("INTEGRITY_CONFLICT")
@@ -219,7 +247,8 @@ class HybridSearch:
                             coverage=coverage, warnings=tuple(dict.fromkeys(warnings)),
                             stage_counts=stages, elapsed_ms=elapsed,graph_paths=graph_paths,
                             evidence_budget=budget_info, excluded=exclusions.as_dict(),
-                            unmatched_identifiers=exact.unmatched)
+                            unmatched_identifiers=exact.unmatched,
+                            stage_ms={name: round(ms, 3) for name, ms in watch.stages.items()})
 
     def _release(self, principal: Principal, case_id: str, chunk_id: str, applicability: Applicability,
                  exclusions: _Exclusions, generation: str | None = None) -> Passage | None:
