@@ -31,6 +31,7 @@ from benchmark.track_a import WITHDRAWN, read_withdrawn
 
 CONFIGS = Path(__file__).resolve().parents[2] / "configs"
 PRIMARY_METRIC = "complete_set_at_k"
+SHARED_INDEX_ARMS = frozenset({"R2", "R3"})
 RECALL_METRIC = "valid_source_recall"
 MRR_METRIC = "mrr"
 TRACK_A_METRICS = (PRIMARY_METRIC, RECALL_METRIC, MRR_METRIC)
@@ -329,12 +330,16 @@ def _build_cost(run: TrackARun, arm: str) -> str:
     record = next((b for b in run.builds if b.get("arm") == arm), None)
     if record is None or record.get("status") != "BUILT":
         return "NOT_RUN"
-    seconds = record.get("seconds")
-    return (
-        "NOT_OBSERVABLE (the load happens inside Palladion; no time was recorded)"
-        if arm == "R7a" and seconds is None
-        else f"{seconds:.1f} s"
-    )
+    if arm == "R7a":
+        loaded = record.get("load_seconds")
+        return (
+            "NOT_OBSERVABLE (the load happens inside Palladion; no time was recorded)"
+            if loaded is None
+            else f"{loaded:.0f} s (corpus load and indexing inside Palladion)"
+        )
+    if arm in SHARED_INDEX_ARMS:
+        return "none of its own (uses the R0 and R1 indices)"
+    return f"{record.get('seconds', 0.0):.1f} s"
 
 
 def track_a_section(run: TrackARun) -> list[str]:

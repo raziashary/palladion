@@ -938,3 +938,23 @@ Dispositions that change or narrow the wording above (E-B05-004): **item 7**: a 
 
 **Addendum, 2026-10-27 (B08-T08.03, owner answers in chat):** (1) The per-model daily token cap of BADR-0042 is raised from 150,000 to 190,000 tokens for the rest of this comparison ("Raise to 190,000"); the provider's own limit (200,000) is unchanged and still stops a call. The first Track B day measured 1,750 to 2,400 tokens a call and stopped both gpt-oss models at 150,000 with 21 pairs pending. (2) Track C is shrunk to one episode and two mutation cases per arm ("Shrink to 1 episode + 2 cases"), because the measured cost (about 15,000 tokens a turn for E3 and about 27,000 for E4) put the frozen list at about 600,000 tokens; the Track C list is frozen again in its own file before the first Track C spend, and the Track B and Track A lists are untouched. Verification: E-B08-008.
 
+## BADR-0045 — Licenses for the fixtures and the code (OQ09)
+
+**Status:** ACCEPTED; 2026-10-27.
+
+**Authority:** Owner answer in chat, 2026-10-27: "MIT code + CC BY 4.0 data".
+
+**Question:** Under which licenses are the synthetic fixtures and the benchmark and generator code published?
+
+**Why:** Protocol 19.3 asks for an explicit dataset license, and B08-T07.01 cannot close without one.
+
+**Options:** MIT code with CC BY 4.0 data; Apache-2.0 code with CC BY 4.0 data; no license yet.
+
+**Recommendation:** the first: permissive, common for a benchmark, and attribution for the data.
+
+**What affects what:** `docs/dataset_card.md`, `docs/reproducibility.md`, the README and a `LICENSE` file name the licenses; the dataset card keeps its statement that every document is fictional and not an authentic procedure; the licenses cover this repository's benchmark code and generated data only, not Palladion, the comparators, or the models, each under its own terms. Any change to the benchmark code that includes a third party's work keeps that work's license.
+
+**My answer (editable):** MIT for the code and the generator; CC BY 4.0 for the generated fictional corpus, questions, gold and annotations.
+
+**Verification:** `LICENSE` and the dataset card name the licenses (B08-T07.01).
+

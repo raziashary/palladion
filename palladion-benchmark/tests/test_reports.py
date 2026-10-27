@@ -61,7 +61,8 @@ def track_a(commit: str | None = COMMIT) -> TrackARun:
     score = RunScore("run-0001", 10, "0" * 64, tuple(sorted(pairs, key=lambda p: (p.arm, p.question_id))), tuple(rows))
     card = build_scorecard(score, metrics=METRICS, stats=STATS, reference="R3", primary="R7a")
     builds: list[Mapping[str, Any]] = [
-        {"arm": "R3", "status": "BUILT", "seconds": 1.5},
+        {"arm": "R0", "status": "BUILT", "seconds": 1.5},
+        {"arm": "R3", "status": "BUILT", "seconds": 0.0},
         {"arm": "R7a", "status": "BUILT"},
     ]
     return TrackARun("C2", provenance(commit=commit), score, card, builds, "R3", "R7a")
@@ -90,7 +91,8 @@ def test_the_report_says_what_it_is_lists_its_runs_and_every_limit() -> None:
 def test_a_harm_is_shown_as_bounds_and_an_unmeasured_cell_says_so() -> None:
     text = render(inputs())
     assert "NOT_OBSERVABLE (the load happens inside Palladion; no time was recorded)" in text
-    assert "| R3 | 20 |" in text and "1.5 s" in text
+    assert "| R0 | 20 |" in text and "1.5 s" in text
+    assert "none of its own (uses the R0 and R1 indices)" in text
     assert "Harm over every eligible pair" in text
 
 
@@ -211,3 +213,12 @@ def test_the_command_line_refuses_a_missing_run_and_says_why(
 ) -> None:
     code = main(["--root", str(tmp_path), "--out", str(tmp_path / "out"), "--track-b", str(tmp_path / "nowhere")])
     assert code == 2 and "refused" in capsys.readouterr().err and not (tmp_path / "out").exists()
+
+
+def test_palladions_corpus_load_time_is_shown_when_it_was_recorded() -> None:
+    run = track_a()
+    builds: list[Mapping[str, Any]] = [{"arm": "R7a", "status": "BUILT", "load_seconds": 612.4}]
+    timed = TrackARun(**{**run.__dict__, "builds": builds})
+    assert "612 s (corpus load and indexing inside Palladion)" in render(inputs(track_a=[timed]))
+    failed = TrackARun(**{**run.__dict__, "builds": [{"arm": "R7a", "status": "FAILED"}]})
+    assert "| NOT_RUN |" in render(inputs(track_a=[failed]))

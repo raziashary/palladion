@@ -16,6 +16,7 @@ import argparse
 import json
 import subprocess
 import sys
+import time
 from pathlib import Path
 from typing import Any
 
@@ -82,8 +83,10 @@ def palladion_arm(
         index_dir.mkdir(parents=True, exist_ok=True)
         record: dict[str, Any] = {"arm": "R7a", "status": "BUILT"}
         if options.load_palladion:
+            began = time.perf_counter()
             report = arm.load_corpus(table)
             record["load"] = {"uploaded": report.uploaded, "approved": report.approved, "revoked": report.revoked}
+            record["load_seconds"] = time.perf_counter() - began  # the offline cost: upload, approval and indexing
         arm.read_table(table)
         record["verify"] = arm.verify_load()
         record["acl"] = arm.verify_acl()
