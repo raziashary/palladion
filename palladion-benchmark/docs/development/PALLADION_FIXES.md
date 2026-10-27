@@ -234,3 +234,7 @@ PF07 follow-up evidence: `palladion/docs/development/evidence/P10_CLASSIFICATION
 E-P10-001–007 and ADR0096. Palladion P10 final phase review/checkpoint is tracked there.
 The benchmark contributor still owns R7b link selection, capability reporting, version
 pinning and comparison validity. PF03 remains OPEN; no performance target is waived.
+
+## Benchmark observation at `dd70c0e` (2026-10-27, E-B08-007)
+
+Measured against the isolated runtime, not a request that Palladion change: `POST /search` with a limit above 12 is answered HTTP 400 (`Invalid request`) in `lexical` and `hybrid` mode on a 1,200-document corpus, and `reranked` mode accepts 13 but refuses 40, although the request schema accepts up to 40 and PF04 states "max 40". The benchmark asks for 10 and caps its adapter at 12. Palladion's contributor has stopped (BADR-0038); this is recorded for whoever resumes.

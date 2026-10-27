@@ -176,7 +176,7 @@ def test_a_real_call_loads_and_retrieves_the_published_corpus_over_http(
                 "unapproved and revoked documents are not retrievable"
             )
             with pytest.raises(CapabilityUnsupported) as caught:
-                arm.retrieve(request(probe, view.identity.principals[0].principal_id, limit=41))
+                arm.retrieve(request(probe, view.identity.principals[0].principal_id, limit=13))
             assert classify_exception(caught.value)[0] is RunStatus.FEATURE_NOT_SUPPORTED
             reranked = PalladionArm(view, server.base_url, tokens, mode="reranked", condition=Condition.C1)
             reranked.map_revisions({rev: doc for doc, rev in report.revisions.items()})

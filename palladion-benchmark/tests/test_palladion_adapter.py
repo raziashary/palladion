@@ -144,7 +144,7 @@ def test_no_module_of_the_benchmark_imports_palladion() -> None:
 def test_k_above_palladions_limit_is_unsupported_not_capped(tmp_path: Path) -> None:
     server = Palladion()
     with pytest.raises(CapabilityUnsupported) as caught:
-        arm(server, tmp_path).retrieve(request(limit=41))
+        arm(server, tmp_path).retrieve(request(limit=13))
     assert classify_exception(caught.value)[0] is RunStatus.FEATURE_NOT_SUPPORTED
     assert server.calls == [], "no call is made for a request that cannot be honoured"
 
@@ -344,7 +344,7 @@ def test_the_principal_map_and_tokens(tmp_path: Path) -> None:
     with pytest.raises(AdapterError, match="no token"):
         tokenless.retrieve(request())
     assert isinstance(mapped, RetrieverAdapter)
-    assert mapped.describe()["max_limit"] == 40 and "as_of" in mapped.describe()["clock"]
+    assert mapped.describe()["max_limit"] == 12 and "as_of" in mapped.describe()["clock"]
 
 
 # --------------------------------------------------------------------------- loading

@@ -53,8 +53,8 @@ class Cell:
     completed: int
     conditional: Interval | None
     excluded: int  # eligible pairs the conditional table dropped because they did not complete
-    # A harm metric over every eligible pair: (no harm among the pairs that did not complete, harm in every one of
-    # them). None for a benefit metric or when nothing is eligible.
+    # The share of eligible pairs that had the harm, bounded: (none of the pairs that did not complete had it, all of
+    # them had it). A pair counts once however much of it was harmful; None for a benefit metric or nothing eligible.
     harm_bounds: tuple[float, float] | None = None
 
 
@@ -284,7 +284,9 @@ def render_markdown(card: Scorecard) -> str:
     harm = [c for c in card.cells if c.harm_bounds is not None]
     if harm:
         lines += ["## Harm over every eligible pair (bounds, not an estimate)", ""]
-        lines += ["| stratum | arm | metric | eligible | completed | harm among completed | lower | upper |"]
+        lines += [
+            "| stratum | arm | metric | eligible | completed | mean (completed) | pairs with the harm: lower | upper |"
+        ]
         lines += ["|---|---|---|---|---|---|---|---|"]
         for c in harm:
             assert c.harm_bounds is not None

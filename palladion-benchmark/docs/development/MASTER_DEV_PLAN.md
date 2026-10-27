@@ -1246,12 +1246,12 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
 
 <a id="b08-t08-02"></a>
 
-- [ ] **B08-T08.02 — Track A comparison on the S tier (no model, no quota)**
+- [x] **B08-T08.02 — Track A comparison on the S tier (no model, no quota)**
   - **Files:** `palladion-benchmark/scripts/run_track_a.py`, `palladion-benchmark/scripts/score_track_a.py`, `palladion-benchmark/docs/development/EVIDENCE_LOG.md`.
   - **Depends:** B08-T08.10, B04-T05.01, B06-T05.01.
   - **Change:** Run R0 to R3 and R7a (R7b is FEATURE_NOT_SUPPORTED, E2 NOT_RUN) over the 97 scoreable questions of the S tier under C1 and C2, one arm at a time in separate run directories at K 10 and the 4,000-word budget, then score them as paired arms; withdrawn questions are listed; the 10 native-only questions are excluded and the list is stated.
   - **Proof:** MEASUREMENT; BG-TRACKA, BG-FAIR; every pair is accounted for; the validator passes; the cross-run guard accepts the set; R7a's removed-candidate counts and capability differences are reported; results at earlier pins are not pooled.
-  - **Evidence:** Not yet executed.
+  - **Evidence:** E-B08-007 (R0 to R3 and R7a, C1 and C2, 500 of 500 pairs each; descriptive).
 
 <a id="b08-t08-03"></a>
 

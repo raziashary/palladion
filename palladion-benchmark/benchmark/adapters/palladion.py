@@ -10,9 +10,9 @@ What the arm declares rather than hides:
   works before ranking, as the neutral filter does for R0 to R3. The arm does not mask Palladion's output: a returned
   document the neutral filter would have refused is kept and counted (``acl_leaked``), so a difference between the two
   rules shows as exposure and is not hidden. Under C1 every reader sees every document.
-* Palladion's search takes at most 40 results and no word budget. K above 40 is refused as unsupported and the
-  evidence budget is applied on the harness side. The request carries the case's evaluation time as ``as_of`` (PF01),
-  the same clock the fixture gives every arm.
+* Palladion's search answers at most 12 results (its schema says 40, E-B08-007) and has no word budget. K above 12
+  is refused as unsupported and the evidence budget is applied on the harness side. The request carries the case's
+  evaluation time as ``as_of`` (PF01), the same clock the fixture gives every arm.
 * A response is a run state when it is not a usable answer: an unreachable server, an index that cannot be read, or a
   reranked request on a server without the reranker is ``NOT_RUN``; a partial index is a transient fault. An empty
   list is returned only when Palladion itself reports an unknown identifier or finds nothing.
@@ -51,7 +51,9 @@ from benchmark.contracts import (
 from benchmark.fixtures.manifest import ManifestRecord
 
 Mode = Literal["lexical", "dense", "hybrid", "reranked"]
-MAX_PALLADION_LIMIT = 40
+# Observed at dd70c0e (E-B08-007): lexical and hybrid search answer HTTP 400 above 12 results although the request
+# schema allows 40, and reranked search refuses 40. K is 10, so the bound the arm relies on is the one that works.
+MAX_PALLADION_LIMIT = 12
 MAX_UPLOAD_CHARACTERS = 65536
 DEFAULT_VALID_FROM = "2026-01-01T00:00:00Z"
 READER = "reader-a"
