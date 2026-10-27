@@ -419,10 +419,15 @@ def forced_arm(arm_id: str) -> TrackCArm:
     return TrackCArm(arm_id, never_opened, dict, frozenset(), forced=(spec.forced_status, spec.forced_reason))
 
 
-def conditions_for(arms: Sequence[TrackCArm], heats: Sequence[Heat]) -> list[RunCondition]:
+def conditions_for(
+    arms: Sequence[TrackCArm], heats: Sequence[Heat], memories: Sequence[Memory] | None = None
+) -> list[RunCondition]:
+    """The conditions to run: each arm's memory baselines (only ``memories`` when named) at each heat."""
     wanted: dict[RunCondition, None] = {}
     for arm in arms:
         for memory in arm.memories:
+            if memories is not None and memory not in memories:
+                continue
             for heat in heats:
                 wanted[RunCondition(memory, heat, Budget.MATCHED)] = None
     return list(wanted)
@@ -448,6 +453,7 @@ def write_manifest(options: argparse.Namespace, fixture: Fixture, view: Publishe
             "arms": options.arms,
             "episodes": options.episodes,
             "mutations": options.mutations,
+            "memories": options.memories,
             "matched_list_sha256": options.matched_sha256,
             "limits": {
                 "call_cap": options.call_cap,
@@ -618,6 +624,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--models-dir", type=Path, default=PROJECT / "artifacts" / "models")
     parser.add_argument("--start-qdrant", action="store_true")
     parser.add_argument("--matched-list", type=Path, default=None, help="the frozen lists this run must match")
+    parser.add_argument("--memories", default=None, help="only these memory baselines (comma-separated), default all")
     parser.add_argument(
         "--daily-token-cap", type=int, default=None,
         help="tokens the model may spend per day; each arm's token cap is its share of what the books leave today",
@@ -725,7 +732,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             base_corpus=fixture.corpus,
         )
         mutations = {i.spec_id: i for i, _ in cases}
-        result = runner.run(arms, episodes, conditions_for(arms, heats), mutations, cases=cases)
+        memories = [Memory(m) for m in options.memories.split(",") if m] if options.memories else None
+        result = runner.run(arms, episodes, conditions_for(arms, heats, memories), mutations, cases=cases)
         estimates = {arm_id: provider.estimated_prompt_tokens for arm_id, provider in scripted.items()}
         summary = write_outputs(options.out, result, episodes, {a.arm_id: a for a in arms}, label, estimates, options)
         print(

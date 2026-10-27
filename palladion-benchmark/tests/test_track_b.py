@@ -801,3 +801,39 @@ def test_the_daily_token_cap_stops_a_model_for_the_day_and_a_later_invocation_fi
     }
     rows = [json.loads(line) for line in (out / "ledger.jsonl").read_text(encoding="utf-8").splitlines()]
     assert sum(r["is_final"] for r in rows) == 5 and sum(r["code"] == "QUOTA_BLOCKED" for r in rows) == 4
+
+
+def test_the_report_command_assembles_a_report_from_a_real_track_b_run(
+    s_root: Path, s_published_corpus: PublishedCorpus, s_questions: tuple[GoldRecord, ...], tmp_path: Path
+) -> None:
+    from benchmark.analysis.reports import main as report_main
+
+    arms = {
+        "R2": GoldRetriever("R2", s_published_corpus, s_questions),
+        "R3": GoldRetriever("R3", s_published_corpus, s_questions, empty=True),
+    }
+    out, _ = run(s_root, tmp_path, s_published_corpus, s_questions, arms)
+    destination = tmp_path / "report"
+    code = report_main(
+        [
+            "--root",
+            str(s_root),
+            "--out",
+            str(destination),
+            "--track-b",
+            str(out),
+            "--reference",
+            "R3",
+            "--primary",
+            "R2",
+            "--withdrawn",
+            str(tmp_path / "no-withdrawn.json"),
+        ]
+    )
+    assert code == 0
+    text = (destination / "report.md").read_text(encoding="utf-8")
+    assert "### Track B, condition C2" in text and "| R2 |" in text and "| R3 |" in text
+    assert "primary" in text and "Co-primary endpoints paired with the reference" in text
+    assert "Track B C2 | run-b-0001" in text, "the run is listed in the provenance table"
+    names = {p.name for p in (destination / "figures").iterdir()}
+    assert "track_b_coverage_cost.svg" in names

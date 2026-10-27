@@ -1183,12 +1183,12 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
 
 <a id="b08-t06-01"></a>
 
-- [ ] **B08-T06.01 — Plots and report generation**
-  - **Files:** `palladion-benchmark/benchmark/analysis/plots.py`, `palladion-benchmark/benchmark/analysis/reports.py`.
+- [x] **B08-T06.01 — Plots and report generation**
+  - **Files:** `palladion-benchmark/benchmark/analysis/plots.py`, `palladion-benchmark/benchmark/analysis/reports.py`, `palladion-benchmark/benchmark/analysis/tables.py`, `palladion-benchmark/tests/test_plots.py`, `palladion-benchmark/tests/test_reports.py`.
   - **Depends:** B03-T06.01, B08-T08.10.
   - **Change:** Risk-coverage, quality-cost Pareto and per-stratum figures; versioned Markdown or HTML reports with sections for negative findings and fairness deviations.
   - **Proof:** UNIT; BG-REPORT; dominated arms are marked from data; no single composite is presented as the winner.
-  - **Evidence:** Not yet executed.
+  - **Evidence:** E-B08-009 (SVG figures with a dominance rule, the report module and command; 25 tests).
 
 <a id="b08-t07-01"></a>
 

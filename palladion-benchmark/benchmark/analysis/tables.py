@@ -255,7 +255,7 @@ def _p(value: float | None) -> str:
     return "n/a" if value is None else f"{value:.4f}"
 
 
-def _fmt(interval: Interval | None) -> str:
+def format_interval(interval: Interval | None) -> str:
     if interval is None:
         return "n/a"
     if interval.low is None or interval.high is None:
@@ -278,7 +278,8 @@ def render_markdown(card: Scorecard) -> str:
             if pick == "itt" and c.metric in HARM_METRICS:
                 continue
             lines.append(
-                f"| {c.stratum} | {c.arm} | {c.metric} | {c.eligible} | {_fmt(value)} | {c.completed} | {c.excluded} |"
+                f"| {c.stratum} | {c.arm} | {c.metric} | {c.eligible} | {format_interval(value)} |"
+                f" {c.completed} | {c.excluded} |"
             )
         lines.append("")
     harm = [c for c in card.cells if c.harm_bounds is not None]
@@ -292,8 +293,8 @@ def render_markdown(card: Scorecard) -> str:
             assert c.harm_bounds is not None
             lower, upper = c.harm_bounds
             lines.append(
-                f"| {c.stratum} | {c.arm} | {c.metric} | {c.eligible} | {c.completed} | {_fmt(c.conditional)} |"
-                f" {lower:.3f} | {upper:.3f} |"
+                f"| {c.stratum} | {c.arm} | {c.metric} | {c.eligible} | {c.completed} |"
+                f" {format_interval(c.conditional)} | {lower:.3f} | {upper:.3f} |"
             )
         lines.append("")
     if card.effects:
@@ -306,7 +307,7 @@ def render_markdown(card: Scorecard) -> str:
             split = "n/a" if e.only_arm is None else f"{e.only_arm} / {e.only_reference}"
             holm_p = "primary (unadjusted)" if e.primary else _p(e.adjusted_p)
             lines.append(
-                f"| {e.stratum} | {e.arm} | {e.reference} | {e.metric} | {e.pairs} | {_fmt(e.difference)} |"
+                f"| {e.stratum} | {e.arm} | {e.reference} | {e.metric} | {e.pairs} | {format_interval(e.difference)} |"
                 f" {split} | {_p(e.p_value)} | {holm_p} |"
             )
         lines.append("")
@@ -430,8 +431,9 @@ def render_answer_scorecard(
         for effect in effects:
             holm_p = "primary (unadjusted)" if effect.primary else _p(effect.adjusted_p)
             lines.append(
-                f"| {effect.arm} | {effect.reference} | {effect.metric} | {effect.pairs} | {_fmt(effect.difference)} |"
-                f" {effect.only_arm} / {effect.only_reference} | {_p(effect.p_value)} | {holm_p} |"
+                f"| {effect.arm} | {effect.reference} | {effect.metric} | {effect.pairs} |"
+                f" {format_interval(effect.difference)} | {effect.only_arm} / {effect.only_reference} |"
+                f" {_p(effect.p_value)} | {holm_p} |"
             )
     lines += ["", "## Citations", ""]
     lines += [

@@ -764,3 +764,14 @@ def test_each_arm_gets_its_share_of_what_the_books_leave_the_model_today(tmp_pat
     spent = _options(tmp_path, daily_token_cap=90_000)
     with pytest.raises(run_track_c.TrackCRunError, match=r"no .* tokens for today"):
         run_track_c.apply_frozen_lists_and_caps(spent, [], [], ["E3"], live=True)
+
+
+def test_a_run_can_be_limited_to_named_memory_baselines() -> None:
+    arm, _, _, _ = memory_arm("E0", memories=frozenset({Memory.NONE, Memory.LAST_N, Memory.SCOPED_EPISODIC}))
+    everything = run_track_c.conditions_for([arm], [Heat.COLD])
+    assert {c.memory for c in everything} == {Memory.NONE, Memory.LAST_N, Memory.SCOPED_EPISODIC}
+    chosen = run_track_c.conditions_for([arm], [Heat.COLD], [Memory.SCOPED_EPISODIC])
+    assert [c.memory for c in chosen] == [Memory.SCOPED_EPISODIC]
+    assert run_track_c.conditions_for([arm], [Heat.COLD], [Memory.NATIVE]) == [], (
+        "a baseline the arm lacks is not invented"
+    )

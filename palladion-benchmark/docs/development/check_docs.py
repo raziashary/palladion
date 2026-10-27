@@ -104,6 +104,8 @@ EXTRA_FILES = {
     ROOT + "tests/test_quota.py",
     ROOT + "benchmark/matched.py",
     ROOT + "tests/test_matched.py",
+    ROOT + "tests/test_plots.py",
+    ROOT + "tests/test_reports.py",
     ROOT + "scripts/freeze_matched.py",
     ROOT + "benchmark/eval/observable.py",
     ROOT + "benchmark/scripted_provider.py",
