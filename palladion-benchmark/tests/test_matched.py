@@ -202,7 +202,7 @@ def test_track_c_episodes_and_cases_are_chosen_outside_the_locked_test_split(
     args = freezer.argparse.Namespace(
         root=s_root, graph_root=s_root, out=tmp_path / "m.json", split="smoke", withdrawn=freezer.WITHDRAWN,
         track_b_count=4, tokens_per_question=7000, max_completion_tokens=2000, episodes=3, mutations="M13,M01",
-        model_budget=[("qwen/qwen3.8-27b", 28000)],
+        model_budget=[("qwen/qwen3.8-27b", 28000)], tracks="a,b,c",
     )  # fmt: skip
     chosen = freezer.build_lists(args)
     expected = freezer.run_track_c.pick_episodes(fixture, 3)
@@ -210,3 +210,19 @@ def test_track_c_episodes_and_cases_are_chosen_outside_the_locked_test_split(
     assert all(e.split.value != "test" for e in expected)
     assert chosen.lists["track_c_cases"] == ("M01", "M13"), "sorted, whatever order they were named in"
     assert set(chosen.assignment) == set(chosen.lists["track_b"]) and len(chosen.lists["track_b"]) == 4
+
+
+def test_the_freeze_command_can_freeze_only_the_tracks_asked_for(s_root: Path, tmp_path: Path) -> None:
+    only_a = tmp_path / "a.json"
+    done = script("freeze_matched.py", "--root", str(s_root), "--out", str(only_a), "--tracks", "a")
+    assert done.returncode == 0, done.stderr
+    frozen = load(only_a)
+    assert set(frozen.lists) == {"track_a"} and frozen.assignment == {}
+    no_budget = script("freeze_matched.py", "--root", str(s_root), "--out", str(tmp_path / "b.json"), "--tracks", "b")
+    assert no_budget.returncode == 2 and "--model-budget" in no_budget.stderr and not (tmp_path / "b.json").exists()
+    unknown = script("freeze_matched.py", "--root", str(s_root), "--out", str(tmp_path / "z.json"), "--tracks", "a,z")
+    assert unknown.returncode == 2 and "--tracks" in unknown.stderr
+    no_graph = script(
+        "freeze_matched.py", "--root", str(s_root), "--out", str(tmp_path / "g.json"), "--tracks", "graph"
+    )
+    assert no_graph.returncode == 2 and "--graph-root" in no_graph.stderr

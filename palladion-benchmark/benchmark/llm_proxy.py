@@ -77,6 +77,8 @@ class Refusal:
 
 
 _DAILY_LIMIT = b"tokens per day"  # the provider's own wording for a per-day token limit (Groq: TPD)
+# Refusals that are a limit stopping the run, the provider's day or the owner's cap, and so never an arm's failure.
+QUOTA_REFUSALS = frozenset({"DAILY_LIMIT_REACHED", "BUDGET_EXHAUSTED", "TOOL_BUDGET_EXHAUSTED"})
 
 
 def _estimate_tokens(payload: Mapping[str, Any]) -> int:
@@ -109,8 +111,8 @@ class CountingProxy:
         self._dispatch_lock = threading.Lock()  # one provider call at a time, so the caps are exact
         self._last_dispatch: float | None = None
         self._totals: dict[str, int] = dict.fromkeys(
-            ("calls", "rate_limited", "errors", "refused", "prompt_tokens", "completion_tokens", "estimated_tokens",
-             "tool_calls", "embedding_requests", "embedding_inputs"), 0
+            ("calls", "rate_limited", "errors", "refused", "quota_refused", "prompt_tokens", "completion_tokens",
+             "estimated_tokens", "tool_calls", "embedding_requests", "embedding_inputs"), 0
         )  # fmt: skip
         self._sequence = 0
         self._daily_wall = False  # the provider said the day's tokens are used up, so no call can succeed now
@@ -141,6 +143,7 @@ class CountingProxy:
     def _refuse(self, status: int, code: str, **fields: Any) -> Refusal:
         with self._lock:
             self._totals["refused"] += 1
+            self._totals["quota_refused"] += code in QUOTA_REFUSALS
         self._record(outcome="REFUSED", code=code, http_status=status, **fields)
         return Refusal(status, code)
 

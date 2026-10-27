@@ -329,6 +329,7 @@ class GeneratorPool:
         sleep: Callable[[float], None] = time.sleep,
         monotonic: Callable[[], float] = time.monotonic,
         wall_clock: Callable[[], datetime] | None = None,
+        token_caps: Mapping[str, int] | None = None,
     ) -> None:
         for model in settings.models:
             if model not in APPROVED_MODELS:
@@ -353,6 +354,9 @@ class GeneratorPool:
         self._records: list[GenerationRecord] = []
         self._mixed: set[str] = set()
         self._quota_blocked: set[str] = set()
+        self._token_caps = dict(token_caps or {})  # tokens a model may still spend in this process (the owner's cap)
+        self._spent: dict[str, int] = {}
+        self._quota_blocked.update(model for model, cap in self._token_caps.items() if cap <= 0)
         self._lock = threading.Lock()
 
     @classmethod
@@ -368,13 +372,14 @@ class GeneratorPool:
         prompt_path: Path | None = None,
         screen_prompts: bool = True,
         pace_seconds: float = 0.0,
+        token_caps: Mapping[str, int] | None = None,
     ) -> GeneratorPool:
         """Build a pool with the real transport. Refuses before touching the env file unless enabled."""
         key = read_api_key(env_file, enabled=enabled)
         transport = HttpxTransport(key, timeout_seconds=settings.request_timeout_seconds)
         return cls(settings, transport, enabled=enabled, assignment=assignment, call_budget=call_budget,
                    record_path=record_path, prompt_path=prompt_path,
-                   screen_prompts=screen_prompts, pace_seconds=pace_seconds)  # fmt: skip
+                   screen_prompts=screen_prompts, pace_seconds=pace_seconds, token_caps=token_caps)  # fmt: skip
 
     def _sequence(self) -> int:
         """A running call number, so a retry by the runner does not repeat a record id."""
@@ -544,6 +549,14 @@ class GeneratorPool:
     def _remember(self, record: GenerationRecord) -> None:
         with self._lock:
             self._records.append(record)
+            cap = self._token_caps.get(record.requested_model)
+            if (
+                cap is not None
+            ):  # a model that has spent its cap is stopped exactly as a provider's daily limit stops it
+                spent = self._spent.get(record.requested_model, 0) + (record.total_tokens or 0)
+                self._spent[record.requested_model] = spent
+                if spent >= cap:
+                    self._quota_blocked.add(record.requested_model)
             if self._record_path is not None:
                 with self._record_path.open("a", encoding="utf-8", newline="\n") as handle:
                     handle.write(json.dumps(record.to_dict(), sort_keys=True) + "\n")

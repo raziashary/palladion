@@ -35,6 +35,7 @@ import palladion_runtime  # noqa: E402
 import run_track_a  # noqa: E402
 
 import comparators  # noqa: E402
+from benchmark import matched as matched_lists  # noqa: E402
 from benchmark.adapters.common import AdapterError, Condition, PublishedView  # noqa: E402
 from benchmark.adapters.langchain import build_langchain_arm  # noqa: E402
 from benchmark.adapters.langgraph import build_langgraph_system  # noqa: E402
@@ -76,7 +77,9 @@ from benchmark.generator import (  # noqa: E402
     read_api_key,
 )
 from benchmark.llm_proxy import CountingProxy, ProxyLimits, ProxyServer, Refusal  # noqa: E402
+from benchmark.matched import MatchedListError  # noqa: E402
 from benchmark.mutations_apply import PalladionTarget  # noqa: E402
+from benchmark.quota import QuotaError, remaining_today  # noqa: E402
 from benchmark.registry import default_registry  # noqa: E402
 from benchmark.run_manifest import RunManifest, collect_hardware, tree_state  # noqa: E402
 from benchmark.runner import RunnerError, RunnerSettings  # noqa: E402
@@ -445,6 +448,7 @@ def write_manifest(options: argparse.Namespace, fixture: Fixture, view: Publishe
             "arms": options.arms,
             "episodes": options.episodes,
             "mutations": options.mutations,
+            "matched_list_sha256": options.matched_sha256,
             "limits": {
                 "call_cap": options.call_cap,
                 "token_cap": options.token_cap,
@@ -567,6 +571,31 @@ def write_outputs(
     return summary
 
 
+def apply_frozen_lists_and_caps(
+    options: argparse.Namespace,
+    episodes: Sequence[Episode],
+    cases: Sequence[tuple[MutationInstance, GoldRecord]],
+    arm_ids: Sequence[str],
+    live: bool,
+) -> None:
+    """Check what the run will ask against the frozen lists and keep each arm inside what the books leave today.
+
+    Sets ``options.matched_sha256`` (the list's digest, or None) and, for a live run with a daily cap, lowers
+    ``options.token_cap`` to an arm's share of the tokens the saved books leave the model today.
+    """
+    matched = matched_lists.load(options.matched_list) if options.matched_list else None
+    if matched is not None:
+        matched.require("track_c_episodes", [e.episode_id for e in episodes])
+        matched.require("track_c_cases", [i.spec_id for i, _ in cases])
+    options.matched_sha256 = matched.digest if matched else None
+    if live and options.daily_token_cap:
+        left = remaining_today(options.ledger_root, [options.out], [PRIMARY_MODEL], options.daily_token_cap)
+        spending = len([a for a in arm_ids if a != "E2"])
+        options.token_cap = min(options.token_cap, left[PRIMARY_MODEL] // max(spending, 1))
+        if options.token_cap < 1:
+            raise TrackCRunError(f"the books leave no {PRIMARY_MODEL} tokens for today")
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--root", type=Path, required=True, help="the S-tier fixture root")
@@ -588,6 +617,15 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--env-file", type=Path, default=PROJECT / ".env")
     parser.add_argument("--models-dir", type=Path, default=PROJECT / "artifacts" / "models")
     parser.add_argument("--start-qdrant", action="store_true")
+    parser.add_argument("--matched-list", type=Path, default=None, help="the frozen lists this run must match")
+    parser.add_argument(
+        "--daily-token-cap", type=int, default=None,
+        help="tokens the model may spend per day; each arm's token cap is its share of what the books leave today",
+    )  # fmt: skip
+    parser.add_argument(
+        "--ledger-root", type=Path, default=PROJECT / "artifacts" / "runs",
+        help="run directories whose saved books count against --daily-token-cap",
+    )  # fmt: skip
     options = parser.parse_args(argv)
     live = options.generator == "live"
     unset = [n for n in ("call_cap", "token_cap", "pace_seconds") if getattr(options, n) is None]
@@ -618,6 +656,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         fixture = rebuild_fixture(options.root, bundle)
         episodes = pick_episodes(fixture, options.episodes)
         cases = pick_cases(fixture, [m for m in options.mutations.split(",") if m])
+        apply_frozen_lists_and_caps(options, episodes, cases, arm_ids, live)
         view = PublishedView.load(Layout(options.root).path(Namespace.PUBLISHED))
         encoder = None
         if any(a in EMBEDDING_ARM_IDS for a in arm_ids):
@@ -699,6 +738,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         AdapterError,
         TrackAError,
         TrackCRunError,
+        MatchedListError,
+        QuotaError,
         MutationError,
         GenerationError,
         RunnerError,

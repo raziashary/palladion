@@ -29,6 +29,7 @@ from benchmark.contracts import ContractError
 WINDOW_HOURS = 24.0
 GENERATION_RECORDS = "generation_records.jsonl"
 PROXY_BOOK_GLOB = "proxy-*.jsonl"
+LOCAL_EMBEDDING = "EMBEDDING"
 
 
 class QuotaError(ContractError):
@@ -90,7 +91,9 @@ def _rows(path: Path) -> Iterable[tuple[int, dict[str, Any]]]:
 
 
 def read_generation_records(path: Path) -> list[Call]:
-    """The shared generator's rows: the model the provider served (else the one asked for) and the usage it reported."""
+    """The shared generator's rows: the model that served the call (the one the provider bills, else the one asked for
+    when nothing was served) and the usage the provider reported. An offline stand-in serves under its own name, so its
+    rows never count against a real model."""
     calls = []
     for number, row in _rows(path):
         model = row.get("served_model") or row.get("requested_model")
@@ -109,9 +112,11 @@ def read_generation_records(path: Path) -> list[Call]:
 
 
 def read_proxy_book(path: Path) -> list[Call]:
-    """A counting proxy's rows."""
+    """A counting proxy's rows. A local embedding call (outcome ``EMBEDDING``) reaches no provider: no quota."""
     calls = []
     for number, row in _rows(path):
+        if row.get("outcome") == LOCAL_EMBEDDING:
+            continue
         model = row.get("model")
         if not isinstance(model, str):
             raise QuotaError(f"{path.name} line {number} names no model")
@@ -156,6 +161,19 @@ def remaining(spend: Mapping[str, Spend], models: Sequence[str], daily_limit: in
     if daily_limit < 1:
         raise QuotaError("the daily limit is at least 1 token")
     return {model: max(0, daily_limit - spend[model].tokens) if model in spend else daily_limit for model in models}
+
+
+def remaining_today(
+    ledger_root: Path, extra: Sequence[Path], models: Sequence[str], daily_cap: int, now: datetime | None = None
+) -> dict[str, int]:
+    """What each model may still spend today: the daily cap less what every saved book shows in the trailing day.
+
+    Every run directory under ``ledger_root`` counts, and so does each of ``extra`` (a directory being written now).
+    """
+    found = sorted(p.resolve() for p in ledger_root.glob("*") if p.is_dir()) if ledger_root.exists() else []
+    directories = found + [p.resolve() for p in extra if p.resolve() not in found]  # a directory counts once
+    spend = window_spend([call for run in directories for call in read_run(run)], now or datetime.now(UTC))
+    return remaining(spend, models, daily_cap)
 
 
 def days_needed(demand: Mapping[str, int], daily_limit: int) -> dict[str, int]:

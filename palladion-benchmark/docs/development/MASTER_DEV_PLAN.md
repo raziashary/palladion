@@ -1255,12 +1255,12 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
 
 <a id="b08-t08-03"></a>
 
-- [ ] **B08-T08.03 — Track B comparison on a frozen matched list over several days**
-  - **Files:** `palladion-benchmark/scripts/run_track_b.py`, `palladion-benchmark/scripts/score_track_b.py`, `palladion-benchmark/docs/development/EVIDENCE_LOG.md`.
+- [x] **B08-T08.03 — Track B comparison on a frozen matched list over several days**
+  - **Files:** `palladion-benchmark/scripts/run_track_b.py`, `palladion-benchmark/scripts/score_track_b.py`, `palladion-benchmark/benchmark/generator.py`, `palladion-benchmark/benchmark/quota.py`, `palladion-benchmark/tests/test_generator_pool.py`, `palladion-benchmark/tests/test_quota.py`, `palladion-benchmark/docs/development/EVIDENCE_LOG.md`.
   - **Depends:** B08-T08.02, B05-T06.01.
-  - **Change:** Freeze a seeded, stratum-balanced list of 40 of the 87 eligible questions, assign each question one approved model before the first call, and run R0 to R3 and R7a on it under C2 at K 10 and the 4,000-word budget with one completion cap of 2,000, no failover, a pace read from the provider's headers, and the daily caps of BADR-0044; each day resumes the same run directory; a quota-blocked pair is retried on a later day.
+  - **Change:** Freeze a seeded, stratum-balanced list of 40 of the 87 eligible questions, assign each question one approved model before the first call, and run R0 to R3 and R7a on it under C2 at K 10 and the 4,000-word budget with one completion cap of 2,000, no failover, a pace read from the provider's headers, and a per-model daily token cap enforced from the saved books (`--daily-token-cap`: a model that has spent its cap is stopped like a provider's daily limit); each day resumes the same run directory; a quota-blocked pair is retried on a later day.
   - **Proof:** MEASUREMENT; BG-TRACKB, BG-FAIR; every question is answered by the same model in every arm; per-day spend and quota-blocked counts are reported; intention-to-treat and conditional tables side by side; no INVALID_RUN is caused by a daily limit; no key appears in any output.
-  - **Evidence:** Not yet executed.
+  - **Evidence:** E-B08-008 (200 of 200 pairs: 191 OK, 9 INVALID_RUN; descriptive, no separation).
 
 <a id="b08-t08-04"></a>
 

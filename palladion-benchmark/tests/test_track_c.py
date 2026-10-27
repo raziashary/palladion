@@ -662,3 +662,105 @@ def test_tool_argument_validity_reads_the_traces_of_a_run(tmp_path: Path, episod
     assert run_track_c.tool_argument_validity(result) == Rate(len(chosen[0].turns), 2 * len(chosen[0].turns))
     bare = runner(tmp_path / "bare").run([arm], chosen, [COLD])
     assert isinstance(run_track_c.tool_argument_validity(bare), NotObservable)
+
+
+# ----------------------------------------------------------- a limit that stopped a call is not the system's failure
+
+
+class Stopped(Book):
+    """A book whose proxy refuses every call for a limit: the system answers, but a call was stopped on the way."""
+
+    def spend(self) -> None:
+        super().spend()
+        self.totals["quota_refused"] = self.totals.get("quota_refused", 0) + 1
+
+
+def test_a_turn_a_limit_stopped_is_not_run_and_not_the_systems_failure(tmp_path: Path, s_world: World) -> None:
+    episode = build_episodes(s_world, 7, 28)[0]
+    stopped_arm, _, _, _ = memory_arm(book=Stopped())
+    result = runner(tmp_path / "stopped").run([stopped_arm], [episode], [COLD], {})
+    turns = [t for t in result.turns if t.episode_id == episode.episode_id]
+    assert turns and {(t.status, t.code) for t in turns} == {(RunStatus.NOT_RUN, "QUOTA_BLOCKED")}
+    assert all("ORIGIN=HARNESS" in t.flags for t in turns)
+    healthy_arm, _, _, _ = memory_arm()
+    healthy = runner(tmp_path / "healthy").run([healthy_arm], [episode], [COLD], {})
+    assert {t.status for t in healthy.turns} == {RunStatus.OK}
+
+
+def test_a_mutation_case_a_limit_stopped_is_not_run_with_the_same_code(
+    tmp_path: Path, mutation_ctx: MutationContext
+) -> None:
+    stopped = Stopped()
+    base, _, _, _ = memory_arm("R2", book=stopped, memories=frozenset({Memory.NONE}))
+    arm = TrackCArm(
+        "R2", base.open_system, stopped.usage, base.memories,
+        mutation_target=lambda: RebuildTarget("R2", mutation_ctx.corpus, Rebuilds()),
+    )  # fmt: skip
+    instance = instantiate(mutation_ctx, "M01")
+    question = mutation_ctx.question(instance.base_question_id)
+    result = runner(tmp_path, mutation_ctx.corpus).run([arm], [], [], cases=[(instance, question)])
+    (record,) = result.mutations
+    assert (record.status, record.code) == (RunStatus.NOT_RUN, "QUOTA_BLOCKED")
+
+
+# ------------------------------------------------------------------ frozen lists and the daily cap (B08-T08.04)
+
+
+def _options(tmp_path: Path, **over: Any) -> Any:
+    import argparse
+
+    base = {
+        "matched_list": None, "daily_token_cap": None, "ledger_root": tmp_path / "books", "out": tmp_path / "out",
+        "token_cap": 150_000,
+    }  # fmt: skip
+    return argparse.Namespace(**{**base, **over})
+
+
+def _frozen(tmp_path: Path, episodes: tuple[str, ...], cases: tuple[str, ...]) -> Path:
+    from benchmark.matched import MatchedLists, freeze
+
+    path = tmp_path / "matched-c.json"
+    freeze(path, MatchedLists(7, {"track_c_episodes": episodes, "track_c_cases": cases}, {}))
+    return path
+
+
+def test_a_run_must_ask_exactly_the_frozen_episodes_and_cases(tmp_path: Path, mutation_ctx: MutationContext) -> None:
+    from benchmark.matched import MatchedListError
+
+    episodes = build_episodes(mutation_ctx.world, 7, 28)[:1]
+    instance = instantiate(mutation_ctx, "M01")
+    cases = [(instance, mutation_ctx.question(instance.base_question_id))]
+    frozen = _frozen(tmp_path, tuple(e.episode_id for e in episodes), ("M01",))
+    options = _options(tmp_path, matched_list=frozen)
+    run_track_c.apply_frozen_lists_and_caps(options, episodes, cases, ["E4"], live=False)
+    assert len(options.matched_sha256) == 64
+    with pytest.raises(MatchedListError, match="track_c_cases"):
+        run_track_c.apply_frozen_lists_and_caps(options, episodes, [], ["E4"], live=False)
+    with pytest.raises(MatchedListError, match="track_c_episodes"):
+        run_track_c.apply_frozen_lists_and_caps(options, [], cases, ["E4"], live=False)
+    plain = _options(tmp_path)
+    run_track_c.apply_frozen_lists_and_caps(plain, episodes, cases, ["E4"], live=False)
+    assert plain.matched_sha256 is None
+
+
+def test_each_arm_gets_its_share_of_what_the_books_leave_the_model_today(tmp_path: Path) -> None:
+    from datetime import UTC, datetime
+
+    books = tmp_path / "books" / "earlier"
+    books.mkdir(parents=True)
+    now = datetime.now(UTC).isoformat().replace("+00:00", "Z")
+    row = {"at": now, "model": run_track_c.PRIMARY_MODEL, "prompt_tokens": 80_000, "completion_tokens": 10_000}
+    (books / "proxy-E3.jsonl").write_text(json.dumps(row) + chr(10), encoding="utf-8")
+    options = _options(tmp_path, daily_token_cap=190_000)
+    run_track_c.apply_frozen_lists_and_caps(options, [], [], ["E3", "E4"], live=True)
+    assert options.token_cap == 50_000, "100,000 left today, shared by two arms"
+    run_track_c.apply_frozen_lists_and_caps(
+        options := _options(tmp_path, daily_token_cap=190_000), [], [], ["E3"], True
+    )
+    assert options.token_cap == 100_000
+    scripted = _options(tmp_path, daily_token_cap=190_000)
+    run_track_c.apply_frozen_lists_and_caps(scripted, [], [], ["E3"], live=False)
+    assert scripted.token_cap == 150_000, "a scripted run spends nothing, so no cap applies"
+    spent = _options(tmp_path, daily_token_cap=90_000)
+    with pytest.raises(run_track_c.TrackCRunError, match=r"no .* tokens for today"):
+        run_track_c.apply_frozen_lists_and_caps(spent, [], [], ["E3"], live=True)

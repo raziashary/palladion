@@ -19,6 +19,7 @@ from benchmark.quota import (
     read_proxy_book,
     read_run,
     remaining,
+    remaining_today,
     window_spend,
 )
 
@@ -56,13 +57,25 @@ def proxy(model: str, delta: timedelta, prompt: int, completion: int) -> dict[st
     }
 
 
-def test_generation_records_give_the_served_model_and_a_refused_request_costs_nothing(tmp_path: Path) -> None:
+def test_generation_records_give_the_serving_model_and_a_refused_request_costs_nothing(tmp_path: Path) -> None:
     path = write(
         tmp_path / "generation_records.jsonl",
         [generation(QWEN, -timedelta(hours=1), 2000, 300), generation(GPT, -timedelta(minutes=5), None, None)],
     )
     calls = read_generation_records(path)
     assert [(c.model, c.tokens) for c in calls] == [(QWEN, 2300), (GPT, 0)]
+
+
+def test_a_local_embedding_call_reaches_no_provider_and_is_not_spend(tmp_path: Path) -> None:
+    embedding = {"at": stamp(-timedelta(minutes=4)), "outcome": "EMBEDDING", "inputs": 256}
+    rows = [proxy(QWEN, -timedelta(minutes=5), 1000, 10), embedding]
+    assert [c.tokens for c in read_proxy_book(write(tmp_path / "proxy-E0.jsonl", rows))] == [1010]
+
+
+def test_an_offline_stand_in_never_counts_against_a_real_model(tmp_path: Path) -> None:
+    row = generation(QWEN, -timedelta(minutes=5), 2000, 300) | {"served_model": "offline-stub"}
+    spend = window_spend(read_generation_records(write(tmp_path / "generation_records.jsonl", [row])), NOW)
+    assert remaining(spend, [QWEN], 200_000) == {QWEN: 200_000}
 
 
 def test_a_proxy_book_is_read_the_same_way(tmp_path: Path) -> None:
@@ -152,3 +165,28 @@ def test_the_command_line_refuses_a_bad_book_and_a_bad_demand(
     good = tmp_path / "ok"
     good.mkdir()
     assert main(["--runs", str(good), "--daily-limit", "1000", "--demand", "no-equals-sign"]) == 2
+
+
+def test_what_a_model_may_still_spend_today_is_the_cap_less_the_books_of_every_run(tmp_path: Path) -> None:
+    books, out = tmp_path / "books", tmp_path / "out"
+    other = books / "other-run"
+    other.mkdir(parents=True)
+    out.mkdir()
+    write(other / "proxy-E3.jsonl", [proxy(QWEN, -timedelta(hours=2), 70_000, 5_000)])
+    own = generation(QWEN, -timedelta(minutes=30), 20_000, 0)
+    write(out / "generation_records.jsonl", [own, generation(GPT, -timedelta(days=2), 99_000, 0)])  # a day-old call
+    caps = remaining_today(books, [out], [QWEN, GPT], 150_000, NOW)
+    assert caps == {QWEN: 55_000, GPT: 150_000}
+    assert remaining_today(tmp_path / "missing", [], [QWEN], 150_000, NOW) == {QWEN: 150_000}
+
+
+def test_a_directory_named_twice_or_by_another_spelling_is_counted_once(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    books = tmp_path / "books"
+    run = books / "run"
+    run.mkdir(parents=True)
+    write(run / "generation_records.jsonl", [generation(QWEN, -timedelta(minutes=30), 40_000, 0)])
+    monkeypatch.chdir(tmp_path)
+    relative = Path("books") / "run"  # the same directory, spelled relative to the working directory
+    assert remaining_today(books, [relative, run], [QWEN], 100_000, NOW) == {QWEN: 60_000}

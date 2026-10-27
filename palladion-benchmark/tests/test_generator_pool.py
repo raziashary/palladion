@@ -325,6 +325,42 @@ def test_a_new_pool_does_not_inherit_a_block_and_asks_the_provider_again() -> No
     assert second.complete(Q1, MESSAGES).text == "ready" and len(transport.payloads) == 1
 
 
+def capped_pool(
+    caps: dict[str, int], script: list[TransportResponse | BaseException]
+) -> tuple[GeneratorPool, FakeTransport]:
+    transport = FakeTransport(script)
+    instance = GeneratorPool(
+        SETTINGS, transport, enabled=True, assignment={Q1: QWEN, Q2: GPT120}, call_budget=10, token_caps=caps,
+        sleep=lambda _s: None, monotonic=Clock(), wall_clock=lambda: datetime(2026, 10, 18, 3, 0, tzinfo=UTC),
+    )  # fmt: skip
+    return instance, transport
+
+
+def test_a_model_that_has_spent_its_cap_is_stopped_like_a_provider_limit_and_the_others_go_on() -> None:
+    instance, transport = capped_pool({QWEN: 15}, [ok(QWEN), ok(GPT120), ok(GPT120)])  # one call costs 15 tokens
+    assert instance.complete(Q1, MESSAGES).text == "ready"  # the call that reaches the cap is answered
+    assert instance.quota_blocked_models == frozenset({QWEN})
+    with pytest.raises(GenerationError) as caught:
+        instance.complete(Q1, MESSAGES)
+    assert caught.value.code == "QUOTA_BLOCKED" and len(transport.payloads) == 1
+    assert instance.complete(Q2, MESSAGES).text == "ready" and instance.complete(Q2, MESSAGES).text == "ready"
+
+
+def test_a_cap_not_yet_reached_leaves_the_model_usable() -> None:
+    instance, _ = capped_pool({QWEN: 16}, [ok(QWEN), ok(QWEN)])
+    instance.complete(Q1, MESSAGES)
+    assert instance.quota_blocked_models == frozenset()
+    instance.complete(Q1, MESSAGES)  # 30 tokens by now: stopped after this one
+    assert instance.quota_blocked_models == frozenset({QWEN})
+
+
+def test_a_model_with_nothing_left_today_is_never_asked() -> None:
+    instance, transport = capped_pool({QWEN: 0}, [ok(QWEN)])
+    with pytest.raises(GenerationError) as caught:
+        instance.complete(Q1, MESSAGES)
+    assert caught.value.code == "QUOTA_BLOCKED" and transport.payloads == [] and instance.records == ()
+
+
 def test_explicit_failover_switches_model_records_it_and_marks_the_question_mixed() -> None:
     settings = replace(SETTINGS, allow_automatic_failover=True)
     instance, transport = pool([limited("1")] * 3 + [ok(GPT120)], settings=settings)

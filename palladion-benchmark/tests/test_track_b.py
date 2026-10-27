@@ -781,3 +781,23 @@ def test_a_pair_a_daily_limit_stopped_is_in_no_rate_and_is_counted_apart(
     endpoints = summary.endpoints
     assert endpoints.pairs == 0 and endpoints.coverage_itt is None and endpoints.directive_rate_worst_case is None
     assert answer_effects(score, reference="R3", primary="R2", stats=stats_settings()) == []
+
+
+def test_the_daily_token_cap_stops_a_model_for_the_day_and_a_later_invocation_finishes_the_run(
+    s_root: Path, tmp_path: Path
+) -> None:
+    out, books = tmp_path / "capped", tmp_path / "books"
+    books.mkdir()
+    base = ["--root", str(s_root), "--split", "smoke", "--out", str(out), "--run-id", "run-b-0200", "--arms", "R0",
+            "--limit-questions", "5", "--ledger-root", str(books)]  # fmt: skip
+    first = run_script(*base, "--daily-token-cap", "100")
+    assert first.returncode == 0, first.stderr
+    report = json.loads(first.stdout)
+    assert report["status_counts"] == {"OK": 1} and report["quota_blocked_pairs"] == 4
+    later = run_script(*base, "--daily-token-cap", "100000000")  # a new day: the cap is not reached
+    assert later.returncode == 0, later.stderr
+    assert json.loads(later.stdout)["quota_blocked_pairs"] == 0 and json.loads(later.stdout)["status_counts"] == {
+        "OK": 4
+    }
+    rows = [json.loads(line) for line in (out / "ledger.jsonl").read_text(encoding="utf-8").splitlines()]
+    assert sum(r["is_final"] for r in rows) == 5 and sum(r["code"] == "QUOTA_BLOCKED" for r in rows) == 4

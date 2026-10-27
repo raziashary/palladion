@@ -34,6 +34,7 @@ from pathlib import Path
 from typing import Any, Protocol
 
 from benchmark.contracts import (
+    QUOTA_BLOCKED_CODE,
     CaseRequest,
     CaseResponse,
     ErrorOrigin,
@@ -485,6 +486,10 @@ class TrackCRunner:
         duration = (time.perf_counter() - started) * 1000.0
         after = dict(arm.usage())
         delta = {key: after.get(key, 0) - before.get(key, 0) for key in after}
+        if delta.get(
+            "quota_refused", 0
+        ):  # a daily limit or a cap stopped a call: the turn was not answered by the system
+            status, origin, code = RunStatus.NOT_RUN, ErrorOrigin.HARNESS, QUOTA_BLOCKED_CODE
         flags = [*clock_flags, *(system.call_flags() if response is not None else ())]
         trace: tuple[Mapping[str, Any], ...] = ()
         if response is not None:
@@ -576,6 +581,8 @@ class TrackCRunner:
             code = application.outcome.value.upper()
         flags += [f"NOT_RESTORED={why}" for why in target.restore()]  # the next case starts from the base state
         after = dict(arm.usage())
+        if after.get("quota_refused", 0) - before.get("quota_refused", 0):
+            status, code = RunStatus.NOT_RUN, QUOTA_BLOCKED_CODE  # a limit stopped a call: not the system's failure
         record = MutationRecord(
             arm.arm_id, instance.instance_id, status, code, application, tuple(asks),
             {k: after.get(k, 0) - before.get(k, 0) for k in after}, tuple(flags), tuple(traces),

@@ -30,6 +30,7 @@ from benchmark.eval.normalize import PublishedCorpus
 from benchmark.fixtures.manifest import Layout, Namespace
 from benchmark.generator import AssignmentPlan, GenerationError, GeneratorPool
 from benchmark.matched import MatchedListError
+from benchmark.quota import QuotaError, remaining_today
 from benchmark.run_manifest import tree_state
 from benchmark.runner import RunnerError
 from benchmark.track_a import (
@@ -79,6 +80,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--withdrawn", type=Path, default=WITHDRAWN)
     parser.add_argument("--limit-questions", type=int, default=None, help="ask a seeded, stratum-balanced subset")
     parser.add_argument("--matched-list", type=Path, default=None, help="the frozen lists this run must match")
+    parser.add_argument(
+        "--daily-token-cap", type=int, default=None,
+        help="tokens a model may spend per day; the run stops asking a model once the books show its day spent",
+    )  # fmt: skip
+    parser.add_argument(
+        "--ledger-root", type=Path, default=PROJECT / "artifacts" / "runs",
+        help="run directories whose saved books count against --daily-token-cap",
+    )  # fmt: skip
     parser.add_argument(
         "--allow-failover", action="store_true", help="on a rate limit move down the approved model list (recorded)"
     )
@@ -166,18 +175,23 @@ def main(argv: list[str] | None = None) -> int:
             plan = plan_assignment(asked, generator, spec, seed)
         options.out.mkdir(parents=True, exist_ok=True)
         record_path, prompt_path = make_pool_paths(options.out)
+        caps = (
+            remaining_today(options.ledger_root, [options.out], generator.models, options.daily_token_cap)
+            if options.daily_token_cap
+            else None
+        )
         pool: GeneratorPool
         if live:
             pool = GeneratorPool.live(
                 generator, options.env_file, enabled=True, assignment=dict(plan.assigned),
                 call_budget=int(options.call_budget or 0), record_path=record_path, prompt_path=prompt_path,
-                pace_seconds=options.pace_seconds,
+                pace_seconds=options.pace_seconds, token_caps=caps,
             )  # fmt: skip
             label = "groq"
         else:
             pool = GeneratorPool(
                 generator, ExtractiveStubTransport(), enabled=True, assignment=dict(plan.assigned),
-                call_budget=10_000_000, record_path=record_path, prompt_path=prompt_path,
+                call_budget=10_000_000, record_path=record_path, prompt_path=prompt_path, token_caps=caps,
             )  # fmt: skip
             label = "offline-stub"
         outcome = execute_track_b(spec, retrievers, pool, plan, corpus, generator, pool_label=label, system_trees=trees)
@@ -202,6 +216,7 @@ def main(argv: list[str] | None = None) -> int:
         GenerationError,
         RunnerError,
         MatchedListError,
+        QuotaError,
         palladion_runtime.PalladionRuntimeError,
     ) as exc:
         print(f"refused: {exc}", file=sys.stderr)

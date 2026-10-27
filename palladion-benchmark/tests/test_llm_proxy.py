@@ -431,3 +431,17 @@ def test_a_client_that_says_stream_false_is_served_and_the_key_is_not_forwarded(
     assert "stream" not in transport.payloads[0], "nothing about streaming reaches the provider"
     refused = proxy.chat(json.dumps({**payload, "stream": True}).encode())
     assert isinstance(refused, Refusal) and refused.code == "STREAMING_REFUSED"
+
+
+def test_a_cap_or_a_daily_limit_is_counted_as_a_quota_refusal_and_a_parameter_refusal_is_not(tmp_path: Path) -> None:
+    capped = make(Fake(), tmp_path, max_calls=1)
+    capped.chat(body())
+    assert isinstance(capped.chat(body()), Refusal)
+    assert capped.usage()["quota_refused"] == 1 and capped.usage()["refused"] == 1
+    daily = TransportResponse(429, {}, b'{"error": {"message": "Rate limit on tokens per day (TPD)"}}')
+    walled = make(Fake(daily), tmp_path)
+    walled.chat(body())
+    assert isinstance(walled.chat(body()), Refusal) and walled.usage()["quota_refused"] == 1
+    other = make(Fake(), tmp_path)
+    assert isinstance(other.chat(body(stream=True)), Refusal)
+    assert other.usage()["refused"] == 1 and other.usage()["quota_refused"] == 0, "a malformed request is not a limit"
