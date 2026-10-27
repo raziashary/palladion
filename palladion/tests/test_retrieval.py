@@ -17,7 +17,7 @@ from evidence_agent.retrieval.embeddings import (
     MODEL_NAME,
     MODEL_REVISION,
 )
-from evidence_agent.retrieval.rerank import RERANK_BATCH, FastEmbedReranker
+from evidence_agent.retrieval.rerank import FastEmbedReranker
 from evidence_agent.storage.qdrant import IndexConsistencyError, QdrantIndex
 
 
@@ -293,13 +293,14 @@ def test_generation_filter_restricts_every_prefetch_and_an_empty_list_asks_the_i
 def test_generation_counts_are_one_exact_facet_call_scoped_to_the_tenant_and_case() -> None:
     index, client = _index()
     client.facet_counts = {"gen-1": 3, "gen-2": 5}
-    assert index.generation_counts("tenant-a", "case-a") == {"gen-1": 3, "gen-2": 5}
+    assert index.generation_counts("tenant-a", "case-a", ["gen-1", "gen-2"]) == {"gen-1": 3, "gen-2": 5}
     call = [c[1] for c in client.calls if c[0] == "facet"][-1]
-    assert call["key"] == "index_generation" and call["exact"] is True
-    assert {c.key: c.match.value for c in call["facet_filter"].must} == {"tenant_id": "tenant-a", "case_id": "case-a"}
-    client.facet_counts = {f"gen-{n}": 1 for n in range(20000)}
-    with pytest.raises(IndexConsistencyError, match="more index generations"):
-        index.generation_counts("tenant-a", "case-a")
+    assert call["key"] == "index_generation" and call["exact"] is True and call["limit"] == 2
+    conditions = {c.key: c.match for c in call["facet_filter"].must}
+    assert conditions["tenant_id"].value == "tenant-a" and conditions["case_id"].value == "case-a"
+    assert conditions["index_generation"].any == ["gen-1", "gen-2"], "only the generations asked about are counted"
+    before = len(client.calls)
+    assert index.generation_counts("tenant-a", "case-a", []) == {} and len(client.calls) == before
 
 
 def test_lexical_and_dense_modes_do_not_invoke_hybrid_fusion() -> None:
@@ -439,7 +440,7 @@ def test_enabled_reranker_sorts_stably_without_changing_chunk_objects() -> None:
         def rerank(self, query: str, documents: list[str], batch_size: int) -> list[float]:
             assert query == "question"
             assert len(documents) == 3
-            assert batch_size == RERANK_BATCH
+            assert batch_size == 8
             return [0.4, 0.9, 0.9]
 
     reranker._load = lambda: _Model()  # type: ignore[method-assign,return-value]
@@ -449,3 +450,33 @@ def test_enabled_reranker_sorts_stably_without_changing_chunk_objects() -> None:
 
     assert ranked == (chunks[1], chunks[2], chunks[0])
     assert all(actual is expected for actual, expected in zip(ranked, (chunks[1], chunks[2], chunks[0]), strict=True))
+
+
+@pytest.mark.parametrize("affinity, cpus, expected", [(2, None, 2), (4, None, 4), (16, None, 4), (None, 1, 1), (None, 8, 4)])
+def test_reranker_threads_follow_the_usable_cores_up_to_four(monkeypatch, affinity, cpus, expected) -> None:
+    import os
+
+    from evidence_agent.retrieval import rerank
+    if affinity is None:
+        monkeypatch.delattr(os, "sched_getaffinity", raising=False)
+        monkeypatch.setattr(os, "cpu_count", lambda: cpus)
+    else:
+        monkeypatch.setattr(os, "sched_getaffinity", lambda pid: set(range(affinity)), raising=False)
+    assert min(rerank.MAX_RERANK_THREADS, rerank._usable_cores()) == expected
+
+
+def test_the_reranker_fingerprint_pins_the_model_and_not_the_machine(monkeypatch) -> None:
+    from evidence_agent.retrieval import rerank
+    hashes = {name: "a" * 64 for name in rerank.RERANKER_FILES}
+    seen = []
+    for threads in (2, 4):
+        monkeypatch.setattr(rerank, "CPU_THREADS", threads)
+        reranker = FastEmbedReranker(enabled=True)
+        reranker._describe(hashes)
+        seen.append((reranker._fingerprint, reranker._manifest))
+    assert seen[0][0] == seen[1][0], "the same model has the same fingerprint on a 2-core and a 4-core host"
+    assert [m["threads"] for _, m in seen] == [2, 4] and all(m["batch_size"] == 8 for _, m in seen)
+    monkeypatch.setattr(rerank, "RERANKER_REVISION", "b" * 40)
+    changed = FastEmbedReranker(enabled=True)
+    changed._describe(hashes)
+    assert changed._fingerprint != seen[0][0], "another model revision is another fingerprint"

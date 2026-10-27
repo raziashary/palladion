@@ -514,7 +514,14 @@ def test_a_search_counts_points_per_generation_and_does_not_read_vectors_back(ha
     headers = {"Authorization": "Bearer reader"}
     body = {"case_id": "case-42", "query": "scoped evidence"}
     batches = handoff.index.batches
+
+    def no_readback(*args, **kwargs):
+        raise AssertionError("a default search must not read a point back")
+
+    full_readback = handoff.index.readback
+    handoff.index.readback = no_readback
     healthy = handoff.client.post("/search", headers=headers, json=body).json()["coverage"]
+    handoff.index.readback = full_readback
     assert healthy["index_coverage"] and healthy["physical_audit_mode"] == "COUNTS"
     assert handoff.index.batches == batches, "the default audit reads no point back"
     handoff.index.readback_mode = "missing"  # the index now holds no points for any generation
@@ -533,11 +540,25 @@ def test_the_counted_audit_fails_closed_when_access_changes_while_it_counts(hand
     reader = registry.access.authenticate("reader-a")
     original = handoff.index.generation_counts
 
-    def revoke_while_counting(tenant, case):
-        result = original(tenant, case)
+    def revoke_while_counting(tenant, case, generations):
+        result = original(tenant, case, generations)
         registry.revoke_source(registry.access.authenticate("admin-a"), revision)
         return result
 
     handoff.index.generation_counts = revoke_while_counting
     with pytest.raises(PermissionDenied):
         counted_coverage(registry, reader, "case-42", handoff.index)
+
+
+def test_a_case_with_nothing_indexed_is_not_a_question_for_the_index(handoff):
+    from evidence_agent.core.errors import DependencyUnavailable
+    from evidence_agent.retrieval.coverage import counted_coverage
+    registry = handoff.p03.registry
+
+    def unreachable(*args, **kwargs):
+        raise DependencyUnavailable
+
+    handoff.index.generation_counts = unreachable
+    empty = counted_coverage(registry, registry.access.authenticate("reader-a"), "case-42", handoff.index)
+    assert empty.accepted_source_count > 0 and empty.indexed_source_count == 0
+    assert empty.warnings == ("ACCEPTED_BUT_UNINDEXED",), "the sources are accepted but none is indexed; the index was not asked"

@@ -24,10 +24,20 @@ RERANKER_FILES = (
     "tokenizer_config.json",
     "vocab.txt",
 )
-# Measured on the 4-core reference machine (P11-T05, ADR-0109): threads up to the core count help, more oversubscribe
-# (6 threads ran twice as slow as 4), and batches of 8 beat 16 and 32 at every thread count.
-CPU_THREADS = min(4, os.cpu_count() or 2)
+# Measured on the 4-core reference machine with 30 real passages (P11-T05, ADR-0109): 4 threads with batches of 8 took
+# 1.79 s, 2 threads with batches of 16 took 2.62 s; at 2 and 4 threads batches of 8 beat 16 and 32; 6 and 8 threads
+# ran two to three times slower (oversubscribed). The thread count follows the cores this process may use, up to four.
+MAX_RERANK_THREADS = 4
 RERANK_BATCH = 8
+
+
+def _usable_cores() -> int:
+    """Cores this process may run on (its affinity where the platform reports one), at least one."""
+    affinity = getattr(os, "sched_getaffinity", None)
+    return max(1, len(affinity(0)) if affinity is not None else os.cpu_count() or 1)
+
+
+CPU_THREADS = min(MAX_RERANK_THREADS, _usable_cores())
 MAX_RERANK_CANDIDATES = 30
 _ort = importlib.import_module("onnxruntime.capi.onnxruntime_pybind11_state")
 _BACKEND_ERRORS = (OSError, ValueError, RuntimeError, _ort.Fail, _ort.InvalidArgument,
@@ -85,6 +95,13 @@ class FastEmbedReranker:
         except _BACKEND_ERRORS as exc:
             raise DependencyUnavailable("Reranker model unavailable") from exc
 
+    def _describe(self, file_hashes: dict[str, str]) -> None:
+        """Record what was loaded. The fingerprint pins the model; threads and batch size are runtime settings of this
+        machine, recorded beside it and not part of it, so the same model has the same identity on every host."""
+        identity = {"model": RERANKER_NAME, "revision": RERANKER_REVISION, "files": file_hashes}
+        self._manifest = {**identity, "threads": CPU_THREADS, "batch_size": RERANK_BATCH}
+        self._fingerprint = hashlib.sha256(json.dumps(identity, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+
     def _load_model(self) -> TextCrossEncoder:
         if self._model is None:
             self._cache_dir.mkdir(parents=True, exist_ok=True)
@@ -104,17 +121,7 @@ class FastEmbedReranker:
                     for block in iter(lambda: stream.read(1024 * 1024), b""):
                         digest.update(block)
                 hashes[name] = digest.hexdigest()
-            manifest = {
-                "model": RERANKER_NAME,
-                "revision": RERANKER_REVISION,
-                "files": hashes,
-                "threads": CPU_THREADS,
-                "batch_size": RERANK_BATCH,
-            }
-            self._manifest = manifest
-            self._fingerprint = hashlib.sha256(
-                json.dumps(manifest, sort_keys=True, separators=(",", ":")).encode()
-            ).hexdigest()
+            self._describe(hashes)
             self._model = TextCrossEncoder(
                 model_name=RERANKER_NAME,
                 cache_dir=str(self._cache_dir / "fastembed"),

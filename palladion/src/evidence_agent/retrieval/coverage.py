@@ -26,7 +26,7 @@ from evidence_agent.retrieval.audit_cache import (
     write_audit,
 )
 from evidence_agent.storage.applicability import Applicability
-from evidence_agent.storage.catalog import MAX_COVERAGE_CHUNKS, Catalog
+from evidence_agent.storage.catalog import MAX_COVERAGE_CHUNKS, MAX_COVERAGE_SOURCES, Catalog
 from evidence_agent.storage.qdrant import IndexConsistencyError
 from evidence_agent.storage.registry import Registry, acl_allows
 
@@ -92,7 +92,28 @@ def quote_policy_families(registry: Registry, principal: Principal, case_id: str
     return families
 
 
-MAX_COVERAGE_SOURCES = 10000
+READBACK_BATCH = 64  # revisions read back in one physical scroll (the index accepts up to this many)
+
+
+def _verdict(accepted: int, indexed: int, warnings: list[str]) -> bool:
+    """True when every accepted source is indexed and nothing was warned; says so in `warnings` otherwise."""
+    if accepted != indexed:
+        warnings.append("ACCEPTED_BUT_UNINDEXED")
+    return accepted == indexed and not warnings
+
+
+def _invalidate_cached_audits(registry: Registry) -> bool:
+    """Forget every cached healthy audit of this database; False when the cache could not be cleared."""
+    if registry.database.path == ":memory:":
+        return True
+    existing_cache = Path(registry.database.path + ".coverage-cache.sqlite")
+    if not existing_cache.exists():
+        return True
+    try:
+        invalidate_audits(existing_cache)
+    except (OSError, sqlite3.Error, ValueError):
+        return False
+    return True
 
 
 def _accepted_sources(registry: Registry, principal: Principal, case_id: str,
@@ -119,8 +140,10 @@ def counted_coverage(registry: Registry, principal: Principal, case_id: str, ind
     the number of points the index holds for its generation, from one call and without reading a vector back.
 
     `source_coverage` reads every point back and validates it; that audit belongs to `/index-health` and to explicit
-    requests. A count that differs from the manifest is a mismatch exactly as a differing readback is. Access that
-    changes between the two canonical reads fails closed, as it does in the full audit.
+    requests. A count that differs from the manifest is a mismatch as a differing readback is, but a point with the
+    right count and the wrong content is not seen here, which is why `physical_audit_mode` says COUNTS. Access that
+    changes between the two canonical reads raises PermissionDenied, as it does in the full audit. A healthy cached
+    full audit is dropped when this one finds a mismatch.
     """
     visible, truncated = _accepted_sources(registry, principal, case_id, as_of)
     warnings = ["COVERAGE_SCOPE_TRUNCATED"] if truncated else []
@@ -128,22 +151,23 @@ def counted_coverage(registry: Registry, principal: Principal, case_id: str, ind
     ready = {row["revision_id"]: row["index_generation"] for row in visible if row["index_state"] == "READY"}
     failed: set[str] = set()
     counts: dict[str, int] = {}
-    try:
-        expected = catalog.coverage_manifests(principal, case_id, ready)
-        counts = index.generation_counts(principal.tenant_id, case_id)
-        if catalog.coverage_manifests(principal, case_id, ready) != expected:  # changed while we were counting
+    expected: dict[tuple[str, str], dict[str, str]] = {}
+    if ready:  # a case with nothing indexed has nothing to count, and the index is not asked
+        try:
+            expected = catalog.coverage_manifests(principal, case_id, ready)
+            counts = index.generation_counts(principal.tenant_id, case_id, list(ready.values()))
+            if catalog.coverage_manifests(principal, case_id, ready) != expected:  # changed while we were counting
+                failed.update(ready)
+                warnings.append("INDEX_MANIFEST_MISMATCH")
+        except ResourceConflict:
+            failed.update(ready)
+            warnings.append("CANONICAL_MANIFEST_UNAVAILABLE")
+        except DependencyUnavailable:
+            failed.update(ready)
+            warnings.append("INDEX_UNAVAILABLE")
+        except IndexConsistencyError:
             failed.update(ready)
             warnings.append("INDEX_MANIFEST_MISMATCH")
-    except ResourceConflict:
-        expected = {}
-        failed.update(ready)
-        warnings.append("CANONICAL_MANIFEST_UNAVAILABLE")
-    except DependencyUnavailable:
-        failed.update(ready)
-        warnings.append("INDEX_UNAVAILABLE")
-    except IndexConsistencyError:
-        failed.update(ready)
-        warnings.append("INDEX_MANIFEST_MISMATCH")
     indexed = 0
     for row in visible:
         if row["index_state"] != "READY":
@@ -154,9 +178,10 @@ def counted_coverage(registry: Registry, principal: Principal, case_id: str, ind
             warnings.append("INDEX_MANIFEST_MISMATCH")
             continue
         indexed += 1
-    if len(visible) != indexed:
-        warnings.append("ACCEPTED_BUT_UNINDEXED")
-    return Coverage(index_coverage=len(visible) == indexed and not warnings, source_counts_complete=not truncated,
+    healthy = _verdict(len(visible), indexed, warnings)
+    if not healthy:
+        _invalidate_cached_audits(registry)
+    return Coverage(index_coverage=healthy, source_counts_complete=not truncated,
                     accepted_source_count=len(visible), indexed_source_count=indexed,
                     warnings=tuple(dict.fromkeys(warnings)), physical_audit_mode="COUNTS")
 
@@ -165,7 +190,7 @@ def source_coverage(registry: Registry, principal: Principal, case_id: str,
                     index: SearchIndex | None = None, *, as_of: datetime | None = None,
                     reuse_physical_audit: bool = False) -> Coverage:
     """The full audit: every point of every READY source read back and validated (the default of `/index-health`)."""
-    accepted = indexed = 0
+    indexed = 0
     now = as_of or registry.clock()
     if now.tzinfo is None or now.utcoffset() is None:
         raise ValueError("Document cutoff must be timezone-aware")
@@ -215,8 +240,8 @@ def source_coverage(registry: Registry, principal: Principal, case_id: str,
             cache_status = "UNAVAILABLE"
     if callable(batch_readback) and cached_at is None and not failed_batches:
         ready = [row for row in visible if row["index_state"] == "READY"]
-        for start in range(0, len(ready), 64):
-            batch = {row["revision_id"]: row["index_generation"] for row in ready[start:start+64]}
+        for start in range(0, len(ready), READBACK_BATCH):
+            batch = {row["revision_id"]: row["index_generation"] for row in ready[start:start + READBACK_BATCH]}
             try:
                 readback = batch_readback(principal.tenant_id, batch)
                 if sum(map(len, physical.values())) + sum(map(len, readback.values())) > MAX_COVERAGE_CHUNKS:
@@ -264,16 +289,9 @@ def source_coverage(registry: Registry, principal: Principal, case_id: str,
                 warnings.append("INDEX_MANIFEST_MISMATCH")
                 continue
         indexed += 1
-    if accepted != indexed:
-        warnings.append("ACCEPTED_BUT_UNINDEXED")
-    healthy = accepted == indexed and not warnings
-    if not healthy and cached_at is None and registry.database.path != ":memory:":
-        existing_cache = Path(registry.database.path + ".coverage-cache.sqlite")
-        if existing_cache.exists():
-            try:
-                invalidate_audits(existing_cache)
-            except (OSError, sqlite3.Error, ValueError):
-                cache_status = "UNAVAILABLE"
+    healthy = _verdict(accepted, indexed, warnings)
+    if not healthy and cached_at is None and not _invalidate_cached_audits(registry):
+        cache_status = "UNAVAILABLE"
     if (healthy and cached_at is None and cache_key is not None and cache_path is not None
             and cache_status == "MISS"):
         try:

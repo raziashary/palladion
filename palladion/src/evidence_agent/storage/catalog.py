@@ -17,6 +17,7 @@ from evidence_agent.storage.registry import Registry, acl_allows
 from evidence_agent.storage.sqlite import utc_now
 
 MAX_COVERAGE_CHUNKS = 100000
+MAX_COVERAGE_SOURCES = 10000
 MAX_ELIGIBLE_REVISIONS = 10000
 # Columns of a stored chunk row in `_chunk_values` order; the span columns are canonical and never change.
 _CHUNK_COLUMNS = ("tenant_id", "revision_id", "case_id", "section_id", "start_byte", "end_byte", "line_start",
