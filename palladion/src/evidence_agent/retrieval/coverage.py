@@ -39,7 +39,7 @@ class Coverage(VersionedModel):
     accepted_source_count: int
     indexed_source_count: int
     warnings: tuple[str, ...] = ()
-    physical_audit_mode: Literal["FRESH", "CACHED", "NOT_CHECKED"] = "NOT_CHECKED"
+    physical_audit_mode: Literal["FRESH", "CACHED", "COUNTS", "NOT_CHECKED"] = "NOT_CHECKED"
     physical_verified_at: datetime | None = None
     physical_cache_status: Literal["DISABLED", "HIT", "MISS", "UNAVAILABLE"] = "DISABLED"
 
@@ -92,29 +92,88 @@ def quote_policy_families(registry: Registry, principal: Principal, case_id: str
     return families
 
 
+MAX_COVERAGE_SOURCES = 10000
+
+
+def _accepted_sources(registry: Registry, principal: Principal, case_id: str,
+                      as_of: datetime | None) -> tuple[list[sqlite3.Row], bool]:
+    """The approved revisions the caller may read that apply at the evaluation instant, and whether the case held more
+    than the bound. Both depths of coverage count against this one list."""
+    registry.access.authorize(principal, tenant_id=principal.tenant_id, case_id=case_id, grant="source:read")
+    at_now = Applicability.at(as_of or registry.clock())
+    rows = registry.database.connection.execute(
+        "SELECT * FROM document_revisions WHERE tenant_id=? AND case_id=? AND "
+        "approval_status='APPROVED' AND (json_array_length(json_extract(acl_json,'$.allowed_principal_ids'))=0 "
+        "OR EXISTS(SELECT 1 FROM json_each(document_revisions.acl_json,'$.allowed_principal_ids') "
+        "WHERE value=?)) ORDER BY revision_id LIMIT ?",
+        (principal.tenant_id, case_id, principal.principal_id, MAX_COVERAGE_SOURCES + 1)).fetchall()
+    visible = [row for row in rows[:MAX_COVERAGE_SOURCES]
+               if acl_allows(row["acl_json"], principal.principal_id)
+               and at_now.admits(row["valid_from"], row["valid_to"], ())]
+    return visible, len(rows) > MAX_COVERAGE_SOURCES
+
+
+def counted_coverage(registry: Registry, principal: Principal, case_id: str, index: SearchIndex, *,
+                     as_of: datetime | None = None) -> Coverage:
+    """The coverage a search can afford on every call (ADR-0109): the canonical manifest of every READY source against
+    the number of points the index holds for its generation, from one call and without reading a vector back.
+
+    `source_coverage` reads every point back and validates it; that audit belongs to `/index-health` and to explicit
+    requests. A count that differs from the manifest is a mismatch exactly as a differing readback is. Access that
+    changes between the two canonical reads fails closed, as it does in the full audit.
+    """
+    visible, truncated = _accepted_sources(registry, principal, case_id, as_of)
+    warnings = ["COVERAGE_SCOPE_TRUNCATED"] if truncated else []
+    catalog = Catalog(registry)
+    ready = {row["revision_id"]: row["index_generation"] for row in visible if row["index_state"] == "READY"}
+    failed: set[str] = set()
+    counts: dict[str, int] = {}
+    try:
+        expected = catalog.coverage_manifests(principal, case_id, ready)
+        counts = index.generation_counts(principal.tenant_id, case_id)
+        if catalog.coverage_manifests(principal, case_id, ready) != expected:  # changed while we were counting
+            failed.update(ready)
+            warnings.append("INDEX_MANIFEST_MISMATCH")
+    except ResourceConflict:
+        expected = {}
+        failed.update(ready)
+        warnings.append("CANONICAL_MANIFEST_UNAVAILABLE")
+    except DependencyUnavailable:
+        failed.update(ready)
+        warnings.append("INDEX_UNAVAILABLE")
+    except IndexConsistencyError:
+        failed.update(ready)
+        warnings.append("INDEX_MANIFEST_MISMATCH")
+    indexed = 0
+    for row in visible:
+        if row["index_state"] != "READY":
+            continue
+        if row["revision_id"] in failed:
+            continue
+        if len(expected[(row["revision_id"], row["index_generation"])]) != counts.get(row["index_generation"], 0):
+            warnings.append("INDEX_MANIFEST_MISMATCH")
+            continue
+        indexed += 1
+    if len(visible) != indexed:
+        warnings.append("ACCEPTED_BUT_UNINDEXED")
+    return Coverage(index_coverage=len(visible) == indexed and not warnings, source_counts_complete=not truncated,
+                    accepted_source_count=len(visible), indexed_source_count=indexed,
+                    warnings=tuple(dict.fromkeys(warnings)), physical_audit_mode="COUNTS")
+
+
 def source_coverage(registry: Registry, principal: Principal, case_id: str,
                     index: SearchIndex | None = None, *, as_of: datetime | None = None,
                     reuse_physical_audit: bool = False) -> Coverage:
-    registry.access.authorize(principal, tenant_id=principal.tenant_id,
-                              case_id=case_id, grant="source:read")
+    """The full audit: every point of every READY source read back and validated (the default of `/index-health`)."""
     accepted = indexed = 0
     now = as_of or registry.clock()
     if now.tzinfo is None or now.utcoffset() is None:
         raise ValueError("Document cutoff must be timezone-aware")
     warnings: list[str] = []
     catalog = Catalog(registry)
-    rows = registry.database.connection.execute(
-            "SELECT * FROM document_revisions WHERE tenant_id=? AND case_id=? AND "
-            "approval_status='APPROVED' AND (json_array_length(json_extract(acl_json,'$.allowed_principal_ids'))=0 "
-            "OR EXISTS(SELECT 1 FROM json_each(document_revisions.acl_json,'$.allowed_principal_ids') "
-            "WHERE value=?)) ORDER BY revision_id LIMIT 10001",
-            (principal.tenant_id, case_id, principal.principal_id)).fetchall()
-    if len(rows) > 10000:
+    visible, truncated = _accepted_sources(registry, principal, case_id, now)
+    if truncated:
         warnings.append("COVERAGE_SCOPE_TRUNCATED")
-    at_now = Applicability.at(now)
-    visible = [row for row in rows[:10000]
-               if acl_allows(row["acl_json"], principal.principal_id)
-               and at_now.admits(row["valid_from"], row["valid_to"], ())]
     accepted = len(visible)
     physical: dict[tuple[str, str], dict[str, str]] = {}
     failed_batches: set[str] = set()
@@ -222,7 +281,7 @@ def source_coverage(registry: Registry, principal: Principal, case_id: str,
         except (OSError, sqlite3.Error, ValueError):
             cache_status = "UNAVAILABLE"
     return Coverage(index_coverage=healthy,
-                    source_counts_complete=len(rows) <= 10000, accepted_source_count=accepted,
+                    source_counts_complete=not truncated, accepted_source_count=accepted,
                     indexed_source_count=indexed,
                     warnings=tuple(dict.fromkeys(warnings)),
                     physical_audit_mode="NOT_CHECKED" if index is None else "CACHED" if cached_at is not None else "FRESH",

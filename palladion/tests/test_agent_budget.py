@@ -33,6 +33,9 @@ class UnavailableIndex:
     def readback(self, *args, **kwargs):
         raise DependencyUnavailable
 
+    def generation_counts(self, *args, **kwargs):
+        raise DependencyUnavailable
+
 
 class ScriptedModel:
     """Role-separated guard injection; never a runtime or provider smoke substitute."""

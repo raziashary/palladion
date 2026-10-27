@@ -17,7 +17,7 @@ from evidence_agent.retrieval.embeddings import (
     MODEL_NAME,
     MODEL_REVISION,
 )
-from evidence_agent.retrieval.rerank import FastEmbedReranker
+from evidence_agent.retrieval.rerank import RERANK_BATCH, FastEmbedReranker
 from evidence_agent.storage.qdrant import IndexConsistencyError, QdrantIndex
 
 
@@ -43,6 +43,7 @@ class _Client:
         self.sparse_modifier = models.Modifier.IDF
         self.query_response = SimpleNamespace(points=[])
         self.query_error: Exception | None = None
+        self.facet_counts: dict[str, int] = {}
 
     def collection_exists(self, collection_name: str) -> bool:
         self.calls.append(("collection_exists", {"collection_name": collection_name}))
@@ -50,6 +51,10 @@ class _Client:
 
     def info(self) -> Any:
         return SimpleNamespace(version="1.19.2")
+
+    def facet(self, **kwargs: Any) -> Any:
+        self.calls.append(("facet", kwargs))
+        return SimpleNamespace(hits=[SimpleNamespace(value=g, count=n) for g, n in self.facet_counts.items()])
 
     def create_collection(self, **kwargs: Any) -> None:
         self.calls.append(("create_collection", kwargs))
@@ -285,6 +290,18 @@ def test_generation_filter_restricts_every_prefetch_and_an_empty_list_asks_the_i
     assert not any(hasattr(c.match, "any") for c in unfiltered["prefetch"][0].filter.must)
 
 
+def test_generation_counts_are_one_exact_facet_call_scoped_to_the_tenant_and_case() -> None:
+    index, client = _index()
+    client.facet_counts = {"gen-1": 3, "gen-2": 5}
+    assert index.generation_counts("tenant-a", "case-a") == {"gen-1": 3, "gen-2": 5}
+    call = [c[1] for c in client.calls if c[0] == "facet"][-1]
+    assert call["key"] == "index_generation" and call["exact"] is True
+    assert {c.key: c.match.value for c in call["facet_filter"].must} == {"tenant_id": "tenant-a", "case_id": "case-a"}
+    client.facet_counts = {f"gen-{n}": 1 for n in range(20000)}
+    with pytest.raises(IndexConsistencyError, match="more index generations"):
+        index.generation_counts("tenant-a", "case-a")
+
+
 def test_lexical_and_dense_modes_do_not_invoke_hybrid_fusion() -> None:
     index, client = _index()
     for mode in ("lexical", "dense"):
@@ -422,7 +439,7 @@ def test_enabled_reranker_sorts_stably_without_changing_chunk_objects() -> None:
         def rerank(self, query: str, documents: list[str], batch_size: int) -> list[float]:
             assert query == "question"
             assert len(documents) == 3
-            assert batch_size == 16
+            assert batch_size == RERANK_BATCH
             return [0.4, 0.9, 0.9]
 
     reranker._load = lambda: _Model()  # type: ignore[method-assign,return-value]

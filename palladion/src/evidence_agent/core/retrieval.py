@@ -58,6 +58,9 @@ class SearchIndex(Protocol):
                allowed_principal_ids: tuple[str, ...]) -> None: ...
     def readback(self, tenant_id: str, revision_id: str,
                  generation: str) -> dict[str, str]: ...
+    def generation_counts(self, tenant_id: str, case_id: str) -> dict[str, int]:
+        """How many points each index generation of the case holds: one cheap call, no vectors read back."""
+        ...
     def query(self, query: str, principal: Principal, case_id: str,
               mode: Literal["lexical", "dense", "hybrid"] = "hybrid",
               limit: int = 20, exact: bool = False,

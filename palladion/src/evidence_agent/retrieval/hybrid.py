@@ -13,7 +13,7 @@ from evidence_agent.core.errors import DependencyUnavailable, PermissionDenied, 
 from evidence_agent.core.models import Principal, VersionedModel
 from evidence_agent.core.retrieval import Candidate, Chunk, SearchIndex
 from evidence_agent.graph.relations import GraphPath
-from evidence_agent.retrieval.coverage import Coverage, source_coverage
+from evidence_agent.retrieval.coverage import Coverage, counted_coverage, source_coverage
 from evidence_agent.retrieval.evidence import EvidenceResolver, Passage
 from evidence_agent.retrieval.graph_expand import GraphExpansion
 from evidence_agent.storage.applicability import Applicability
@@ -229,8 +229,9 @@ class HybridSearch:
             graph_paths = tuple(p for p in graph_paths if p.target_chunk_id in returned
                 and set(p.evidence_ids).issubset(returned))
         with watch.stage("coverage"):
-            coverage = source_coverage(self.registry, principal, case_id, self.index,
-                                       as_of=applicability.primary, reuse_physical_audit=reuse_physical_audit)
+            coverage = (source_coverage(self.registry, principal, case_id, self.index, as_of=applicability.primary,
+                                        reuse_physical_audit=True) if reuse_physical_audit else
+                        counted_coverage(self.registry, principal, case_id, self.index, as_of=applicability.primary))
         warnings.extend(coverage.warnings)
         if exclusions.integrity_conflict:
             warnings.append("INTEGRITY_CONFLICT")

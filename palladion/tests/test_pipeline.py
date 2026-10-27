@@ -79,6 +79,11 @@ class MemoryIndex:
                 {chunk.chunk_id: chunk.content_sha256 for chunk in chunks}
             )
 
+    def generation_counts(self, tenant_id: str, case_id: str) -> dict[str, int]:
+        if self.readback_mode == "missing":
+            return {}
+        return {generation: len(chunks) for (_, generation), chunks in self.points.items()}
+
     def readback(self, tenant_id: str, revision_id: str, generation: str) -> dict[str, str]:
         assert tenant_id == "tenant-a"
         assert revision_id

@@ -338,9 +338,8 @@ def test_http_explicit_audit_cache_reopens_and_discloses_window(handoff, monkeyp
     _index_reader_sources(handoff)
     headers = {"Authorization": "Bearer reader"}
     body = {"case_id": "case-42", "query": "scoped evidence"}
-    strict = handoff.client.post("/search", headers=headers, json=body).json()["coverage"]
-    assert strict["physical_audit_mode"] == "FRESH"
-    assert strict["physical_cache_status"] == "DISABLED"
+    default = handoff.client.post("/search", headers=headers, json=body).json()["coverage"]
+    assert default["physical_audit_mode"] == "COUNTS" and default["physical_cache_status"] == "DISABLED"
     body["reuse_physical_audit"] = True
     first = handoff.client.post("/search", headers=headers, json=body).json()["coverage"]
     assert first["index_coverage"] and first["physical_cache_status"] == "MISS"
@@ -507,3 +506,38 @@ def test_reading_a_citation_back_takes_seven_extra_instants_and_not_eight(handof
                               params={"case_id": "case-42", "applicability_instants": seven}).status_code == 200
     assert handoff.client.get(route, headers=headers, params={
         "case_id": "case-42", "applicability_instants": [*seven, "2025-01-08T00:00:00Z"]}).status_code == 422
+
+
+def test_a_search_counts_points_per_generation_and_does_not_read_vectors_back(handoff):
+    upload_approved(handoff)
+    _index_reader_sources(handoff)
+    headers = {"Authorization": "Bearer reader"}
+    body = {"case_id": "case-42", "query": "scoped evidence"}
+    batches = handoff.index.batches
+    healthy = handoff.client.post("/search", headers=headers, json=body).json()["coverage"]
+    assert healthy["index_coverage"] and healthy["physical_audit_mode"] == "COUNTS"
+    assert handoff.index.batches == batches, "the default audit reads no point back"
+    handoff.index.readback_mode = "missing"  # the index now holds no points for any generation
+    broken = handoff.client.post("/search", headers=headers, json=body).json()["coverage"]
+    assert not broken["index_coverage"] and "INDEX_MANIFEST_MISMATCH" in broken["warnings"]
+    assert handoff.index.batches == batches
+    full = handoff.client.get("/index-health", headers=headers, params={"case_id": "case-42"}).json()
+    assert full["physical_audit_mode"] == "FRESH" and handoff.index.batches > batches, "the full audit stays here"
+
+
+def test_the_counted_audit_fails_closed_when_access_changes_while_it_counts(handoff):
+    from evidence_agent.core.errors import PermissionDenied
+    from evidence_agent.retrieval.coverage import counted_coverage
+    revision = upload_approved(handoff)
+    registry = handoff.p03.registry
+    reader = registry.access.authenticate("reader-a")
+    original = handoff.index.generation_counts
+
+    def revoke_while_counting(tenant, case):
+        result = original(tenant, case)
+        registry.revoke_source(registry.access.authenticate("admin-a"), revision)
+        return result
+
+    handoff.index.generation_counts = revoke_while_counting
+    with pytest.raises(PermissionDenied):
+        counted_coverage(registry, reader, "case-42", handoff.index)

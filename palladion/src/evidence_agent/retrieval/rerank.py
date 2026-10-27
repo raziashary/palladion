@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import importlib
 import json
+import os
 from pathlib import Path
 from typing import Protocol, Sequence
 
@@ -23,7 +24,10 @@ RERANKER_FILES = (
     "tokenizer_config.json",
     "vocab.txt",
 )
-CPU_THREADS = 2
+# Measured on the 4-core reference machine (P11-T05, ADR-0109): threads up to the core count help, more oversubscribe
+# (6 threads ran twice as slow as 4), and batches of 8 beat 16 and 32 at every thread count.
+CPU_THREADS = min(4, os.cpu_count() or 2)
+RERANK_BATCH = 8
 MAX_RERANK_CANDIDATES = 30
 _ort = importlib.import_module("onnxruntime.capi.onnxruntime_pybind11_state")
 _BACKEND_ERRORS = (OSError, ValueError, RuntimeError, _ort.Fail, _ort.InvalidArgument,
@@ -105,6 +109,7 @@ class FastEmbedReranker:
                 "revision": RERANKER_REVISION,
                 "files": hashes,
                 "threads": CPU_THREADS,
+                "batch_size": RERANK_BATCH,
             }
             self._manifest = manifest
             self._fingerprint = hashlib.sha256(
@@ -129,7 +134,7 @@ class FastEmbedReranker:
             return tuple(chunks)
 
         try:
-            scores = list(self._load().rerank(query, [index_text(chunk) for chunk in chunks], batch_size=16))
+            scores = list(self._load().rerank(query, [index_text(chunk) for chunk in chunks], batch_size=RERANK_BATCH))
         except _BACKEND_ERRORS as exc:
             raise DependencyUnavailable("Reranker inference unavailable") from exc
         if len(scores) != len(chunks):

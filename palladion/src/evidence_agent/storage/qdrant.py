@@ -26,6 +26,7 @@ _DENSE_VECTOR = "dense"
 _SPARSE_VECTOR = "bm25"
 _COLLECTION = "knowledge_chunks_v1"
 _MAX_QUERY_LIMIT = 100
+_MAX_FACET_GENERATIONS = 20000  # twice the 10,000-source bound: current generations plus leftovers of earlier ones
 _T = TypeVar("_T")
 
 
@@ -295,6 +296,23 @@ class QdrantIndex:
             points=points,
             wait=True,
         )
+
+    def generation_counts(self, tenant_id: str, case_id: str) -> dict[str, int]:
+        """Exact point count of every index generation in the case, from one facet call on the payload index."""
+        response = self._call_qdrant(
+            self._client.facet,
+            collection_name=self.collection_name,
+            key="index_generation",
+            facet_filter=models.Filter(must=[
+                models.FieldCondition(key="tenant_id", match=models.MatchValue(value=tenant_id)),
+                models.FieldCondition(key="case_id", match=models.MatchValue(value=case_id)),
+            ]),
+            limit=_MAX_FACET_GENERATIONS,
+            exact=True,
+        )
+        if len(response.hits) >= _MAX_FACET_GENERATIONS:
+            raise IndexConsistencyError("the case holds more index generations than one facet call reports")
+        return {str(hit.value): int(hit.count) for hit in response.hits}
 
     def readback(self, tenant_id: str, revision_id: str, generation: str) -> dict[str, str]:
         if not tenant_id or not revision_id or not generation:

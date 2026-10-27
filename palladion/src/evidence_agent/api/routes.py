@@ -305,8 +305,10 @@ def search(body: Search, request: Request, authorization: str | None = Header(de
     apply, so an older version that governed an earlier case time can be returned
     (ADR-0102); current ACL/approval/revocation still apply. Optional token_budget counts
     whole returned passages with the disclosed retrieval tokenizer, not provider tokens.
-    Explicit reuse_physical_audit may reuse a healthy audit for at most5seconds from
-    its original start, with mode/time disclosed; current canonical checks still run.
+    The default audit counts the points of each source's generation against its canonical
+    manifest (mode COUNTS). Explicit reuse_physical_audit runs the full read-back audit and may
+    reuse a healthy one for at most5seconds from its original start, with mode/time disclosed;
+    current canonical checks still run.
     """
     with services(request, authorization) as (_, catalog, principal):
         return HybridSearch(catalog, request.app.state.index, request.app.state.ranker,
@@ -340,7 +342,7 @@ def index_health(case_id: str, request: Request,
     """Return supplied-source index coverage to an authorized current case reader.
 
     Coverage describes registered supplied material, not completeness of all real knowledge.
-    Default fresh; explicit reuse_physical_audit enables at most5second physical reuse
+    Default is the full fresh read-back audit; explicit reuse_physical_audit enables at most5second physical reuse
     with timestamp/status disclosure, without reusing current canonical authorization.
     """
     from evidence_agent.retrieval.coverage import source_coverage

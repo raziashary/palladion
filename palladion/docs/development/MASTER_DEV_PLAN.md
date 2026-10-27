@@ -1597,10 +1597,10 @@ Owner GO 2026-10-27 (benchmark investigation; "all of the fixes ... an actual fi
 
 <a id="p11-t05-01"></a>
 
-- [ ] **P11-T05.01 — Measure, then speed up the search path**
-  - **Files:** `palladion/src/evidence_agent/retrieval/coverage.py`, `palladion/src/evidence_agent/retrieval/rerank.py`, `palladion/src/evidence_agent/agent/search_worker.py`, `palladion/tests/test_handoff.py`.
+- [x] **P11-T05.01 — Measure, then speed up the search path**
+  - **Files:** `palladion/src/evidence_agent/retrieval/coverage.py`, `palladion/src/evidence_agent/retrieval/rerank.py`, `palladion/src/evidence_agent/storage/qdrant.py`, `palladion/src/evidence_agent/retrieval/hybrid.py`, `palladion/tests/test_handoff.py`, `palladion/tests/test_retrieval.py`.
   - **Depends:** P11-T01.02.
-  - **Change:** Per-stage timing on the real runtime first; then the audit on the search path, the reranker settings and the per-search worker, each only as far as the measurement shows (ADR-0109, owner-approved direction).
+  - **Change:** Per-stage timing on the real runtime first; then the counted audit on the search path and the reranker settings, each as far as the measurement showed (ADR-0109, owner-approved direction). The long-lived search worker and the multilingual reranker candidate are not built and stay recorded as open in ADR-0109 and RISKS.
   - **Proof:** MEASUREMENT; G-RETRIEVAL, G-BUDGET; before and after timings on the same corpus, ranking unchanged unless disclosed.
 
 <a id="p11-t06-01"></a>

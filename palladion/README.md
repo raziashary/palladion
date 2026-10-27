@@ -446,7 +446,9 @@ run inputs. Legacy P08 configuration and completeness-metric limits are recorded
 
 Physical audit reuse is experimental and explicitly enabled per request with
 `reuse_physical_audit: true` on `POST /search`, or the same query parameter on
-`GET /index-health`. Default requests and the four domain tools remain fresh. Only a
+`GET /index-health`. A search by default counts the points of every source's generation against its
+canonical manifest (`physical_audit_mode: COUNTS`, one call, no vector read back); `GET /index-health`
+reads every point back and validates it (`FRESH`). Only a
 complete healthy physical audit may be reused, for at most five seconds from its
 original start; hits do not renew that age. Current principal/case/source ACL, approval,
 validity, generation and exact canonical manifests are rechecked on every request.
