@@ -2668,3 +2668,30 @@ contradiction found; historical12-doc coverage remains partial. No tests/mutatio
 **Second-round validation.** `uv run --locked --no-env-file pytest -q -p no:cacheprovider` 587 passed, 33 skipped; ruff and mypy clean; docs checker PASS. The mutation script now holds 30 mutants, all killed.
 
 **Limits.** All of the above is source-level evidence with an in-memory ranked index and the real registry, catalog, ingest, resolver and exact lane. The Qdrant-gated suites (33 explicit skips, unchanged) and a real Groq call were not run here. No benchmark number is claimed: the effect on retrieval and answers is measured in the benchmark at the commit that contains this change (open, P11-T06.01). Speed is unmeasured; the estimates in the investigation are not results. The prefilter bound (10,000 generations) and the exact-lane bound (100 chunks) are unchanged policy values.
+
+
+## E-P11-002 — Search-path speed and chunk packing, measured through the benchmark (P11-T05, ADR-0106 addendum, ADR-0109), 2026-10-28
+
+**Revision and scope.** Palladion commits `d2f8812`, `2365405`, `45a9276`, `7bafa36` and `49b25cb` (the last has the 600-character packing target, the shortest-first reranker and the corrected generation count). Measured by the benchmark's smoke split (100 questions, 72 scored pairs in Track A) over 1,200 fictional documents on the 4-core development machine, condition C2, one run per commit. This is a single machine shared with other programs; the repeat below shows how far one stage can move between runs.
+
+**Per-search stage times, 100 reranked searches, median milliseconds** (`palladion-benchmark/scripts/palladion_stage_times.py`, artifacts `p11-stage-times` to `p11e-stage-times-repeat`):
+
+| commit | total p50 | total p95 | rerank | coverage | resolve | corpus load |
+|---|---|---|---|---|---|---|
+| `d2f8812` (before the speed work) | 2,180 | n/a | 1,265 | 743 | 53 | n/a |
+| `2365405` (counted audit, 4 threads) | 1,068 | 1,708 | 791 | 96 | 57 | 253 s |
+| `45a9276` (packing at 1,200) | 2,454 | 3,286 | 1,873 | 407 | 55 | 152 s |
+| `7bafa36` (packing at 600, sorted rerank) | 2,026 | 4,001 | 1,281 | 497 | 69 | 271 s |
+| `49b25cb` (generation count fixed) | 2,331 | 6,015 | 2,007 | 106 | 91 | 239 s |
+| `49b25cb`, repeat | 1,508 | 2,051 | 1,216 | 93 | 67 | 238 s |
+
+The coverage stage rose from 96 ms to 400 to 500 ms between `2365405` and `45a9276` because `e76c41d` filtered the facet to every wanted generation; `facet_time.py` against the live index measured 888 ms with that filter and 25 ms without (22 ms at a 20,000 limit). Fixed in `49b25cb`. The same commit measured 2,331 ms and, repeated, 1,508 ms, so differences below roughly a factor of 1.5 between single runs are not distinguishable on this machine. Packing makes passages longer, and the reranker's cost follows the tokens it reads, so a packed index is slower to rerank than an unpacked one.
+
+**Reranker experiment** (30 real passages, `rerank_exp.py` and `rerank_real.py`): sending passages shortest first gave the identical ranking in 2.23 s against 2.84 s. Cutting the input to 256, 192 and 128 tokens ran faster but moved the top five (overlap 0.95, 0.85, 0.70). The int8 model file (23 MB against 91 MB) was no faster than the float file here (1,416 ms against 1,297 ms) and moved the top five (0.95). Only the ordering was adopted.
+
+**Retrieval quality of Palladion's retriever (Track A, C2, 72 pairs, complete-set rate and valid-source recall at 10):** `2365405` 0.125 and 0.216; `45a9276` (packing 1,200) 0.181 and 0.265; `7bafa36` (packing 600) 0.181 and 0.271; `49b25cb` 0.181 and 0.271 (the retrieval is unchanged by the count fix). By stratum, complete-set rate at `2365405` against `49b25cb`: exact identifiers 0.3 and 0.3; paraphrase 0.1 and 0.2; multi-document 0.3 and 0.3; version 0.0 and 0.2; exceptions 0.2 and 0.3; conflicts 0.0 and 0.0; access 0.0 and 0.0 (10 questions each, 5 for access; strata of this size cannot carry a ranking). At 1,200 characters the same table read version 0.5, multi-document 0.1 and exceptions 0.1; 600 kept the version gain at 0.2 without the other two losses. The wrong-vintage harm rate was 0.075 at `2365405` and 0.045 at `49b25cb`. All 72 pairs of every arm ended OK.
+
+**Decision.** Packing is kept at 600 characters under the experiment's own rule (the version stratum improves and no stratum is lower than before); the choice of 600 was made after reading the 1,200 result, so the table above is exploratory. The cost is a longer rerank. Not done, and the next levers: reranking fewer than 30 candidates (a quality and speed trade that needs its own measurement), a multilingual reranker candidate (ADR-0109), and a long-lived search worker.
+
+**Gates at `49b25cb`.** `uv run --locked --no-env-file pytest -q -p no:cacheprovider` 605 passed, 33 skipped; ruff and mypy clean; docs checker PASS; five packing mutants and three reranker mutants killed.
+
