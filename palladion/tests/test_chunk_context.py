@@ -190,9 +190,9 @@ def test_small_neighbouring_sections_share_a_chunk_that_belongs_to_the_section_a
 
 
 def test_packing_fills_a_chunk_with_whole_sections_up_to_the_target_and_never_splits_one() -> None:
-    def section(number: int) -> str:  # two paragraphs, about 420 characters in all
-        words = [f"w{number}x{m}" for m in range(70)]
-        return f"## Section {number}\n\n" + " ".join(words[:35]) + "\n\n" + " ".join(words[35:])
+    def section(number: int) -> str:  # two paragraphs, about 215 characters in all
+        words = [f"w{number}x{m}" for m in range(34)]
+        return f"## Section {number}\n\n" + " ".join(words[:17]) + "\n\n" + " ".join(words[17:])
 
     content = ("# Packet\n\n" + "\n\n".join(section(n) for n in range(6)) + "\n").encode()
     chunks = chunks_of(content)
@@ -201,12 +201,12 @@ def test_packing_fills_a_chunk_with_whole_sections_up_to_the_target_and_never_sp
     assert sum(c.text.count("## Section") for c in chunks) == 6, "no section is dropped"
     for number in range(6):
         holders = {c.chunk_id for c in chunks if f"## Section {number}\n" in c.text}
-        for marker in (f"w{number}x0 ", f"w{number}x69"):  # first and last words, either side of the paragraph break
+        for marker in (f"w{number}x0 ", f"w{number}x33"):  # first and last words, either side of the paragraph break
             assert {c.chunk_id for c in chunks if marker in c.text} == holders, "a section is in one chunk"
 
 
 def test_a_heading_that_fits_the_previous_chunk_does_not_leave_its_body_behind() -> None:
-    previous = " ".join(f"a{n}" for n in range(230))  # a section of about 1,100 characters
+    previous = " ".join(f"a{n}" for n in range(100))  # a section of about 500 characters
     body = " ".join(f"b{n}" for n in range(300))  # a section too large to share the previous chunk
     chunks = chunks_of(f"# Policy\n\n## A\n\n{previous}\n\n## B\n\n{body}\n".encode())
     heading = next(c for c in chunks if "## B" in c.text)

@@ -16,7 +16,7 @@ DEFAULT_MAX_CHARS = 2400
 # Neighbouring chunks are joined while together they fit this many characters, because a section of a hundred characters
 # is a poor unit to retrieve: it carries no context of its own and many of them crowd the result. Only whole chunks are
 # joined, so a section is never split to fill one (ADR-0106 addendum).
-PACK_CHARS = 1200
+PACK_CHARS = 600
 _SENTENCE_END = re.compile(r"[.!?\u3002][\"')\]]*\s")
 _EXCEPTION = re.compile(
     r"\b(?:except(?:ion)?|unless|however|provided that|notwithstanding|only if)\b",
