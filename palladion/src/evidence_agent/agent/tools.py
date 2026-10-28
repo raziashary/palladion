@@ -103,7 +103,7 @@ class Tools:
                     result = await search(self.ledger.search, principal.principal_id, case,
                                           args.query, args.search_mode, args.limit,
                                           require_graph=args.require_graph or self.graph_required,
-                                          applicability=applicability)
+                                          applicability=applicability, named_from=self.ledger.question)
                 data = []
                 for passage in result.passages:
                     try:

@@ -190,13 +190,17 @@ def test_a_draft_has_no_version_number_and_does_not_shift_the_others(corpus) -> 
     assert [corpus.catalog.family_version(corpus.uploader, "case-1", "POL-1", n)[1] for n in (1, 2, 3)] == [one, two, three]
 
 
-def test_a_hidden_version_looks_like_a_missing_one(corpus) -> None:
-    one = corpus.add("POL-2", "# POL-2\n\nFirst.", valid_from="2025-01-01T00:00:00Z", valid_to="2025-06-01T00:00:00Z",
-                     allowed=("approver",))
-    two = corpus.add("POL-2", "# POL-2\n\nSecond.", valid_from="2025-06-01T00:00:00Z", supersedes=one)
-    assert corpus.catalog.family_version(corpus.uploader, "case-1", "POL-2", 1) == ("POL-2", None)
-    assert corpus.catalog.family_version(corpus.uploader, "case-1", "POL-2", 7) == ("POL-2", None)
-    assert corpus.catalog.family_version(corpus.uploader, "case-1", "POL-2", 2) == ("POL-2", two)
+def test_numbering_counts_only_what_the_caller_can_read_so_probing_never_shows_a_hidden_version(corpus) -> None:
+    one = corpus.add("POL-2", "# POL-2" + chr(10) + chr(10) + "First.", valid_from="2025-01-01T00:00:00Z",
+                     valid_to="2025-06-01T00:00:00Z", allowed=("approver",))
+    two = corpus.add("POL-2", "# POL-2" + chr(10) + chr(10) + "Second.", valid_from="2025-06-01T00:00:00Z", supersedes=one)
+    only = corpus.add("POL-3", "# POL-3" + chr(10) + chr(10) + "Only.", valid_from="2025-01-01T00:00:00Z")
+    # The reader sees one version of POL-2 and one of POL-3; the answers have the same shape whatever is hidden.
+    assert corpus.catalog.family_version(corpus.uploader, "case-1", "POL-2", 1) == ("POL-2", two)
+    assert corpus.catalog.family_version(corpus.uploader, "case-1", "POL-3", 1) == ("POL-3", only)
+    assert corpus.catalog.family_version(corpus.uploader, "case-1", "POL-2", 2) == ("POL-2", None)
+    assert corpus.catalog.family_version(corpus.uploader, "case-1", "POL-3", 2) == ("POL-3", None)
+    assert corpus.catalog.family_version(corpus.admin, "case-1", "POL-2", 1) == ("POL-2", one), "who can read it sees it"
 
 
 def test_a_family_of_another_case_names_nothing(corpus) -> None:
@@ -297,12 +301,14 @@ def test_the_agent_tool_hands_the_versions_a_search_named_to_the_ledger(corpus, 
 
     one, _, _ = versions(corpus)
 
-    async def in_process(owner, principal_id, case_id, query, mode, limit, *, applicability, require_graph=False):
+    async def in_process(owner, principal_id, case_id, query, mode, limit, *, applicability, require_graph=False,
+                         named_from=None):
         return corpus.search.search(corpus.reader, case_id, query, mode=mode, limit=limit, as_of=applicability.primary,
-                                    also_at=applicability.also)
+                                    also_at=applicability.also, named_from=named_from)
 
     monkeypatch.setattr(agent_tools, "search", in_process)
     ledger = RequestLedger(corpus.search, corpus.reader, "case-1", "trace-tool")
+    ledger.question = "According to POL-1@v1, how many hours?"  # the user wrote the version
     tools = agent_tools.Tools(ledger, None, CaseStore(corpus.registry, corpus.reader, "case-1"))  # type: ignore[arg-type]
     arguments = json.dumps({"query": "According to POL-1@v1, how many hours?", "search_mode": "hybrid"})
     answer = asyncio.run(tools.execute("search_knowledge", arguments))
@@ -325,3 +331,66 @@ def test_family_defining_rows_survive_the_alias_row_cap_ahead_of_mentions(corpus
     monkeypatch.setattr(catalog_module, "MAX_ALIAS_ROWS", 2)
     hits = corpus.catalog.alias_hits(corpus.uploader, "case-1", "POL-4")
     assert policy in [h.revision_id for h in hits if h.defining], "the cap drops mentions, not the defining chunk"
+
+
+def test_a_version_written_by_the_model_and_not_by_the_user_names_nothing(corpus, monkeypatch) -> None:
+    import asyncio
+    import json
+
+    from evidence_agent.agent import tools as agent_tools
+    from evidence_agent.memory.store import CaseStore
+    from evidence_agent.retrieval.evidence import RequestLedger
+
+    _, _, three = versions(corpus)
+
+    async def in_process(owner, principal_id, case_id, query, mode, limit, *, applicability, require_graph=False,
+                         named_from=None):
+        return corpus.search.search(corpus.reader, case_id, query, mode=mode, limit=limit, as_of=applicability.primary,
+                                    also_at=applicability.also, named_from=named_from)
+
+    monkeypatch.setattr(agent_tools, "search", in_process)
+    ledger = RequestLedger(corpus.search, corpus.reader, "case-1", "trace-model")
+    ledger.question = "How many hours may a request be raised within?"  # the user named no version
+    tools = agent_tools.Tools(ledger, None, CaseStore(corpus.registry, corpus.reader, "case-1"))  # type: ignore[arg-type]
+    asyncio.run(tools.execute("search_knowledge", json.dumps({"query": "POL-1@v1 hours", "search_mode": "hybrid"})))
+    assert {data["revision_id"] for data in ledger.records.values()} == {three}, "only the version that governs"
+    assert not ledger.named
+    direct = corpus.search.search(corpus.reader, "case-1", "POL-1@v1 hours", as_of=NOW, named_from="")
+    assert set(corpus.revisions_of(direct)) == {three} and direct.named_versions == ()
+
+
+def test_a_registered_code_nothing_applies_to_is_not_called_unknown(corpus) -> None:
+    corpus.add("OLD-1", "# OLD-1" + chr(10) + chr(10) + "An old rule.", register_aliases=True,
+               valid_from="2020-01-01T00:00:00Z", valid_to="2021-01-01T00:00:00Z")
+    result = corpus.search.search(corpus.uploader, "case-1", "OLD-1", as_of=NOW)
+    assert result.passages == () and "EXACT_IDENTIFIER_NOT_APPLICABLE" in result.warnings
+    assert "EXACT_IDENTIFIER_NOT_FOUND" not in result.warnings and result.unmatched_identifiers == ()
+    unknown = corpus.search.search(corpus.uploader, "case-1", "NEVER-9", as_of=NOW)
+    assert "EXACT_IDENTIFIER_NOT_FOUND" in unknown.warnings and "EXACT_IDENTIFIER_NOT_APPLICABLE" not in unknown.warnings
+
+
+class Shallow(Backwards):
+    max_candidates = 2
+
+
+def test_a_candidate_past_the_rerank_depth_is_kept_after_the_reranked_ones(tmp_path: Path) -> None:
+    corpus = Corpus(tmp_path, ranker=Shallow())
+    try:
+        added = [corpus.add(f"NOTE-{n}", f"Gateway status note {n}" + " gateway" * (5 - n)) for n in range(5)]
+        plain = corpus.revisions_of(corpus.search.search(corpus.uploader, "case-1", "gateway status", mode="hybrid", limit=5))
+        reranked = corpus.revisions_of(
+            corpus.search.search(corpus.uploader, "case-1", "gateway status", mode="reranked", limit=5))
+        assert sorted(reranked) == sorted(plain) == sorted(added), "nothing is dropped for being past the depth"
+        assert reranked[:2] == list(reversed(plain[:2])) and reranked[2:] == plain[2:]
+    finally:
+        corpus.close()
+
+
+def test_coverage_does_not_count_a_replaced_revision_among_the_sources_it_expects(corpus) -> None:
+    from evidence_agent.retrieval.coverage import counted_coverage
+
+    before = counted_coverage(corpus.registry, corpus.uploader, "case-1", corpus.index, as_of=NOW).accepted_source_count
+    old = corpus.add("POL-6", "# POL-6" + chr(10) + chr(10) + "Old.", valid_from="2025-01-01T00:00:00Z", index=False)
+    corpus.add("POL-6", "# POL-6" + chr(10) + chr(10) + "New.", valid_from="2026-01-01T00:00:00Z", supersedes=old)
+    after = counted_coverage(corpus.registry, corpus.uploader, "case-1", corpus.index, as_of=NOW)
+    assert after.accepted_source_count == before + 1, "the new version counts, the replaced one that was never indexed does not"

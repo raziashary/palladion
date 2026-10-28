@@ -242,7 +242,7 @@ def test_two_default_searches_fill_the_ledger_and_tell_the_model_what_did_not_fi
     ledger = RequestLedger(corpus.search, corpus.reader, "case-1", "trace-tools")
     seen: list[Applicability] = []
 
-    async def in_process(owner, principal_id, case_id, query, mode, limit, applicability, *, require_graph=False):  # type: ignore[no-untyped-def]
+    async def in_process(owner, principal_id, case_id, query, mode, limit, applicability, *, require_graph=False, named_from=None):  # type: ignore[no-untyped-def]
         seen.append(applicability)
         return owner.search(corpus.reader, case_id, query, mode=mode, limit=limit, as_of=applicability.primary,
                             also_at=applicability.also)

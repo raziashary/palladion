@@ -116,10 +116,12 @@ def _invalidate_cached_audits(registry: Registry) -> bool:
     return True
 
 
-def _accepted_sources(registry: Registry, principal: Principal, case_id: str,
-                      as_of: datetime | None) -> tuple[list[sqlite3.Row], bool]:
-    """The approved revisions the caller may read that apply at the evaluation instant, and whether the case held more
-    than the bound. Both depths of coverage count against this one list."""
+def _accepted_sources(registry: Registry, principal: Principal, case_id: str, as_of: datetime | None,
+                      fingerprint: str | None) -> tuple[list[sqlite3.Row], bool]:
+    """The approved revisions the caller may read that apply at the evaluation instant (not yet replaced by a successor
+    that can be served under `fingerprint`; with no index to judge by, replacement is not applied), and whether the case
+    held more than the bound. Both depths of coverage
+    count against this one list."""
     registry.access.authorize(principal, tenant_id=principal.tenant_id, case_id=case_id, grant="source:read")
     at_now = Applicability.at(as_of or registry.clock())
     rows = registry.database.connection.execute(
@@ -128,9 +130,12 @@ def _accepted_sources(registry: Registry, principal: Principal, case_id: str,
         "OR EXISTS(SELECT 1 FROM json_each(document_revisions.acl_json,'$.allowed_principal_ids') "
         "WHERE value=?)) ORDER BY revision_id LIMIT ?",
         (principal.tenant_id, case_id, principal.principal_id, MAX_COVERAGE_SOURCES + 1)).fetchall()
+    superseded = (Catalog(registry).effective_supersessions(principal.tenant_id, case_id, fingerprint)
+                  if fingerprint is not None else {})
     visible = [row for row in rows[:MAX_COVERAGE_SOURCES]
                if acl_allows(row["acl_json"], principal.principal_id)
-               and at_now.admits(row["revision_id"], row["family_id"], row["valid_from"], row["valid_to"], ())]
+               and at_now.admits(row["revision_id"], row["family_id"], row["valid_from"], row["valid_to"],
+                                 superseded.get(row["revision_id"], ()))]
     return visible, len(rows) > MAX_COVERAGE_SOURCES
 
 
@@ -145,7 +150,7 @@ def counted_coverage(registry: Registry, principal: Principal, case_id: str, ind
     changes between the two canonical reads raises PermissionDenied, as it does in the full audit. A healthy cached
     full audit is dropped when this one finds a mismatch.
     """
-    visible, truncated = _accepted_sources(registry, principal, case_id, as_of)
+    visible, truncated = _accepted_sources(registry, principal, case_id, as_of, index.fingerprint)
     warnings = ["COVERAGE_SCOPE_TRUNCATED"] if truncated else []
     catalog = Catalog(registry)
     ready = {row["revision_id"]: row["index_generation"] for row in visible if row["index_state"] == "READY"}
@@ -196,7 +201,7 @@ def source_coverage(registry: Registry, principal: Principal, case_id: str,
         raise ValueError("Document cutoff must be timezone-aware")
     warnings: list[str] = []
     catalog = Catalog(registry)
-    visible, truncated = _accepted_sources(registry, principal, case_id, now)
+    visible, truncated = _accepted_sources(registry, principal, case_id, now, index.fingerprint if index is not None else None)
     if truncated:
         warnings.append("COVERAGE_SCOPE_TRUNCATED")
     accepted = len(visible)

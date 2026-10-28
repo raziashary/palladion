@@ -391,3 +391,11 @@ def test_reserved_finalizer_owns_phase_instruction_and_keeps_question_as_data(p0
     fixture = make_runtime(p03,model)
     asyncio.run(fixture.runtime._finalize("UNTRUSTED_QUESTION_CANARY",Draft()))
     assert fixture.runtime.budget.main_used == 1 and fixture.runtime.budget.final_used
+
+
+def test_the_runtime_tells_the_ledger_which_words_were_the_users(p03):
+    """A version in a search (`POL-1@v2`) is honoured only when the user's own message wrote it (ADR-0110)."""
+    fixture = make_runtime(p03, ScriptedModel([]))
+    assert fixture.ledger.question == ""
+    asyncio.run(fixture.runtime.answer("According to POL-1@v2, how many hours?"))
+    assert fixture.ledger.question == "According to POL-1@v2, how many hours?"

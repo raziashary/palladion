@@ -534,27 +534,27 @@ class Catalog:
 
         Versions are the family's approved and revoked revisions in the order their validity starts, then their
         registration, then ID: a revoked version keeps its number, a draft has none, and a version approved later with
-        an earlier start is numbered before the ones that start after it. The revision ID is None when the family has
-        no such version or the caller may not read it, the same answer for both, so a hidden version is not told apart
-        from a missing one. None when the caller can read no revision of a family of that name, so a hidden family is
-        not told apart from one the case does not hold.
+        an earlier start is numbered before the ones that start after it. Only the versions the caller may read are
+        counted, so a number can differ between readers but probing the numbers never shows that a hidden version exists.
+        The revision ID is None when the family has no such version or the version is revoked. None when the caller can
+        read no revision of a family of that name, so a hidden family is not told apart from one the case does not hold.
         """
         self.registry.access.authorize(principal, tenant_id=principal.tenant_id, case_id=case_id, grant="source:read")
-        rows = self.database.connection.execute(
+        found = self.database.connection.execute(
             "SELECT revision_id, family_id, approval_status, acl_json FROM document_revisions "
             "WHERE tenant_id = ? AND case_id = ? AND family_id = ? "
             "AND approval_status IN ('APPROVED', 'REVOKED') "
             "ORDER BY valid_from IS NOT NULL, valid_from, registered_at, revision_id LIMIT ?",
             (principal.tenant_id, case_id, family.strip(), MAX_ELIGIBLE_REVISIONS + 1),
         ).fetchall()
-        if not any(acl_allows(row["acl_json"], principal.principal_id) for row in rows):
+        rows = [row for row in found if acl_allows(row["acl_json"], principal.principal_id)]
+        if not rows:
             return None
         family_id = rows[0]["family_id"]
         if not 1 <= ordinal <= len(rows):
             return family_id, None
         row = rows[ordinal - 1]
-        readable = row["approval_status"] == "APPROVED" and acl_allows(row["acl_json"], principal.principal_id)
-        return family_id, row["revision_id"] if readable else None
+        return family_id, row["revision_id"] if row["approval_status"] == "APPROVED" else None
 
     def effective_supersessions(self, tenant_id: str, case_id: str, fingerprint: str,
                                 revision_id: str | None = None) -> dict[str, list[str]]:

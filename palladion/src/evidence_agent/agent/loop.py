@@ -289,6 +289,7 @@ class AgentRuntime:
 
     async def answer(self, query: str) -> dict[str, Any]:
         self.store.authorize()
+        self.ledger.question = query
         # Keep the previous packet separate: current query remains explicitly user-reported.
         hints = preflight(query, self.store, include_memory=self.settings.continuity_enabled,
             packet_max_chars=self.settings.packet_max_chars)

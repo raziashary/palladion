@@ -122,6 +122,9 @@ class RequestLedger:
         self.failures: list[str] = []
         self.tool_status: dict[str, str] = {}
         self.named: dict[str, tuple[tuple[str, str | None], ...]] = {}  # versions the search that found a chunk named
+        # The user's own message. A version (`POL-1@v2`) is honoured only when it is written here, so the model cannot
+        # make a replaced revision admissible by wording its own query (ADR-0110); empty until the runtime sets it.
+        self.question = ""
 
     def applicability(self) -> Applicability:
         """The clock plus the case's trusted instants (ADR-0102): when it opened, its named domain events and the

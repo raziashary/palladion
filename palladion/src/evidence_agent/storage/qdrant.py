@@ -329,7 +329,7 @@ class QdrantIndex:
         return groups.get((revision_id, generation), {})
 
     def readback_many(self, tenant_id: str, revisions: dict[str, str]) -> dict[tuple[str, str], dict[str, str]]:
-        """Read up to64 requested generations in one bounded physical scroll.
+        """Read up to 64 requested generations in one bounded physical scroll.
 
         Validates the same vectors/fingerprints/hashes as single-generation readback.
         Caller owns batching; no cache hides physical drift after publication.

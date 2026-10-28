@@ -32,6 +32,7 @@ class ExactHits:
     leading: tuple[str, ...]  # chunks of the revision a code names, then selective mentions: ahead of semantic hits
     trailing: tuple[str, ...]  # chunks that only mention a widely cited code: after the semantic hits
     unmatched: tuple[str, ...]  # code-shaped tokens of the query with no registered alias
+    inapplicable: tuple[str, ...]  # codes that are registered but whose chunks the question's time and scope exclude
     truncated: bool
     unknown_lookup: bool  # the query is only unregistered code(s): a lookup that nothing answers, not a question
 
@@ -98,10 +99,15 @@ class ExactIndex:
                 for hit in mentions[:WIDELY_CITED_MENTION_LIMIT]:
                     trailing[hit.chunk_id] = None
         # Only identifiers the lane looked up can be called unmatched; past the candidate bound the rest were not tried.
-        unmatched = tuple(token for token in self.identifiers(query) if token in found and not found[token])
+        empty = tuple(token for token in self.identifiers(query) if token in found and not found[token])
+        known = {token for token in empty if generations is not None
+                 and self.catalog.alias_hits(principal, case_id, token, limit=1)}
+        unmatched = tuple(token for token in empty if token not in known)
+        inapplicable = tuple(token for token in empty if token in known)
         lookup_only = not re.search(r"\w", CODE_PATTERN.sub(" ", query))
-        return ExactHits(tuple(leading), tuple(c for c in trailing if c not in leading), unmatched, truncated,
-                         unknown_lookup=bool(unmatched) and lookup_only and not truncated and not leading and not trailing)
+        return ExactHits(tuple(leading), tuple(c for c in trailing if c not in leading), unmatched, inapplicable,
+                         truncated,
+                         unknown_lookup=bool(empty) and lookup_only and not truncated and not leading and not trailing)
 
     def identifiers(self, query: str) -> tuple[str, ...]:
         return tuple(dict.fromkeys(CODE_PATTERN.findall(query)))

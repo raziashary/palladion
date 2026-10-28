@@ -105,6 +105,7 @@ class HybridSearch:
                require_graph: bool = False,
                token_budget: int | None = None,
                reuse_physical_audit: bool = False,
+               named_from: str | None = None,
                evaluator_candidates: tuple[Candidate, ...] | None = None) -> SearchResult:
         if not query.strip() or len(query) > 2048 or not 1 <= limit <= 40:
             raise ValueError("Search bounds exceeded")
@@ -120,7 +121,9 @@ class HybridSearch:
         watch = _Stopwatch()
         warnings: list[str] = []
         # A question that names a version (`POL-001@v2`) asks for that revision, not for the one that governs (ADR-0110).
-        named = self.exact.named_versions(principal, case_id, query)
+        # `named_from` is the text a version reference is read from: the query itself unless the caller says whose
+        # words may name one (the agent passes the user's message, not what the model wrote).
+        named = self.exact.named_versions(principal, case_id, query if named_from is None else named_from)
         if named.resolved:
             applicability = applicability.naming(named.resolved)
             if any(revision is None for _, revision in named.resolved):
@@ -159,6 +162,8 @@ class HybridSearch:
         # An unknown structured code is labelled, never silently replaced by a near identifier (ADR-0105).
         if exact.unmatched:
             warnings.append("EXACT_IDENTIFIER_NOT_FOUND")
+        if exact.inapplicable:
+            warnings.append("EXACT_IDENTIFIER_NOT_APPLICABLE")  # known, but not at the case's time or for this reader
         if exact.unknown_lookup:
             candidates = []  # a bare unknown code asks for that code; similar-looking neighbours would substitute it
         semantic = {chunk_id for chunk_id, _ in candidates}
@@ -190,9 +195,10 @@ class HybridSearch:
                                 if c in resolved and c not in semantic and c not in exact.leading]
                         placed = {p.citation_id for p in (*front, *back)}
                         middle = [p for p in ordered if p.citation_id not in placed]
-                        chunks = tuple(self.resolver.chunk(principal, passage)
-                                       for passage in middle[:self.ranker.max_candidates])
-                        ordered = [*front, *(resolved[chunk.chunk_id] for chunk in self.ranker.rank(query, chunks)), *back]
+                        depth = self.ranker.max_candidates
+                        chunks = tuple(self.resolver.chunk(principal, passage) for passage in middle[:depth])
+                        reranked = [resolved[chunk.chunk_id] for chunk in self.ranker.rank(query, chunks)]
+                        ordered = [*front, *reranked, *middle[depth:], *back]  # the rest keep the index's order
                 except DependencyUnavailable:
                     warnings.append("RERANK_UNAVAILABLE")
         selected = ordered[:limit]

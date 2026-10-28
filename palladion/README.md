@@ -157,7 +157,7 @@ For a seeded case, the search JSON body is:
 
 Search modes are `lexical`, `dense`, `hybrid` and `reranked`. Start the API with
 `scripts/serve.py --rerank` to enable its optional local cross-encoder. Discovery and
-reranking have explicit candidate budgets; HTTP defaults to12 passages and allows up to40;
+reranking have explicit candidate budgets; HTTP defaults to 12 passages and allows up to 40;
 the model's search tool asks for 8 reranked passages unless it names another limit (at most12); when the request ledger (12 documents) cannot take them all, the tool result says how many were left out (`omitted_passages`). Reranked
 mode returns the ranked passages first and uses at most a quarter of the limit for context: exception-linked
 chunks and same-section neighbours. Expected
@@ -387,7 +387,7 @@ procedural experience never becomes approved policy or executable instructions.
 
 `POST /search` accepts case_id, query, mode, limit (default12, maximum40), optional
 `as_of`, optional `applicability_instants` (up to seven more aware instants) and optional `token_budget`.
-The model's search tool defaults to 8 reranked passages and is capped12.
+The model's search tool defaults to 8 reranked passages and is capped at 12.
 `as_of` must include a timezone and selects document applicability only; it cannot
 supply trusted transaction time or restore revoked approval, membership or source ACL.
 A revision is returned when it is inside its validity window and not yet superseded at `as_of` or at any
