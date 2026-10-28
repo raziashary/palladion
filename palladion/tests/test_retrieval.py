@@ -437,19 +437,45 @@ def test_enabled_reranker_sorts_stably_without_changing_chunk_objects() -> None:
     reranker = FastEmbedReranker(enabled=True, max_candidates=3)
 
     class _Model:
+        def __init__(self) -> None:
+            self.batches: list[list[str]] = []
+
         def rerank(self, query: str, documents: list[str], batch_size: int) -> list[float]:
             assert query == "question"
             assert len(documents) == 3
             assert batch_size == 8
-            return [0.4, 0.9, 0.9]
+            self.batches.append(documents)
+            return [{"first text": 0.4, "second text": 0.9, "third text": 0.9}[document] for document in documents]
 
-    reranker._load = lambda: _Model()  # type: ignore[method-assign,return-value]
-    chunks = (_chunk("one"), _chunk("two"), _chunk("three"))
+    model = _Model()
+    reranker._load = lambda: model  # type: ignore[method-assign,return-value]
+    chunks = (_chunk("one", "first text"), _chunk("two", "second text"), _chunk("three", "third text"))
 
     ranked = reranker.rank("question", chunks)
 
     assert ranked == (chunks[1], chunks[2], chunks[0])
     assert all(actual is expected for actual, expected in zip(ranked, (chunks[1], chunks[2], chunks[0]), strict=True))
+
+
+def test_the_reranker_hands_the_model_passages_shortest_first_and_scores_each_its_own() -> None:
+    reranker = FastEmbedReranker(enabled=True, max_candidates=4)
+    long, middle, short = "x" * 300, "x" * 100, "x" * 5
+
+    class _Model:
+        seen: list[str] = []
+
+        def rerank(self, query: str, documents: list[str], batch_size: int) -> list[float]:
+            self.seen = list(documents)
+            return [float(len(document)) for document in documents]  # longer text scores higher
+
+    model = _Model()
+    reranker._load = lambda: model  # type: ignore[method-assign,return-value]
+    chunks = tuple(_chunk(f"chunk-{n}", text) for n, text in enumerate((long, short, middle, short + "y")))
+
+    ranked = reranker.rank("question", chunks)
+
+    assert [len(text) for text in model.seen] == sorted(len(text) for text in model.seen), "shortest first"
+    assert ranked == (chunks[0], chunks[2], chunks[3], chunks[1]), "each passage keeps the score of its own text"
 
 
 @pytest.mark.parametrize("affinity, cpus, expected", [(2, None, 2), (4, None, 4), (16, None, 4), (None, 1, 1), (None, 8, 4)])
