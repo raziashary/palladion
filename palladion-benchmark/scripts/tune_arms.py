@@ -44,6 +44,7 @@ from benchmark.tuning import BASELINE, Trial, TuningError, TuningLog, choose, on
 PROJECT = Path(__file__).resolve().parents[1]
 FIXTURES = PROJECT / "artifacts" / "fixtures"
 LOG = PROJECT / "artifacts" / "tuning" / "tuning_log.jsonl"
+INDEXES = PROJECT / "artifacts" / "tuning" / "index"  # embeddings are cached per world, so trials share them
 K, BUDGET, SPLIT = 10, 4000, "smoke"
 DEVELOPMENT = frozenset({"D11", "D12"})  # the worlds tuning may read; every other world is refused
 Models = tuple[Encoder | None, Reranker | None]
@@ -62,7 +63,7 @@ def score_world(arm: str, levers: ArmSettings, root: Path, out: Path, models: Mo
     bundle = load_all(PROJECT / "configs")
     view = PublishedView.load(Layout(root).path(Namespace.PUBLISHED))
     arms, builds = build_local_arms(
-        view, [arm], condition=Condition.C2, index_dir=out / "index", encoder=models[0], reranker=models[1],
+        view, [arm], condition=Condition.C2, index_dir=INDEXES / root.name, encoder=models[0], reranker=models[1],
         settings={arm: levers},
     )  # fmt: skip
     try:
