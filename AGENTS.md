@@ -32,7 +32,10 @@ repository from the blueprint's illustrative tree.
   standing start/end-only Luna Medium delegation rule; reuse the end reviewer for resolution.
   Owner also authorized completion notes in palladion-benchmark/docs/development/
   PALLADION_FIXES.md and a scoped verified main push. Other benchmark/editor work,
-  UI, real enterprise writes and X01 remain excluded. Graph stays defaultoff.
+  real enterprise writes and X01 remain excluded. The owner authorized one separate
+  local operator UI, `palladion-ui/` (2026-10-28): a client of the HTTP API that holds
+  no evidence authority and adds no model tool; the policy and source-listing routes it
+  needed are recorded in ADR-0112 and still owe an independent review. Graph stays defaultoff.
   Approved explicitly enabled commands may use the three selected Groq models.
   ADR0066 memory boundaries persist: private USER semantic preferences, session-only
   episodic context, unapproved procedural experience, primary PathA/opt-in local PathB.
