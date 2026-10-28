@@ -27,7 +27,7 @@ questions written by anyone other than the benchmark's generator.
 | Claim rule | CONFIRMED only when the lower bound is above 0.05 (an absolute gain of five points); BELOW_MINIMUM when it is above 0 but not above 0.05; INCONCLUSIVE when the interval holds 0; ADVERSE when the upper bound is below 0 |
 | Other conditions and measures | C1 is reported, not primary; recall, MRR, harm rates and strata are descriptive |
 | Repeats | three runs of every world, each on a freshly prepared Palladion runtime; the first repeat is the registered one, the others report reproducibility |
-| Wording variants | a different-family model rewrites each question; the rewrites that keep every identifier, number and negation are scored on the same questions beside the originals and reported as a change in CompleteSet@10, with no claim |
+| Wording variants | a different-family model rewrites each question; the rewrites that keep every identifier, number and negation are scored on the same questions beside the originals and reported as a change in CompleteSet@10, with no claim; their digests are sealed by a second seal before their run, and the primary result does not wait for them |
 | Labels | the generator's, delegated and unaudited by a human (the owner accepted this in writing on 2026-10-28) |
 
 ## Rules of conduct
@@ -38,7 +38,16 @@ questions written by anyone other than the benchmark's generator.
 3. A question found defective after the seal stays in the denominator and is listed in the report.
 4. A run that fails, times out or is not completed is a result (a run state), never a zero and never dropped.
 
-## What would change the plan
+## Development-world check (B08-T02.01, B08-T02.02), done before the seal
 
-The minimum effect of 0.05 is checked against the development worlds' disagreement before the seal (B08-T02.02); if six
-worlds cannot resolve it, the report says the endpoint is underpowered rather than lowering the bar.
+Every benchmark-built arm was tuned on the development worlds (D11 and D12, 200 questions) with the same budget; the
+frozen settings are in `configs/tuned_arms.json`. Every arm kept 250-word chunks (the earlier 120 handicapped all of
+them) and nothing else. On those worlds, which Palladion was never changed on, CompleteSet@10 under C2 was: R7a 0.362,
+R3f 0.282, R0 0.262, R0x 0.262, R2 0.262, R3 0.235, R1 0.154. The registered pairing R7a against R3 was +0.128
+[+0.066, +0.189] on the 149 questions that owe the metric, and R7a against R3f +0.081 [+0.007, +0.154].
+
+Power of the registered claim rule with six worlds (about 260 family clusters; a Monte Carlo that draws the arms
+independently within a question, so it understates the power of a paired design): 0.92 for a true gain of 0.128, 0.63
+for 0.10 and 0.30 for 0.08. The minimum effect stays 0.05. A gain between 0 and about 0.10 is therefore likely to come
+back INCONCLUSIVE or BELOW_MINIMUM, and the report will say the endpoint could not resolve it rather than lower the bar.
+
