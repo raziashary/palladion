@@ -64,7 +64,8 @@ CASE = "case-42"
 UNAVAILABLE_WARNINGS = frozenset({"INDEX_UNAVAILABLE", "INDEX_MANIFEST_MISMATCH", "INTEGRITY_CONFLICT"})
 RETRYABLE_WARNINGS = frozenset({"ACCEPTED_BUT_UNINDEXED"})
 # Warnings that describe a normal answer: a truncated coverage report at scale, an identifier Palladion lacks,
-# candidates that its canonical checks all refused, a case with nothing that could apply, a bounded prefilter or lane.
+# candidates that its canonical checks all refused, a case with nothing that could apply, a bounded prefilter or lane,
+# a question that names a version its family does not have or that was not served, a code no document applies to.
 NOTE_WARNINGS = frozenset(
     {
         "COVERAGE_SCOPE_TRUNCATED",
@@ -73,6 +74,10 @@ NOTE_WARNINGS = frozenset(
         "ALL_CANDIDATES_EXCLUDED",
         "NO_ELIGIBLE_SOURCES",
         "ELIGIBILITY_PREFILTER_BOUNDED",
+        "NAMED_VERSION_NOT_FOUND",
+        "NAMED_VERSION_NOT_SERVED",
+        "NAMED_VERSIONS_TRUNCATED",
+        "EXACT_IDENTIFIER_NOT_APPLICABLE",
     }
 )
 APPROVE_STATES = frozenset({"approved", "retired", "non_normative", "withdrawn"})

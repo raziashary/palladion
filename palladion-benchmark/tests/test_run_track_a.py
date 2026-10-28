@@ -121,7 +121,7 @@ def test_the_manifest_records_k_budget_condition_and_the_arms_settings(r0_run: P
     recorded = manifest.retrieval_config
     assert (recorded["k"], recorded["budget_words"], recorded["metadata_condition"]) == (K, BUDGET, "C2")
     assert recorded["k1"] == 1.2 and recorded["arm"] == "R0"
-    assert manifest.method_version == "1.0.0" and manifest.split == "smoke" and manifest.confirmatory is False
+    assert manifest.method_version == "1.1.0" and manifest.split == "smoke" and manifest.confirmatory is False
 
 
 def test_the_artifacts_contain_no_gold(r0_run: Path, s_questions: tuple[GoldRecord, ...]) -> None:

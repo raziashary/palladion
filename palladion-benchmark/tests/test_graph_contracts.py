@@ -279,5 +279,5 @@ def test_a_run_without_graph_arms_is_unchanged_by_the_new_checks(s_root: Path, t
     arms, builds = build_local_arms(view, ["R0"], condition=Condition.C2, index_dir=tmp_path / "index")
     execute(RunSpec("run-g-0002", "smoke", Condition.C2, 10, 4000, s_root, tmp_path / "r0"), arms, builds=builds)
     manifest = read_verified(tmp_path / "r0" / "manifest-R0.json")
-    assert "comparator" not in manifest.retrieval_config and manifest.method_version == "1.0.0"
+    assert "comparator" not in manifest.retrieval_config and manifest.method_version == "1.1.0"
     assert validate_run(tmp_path / "r0", root=s_root) == []

@@ -88,7 +88,7 @@ COST_KEYS = (
     "storage_bytes",
 )
 RUNNABLE_SPLITS = ("smoke", "dev")
-METHOD_VERSION = "1.0.0"
+METHOD_VERSION = "1.1.0"  # 1.1.0: R3 reranks 20 passages, not 30
 FICTION = "The corpus, questions and identities are fictional (Meridian Switchworks)."
 GOLD_KEYS = (
     "answerability",

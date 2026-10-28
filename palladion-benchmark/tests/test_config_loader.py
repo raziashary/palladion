@@ -185,7 +185,7 @@ def test_unquoted_version_like_pin_is_rejected_because_yaml_turns_it_into_a_floa
     path = config_dir / "comparators.yaml"
     edit(
         path,
-        'system_under_test: {kind: commit, value: "49b25cb00a3569e2c0cee92ff60619b934bd70a5"}',
+        'system_under_test: {kind: commit, value: "5acc8259213ae98e57586526c77e8d1b5185be80"}',
         "system_under_test: {kind: version, value: 3.10}",
     )
     with pytest.raises(ConfigError, match="quoted string"):

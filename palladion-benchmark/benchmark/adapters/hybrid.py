@@ -36,7 +36,9 @@ from benchmark.contracts import EvidenceCandidate, RetrievalRequest
 
 RRF_K = 60
 DEPTH = 50
-RERANK_DEPTH = 30
+MAX_RERANK_DEPTH = 30
+# Mirrors Palladion's default (its rerank.py, ADR-0109): measured on this arm, 20 found as much as 30.
+RERANK_DEPTH = 20
 RERANKER_NAME = "Xenova/ms-marco-MiniLM-L-6-v2"
 # The same CPU budget as Palladion's reranker (its rerank.py, measured in P11-T05): copied, not imported (BADR-0002).
 RERANKER_THREADS = min(4, os.cpu_count() or 2)
@@ -212,8 +214,8 @@ class RerankedArm:
     arm_id = "R3"
 
     def __init__(self, hybrid: HybridArm, reranker: Reranker, *, depth: int = RERANK_DEPTH) -> None:
-        if not 1 <= depth <= RERANK_DEPTH:
-            raise AdapterError(f"the rerank depth is between 1 and {RERANK_DEPTH}")
+        if not 1 <= depth <= MAX_RERANK_DEPTH:
+            raise AdapterError(f"the rerank depth is between 1 and {MAX_RERANK_DEPTH}")
         self.hybrid, self.reranker, self.depth = hybrid, reranker, depth
         self.view = hybrid.view
         self.condition = hybrid.condition

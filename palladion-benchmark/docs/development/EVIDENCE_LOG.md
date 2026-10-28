@@ -800,3 +800,26 @@ Also produced: the plain-language scorecard in the repository `README.md` and `r
 
 Limits: one run per pin on one machine shared with other programs; 72 scored pairs with wide intervals; the packing target of 600 was chosen after reading the 1,200 result, so that comparison is exploratory; Track B and Track C were not re-run at these pins.
 
+
+## E-B08-011 — B08-T08.02 at Palladion `5acc825`: Track A re-measured after the exact-code and named-version work, and an R3 method version 1.1.0
+
+2026-10-28, from `palladion-benchmark/`. Pin moved to `5acc825` (BADR-0046 addendum); runs by `artifacts/runs/p11_track_a.sh p11g C2 C1` and `p11_track_a.sh p11h C1`, frozen matched list `7803021a91c1`, K 10, 72 scored pairs. R3 now reranks 20 passages to mirror Palladion's default (`RERANK_DEPTH`, `MAX_RERANK_DEPTH` 30), so the local arms' method version is **1.1.0** (`METHOD_VERSION`, the YAML pins of R0 to R3, two tests); earlier runs stay at their own pin and version and are never pooled.
+
+| tag | condition | R7a CompleteSet@10 | ValidSourceRecall@10 | MRR | wrong vintage | p50 query |
+|---|---|---|---|---|---|---|
+| `p11g-a-c2` | C2 | 0.306 | 0.399 | 0.237 | 0.045 | 1,032 ms |
+| `p11g-a-c1` | C1 | NOT_RUN (97 pairs) | | | | |
+| `p11h-a-c1` | C1 | 0.292 | 0.385 | 0.193 | 0.045 | 913 ms |
+
+`p11g-a-c1` is a recorded failure, not a zero: the Palladion arm's setup stopped with `Palladion refused to approve ART-dca922f95f (HTTP 503)` while loading the corpus; the other four arms of that run are OK and unchanged. The cause of the 503 is not established (no Palladion server log was kept; the same code loaded without error in condition C2 before and again in the repeat). The condition was repeated as `p11h-a-c1` with the same code and commit and loaded; the C1 numbers use `p11h-a-c1` and the two runs are not pooled. Follow-up for the next run: keep the runtime's server log with the run directory.
+
+C2 at `5acc825` (`p11g-report-c2/report.md`): R0 0.167/0.286/0.223, R1 0.014/0.035/0.012, R2 0.056/0.144/0.097, R3 0.083/0.192/0.122, R7a 0.306/0.399/0.237 (CompleteSet/ValidSourceRecall/MRR; all pairs OK). Primary pairing R7a against R3: complete-set +0.222 [0.055, 0.353] (20 only R7a, 4 only R3, exact p 0.0015), recall +0.207 [0.063, 0.326], MRR +0.115 [0.033, 0.204]. C1 (`p11h-report-c1/report.md`): R7a 0.292 against R3 0.097; complete-set +0.194 [0.031, 0.324] (18 against 4, exact p 0.0043), recall +0.199 [0.049, 0.317], MRR +0.075 [-0.017, 0.158]. By stratum under C2 (complete sets of 10): R7a Q1 10, Q2 4, Q3 3, Q4 2, Q5 3, Q6 0, Q8 0 of 5, Q10 0 of 7; R0 Q1 8, Q2 1, Q5 1, Q6 2; R3 Q1 2, Q6 4. Harm under C2: forbidden source 0 for every arm; authority confusion R7a 0, others 0.196 to 0.289; wrong vintage R7a 0.045, others 0.075 to 0.388. Under C1 the forbidden-source exposure is 0.536 to 0.742 for every arm including R7a (0.660) because the condition gives no access information to anyone.
+
+Stage times of 100 reranked searches (`p11g-stage-times`): total median 900 ms (p95 1,184 ms), rerank 665, coverage 79, resolve 54, index 30, eligibility 16, release 14, context 5, exact 1; corpus load 185 s.
+
+Rerank-depth and multilingual experiment on R3 (`scripts/rerank_variants.py`, runs `rr-*`, one run each): MiniLM at 30 passages 0.083/0.190/0.114 at a median of 1,174 ms, at 20 0.083/0.192/0.122 at 857 ms, at 15 0.056/0.158/0.110 at 739 ms, at 10 0.056/0.144/0.115 at 391 ms; BGE reranker v2 m3 int8 at 30 0.167/0.283/0.183 at 19,123 ms, at 15 0.056/0.158/0.141 at 8,422 ms.
+
+Adapter: `NOTE_WARNINGS` accepts `NAMED_VERSION_NOT_FOUND`, `NAMED_VERSION_NOT_SERVED`, `NAMED_VERSIONS_TRUNCATED` and `EXACT_IDENTIFIER_NOT_APPLICABLE`; the old diagnosis scripts were removed and `rerank_variants.py` kept.
+
+Limits: **in-sample** (Palladion was changed after the smoke split showed where it failed, and measured on the same questions; the held-out split was not run), one run per condition on a machine shared with other programs, depth and packing chosen after reading results; Track B and Track C were not re-run at this pin.
+
