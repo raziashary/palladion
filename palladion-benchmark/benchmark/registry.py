@@ -270,6 +270,21 @@ def default_registry() -> ArmRegistry:
         _arm("R1", "Dense", (a,), "B04", overrides=_harness_arm("tests/test_dense.py")),
         _arm("R2", "Hybrid RRF", (a, b), "B04", overrides=_harness_arm("tests/test_hybrid.py")),
         _arm("R3", "Hybrid plus reranker", (a, b), "B04", overrides=_harness_arm("tests/test_hybrid.py")),
+        _arm("R0x", "BM25 lexical plus exact lane", (a,), "B08", overrides=_harness_arm("tests/test_exact_lane.py")),
+        _arm(
+            "R3f",
+            "Hybrid plus reranker plus eligibility rule",
+            (a, b),
+            "B08",
+            overrides={
+                **_harness_arm("tests/test_eligibility.py"),
+                "temporal_filter": (
+                    Support.SUPPORTED,
+                    "approval, validity window and supersession are applied before ranking at the question's "
+                    "times, tested in tests/test_eligibility.py",
+                ),
+            },
+        ),
         _arm("R4", "HippoRAG 2", (a,), "B06", graph=graph_by_definition, overrides=_comparator_arm("R4")),
         _arm("R5", "GraphRAG Local", (a,), "B06", graph=graph_by_definition, overrides=_comparator_arm("R5")),
         _arm("R6", "LightRAG", (a,), "B06", graph=graph_by_definition, overrides=_comparator_arm("R6")),

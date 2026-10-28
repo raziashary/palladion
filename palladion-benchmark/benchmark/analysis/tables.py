@@ -96,7 +96,7 @@ class Scorecard:
         return next(c for c in self.cells if (c.stratum, c.arm, c.metric) == (stratum, arm, metric))
 
 
-def _itt_value(pair: PairScore, metric: str) -> float | None:
+def itt_value(pair: PairScore, metric: str) -> float | None:
     """The pair's value under intention to treat, or None when the metric does not apply or is a harm metric."""
     if metric in HARM_METRICS:
         return None
@@ -120,7 +120,7 @@ def _interval(values: Sequence[float], families: Sequence[str], stats: Statistic
 
 def _cell(stratum: str, arm: str, metric: str, pairs: Sequence[PairScore], stats: StatisticsSettings) -> Cell:
     eligible = [p for p in pairs if metric in p.applicable or metric in p.metrics]
-    itt = [(p, v) for p in eligible if (v := _itt_value(p, metric)) is not None]
+    itt = [(p, v) for p in eligible if (v := itt_value(p, metric)) is not None]
     done = [(p, p.metrics[metric]) for p in eligible if p.status is RunStatus.OK and metric in p.metrics]
     harm = None
     if metric in HARM_METRICS and eligible:
@@ -163,8 +163,8 @@ def _effect(
     theirs: Sequence[PairScore],
     stats: StatisticsSettings,
 ) -> Effect | None:
-    a = {p.question_id: v for p in mine if (v := _itt_value(p, metric)) is not None}
-    b = {p.question_id: v for p in theirs if (v := _itt_value(p, metric)) is not None}
+    a = {p.question_id: v for p in mine if (v := itt_value(p, metric)) is not None}
+    b = {p.question_id: v for p in theirs if (v := itt_value(p, metric)) is not None}
     return paired_effect(stratum, arm, reference, metric, a, b, {p.question_id: p.scenario_family for p in mine}, stats)
 
 

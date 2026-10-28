@@ -438,13 +438,15 @@ def make_spec(arm_id: str = "X1", **support: Support) -> ArmSpec:
     return ArmSpec(arm_id, "Test arm", (Track.RETRIEVAL_ONLY,), capabilities)
 
 
-def test_default_registry_has_all_fifteen_arms_and_matches_the_config() -> None:
+def test_default_registry_has_all_seventeen_arms_and_matches_the_config() -> None:
     registry = default_registry()
     assert registry.ids() == [
         "R0",
         "R1",
         "R2",
         "R3",
+        "R0x",
+        "R3f",
         "R4",
         "R5",
         "R6",
@@ -502,7 +504,7 @@ def test_capabilities_are_read_only() -> None:
 def test_matrix_prints_a_word_in_every_cell_never_blank() -> None:
     matrix = default_registry().render_matrix()
     rows = [line for line in matrix.splitlines() if line.startswith("| ")]
-    assert len(rows) == 1 + 15
+    assert len(rows) == 1 + 17
     for row in rows:
         cells = [cell.strip() for cell in row.strip("|").split("|")]
         assert all(cells), f"blank cell in {row}"

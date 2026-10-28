@@ -31,6 +31,7 @@ from benchmark.adapters.common import (
     flags_from_notes,
 )
 from benchmark.adapters.dense import DenseArm
+from benchmark.adapters.eligibility import Eligibility
 from benchmark.adapters.models import ModelSpec, verify
 from benchmark.contracts import EvidenceCandidate, RetrievalRequest
 
@@ -104,7 +105,15 @@ class HybridArm:
 
     arm_id = "R2"
 
-    def __init__(self, lexical: Bm25Arm, dense: DenseArm, *, rrf_k: int = RRF_K, depth: int = DEPTH) -> None:
+    def __init__(
+        self,
+        lexical: Bm25Arm,
+        dense: DenseArm,
+        *,
+        rrf_k: int = RRF_K,
+        depth: int = DEPTH,
+        eligibility: Eligibility | None = None,
+    ) -> None:
         if lexical.view is not dense.view and lexical.view.root != dense.view.root:
             raise AdapterError("the lexical and dense arms must read the same published namespace")
         if lexical.condition is not dense.condition or lexical.chunk_words != dense.chunk_words:
@@ -115,6 +124,7 @@ class HybridArm:
         self.view = lexical.view
         self.condition: Condition = lexical.condition
         self.rrf_k, self.depth = rrf_k, depth
+        self.eligibility = eligibility  # R3f only: the approval, window and supersession rule applied before ranking
         self.last_notes: dict[str, Any] = {}
         self._stats: dict[str, Any] = {}
 
@@ -149,7 +159,7 @@ class HybridArm:
         return dict(self._stats)
 
     def describe(self) -> dict[str, Any]:
-        return {
+        described = {
             "arm": self.arm_id,
             "rrf_k": self.rrf_k,
             "depth": self.depth,
@@ -157,13 +167,18 @@ class HybridArm:
             "lexical": self.lexical.describe(),
             "dense": self.dense.describe(),
         }
+        return described if self.eligibility is None else {**described, "eligibility": self.eligibility.describe()}
+
+    def eligible_for(self, request: RetrievalRequest) -> frozenset[str] | None:
+        """The documents the request may be answered from, or None when this arm ranks the whole namespace."""
+        return None if self.eligibility is None else self.eligibility.documents(request)
 
     def fused(
-        self, query: str, principal_id: str
+        self, query: str, principal_id: str, eligible: frozenset[str] | None = None
     ) -> tuple[list[tuple[Chunk, float]], dict[str, dict[str, int]], list[Chunk]]:
         """Fused (chunk, score) best first, the per-channel ranks of each chunk, and the exact-key chunks."""
-        lexical = [s.chunk for s in self.lexical.rank(query, principal_id)[: self.depth]]
-        dense_ids = [chunk_id for chunk_id, _ in self.dense.search(query, principal_id, self.depth)]
+        lexical = [s.chunk for s in self.lexical.rank(query, principal_id, eligible)[: self.depth]]
+        dense_ids = [chunk_id for chunk_id, _ in self.dense.search(query, principal_id, self.depth, eligible=eligible)]
         by_id = {c.chunk_id: c for c in self.lexical.chunks}
         ranks: dict[str, dict[str, int]] = defaultdict(dict)
         for position, chunk in enumerate(lexical, start=1):
@@ -171,11 +186,11 @@ class HybridArm:
         for position, chunk_id in enumerate(dense_ids, start=1):
             ranks[chunk_id]["dense"] = position
         order = reciprocal_rank_fusion([[c.chunk_id for c in lexical], dense_ids], self.rrf_k)
-        exact = self.lexical.chunks_naming(identifiers(query), principal_id)
+        exact = self.lexical.chunks_naming(identifiers(query), principal_id, eligible)
         return [(by_id[chunk_id], score) for chunk_id, score in order], dict(ranks), exact
 
     def retrieve(self, request: RetrievalRequest) -> list[EvidenceCandidate]:
-        ranked, ranks, exact = self.fused(request.query, request.principal_id)
+        ranked, ranks, exact = self.fused(request.query, request.principal_id, self.eligible_for(request))
         exact_ids = {c.chunk_id for c in exact}
         candidates = [
             self.candidate(chunk, rank, score, ranks, exact_ids, "hybrid")
@@ -211,12 +226,10 @@ class HybridArm:
 class RerankedArm:
     """The R3 arm: the fused top candidates reordered by the pinned cross-encoder."""
 
-    arm_id = "R3"
-
-    def __init__(self, hybrid: HybridArm, reranker: Reranker, *, depth: int = RERANK_DEPTH) -> None:
+    def __init__(self, hybrid: HybridArm, reranker: Reranker, *, depth: int = RERANK_DEPTH, arm_id: str = "R3") -> None:
         if not 1 <= depth <= MAX_RERANK_DEPTH:
             raise AdapterError(f"the rerank depth is between 1 and {MAX_RERANK_DEPTH}")
-        self.hybrid, self.reranker, self.depth = hybrid, reranker, depth
+        self.hybrid, self.reranker, self.depth, self.arm_id = hybrid, reranker, depth, arm_id
         self.view = hybrid.view
         self.condition = hybrid.condition
 
@@ -246,7 +259,7 @@ class RerankedArm:
         }
 
     def retrieve(self, request: RetrievalRequest) -> list[EvidenceCandidate]:
-        fused, ranks, exact = self.hybrid.fused(request.query, request.principal_id)
+        fused, ranks, exact = self.hybrid.fused(request.query, request.principal_id, self.hybrid.eligible_for(request))
         pool = fused[: self.depth]
         if not pool:
             return self.hybrid.finish([], request, exact)

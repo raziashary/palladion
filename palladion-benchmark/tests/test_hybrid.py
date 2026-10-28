@@ -12,6 +12,7 @@ from support import HashingEncoder
 from benchmark.adapters.bm25 import Bm25Arm
 from benchmark.adapters.common import AdapterError, Condition, PublishedView, count_words
 from benchmark.adapters.dense import DenseArm, FastEmbedEncoder
+from benchmark.adapters.eligibility import Eligibility
 from benchmark.adapters.hybrid import (
     RERANKER_LANGUAGE_NOTE,
     RRF_K,
@@ -286,3 +287,41 @@ def test_the_full_pinned_stack_over_the_real_corpus(
         assert r3.describe()["hybrid"]["rrf_k"] == 60
     finally:
         dense.close()
+
+
+# --------------------------------------------------------------------------- R3f: the eligibility rule before ranking
+
+
+def test_the_eligibility_rule_keeps_documents_the_time_rules_out_from_the_ranking_in_every_channel(
+    r2: HybridArm, view: PublishedView
+) -> None:
+    rule = Eligibility(view)
+    at = request(QUERY, view.identity.principals[0].principal_id).evaluation_time
+    out = next(
+        r.doc_id
+        for r in view.records
+        if r.registry_state == "retired"
+        and r.valid_to
+        and r.valid_to < at
+        and r.doc_id not in rule.documents(request(QUERY, view.identity.principals[0].principal_id))
+    )
+    principal = next(
+        p.principal_id for p in view.identity.principals if out in r2.lexical.access.visible_documents(p.principal_id)
+    )
+    query = view.document(out).text[:400]
+    plain = {c.source_document_id for c in r2.retrieve(request(query, principal, limit=30))}
+    assert out in plain, "positive control: without the rule the retired version is found by its own text"
+    ruled = HybridArm(r2.lexical, r2.dense, eligibility=rule)
+    ruled.adopt_built_indexes()
+    assert out not in {c.source_document_id for c in ruled.retrieve(request(query, principal, limit=30))}
+    assert "eligibility" in ruled.describe() and "eligibility" not in r2.describe()
+
+
+def test_r3f_is_a_reranked_arm_under_its_own_id_that_applies_the_rule(r2: HybridArm, view: PublishedView) -> None:
+    ruled = HybridArm(r2.lexical, r2.dense, eligibility=Eligibility(view))
+    ruled.adopt_built_indexes()
+    arm = RerankedArm(ruled, OverlapReranker(), arm_id="R3f")
+    assert arm.arm_id == "R3f" and arm.describe()["arm"] == "R3f" and arm.index_stats()["arm"] == "R3f"
+    assert RerankedArm(r2, OverlapReranker()).arm_id == "R3"
+    principal = view.identity.principals[0].principal_id
+    assert arm.retrieve(request(QUERY, principal, limit=10))

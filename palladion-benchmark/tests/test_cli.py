@@ -22,11 +22,11 @@ def run_module(*args: str) -> subprocess.CompletedProcess[str]:
     )
 
 
-def test_capability_matrix_exits_zero_and_lists_all_fifteen_arms_via_the_real_entry_point() -> None:
+def test_capability_matrix_exits_zero_and_lists_all_seventeen_arms_via_the_real_entry_point() -> None:
     result = run_module("capability-matrix")
     assert result.returncode == 0, result.stderr
     rows = [line for line in result.stdout.splitlines() if line.startswith("| ")]
-    assert len(rows) == 16  # header plus fifteen arms
+    assert len(rows) == 18  # header plus seventeen arms
     for arm in ("R0", "R7a", "R7b", "E0", "E2", "E3", "E4"):
         assert any(row.startswith(f"| {arm} |") for row in rows), arm
     assert "unsupported" in result.stdout and "UNVERIFIED" in result.stdout
@@ -50,7 +50,7 @@ def test_arm_filter_limits_the_rows(capsys: pytest.CaptureFixture[str]) -> None:
 def test_list_arms_prints_ids_and_names(capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["list-arms"]) == 0
     lines = capsys.readouterr().out.splitlines()
-    assert lines[0] == "R0\tBM25 lexical" and len(lines) == 15
+    assert lines[0] == "R0\tBM25 lexical" and len(lines) == 17
 
 
 def test_version_matches_the_package(capsys: pytest.CaptureFixture[str]) -> None:
@@ -62,7 +62,7 @@ def test_validate_config_passes_in_exploratory_mode_and_fails_in_confirmatory_mo
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     assert main(["validate-config"]) == 0
-    assert "PASS: configuration valid (exploratory); 15 arms" in capsys.readouterr().out
+    assert "PASS: configuration valid (exploratory); 17 arms" in capsys.readouterr().out
     assert main(["validate-config", "--confirmatory"]) == 1
     assert "confirmatory mode refuses unpinned" in capsys.readouterr().err
 

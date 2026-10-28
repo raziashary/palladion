@@ -23,7 +23,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from benchmark.adapters.common import AdapterError, Condition, PublishedView, build_chunks
 from benchmark.adapters.dense import DEFAULT_URL
 from benchmark.config import load_all
-from benchmark.track_a import LOCAL_ARMS, TrackAError, build_local_arms, load_pinned_models
+from benchmark.track_a import DEFAULT_ARMS, DENSE_ARMS, TrackAError, build_local_arms, load_pinned_models
 
 PROJECT = Path(__file__).resolve().parents[1]
 REPORT = "index_report.json"
@@ -55,7 +55,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--published", type=Path, required=True)
     parser.add_argument("--index-dir", type=Path, required=True)
-    parser.add_argument("--arms", default=",".join(LOCAL_ARMS))
+    parser.add_argument("--arms", default=",".join(DEFAULT_ARMS))
     parser.add_argument("--condition", choices=[c.value for c in Condition], default=Condition.C2.value)
     parser.add_argument("--qdrant-url", default=DEFAULT_URL)
     parser.add_argument(
@@ -67,7 +67,7 @@ def main(argv: list[str] | None = None) -> int:
     started = False
     try:
         view = PublishedView.load(options.published)
-        needs_models = any(a in ("R1", "R2", "R3") for a in arms)
+        needs_models = any(a in DENSE_ARMS for a in arms)
         encoder, reranker = (
             load_pinned_models(PROJECT / "configs", options.models_dir) if needs_models else (None, None)
         )

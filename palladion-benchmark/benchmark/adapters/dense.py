@@ -240,20 +240,23 @@ class DenseArm:
 
     # -- search ----------------------------------------------------------------------------------
 
-    def _filter(self, principal_id: str) -> Filter | None:
-        if self.condition is Condition.C1:
+    def _filter(self, principal_id: str, eligible: frozenset[str] | None = None) -> Filter | None:
+        if self.condition is Condition.C1 and eligible is None:
             return None
-        visible = sorted(self.access.visible_documents(principal_id))
-        return Filter(must=[FieldCondition(key="doc_id", match=MatchAny(any=visible))])
+        visible = self.access.visible_documents(principal_id)
+        allowed = sorted(visible if eligible is None else visible & eligible)
+        return Filter(must=[FieldCondition(key="doc_id", match=MatchAny(any=allowed))])
 
-    def search(self, query: str, principal_id: str, limit: int, *, exact: bool = False) -> list[tuple[str, float]]:
+    def search(
+        self, query: str, principal_id: str, limit: int, *, exact: bool = False, eligible: frozenset[str] | None = None
+    ) -> list[tuple[str, float]]:
         """(chunk id, cosine score) best first; ``exact=True`` asks Qdrant for brute-force search instead of HNSW."""
         if not self._chunks:
             raise AdapterError("build_index must run before retrieve")
         response = self._client.query_points(
             collection_name=self.collection,
             query=self.encoder.embed_query(query),
-            query_filter=self._filter(principal_id),
+            query_filter=self._filter(principal_id, eligible),
             limit=limit + TIE_MARGIN,
             search_params=SearchParams(hnsw_ef=HNSW_EF_SEARCH, exact=exact),
             with_payload=True,

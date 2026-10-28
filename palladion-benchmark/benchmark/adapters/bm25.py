@@ -170,8 +170,9 @@ class Bm25Arm:
                 total += weight * self.idf(term) * frequency * (self.k1 + 1) / (frequency + norm)
         return total
 
-    def rank(self, query: str, principal_id: str) -> list[Scored]:
-        """Every chunk with a positive score for a document the principal may see, best first; ties by chunk id."""
+    def rank(self, query: str, principal_id: str, eligible: frozenset[str] | None = None) -> list[Scored]:
+        """Every chunk with a positive score for a document the principal may see (and, when the arm applies an
+        eligibility rule, that the rule admits), best first; ties by chunk id."""
         if not self._chunks:
             raise AdapterError("build_index must run before retrieve")
         query_terms = Counter(tokenize(query))
@@ -182,15 +183,20 @@ class Bm25Arm:
             Scored(self._chunks[i], self.score(i, query_terms))
             for i in candidates
             if self.access.allows(principal_id, self._chunks[i].doc_id)
+            and (eligible is None or self._chunks[i].doc_id in eligible)
         ]
         scored.sort(key=lambda s: (-s.score, s.chunk.chunk_id))
         return [s for s in scored if s.score > 0]
 
-    def chunks_naming(self, identifier_tokens: list[str], principal_id: str) -> list[Chunk]:
+    def chunks_naming(
+        self, identifier_tokens: list[str], principal_id: str, eligible: frozenset[str] | None = None
+    ) -> list[Chunk]:
         """Chunks that contain any of the whole identifiers, in index order, for documents the principal may see."""
         found: dict[int, None] = {}
         for token in identifier_tokens:
             for index in self._postings.get(token, ()):
-                if self.access.allows(principal_id, self._chunks[index].doc_id):
+                if self.access.allows(principal_id, self._chunks[index].doc_id) and (
+                    eligible is None or self._chunks[index].doc_id in eligible
+                ):
                     found.setdefault(index, None)
         return [self._chunks[i] for i in sorted(found)]

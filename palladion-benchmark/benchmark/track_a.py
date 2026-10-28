@@ -20,10 +20,12 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Protocol
 
-from benchmark.adapters.bm25 import Bm25Arm
+from benchmark.adapters.bm25 import K1, B, Bm25Arm
 from benchmark.adapters.common import DEFAULT_CHUNK_WORDS, AdapterError, Condition, PublishedView
 from benchmark.adapters.dense import DEFAULT_URL, DenseArm, Encoder, FastEmbedEncoder
-from benchmark.adapters.hybrid import FastEmbedReranker, HybridArm, RerankedArm, Reranker
+from benchmark.adapters.eligibility import Eligibility
+from benchmark.adapters.exact_lane import ExactLaneArm
+from benchmark.adapters.hybrid import DEPTH, RERANK_DEPTH, RRF_K, FastEmbedReranker, HybridArm, RerankedArm, Reranker
 from benchmark.adapters.models import ModelSpec, spec_from_pin
 from benchmark.config import ConfigBundle, load_all
 from benchmark.contracts import (
@@ -65,6 +67,49 @@ from benchmark.runner import (
 )
 
 
+@dataclass(frozen=True)
+class ArmSettings:
+    """The levers of the benchmark's own arms (BADR-0047). The defaults are method 1.1.0; a run records what it used.
+
+    Every arm gets the same tuning budget on the development worlds (at most six one-lever trials, each logged) and the
+    chosen values are frozen before the sealed run; nothing here is changed after it.
+    """
+
+    k1: float = K1
+    b: float = B
+    chunk_words: int = DEFAULT_CHUNK_WORDS
+    rrf_k: int = RRF_K
+    fusion_depth: int = DEPTH
+    rerank_depth: int = RERANK_DEPTH
+
+    def __post_init__(self) -> None:
+        numbers = (self.k1, self.b)
+        counts = (self.chunk_words, self.rrf_k, self.fusion_depth, self.rerank_depth)
+        if any(isinstance(v, bool) or not isinstance(v, int | float) for v in numbers) or any(
+            isinstance(v, bool) or not isinstance(v, int) for v in counts
+        ):
+            raise TrackAError("k1 and b are numbers; chunk_words, rrf_k, fusion_depth and rerank_depth are integers")
+
+    def to_dict(self) -> dict[str, float | int]:
+        return dict(asdict(self))
+
+    @classmethod
+    def from_dict(cls, data: Mapping[str, Any]) -> ArmSettings:
+        unknown = sorted(set(data) - set(cls.__dataclass_fields__))
+        if unknown:
+            raise TrackAError(f"unknown arm setting(s): {', '.join(unknown)}")
+        return cls(**data)
+
+
+def read_settings(path: Path) -> dict[str, ArmSettings]:
+    """The levers of each arm from a JSON file ``{"R0": {"k1": 1.5}, ...}``; absent levers keep their defaults."""
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        return {arm: ArmSettings.from_dict(levers) for arm, levers in data.items()}
+    except (OSError, ValueError, AttributeError, TypeError) as error:
+        raise TrackAError(f"{path.name} is not a file of arm settings: {error}") from error
+
+
 class DescribedArm(Protocol):
     """A retriever that also says which settings define it, for the run manifest."""
 
@@ -77,7 +122,11 @@ class DescribedArm(Protocol):
     def describe(self) -> dict[str, Any]: ...
 
 
-LOCAL_ARMS = ("R0", "R1", "R2", "R3")
+DEFAULT_ARMS = ("R0", "R1", "R2", "R3")
+# R0x and R3f are the baselines BADR-0047 adds: R0 plus Palladion's exact-code rule, and R3 plus its eligibility rule.
+LOCAL_ARMS = (*DEFAULT_ARMS, "R0x", "R3f")
+DENSE_ARMS = ("R1", "R2", "R3", "R3f")  # the arms that use the pinned embedding model and the benchmark's Qdrant
+RERANKED_ARMS = ("R3", "R3f")
 # Third-party graph comparators: built and run in their own environment, identified by a ComparatorPin (BADR-0031).
 COMPARATOR_ARMS = ("R4", "R5", "R6")
 COST_KEYS = (
@@ -152,15 +201,24 @@ def read_annotations(root: Path, split: str) -> tuple[tuple[GoldRecord, ...], Re
 
 
 def build_request(
-    record: GoldRecord, identity: IdentityManifest, *, k: int, budget: int, condition: Condition
+    record: GoldRecord,
+    identity: IdentityManifest,
+    *,
+    k: int,
+    budget: int,
+    condition: Condition,
+    query: str | None = None,
 ) -> RetrievalRequest:
-    """What an arm may see of a question: text, principal, snapshot, times and the access attributes."""
+    """What an arm may see of a question: text, principal, snapshot, times and the access attributes.
+
+    ``query`` replaces the question's text with a wording variant (BADR-0047); the gold stays the original's.
+    """
     principal = next((p for p in identity.principals if p.principal_id == record.principal_id), None)
     if principal is None:
         raise TrackAError(f"principal {record.principal_id} is not in the identity manifest")
     return RetrievalRequest(
         question_id=record.question_id,
-        query=record.query,
+        query=record.query if query is None else query,
         principal_id=record.principal_id,
         corpus_snapshot_id=record.corpus_snapshot_id,
         evaluation_time=record.evaluation_time,
@@ -172,15 +230,6 @@ def build_request(
 
 
 # --------------------------------------------------------------------------- building the local arms
-
-
-@dataclass
-class _Shared:
-    """The indexes that more than one arm uses, built once."""
-
-    lexical: Bm25Arm | None = None
-    dense: DenseArm | None = None
-    hybrid: HybridArm | None = None
 
 
 class UnavailableArm:
@@ -229,27 +278,31 @@ def build_local_arms(
     qdrant_url: str = DEFAULT_URL,
     encoder: Encoder | None = None,
     reranker: Reranker | None = None,
-    chunk_words: int | None = None,
+    settings: Mapping[str, ArmSettings] | None = None,
     expected_qdrant: str | None = None,
 ) -> tuple[dict[str, DescribedArm], list[dict[str, Any]]]:
-    """R0 to R3 over shared indexes (one lexical and one dense index serve every arm that needs them).
+    """The benchmark's own arms: R0 to R3 and R3f share a lexical, a dense and a fused index where their settings agree.
 
-    Returns the arms and one record per arm: its stats when built, or the error type when not. A failure is recorded and
-    the arm becomes an ``UnavailableArm``; nothing is skipped silently.
+    (R0x holds its own copy of the lexical index.)
+
+    ``settings`` maps an arm to its levers (BADR-0047); an arm without an entry uses the 1.1.0 defaults. Returns the
+    arms and one record per arm: its stats when built, or the error type when not. A failure is recorded and the arm
+    becomes an ``UnavailableArm``; nothing is skipped silently.
     """
-    unknown = sorted(set(wanted) - set(LOCAL_ARMS))
+    unknown = sorted(set(wanted) - set(LOCAL_ARMS)) + sorted(set(settings or {}) - set(LOCAL_ARMS))
     if unknown:
         raise TrackAError(f"not a local arm: {', '.join(unknown)}")
     published = str(view.root)
-    words = chunk_words or DEFAULT_CHUNK_WORDS
     records: list[dict[str, Any]] = []
     arms: dict[str, DescribedArm] = {}
-    shared = _Shared()
+    lexicals: dict[tuple[float, float, int], Bm25Arm] = {}
+    denses: dict[int, DenseArm] = {}
+    hybrids: dict[tuple[float, float, int, int, int], HybridArm] = {}
 
-    def attempt(arm_id: str, build: Callable[[], DescribedArm]) -> None:
+    def attempt(arm_id: str, build: Callable[[ArmSettings], DescribedArm]) -> None:
         started = time.perf_counter()
         try:
-            arm = build()
+            arm = build((settings or {}).get(arm_id, ArmSettings()))
         except Exception as exc:
             arms[arm_id] = UnavailableArm(arm_id, f"index build failed: {type(exc).__name__}")
             records.append({"arm": arm_id, "status": "FAILED", "error": type(exc).__name__, "reason": str(exc)[:200]})
@@ -259,38 +312,58 @@ def build_local_arms(
             {"arm": arm_id, "status": "BUILT", "seconds": time.perf_counter() - started, "stats": arm.index_stats()}
         )
 
-    def lexical() -> Bm25Arm:
-        if shared.lexical is None:
-            arm = Bm25Arm(view, condition, words)
+    def lexical(levers: ArmSettings) -> Bm25Arm:
+        key = (levers.k1, levers.b, levers.chunk_words)
+        if key not in lexicals:
+            arm = Bm25Arm(view, condition, levers.chunk_words, levers.k1, levers.b)
             arm.build_index(published, "track_a")
-            shared.lexical = arm
-        return shared.lexical
+            lexicals[key] = arm
+        return lexicals[key]
 
-    def dense() -> DenseArm:
-        if shared.dense is None:
+    def dense(levers: ArmSettings) -> DenseArm:
+        if levers.chunk_words not in denses:
             if encoder is None:
                 raise AdapterError("the dense arms need the pinned embedding model")
-            arm = DenseArm(view, encoder, index_dir, qdrant_url=qdrant_url, condition=condition, chunk_words=words)
+            arm = DenseArm(
+                view, encoder, index_dir, qdrant_url=qdrant_url, condition=condition, chunk_words=levers.chunk_words
+            )
             arm.build_index(published, "track_a")
             reported = arm.index_stats()["qdrant_server_version"]
             if expected_qdrant is not None and reported != expected_qdrant:
                 raise AdapterError(f"the Qdrant server is {reported}, but the pin is {expected_qdrant}")
-            shared.dense = arm
-        return shared.dense
+            denses[levers.chunk_words] = arm
+        return denses[levers.chunk_words]
 
-    def hybrid() -> HybridArm:
-        if shared.hybrid is None:
-            fused = HybridArm(lexical(), dense())
+    def hybrid(levers: ArmSettings) -> HybridArm:
+        key = (levers.k1, levers.b, levers.chunk_words, levers.rrf_k, levers.fusion_depth)
+        if key not in hybrids:
+            fused = HybridArm(lexical(levers), dense(levers), rrf_k=levers.rrf_k, depth=levers.fusion_depth)
             fused.adopt_built_indexes()
-            shared.hybrid = fused
-        return shared.hybrid
+            hybrids[key] = fused
+        return hybrids[key]
 
-    def reranked() -> RerankedArm:
+    def reranked(levers: ArmSettings) -> RerankedArm:
         if reranker is None:
             raise AdapterError("R3 needs the pinned reranker")
-        return RerankedArm(hybrid(), reranker)
+        return RerankedArm(hybrid(levers), reranker, depth=levers.rerank_depth)
 
-    builders: dict[str, Callable[[], DescribedArm]] = {"R0": lexical, "R1": dense, "R2": hybrid, "R3": reranked}
+    def exact_lane(levers: ArmSettings) -> ExactLaneArm:
+        arm = ExactLaneArm(view, condition, levers.chunk_words, levers.k1, levers.b)
+        arm.build_index(published, "track_a")
+        return arm
+
+    def eligible_reranked(levers: ArmSettings) -> RerankedArm:
+        if reranker is None:
+            raise AdapterError("R3f needs the pinned reranker")
+        fused = HybridArm(
+            lexical(levers), dense(levers), rrf_k=levers.rrf_k, depth=levers.fusion_depth, eligibility=Eligibility(view)
+        )
+        fused.adopt_built_indexes()
+        return RerankedArm(fused, reranker, depth=levers.rerank_depth, arm_id="R3f")
+
+    builders: dict[str, Callable[[ArmSettings], DescribedArm]] = {
+        "R0": lexical, "R1": dense, "R2": hybrid, "R3": reranked, "R0x": exact_lane, "R3f": eligible_reranked,
+    }  # fmt: skip
     for arm_id in wanted:
         attempt(arm_id, builders[arm_id])
     return arms, records
@@ -311,6 +384,12 @@ class RunSpec:
     order_seed: int | None = None
     config_dir: Path = Path(__file__).resolve().parents[1] / "configs"
     matched_list_sha256: str | None = None  # the frozen list the run was checked against (BADR-0044)
+    # Wording variants (BADR-0047): question id -> the accepted rewrite. When given, the run asks only these questions,
+    # with these words, against the originals' gold.
+    paraphrases: Mapping[str, str] | None = None
+    paraphrase_sha256: str | None = None
+    # The levers each of the benchmark's own arms ran with (BADR-0047), recorded so a sealed run can be held to them.
+    arm_settings: Mapping[str, Mapping[str, float | int]] | None = None
 
 
 @dataclass(frozen=True)
@@ -333,12 +412,12 @@ def _manifest(
 ) -> RunManifest:
     shared = bundle.comparators.shared_models
     models: dict[str, str | None] = {}
-    if arm_id in ("R1", "R2", "R3"):
+    if arm_id in DENSE_ARMS:
         models["embeddings"] = f"{shared['embeddings'].value}@{shared['embeddings'].revision}"
-    if arm_id in ("R1", "R2", "R3"):
+    if arm_id in DENSE_ARMS:
         qdrant = shared["qdrant_server"]
         models["qdrant_server"] = f"{qdrant.value}@sha256:{next(iter(qdrant.digests.values()))}"
-    if arm_id == "R3":
+    if arm_id in RERANKED_ARMS:
         models["reranker"] = f"{shared['reranker'].value}@{shared['reranker'].revision}"
     reasons = {
         "container_image_digest": "no container is used; arms run in the benchmark environment or a pinned worktree",
@@ -380,6 +459,7 @@ def _manifest(
             "budget_words": spec.budget_words,
             "metadata_condition": spec.condition.value,
             "matched_list_sha256": spec.matched_list_sha256,
+            "paraphrase_sha256": spec.paraphrase_sha256,
         },
         prompt_digest=None,
         hardware=collect_hardware(),
@@ -408,9 +488,18 @@ def execute(
     bundle = load_all(spec.config_dir)
     records, read_log = read_annotations(spec.root, spec.split)
     identity = read_identity(Layout(spec.root).path(Namespace.PUBLISHED))
+    if spec.paraphrases is not None:
+        unknown = set(spec.paraphrases) - {r.question_id for r in records}
+        if unknown or not spec.paraphrases or spec.paraphrase_sha256 is None:
+            raise TrackAError("the wording variants name questions the split does not hold, or are empty or unsigned")
+        records = tuple(r for r in records if r.question_id in spec.paraphrases)
     requests = [
-        build_request(r, identity, k=spec.k, budget=spec.budget_words, condition=spec.condition) for r in records
-    ]
+        build_request(
+            r, identity, k=spec.k, budget=spec.budget_words, condition=spec.condition,
+            query=None if spec.paraphrases is None else spec.paraphrases[r.question_id],
+        )
+        for r in records
+    ]  # fmt: skip
     digests = {
         "source": read_log.published_manifest_sha256,
         "gold": read_log.annotation_sha256,
@@ -452,6 +541,8 @@ def execute(
                 "budget_words": spec.budget_words,
                 "metadata_condition": spec.condition.value,
                 "matched_list_sha256": spec.matched_list_sha256,
+                "paraphrase_sha256": spec.paraphrase_sha256,
+                "arm_settings": spec.arm_settings,
                 "questions": len(requests),
                 "builds": list(builds),
                 "notice": FICTION,

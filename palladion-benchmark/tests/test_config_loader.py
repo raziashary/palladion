@@ -43,7 +43,7 @@ def test_real_configs_load_and_have_the_documented_shape() -> None:
     assert (bundle.benchmark.splits.smoke, bundle.benchmark.splits.dev, bundle.benchmark.splits.test) == (10, 30, 60)
     assert bundle.benchmark.main_max_calls == 5 and bundle.benchmark.critic_max_calls == 3
     assert [a.arm_id for a in bundle.comparators.arms][:3] == ["R0", "R1", "R2"]
-    assert len(bundle.comparators.arms) == 15
+    assert len(bundle.comparators.arms) == 17  # R0x and R3f added by BADR-0047
     assert bundle.evaluation.sealed is False
     assert bundle.benchmark.generator.models[0] == "qwen/qwen3.8-27b"
     assert bundle.benchmark.generator.allow_automatic_failover is False

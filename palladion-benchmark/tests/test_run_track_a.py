@@ -174,6 +174,73 @@ def test_all_four_local_arms_run_the_split_through_the_real_runner(
         dense.close()
 
 
+# --------------------------------------------------------------------------- wording variants (BADR-0047)
+
+
+class SpyArm:
+    """Wraps an arm and records the words each request carried, to prove what the arm was shown."""
+
+    def __init__(self, inner: DescribedArm) -> None:
+        self.inner = inner
+        self.queries: dict[str, str] = {}
+
+    def build_index(self, source_manifest_uri: str, index_namespace: str) -> None:
+        self.inner.build_index(source_manifest_uri, index_namespace)
+
+    def retrieve(self, request: Any) -> Any:
+        self.queries[request.question_id] = request.query
+        return self.inner.retrieve(request)
+
+    def index_stats(self) -> dict[str, Any]:
+        return self.inner.index_stats()
+
+    def describe(self) -> dict[str, Any]:
+        return self.inner.describe()
+
+
+def test_a_wording_variant_run_asks_only_the_accepted_questions_in_their_new_words(
+    s_root: Path, tmp_path: Path, s_questions: tuple[GoldRecord, ...]
+) -> None:
+    chosen = {s_questions[0].question_id: "first, reworded", s_questions[3].question_id: "fourth, reworded"}
+    arms, builds = r0_only(s_root, tmp_path / "index")
+    spy = SpyArm(arms["R0"])
+    variants = RunSpec(
+        "run-a-0003", "smoke", Condition.C2, K, BUDGET, s_root, tmp_path / "run",
+        paraphrases=chosen, paraphrase_sha256="d" * 64,
+    )  # fmt: skip
+    outcome = execute(variants, {"R0": spy}, builds=builds)
+    assert outcome.questions == 2 and outcome.summary.planned_pairs == 2
+    assert spy.queries == chosen, "only the accepted questions, with the rewritten words"
+    config = json.loads((tmp_path / "run" / "run_config.json").read_text(encoding="utf-8"))
+    assert config["paraphrase_sha256"] == "d" * 64 and config["questions"] == 2
+    manifest = json.loads((tmp_path / "run" / "manifest-R0.json").read_text(encoding="utf-8"))
+    assert manifest["manifest"]["retrieval_config"]["paraphrase_sha256"] == "d" * 64
+
+
+def test_an_original_run_keeps_asking_the_templates_words_and_records_no_variant_digest(
+    s_root: Path, tmp_path: Path, s_questions: tuple[GoldRecord, ...]
+) -> None:
+    arms, builds = r0_only(s_root, tmp_path / "index")
+    spy = SpyArm(arms["R0"])
+    execute(spec(s_root, tmp_path / "run", "run-a-0004"), {"R0": spy}, builds=builds)
+    assert spy.queries == {r.question_id: r.query for r in s_questions}
+    assert json.loads((tmp_path / "run" / "run_config.json").read_text(encoding="utf-8"))["paraphrase_sha256"] is None
+
+
+@pytest.mark.parametrize("variants", [{}, {"q-00000000deadbeef": "words"}])
+def test_variants_that_are_empty_or_name_an_unknown_question_are_refused_before_anything_runs(
+    s_root: Path, tmp_path: Path, variants: dict[str, str]
+) -> None:
+    arms, builds = r0_only(s_root, tmp_path / "index")
+    bad = RunSpec(
+        "run-a-0005", "smoke", Condition.C2, K, BUDGET, s_root, tmp_path / "run",
+        paraphrases=variants, paraphrase_sha256="d" * 64,
+    )  # fmt: skip
+    with pytest.raises(TrackAError, match="wording variants"):
+        execute(bad, arms, builds=builds)
+    assert not (tmp_path / "run" / "ledger.jsonl").exists()
+
+
 # --------------------------------------------------------------------------- the entry points
 
 
