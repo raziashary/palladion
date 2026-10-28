@@ -26,6 +26,7 @@ _DENSE_VECTOR = "dense"
 _SPARSE_VECTOR = "bm25"
 _COLLECTION = "knowledge_chunks_v1"
 _MAX_QUERY_LIMIT = 100
+_MAX_FACET_GENERATIONS = 20000  # twice the 10,000-source bound: current generations plus leftovers of earlier ones
 _T = TypeVar("_T")
 
 
@@ -297,7 +298,12 @@ class QdrantIndex:
         )
 
     def generation_counts(self, tenant_id: str, case_id: str, generations: Sequence[str]) -> dict[str, int]:
-        """Exact point count of the given index generations, from one facet call on the payload index."""
+        """Exact point count of the given index generations, from one facet call on the payload index.
+
+        The facet counts every generation of the case and the answer is cut to the ones asked about: filtering the
+        facet to those generations instead made the call 35 times slower at 1,167 generations (888 ms against 25 ms).
+        A case holding more generations than one call reports could hide an asked-about one, which is an error.
+        """
         if not generations:
             return {}
         response = self._call_qdrant(
@@ -307,12 +313,14 @@ class QdrantIndex:
             facet_filter=models.Filter(must=[
                 models.FieldCondition(key="tenant_id", match=models.MatchValue(value=tenant_id)),
                 models.FieldCondition(key="case_id", match=models.MatchValue(value=case_id)),
-                models.FieldCondition(key="index_generation", match=models.MatchAny(any=list(generations))),
             ]),
-            limit=len(generations),
+            limit=_MAX_FACET_GENERATIONS,
             exact=True,
         )
-        return {str(hit.value): int(hit.count) for hit in response.hits}
+        if len(response.hits) >= _MAX_FACET_GENERATIONS:
+            raise IndexConsistencyError("the case holds more index generations than one facet call reports")
+        wanted = set(generations)
+        return {str(hit.value): int(hit.count) for hit in response.hits if str(hit.value) in wanted}
 
     def readback(self, tenant_id: str, revision_id: str, generation: str) -> dict[str, str]:
         if not tenant_id or not revision_id or not generation:

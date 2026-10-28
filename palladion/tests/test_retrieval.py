@@ -292,15 +292,24 @@ def test_generation_filter_restricts_every_prefetch_and_an_empty_list_asks_the_i
 
 def test_generation_counts_are_one_exact_facet_call_scoped_to_the_tenant_and_case() -> None:
     index, client = _index()
-    client.facet_counts = {"gen-1": 3, "gen-2": 5}
+    client.facet_counts = {"gen-1": 3, "gen-2": 5, "left-over": 7}
     assert index.generation_counts("tenant-a", "case-a", ["gen-1", "gen-2"]) == {"gen-1": 3, "gen-2": 5}
     call = [c[1] for c in client.calls if c[0] == "facet"][-1]
-    assert call["key"] == "index_generation" and call["exact"] is True and call["limit"] == 2
+    assert call["key"] == "index_generation" and call["exact"] is True
     conditions = {c.key: c.match for c in call["facet_filter"].must}
+    assert set(conditions) == {"tenant_id", "case_id"}, "a filter naming each generation is far slower than counting all"
     assert conditions["tenant_id"].value == "tenant-a" and conditions["case_id"].value == "case-a"
-    assert conditions["index_generation"].any == ["gen-1", "gen-2"], "only the generations asked about are counted"
     before = len(client.calls)
     assert index.generation_counts("tenant-a", "case-a", []) == {} and len(client.calls) == before
+
+
+def test_a_case_with_more_generations_than_one_facet_call_reports_is_an_error_not_a_silent_undercount() -> None:
+    from evidence_agent.storage import qdrant
+
+    index, client = _index()
+    client.facet_counts = {f"gen-{n}": 1 for n in range(qdrant._MAX_FACET_GENERATIONS)}
+    with pytest.raises(qdrant.IndexConsistencyError):
+        index.generation_counts("tenant-a", "case-a", ["gen-1"])
 
 
 def test_lexical_and_dense_modes_do_not_invoke_hybrid_fusion() -> None:
