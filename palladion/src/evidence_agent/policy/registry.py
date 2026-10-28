@@ -15,6 +15,11 @@ from evidence_agent.core.models import Principal, SourceKind, SourceRef, TimeBas
 from evidence_agent.live.gateway import iso
 from evidence_agent.storage.registry import Registry
 
+TIMESTAMP_SOURCES = {TimeBasis.TRANSACTION_OCCURRED_AT: "verified_live.transaction_occurred_at",
+                     TimeBasis.CASE_OPENED_AT: "case_event.opened_at",
+                     TimeBasis.EVALUATION_AT: "server_clock.evaluation_time",
+                     TimeBasis.DOMAIN_EVENT_AT: "verified_case.domain_event_at"}
+
 
 class Clause(VersionedModel):
     revision_id: str = Field(min_length=1)
@@ -68,11 +73,7 @@ class PolicySpec(VersionedModel):
 
     @model_validator(mode="after")
     def coherent(self) -> PolicySpec:
-        sources = {TimeBasis.TRANSACTION_OCCURRED_AT: "verified_live.transaction_occurred_at",
-                   TimeBasis.CASE_OPENED_AT: "case_event.opened_at",
-                   TimeBasis.EVALUATION_AT: "server_clock.evaluation_time",
-                   TimeBasis.DOMAIN_EVENT_AT: "verified_case.domain_event_at"}
-        if self.timestamp_source != sources[self.time_basis]:
+        if self.timestamp_source != TIMESTAMP_SOURCES[self.time_basis]:
             raise ValueError("Time basis requires its approved producer")
         if (self.time_basis is TimeBasis.DOMAIN_EVENT_AT) != bool(self.domain_event):
             raise ValueError("Domain event must be explicitly named")

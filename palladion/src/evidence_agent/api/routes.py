@@ -21,6 +21,8 @@ from evidence_agent.api.schemas import (
     Message,
     MessageResponse,
     PdfUpload,
+    PolicyCreate,
+    PolicySupersede,
     PrincipalProvision,
     Search,
     Upload,
@@ -242,6 +244,161 @@ def provision_membership(case_id: str, body: MembershipProvision, request: Reque
     with services(request, authorization) as (registry, _, principal):
         active = registry.provision_membership(principal, case_id, body.principal_id)
         return {"case_id": case_id, "principal_id": body.principal_id, "active": active}
+
+
+@router.get("/v1/cases/{case_id}/sources")
+def list_sources(case_id: str, request: Request,
+                 authorization: str | None = Header(default=None)) -> object:
+    """List the documents of one case that the caller may know about, newest first.
+
+    A reader sees approved documents whose access list allows them; an uploader also sees their own
+    drafts; a case admin sees every state, including drafts and revoked sources. Metadata only: no source
+    text is returned and being listed grants no right to read it.
+    """
+    from evidence_agent.storage.registry import acl_allows
+    with services(request, authorization) as (registry, _, principal):
+        registry.access.authorize(principal, tenant_id=principal.tenant_id, case_id=case_id, grant="case:read")
+        try:
+            registry.access.authorize(principal, tenant_id=principal.tenant_id, case_id=case_id,
+                                      grant="document:approve", role="admin")
+            admin = True
+        except PermissionDenied:
+            admin = False
+        rows = registry.database.connection.execute(
+            "SELECT revision_id, family_id, source_path, approval_status, index_state, valid_from, valid_to, "
+            "uploader_id, owner_id, registered_at, acl_json FROM document_revisions "
+            "WHERE tenant_id=? AND case_id=? ORDER BY registered_at DESC, revision_id LIMIT 200",
+            (principal.tenant_id, case_id)).fetchall()
+        return {"sources": [{
+            "revision_id": row["revision_id"], "family_id": row["family_id"], "filename": row["source_path"],
+            "state": row["approval_status"], "index_state": row["index_state"],
+            "valid_from": row["valid_from"], "valid_to": row["valid_to"], "uploader_id": row["uploader_id"],
+            "owner_id": row["owner_id"], "registered_at": row["registered_at"],
+            "mine": row["uploader_id"] == principal.principal_id}
+            for row in rows
+            if row["uploader_id"] == principal.principal_id or (
+                acl_allows(row["acl_json"], principal.principal_id)
+                and (admin or row["approval_status"] == "APPROVED"))]}
+
+
+@router.post("/v1/admin/policies", status_code=201)
+def register_policy(body: PolicyCreate, request: Request,
+                    authorization: str | None = Header(default=None)) -> dict[str, str]:
+    """Register one policy version built from exact clauses of approved sources.
+
+    Needs a current case-member admin with document:approve. The author defaults to the uploader of the
+    cited source and must differ from the registering admin; every clause is re-read from the original
+    bytes and every predicate is validated. The time source follows from the time basis, and product and
+    transaction class default to the first case's registered scope. Repeats are idempotent; a changed
+    definition of the same version conflicts.
+    """
+    import json
+
+    from evidence_agent.core.models import TimeBasis
+    from evidence_agent.live.gateway import read_scope
+    from evidence_agent.policy.registry import TIMESTAMP_SOURCES, PolicyRegistry, PolicySpec
+    with services(request, authorization) as (registry, _, principal):
+        scope = read_scope(registry, principal, body.case_ids[0])
+        uploader = registry.database.connection.execute(
+            "SELECT uploader_id FROM document_revisions WHERE tenant_id=? AND revision_id=?",
+            (principal.tenant_id, body.clauses[0].revision_id)).fetchone()
+        if uploader is None:
+            raise PermissionDenied
+        if any(rule.clause_index >= len(body.clauses) for rule in body.rules):
+            raise ValueError("A rule names a clause that is not listed")
+        clauses = [clause.model_dump() for clause in body.clauses]
+        basis = TimeBasis(body.time_basis)
+        # JSON mode keeps the registry's own model as the one validator of the definition.
+        spec = PolicySpec.model_validate_json(json.dumps({
+            "version_id": body.version_id, "family_id": body.family_id,
+            "author_id": body.author_id or uploader["uploader_id"],
+            "product": body.product or scope.product,
+            "transaction_class": body.transaction_class or scope.transaction_class,
+            "allowed_case_ids": body.case_ids, "time_basis": basis.value,
+            "timestamp_source": TIMESTAMP_SOURCES[basis], "domain_event": body.domain_event,
+            "timestamp_max_age_seconds": body.timestamp_max_age_seconds,
+            "valid_from": body.valid_from.isoformat(),
+            "valid_to": body.valid_to.isoformat() if body.valid_to else None,
+            "clauses": clauses, "required_facts": [fact.model_dump() for fact in body.required_facts],
+            "rules": [{"id": rule.id, "predicate": rule.predicate, "outcome": rule.outcome,
+                       "clause": clauses[rule.clause_index]} for rule in body.rules],
+            "default_outcome": body.default_outcome}))
+        PolicyRegistry(registry).register(principal, spec)
+        return {"version_id": spec.version_id, "state": "APPROVED"}
+
+
+@router.get("/v1/admin/policies")
+def list_policies(case_id: str, request: Request,
+                  authorization: str | None = Header(default=None)) -> object:
+    """List the tenant's policy versions that apply to one case, for a current case-member admin.
+
+    Shows definition, state and recorded replacements; it reads no source text and evaluates nothing.
+    """
+    import json
+
+    from evidence_agent.policy.registry import PolicySpec
+    with services(request, authorization) as (registry, _, principal):
+        registry.access.authorize(principal, tenant_id=principal.tenant_id, case_id=case_id,
+                                  grant="document:approve", role="admin")
+        connection = registry.database.connection
+        rows = connection.execute(
+            "SELECT version_id, status, registered_at, decision_table_json FROM policy_versions "
+            "WHERE tenant_id=? ORDER BY family_id, valid_from, version_id LIMIT 500",
+            (principal.tenant_id,)).fetchall()
+        successors: dict[str, list[str]] = {}
+        for event in connection.execute(
+                "SELECT trace_id, safe_payload_json FROM audit_events WHERE tenant_id=? "
+                "AND event_kind='POLICY_SUPERSEDES' ORDER BY occurred_at", (principal.tenant_id,)):
+            payload = json.loads(event["safe_payload_json"])
+            if payload.get("case_id") == case_id:
+                successors.setdefault(payload["predecessor"], []).append(event["trace_id"])
+        policies = []
+        for row in rows:
+            spec = PolicySpec.model_validate_json(row["decision_table_json"])
+            if case_id not in spec.allowed_case_ids:
+                continue
+            policies.append({
+                "version_id": spec.version_id, "family_id": spec.family_id, "state": row["status"],
+                "registered_at": row["registered_at"], "author_id": spec.author_id,
+                "time_basis": spec.time_basis.value, "domain_event": spec.domain_event,
+                "valid_from": spec.valid_from.isoformat(),
+                "valid_to": spec.valid_to.isoformat() if spec.valid_to else None,
+                "product": spec.product, "transaction_class": spec.transaction_class,
+                "case_ids": list(spec.allowed_case_ids),
+                "clauses": [{"revision_id": c.revision_id, "section_id": c.section_id,
+                             "start_byte": c.start_byte, "end_byte": c.end_byte} for c in spec.clauses],
+                "required_facts": [fact.model_dump(mode="json") for fact in spec.required_facts],
+                "rules": [{"id": r.id, "outcome": r.outcome, "predicate": r.predicate,
+                           "clause_index": spec.clauses.index(r.clause)} for r in spec.rules],
+                "default_outcome": spec.default_outcome,
+                "superseded_by": successors.get(spec.version_id, []),
+                "supersedes": [old for old, new in successors.items() if spec.version_id in new]})
+        return {"policies": policies}
+
+
+@router.post("/v1/admin/policies/{version_id}/revoke")
+def revoke_policy(version_id: str, request: Request,
+                  authorization: str | None = Header(default=None)) -> dict[str, str]:
+    """Revoke a policy version under current admin authority; later selections skip it, audit keeps it."""
+    from evidence_agent.policy.registry import PolicyRegistry
+    with services(request, authorization) as (registry, _, principal):
+        PolicyRegistry(registry).revoke(principal, version_id)
+        return {"version_id": version_id, "state": "REVOKED"}
+
+
+@router.post("/v1/admin/policies/{version_id}/supersede")
+def supersede_policy(version_id: str, body: PolicySupersede, request: Request,
+                     authorization: str | None = Header(default=None)) -> dict[str, str]:
+    """Record, with a reason, that this version replaces another for one case from a given instant.
+
+    Both must be approved versions of the same family, time basis, product and transaction class. This is
+    the only way two overlapping versions stop being a POLICY_CONFLICT.
+    """
+    from evidence_agent.policy.registry import PolicyRegistry
+    with services(request, authorization) as (registry, _, principal):
+        PolicyRegistry(registry).supersede(principal, body.predecessor_version_id, version_id,
+                                           case_id=body.case_id, valid_from=body.valid_from, reason=body.reason)
+        return {"version_id": version_id, "supersedes": body.predecessor_version_id}
 
 
 @router.post("/sources/{revision_id}/approve")

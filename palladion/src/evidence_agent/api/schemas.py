@@ -108,3 +108,54 @@ class MessageResponse(RequestModel):
     # Present only when the server was started in evaluator mode (ADR-0100); omitted otherwise.
     experiment: dict[str, Any] | None = None
     evaluator: dict[str, Any] | None = None
+
+
+class PolicyClauseIn(RequestModel):
+    revision_id: str = Field(min_length=1, max_length=100)
+    section_id: str = Field(min_length=1, max_length=200)
+    start_byte: int = Field(ge=0)
+    end_byte: int = Field(gt=0)
+    sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+
+class PolicyFactIn(RequestModel):
+    name: str = Field(min_length=1, max_length=100)
+    type: Literal["enum", "bool", "int", "float", "string"]
+    operation: Literal["get_transaction_status", "get_settlement_status",
+                       "get_incident_status", "get_merchant_summary"]
+    field: str = Field(min_length=1, max_length=100)
+    allowed_values: list[str] = Field(default_factory=list, max_length=32)
+    max_age_seconds: int = Field(gt=0, le=86400)
+
+
+class PolicyRuleIn(RequestModel):
+    id: str = Field(min_length=1, max_length=100)
+    predicate: dict[str, Any]
+    outcome: str = Field(min_length=1, max_length=100)
+    clause_index: int = Field(ge=0)
+
+
+class PolicyCreate(RequestModel):
+    """One policy version; the server derives the time source, author and, when omitted, the case scope."""
+    version_id: str = Field(min_length=1, max_length=100)
+    family_id: str = Field(min_length=1, max_length=100)
+    case_ids: list[str] = Field(min_length=1, max_length=100)
+    time_basis: Literal["TRANSACTION_OCCURRED_AT", "CASE_OPENED_AT", "EVALUATION_AT", "DOMAIN_EVENT_AT"]
+    domain_event: str | None = Field(default=None, max_length=100)
+    timestamp_max_age_seconds: int = Field(default=300, gt=0, le=86400)
+    valid_from: AwareDatetime = Field(strict=False)
+    valid_to: AwareDatetime | None = Field(default=None, strict=False)
+    clauses: list[PolicyClauseIn] = Field(min_length=1, max_length=16)
+    required_facts: list[PolicyFactIn] = Field(default_factory=list, max_length=32)
+    rules: list[PolicyRuleIn] = Field(default_factory=list, max_length=64)
+    default_outcome: str = Field(min_length=1, max_length=100)
+    author_id: str | None = Field(default=None, max_length=100)
+    product: str | None = Field(default=None, max_length=100)
+    transaction_class: str | None = Field(default=None, max_length=100)
+
+
+class PolicySupersede(RequestModel):
+    predecessor_version_id: str = Field(min_length=1, max_length=100)
+    case_id: str = Field(min_length=1, max_length=100)
+    valid_from: AwareDatetime = Field(strict=False)
+    reason: str = Field(min_length=1, max_length=200)
