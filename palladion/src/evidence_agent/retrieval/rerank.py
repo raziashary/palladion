@@ -38,7 +38,11 @@ def _usable_cores() -> int:
 
 
 CPU_THREADS = min(MAX_RERANK_THREADS, _usable_cores())
-MAX_RERANK_CANDIDATES = 30
+MAX_RERANK_CANDIDATES = 30  # what an operator may ask for
+# What a search reranks unless told otherwise. Measured on the benchmark's hybrid-plus-reranker arm over its 72 scored
+# pairs (ADR-0109): 20 found as much as 30 (complete-set 0.083 and 0.083, recall 0.192 and 0.190) in a quarter less
+# time; 15 lost recall (0.158) and 10 more (0.144).
+DEFAULT_RERANK_CANDIDATES = 20
 _ort = importlib.import_module("onnxruntime.capi.onnxruntime_pybind11_state")
 _BACKEND_ERRORS = (OSError, ValueError, RuntimeError, _ort.Fail, _ort.InvalidArgument,
                    _ort.InvalidProtobuf, _ort.NoSuchFile, _ort.RuntimeException)
@@ -56,7 +60,7 @@ class FastEmbedReranker:
         *,
         enabled: bool = False,
         cache_dir: Path | None = None,
-        max_candidates: int = MAX_RERANK_CANDIDATES,
+        max_candidates: int = DEFAULT_RERANK_CANDIDATES,
     ) -> None:
         if not 1 <= max_candidates <= MAX_RERANK_CANDIDATES:
             raise ValueError(f"max_candidates must be between 1 and {MAX_RERANK_CANDIDATES}")

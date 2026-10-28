@@ -515,3 +515,12 @@ def test_the_reranker_fingerprint_pins_the_model_and_not_the_machine(monkeypatch
     changed = FastEmbedReranker(enabled=True)
     changed._describe(hashes)
     assert changed._fingerprint != seen[0][0], "another model revision is another fingerprint"
+
+
+def test_a_search_reranks_twenty_passages_unless_told_otherwise_and_an_operator_may_ask_for_thirty() -> None:
+    from evidence_agent.retrieval.rerank import DEFAULT_RERANK_CANDIDATES, MAX_RERANK_CANDIDATES
+
+    assert FastEmbedReranker(enabled=False).max_candidates == DEFAULT_RERANK_CANDIDATES == 20
+    assert FastEmbedReranker(enabled=False, max_candidates=MAX_RERANK_CANDIDATES).max_candidates == 30
+    with pytest.raises(ValueError, match="between 1 and 30"):
+        FastEmbedReranker(enabled=False, max_candidates=31)
