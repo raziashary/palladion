@@ -574,3 +574,62 @@ actual owned children; test-input-size and extracted-output-size are distinct co
 Additional tests after a broad suite need their own dated evidence; overlapping counts
 must not be summed. A rebuilt70-file source/wheel/installed comparison closes package
 freshness after a docstring correction without inventing a second broad-suite run.
+
+
+## P11 learning — what the running system showed that reading it did not
+
+## L050 — Read what the system returns before designing the fix
+
+The exact-code weakness had four causes, found only by running real searches against the loaded corpus and printing each
+stage: a code in a title counted as one of many mentions, the reranker moved the exact lane's chunks, a sentence-final full
+stop was part of the code, and half the failing questions named a replaced version. The first hypothesis (dense noise
+swamping the keyword hit in fusion) was only part of it. Probe the real path per stage before choosing a change.
+
+## L051 — A later stage can silently undo an earlier stage's guarantee
+
+ADR-0105 put the chunks that define a code first, and its tests proved it in the hybrid mode. The agent's default is the
+reranked mode, where the cross-encoder reordered everything. A guarantee needs a test in the default configuration, and a
+reordering stage must be told what it may not move.
+
+## L052 — A filter that names every element can cost far more than counting and cutting
+
+Filtering the generation count to the 1,167 generations asked about took 888 ms; counting the whole case and cutting the
+answer took 25 ms. The change was made for tidiness and found by a stage timing, not by reading. Time a new query shape
+against the real index before keeping it.
+
+## L053 — Test identifiers inside prose, not alone
+
+A code pattern that allowed a dot inside the code also took the full stop that ends a sentence, so "fails with code
+MS-1817." registered an alias nothing would ask for. A test that listed codes on their own could not see it; the test that
+put a code at the end of a sentence did, and a mutant that survived exposed the wrong premise of the first test.
+
+## L054 — A feature that lets a question name a resource must say whose words may name it
+
+Letting a query name a version (`POL-1@v2`) was approved, but the first version read the reference from whatever query the
+agent sent, so the model could widen what applies by wording its own query, and the numbering counted hidden versions, so
+probing the numbers showed that a hidden one existed. Both were found by independent review, not by the author. State
+whose text counts, and what every observable answer reveals about items the reader cannot see.
+
+## L055 — Measure each speed lever against a lossless baseline
+
+Sending passages to the reranker shortest first gave the identical ranking in 21 percent less time; cutting the input
+length or using the int8 file moved the top five; 20 passages found as much as 30 and 15 lost recall. The multilingual BGE
+reranker nearly doubled the benchmark's complete-set rate on the hybrid arm (0.083 to 0.167) at 19 s per question on this
+CPU against 1.2 s, so it is a quality candidate for a GPU or a smaller model, not a CPU default.
+
+## L056 — Start-up can dominate
+
+A fresh search process takes 12 to 14 s to import and load both models before the first search, against 1.5 to 2 s for the
+search in a warm process. The agent starts one per search. The largest speed lever for the agent path is not in the
+retrieval at all.
+
+## L057 — One timing run on a shared machine proves nothing below a factor of about 1.5
+
+The same commit measured 2.3 s and 1.5 s median in two runs. Repeat a measurement and state the spread before claiming a
+speed-up.
+
+## L058 — Check that a mutation run can fail for the intended reason
+
+A test file with a syntax error made every mutant look killed, and shell here-documents rewrote escape sequences in test
+files twice. Confirm the unmutated suite passes before reading a kill count, and write files with a tool that does not
+reinterpret them.
