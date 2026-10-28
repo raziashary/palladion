@@ -31,28 +31,31 @@ Qwen3.8-27B, GPT-OSS120B or GPT-OSS20B; retrieval-only checks need no provider c
 
 The [benchmark](palladion-benchmark/README.md) tests how well Palladion's search finds the documents a question
 needs, next to common alternatives, on a fictional document set of 1,200 documents. Latest run (Palladion commit
-`49b25cb`, 72 scored questions). **This is a private, exploratory comparison, not a sealed experiment: it does not
-show that any system is better, and where numbers are close they cannot be told apart.**
+`5acc825`, 72 scored questions). **This is a private, exploratory comparison, not a sealed experiment: it does not
+show that any system is better. Palladion was improved after seeing these same questions, so the result is
+in-sample and may not carry to new questions.**
 
 | System | Questions where **all** needed documents were found (of 72) | Share of needed documents found | Typical search time |
 |---|---|---|---|
-| **Palladion's retriever** | **13** | **27%** | 1.8 s |
+| **Palladion's retriever** | **22** | **40%** | 1.0 s |
 | Keyword search | 12 | 29% | 0.01 s |
-| Keyword + meaning + re-reader (the strong common baseline) | 6 | 19% | 1.3 s |
+| Keyword + meaning + re-reader (the strong common baseline) | 6 | 19% | 0.7 s |
 | Keyword + meaning | 4 | 14% | 0.04 s |
 | Meaning search | 1 | 4% | 0.03 s |
 
 In words:
 
-* **Level with plain keyword search, ahead of the strong baseline, but the ranges overlap.** Most methods find the
-  complete set for fewer than one question in five; this is hard for every method tested.
+* **Ahead of the strong baseline on this run** (22 against 6 complete sets; range of the difference +6 to +35
+  percentage points), and ahead of plain keyword search on the complete set. Most methods still find the complete
+  set for fewer than a third of the questions.
 * **Where Palladion is clearly different:** it almost never returns an out-of-date version of a document (4.5% of
   questions, against 8% to 39% for the others) and never returns a draft or unapproved document (0%, against 20% to
   29%). The others ignore approval state and validity dates, so this compares capabilities, not equal effort.
-* **Where it is weak:** looking up an exact code or rule number (3 of 10 questions, keyword search finds 8 of 10),
-  questions where two official sources disagree (0 of 10), who may see what (0 of 5) and broad summaries (0 of 7).
+* **Exact codes and rule numbers:** 10 of 10 questions, against 8 for keyword search (it was 3 before this work).
+* **Where it is still weak:** two official sources that disagree (0 of 10 questions; the strong baseline finds 4),
+  who may see what (0 of 5) and broad summaries (0 of 7).
 * **Answering** (separate test, older Palladion version): almost no system answered a question completely right,
-  and the answering model, not only the search, limits the result. To be re-run.
+  and the answering model, not only the search, limits the result. To be re-run when the model quota renews.
 
 The full plain-language report, with every test, the history of the improvements and what is still to do, is in
 [report.md](report.md).
@@ -106,6 +109,34 @@ Path B embedding jobs remain controlled operations.
 P10 adds weighted deterministic classification, bounded conversation context, typed
 graph-link administration and extra text/PDF formats. Its current verification and
 limitations are tracked in [P10 evidence](palladion/docs/development/evidence/P10_CLASSIFICATION_AND_FORMATS.md).
+
+## Inside a search, and what "policy" means
+
+The longer version, with every stage and file, is in [architecture.md](architecture.md). The short version:
+
+```mermaid
+flowchart TD
+    Q[Question] --> E[1. Which documents can apply?<br/>approved, readable, valid at the case time, not replaced]
+    E --> S[2. One Qdrant call, two searchers at once<br/>BM25 keywords + dense meaning, merged by RRF]
+    Q --> X[2b. Exact-code lane<br/>POL-001, MS-1817, POL-001@v2]
+    S --> R[3. Re-check every candidate<br/>original bytes, approval, access, window]
+    X --> R
+    R --> K[4. Reranker re-reads up to 30 passages with the question]
+    K --> C[5. Bounded neighbouring context]
+    C --> O[6. Passages with citations]
+```
+
+* **BM25 and dense run at the same time**, not one after the other. BM25 matches the question's words (strong on exact
+  codes), the dense model matches meaning (strong on paraphrase and Indonesian/English). Their two ranked lists are merged
+  by reciprocal rank fusion. The **reranker comes after** the safety checks and only reorders what survived.
+* **Search is not the policy engine.** Search finds documents and shows what they say. The **policy engine** is plain code
+  (no language model) that applies an *approved rule table* to a case: it picks the policy version that applies at the
+  time the table names, reads the live facts itself (the agent can only name which observations to use, never supply a
+  value), checks they are fresh, runs the rules, and returns a decision with the matched rules and the source clauses
+  (`DETERMINED`, `INCOMPLETE_INPUT`, `POLICY_CONFLICT`, ...). The agent calls search or `evaluate_policy` as the question
+  needs; the final gate checks every released claim against the original evidence or the policy decision.
+* A question may name a **version** (`POL-001@v2` means the second version of POL-001) and is then answered by that
+  version even if a newer one replaced it. Without a version, only the version that applies at the case time is returned.
 
 ## What works today
 
