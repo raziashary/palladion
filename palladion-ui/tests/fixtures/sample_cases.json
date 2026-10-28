@@ -1,0 +1,152 @@
+{
+ "schema_version": 1,
+ "annotation_status": "PILOT",
+ "annotation_note": "Synthetic blueprint inventory only. No independent human ratification or adjudication is claimed.",
+ "principals": [
+  {
+   "principal_id": "admin-a",
+   "tenant_id": "tenant-a",
+   "roles": [
+    "admin"
+   ],
+   "allowed_case_ids": [
+    "case-42",
+    "case-43"
+   ],
+   "grants": [
+    "case:read",
+    "document:approve",
+    "source:read"
+   ]
+  },
+  {
+   "principal_id": "uploader-a",
+   "tenant_id": "tenant-a",
+   "roles": [
+    "uploader"
+   ],
+   "allowed_case_ids": [
+    "case-42",
+    "case-43"
+   ],
+   "grants": [
+    "case:read",
+    "document:upload",
+    "source:read"
+   ]
+  },
+  {
+   "principal_id": "reader-a",
+   "tenant_id": "tenant-a",
+   "roles": [
+    "reader"
+   ],
+   "allowed_case_ids": [
+    "case-42"
+   ],
+   "grants": [
+    "case:read",
+    "source:read"
+   ]
+  },
+  {
+   "principal_id": "reader-a-limited",
+   "tenant_id": "tenant-a",
+   "roles": [
+    "reader"
+   ],
+   "allowed_case_ids": [
+    "case-42"
+   ],
+   "grants": [
+    "case:read",
+    "source:read"
+   ]
+  },
+  {
+   "principal_id": "admin-b",
+   "tenant_id": "tenant-b",
+   "roles": [
+    "admin"
+   ],
+   "allowed_case_ids": [
+    "case-88"
+   ],
+   "grants": [
+    "case:read",
+    "document:approve",
+    "source:read"
+   ]
+  },
+  {
+   "principal_id": "uploader-b",
+   "tenant_id": "tenant-b",
+   "roles": [
+    "uploader"
+   ],
+   "allowed_case_ids": [
+    "case-88"
+   ],
+   "grants": [
+    "case:read",
+    "document:upload",
+    "source:read"
+   ]
+  },
+  {
+   "principal_id": "reader-b",
+   "tenant_id": "tenant-b",
+   "roles": [
+    "reader"
+   ],
+   "allowed_case_ids": [
+    "case-88"
+   ],
+   "grants": [
+    "case:read",
+    "source:read"
+   ]
+  }
+ ],
+ "cases": [
+  {
+   "case_id": "case-42",
+   "tenant_id": "tenant-a",
+   "product": "QR_DEMO",
+   "transaction_class": "DEMO_STANDARD",
+   "transaction_id": "TX-DEMO-102",
+   "opened_at": "2026-10-17T06:00:00Z",
+   "allowed_principal_ids": [
+    "admin-a",
+    "uploader-a",
+    "reader-a",
+    "reader-a-limited"
+   ]
+  },
+  {
+   "case_id": "case-43",
+   "tenant_id": "tenant-a",
+   "product": "QR_DEMO",
+   "transaction_class": "DEMO_STANDARD",
+   "transaction_id": "TX-DEMO-143",
+   "opened_at": "2026-10-17T06:20:00Z",
+   "allowed_principal_ids": [
+    "admin-a",
+    "uploader-a"
+   ]
+  },
+  {
+   "case_id": "case-88",
+   "tenant_id": "tenant-b",
+   "product": "QR_DEMO",
+   "transaction_class": "DEMO_STANDARD",
+   "transaction_id": "TX-DEMO-288",
+   "opened_at": "2026-10-17T06:30:00Z",
+   "allowed_principal_ids": [
+    "admin-b",
+    "uploader-b",
+    "reader-b"
+   ]
+  }
+ ]
+}

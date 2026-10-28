@@ -1,0 +1,6 @@
+{
+  "name": "palladion-ui-web",
+  "private": true,
+  "type": "module",
+  "scripts": { "test": "node --test" }
+}
