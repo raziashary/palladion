@@ -1,0 +1,22 @@
+{
+  "kind": "registration",
+  "decision": "BADR-0047",
+  "scope": "Track A (retrieval only) on six fresh worlds; Tracks B and C are not part of this registration",
+  "endpoint": "complete_set_at_k",
+  "condition": "C2",
+  "k": 10,
+  "budget_words": 4000,
+  "primary": {"arm": "R7a", "reference": "R3"},
+  "secondary_references": ["R0", "R0x", "R3f"],
+  "minimum_effect": 0.05,
+  "claim_rule": "CONFIRMED only when the lower bound of the 95% family-clustered interval of the paired difference (R7a minus the reference, intention to treat) is above the minimum effect",
+  "multiplicity": "Holm over the secondary pairings; the primary pairing is not adjusted",
+  "arms": ["R0", "R0x", "R1", "R2", "R3", "R3f", "R7a"],
+  "worlds": ["T101", "T102", "T103", "T104", "T105", "T106"],
+  "repeats": 3,
+  "condition_c1": "reported, not primary",
+  "wording_variants": "scored beside the originals on the same questions; reported as the change in CompleteSet@10, no claim",
+  "withdrawn_questions": "none; a question found defective after the seal stays in and is listed",
+  "labels": "delegated and unaudited by a human (OQ13 accepted in writing by the owner, 2026-10-28)",
+  "after_the_seal": "any change to code, configuration, this file or a world makes later results exploratory"
+}
