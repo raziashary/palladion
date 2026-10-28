@@ -10,11 +10,12 @@ import pytest
 from evidence_agent.core.errors import ResourceConflict
 from evidence_agent.core.ids import digest_bytes
 from evidence_agent.core.retrieval import TEXT_REPRESENTATION, Chunk, index_text
-from evidence_agent.ingest.chunking import chunk_blocks
-from evidence_agent.ingest.parsing import PARSER_VERSION, parse_document, source_mime
+from evidence_agent.ingest.chunking import PACK_CHARS, chunk_blocks
+from evidence_agent.ingest.parsing import PARSER_VERSION, ParsedBlock, parse_document, source_mime
 from evidence_agent.ingest.pipeline import IngestPipeline
 from evidence_agent.storage.qdrant import QdrantIndex
 
+from .search_support import FILLER
 from .test_pipeline import MemoryIndex, _setup
 from .test_retrieval import _Client, _Encoder
 
@@ -22,6 +23,12 @@ BANNER = "> FICTIONAL: Meridian Switchworks is an invented company.\n\n"
 POLICY = (
     BANNER + "# Reversal policy\n\n- Status: approved\n- Effective from: 2026-01-01\n\n"
     "## 4 Requirements\n\n4.1 A request after 24 hours is refused.\n\n4.2 Amounts above 10 are escalated.\n"
+).encode("utf-8")
+# The same policy with sections too long to share a chunk (see PACK_CHARS), so each section is a chunk of its own.
+BIG_POLICY = (
+    BANNER + f"# Reversal policy\n\n- Status: approved\n- Effective from: 2026-01-01\n- Notes: {FILLER}\n\n"
+    f"## 4 Requirements\n\n4.1 A request after 24 hours is refused. {FILLER}\n\n"
+    f"## 5 Escalation\n\n5.1 Amounts above 10 are escalated. {FILLER}\n"
 ).encode("utf-8")
 
 
@@ -46,7 +53,7 @@ def test_a_heading_with_no_text_of_its_own_joins_the_block_below_it() -> None:
 
 
 def test_every_chunk_knows_the_titles_above_it() -> None:
-    chunks = chunks_of(POLICY, max_chars=120)
+    chunks = chunks_of(BIG_POLICY)
     requirement = next(c for c in chunks if "after 24 hours" in c.text)
     assert requirement.heading_path == ("Reversal policy", "4 Requirements")
     assert requirement.section_id == "reversal-policy/4-requirements"
@@ -79,7 +86,7 @@ def test_the_index_reads_the_heading_path_but_stores_and_hashes_the_canonical_te
 
     client = _Client()
     index = QdrantIndex(collection_name="ctx", client=client, encoder=Spy(), active_generation="gen")  # type: ignore[arg-type]
-    chunk = next(c for c in chunks_of(POLICY, max_chars=120) if "after 24 hours" in c.text)
+    chunk = next(c for c in chunks_of(BIG_POLICY) if "after 24 hours" in c.text)
     index.ensure_collection()
     index.upsert([chunk], "gen", ())
     assert seen == ["Reversal policy > 4 Requirements\n\n" + chunk.text]
@@ -108,7 +115,7 @@ def revision(tmp_path: Path):  # type: ignore[no-untyped-def]
     database, registry, catalog, uploader, first, _ = _setup(tmp_path)
     admin = registry.access.authenticate("approver")
     new = registry.register_source(uploader, tenant_id="tenant-a", case_id="case-1", family_id="POL",
-                                   content=POLICY, source_path="policy.md", owner_id="uploader")
+                                   content=BIG_POLICY, source_path="policy.md", owner_id="uploader")
     registry.approve_source(admin, new)
     try:
         yield database, catalog, uploader, new
@@ -170,3 +177,61 @@ def test_no_parser_version_can_move_a_stored_chunk_span(revision) -> None:
         "SELECT chunk_id FROM p02_chunks WHERE revision_id=? ORDER BY start_byte LIMIT 1)", (new,))
     with pytest.raises(ResourceConflict):
         IngestPipeline(catalog, index).index(uploader, new)
+
+
+# ---------------------------------------------------------------- small sections share a chunk, whole (ADR-0106 addendum)
+
+
+def test_small_neighbouring_sections_share_a_chunk_that_belongs_to_the_section_above_them() -> None:
+    content = b"# Policy\n\n## A\n\nfirst clause.\n\n## B\n\nsecond clause.\n\n## C\n\nthird clause.\n"
+    chunks = chunks_of(content)
+    assert len(chunks) == 1 and all(clause in chunks[0].text for clause in ("first", "second", "third"))
+    assert chunks[0].heading_path == ("Policy",) and chunks[0].section_id == "policy", "the shared titles"
+
+
+def test_packing_fills_a_chunk_with_whole_sections_up_to_the_target_and_never_splits_one() -> None:
+    def section(number: int) -> str:  # two paragraphs, about 420 characters in all
+        words = [f"w{number}x{m}" for m in range(70)]
+        return f"## Section {number}\n\n" + " ".join(words[:35]) + "\n\n" + " ".join(words[35:])
+
+    content = ("# Packet\n\n" + "\n\n".join(section(n) for n in range(6)) + "\n").encode()
+    chunks = chunks_of(content)
+    assert len(chunks) > 1 and all(len(c.text) <= PACK_CHARS for c in chunks)
+    assert all(c.text.startswith(("## ", "# ")) for c in chunks), "every chunk starts at a section boundary"
+    assert sum(c.text.count("## Section") for c in chunks) == 6, "no section is dropped"
+    for number in range(6):
+        holders = {c.chunk_id for c in chunks if f"## Section {number}\n" in c.text}
+        for marker in (f"w{number}x0 ", f"w{number}x69"):  # first and last words, either side of the paragraph break
+            assert {c.chunk_id for c in chunks if marker in c.text} == holders, "a section is in one chunk"
+
+
+def test_a_heading_that_fits_the_previous_chunk_does_not_leave_its_body_behind() -> None:
+    previous = " ".join(f"a{n}" for n in range(230))  # a section of about 1,100 characters
+    body = " ".join(f"b{n}" for n in range(300))  # a section too large to share the previous chunk
+    chunks = chunks_of(f"# Policy\n\n## A\n\n{previous}\n\n## B\n\n{body}\n".encode())
+    heading = next(c for c in chunks if "## B" in c.text)
+    assert "b0 " in heading.text and "b299" in heading.text, "the heading and its body are one chunk"
+    assert heading.heading_path == ("Policy", "B")
+    assert not any(c.text.rstrip().endswith("## B") for c in chunks)
+
+
+def test_a_heading_with_no_text_after_it_is_part_of_the_chunk_s_shared_path() -> None:
+    chunks = chunks_of(b"# Policy\n\n## A\n\nclause a.\n\n## B\n")
+    assert len(chunks) == 1 and chunks[0].text.rstrip().endswith("## B")
+    assert chunks[0].heading_path == ("Policy",), "the chunk holds text of A and the title B, so only Policy is shared"
+
+
+def test_a_section_larger_than_the_target_stays_whole_and_is_not_joined_by_its_neighbours() -> None:
+    content = f"# Packet\n\n## Long\n\n{FILLER}\n\n## Short\n\nclause after.\n".encode()
+    chunks = chunks_of(content)
+    long_chunk = next(c for c in chunks if "pad0 " in c.text)
+    assert "clause after" not in long_chunk.text and len(long_chunk.text) > PACK_CHARS
+
+
+def test_blocks_that_overlap_are_never_joined_into_one_chunk() -> None:
+    source = b"first words here and second words here"
+    first = ParsedBlock("a", ("A",), source[:20].decode(), 0, 20, 1, 1, "paragraph")
+    second = ParsedBlock("b", ("B",), source[10:].decode(), 10, len(source), 1, 1, "paragraph")
+    chunks = chunk_blocks([first, second], source_bytes=source, tenant_id="tenant-a", case_id="case-1",
+                          revision_id="rev-1", source_sha256=digest_bytes(source))
+    assert [(c.start_byte, c.end_byte) for c in chunks] == [(0, 20), (10, len(source))]

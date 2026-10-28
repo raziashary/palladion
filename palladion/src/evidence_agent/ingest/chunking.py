@@ -10,9 +10,13 @@ from dataclasses import dataclass
 from evidence_agent.core.ids import chunk_id
 from evidence_agent.core.retrieval import Chunk
 
-from .parsing import ParsedBlock
+from .parsing import ParsedBlock, section_id_for
 
 DEFAULT_MAX_CHARS = 2400
+# Neighbouring chunks are joined while together they fit this many characters, because a section of a hundred characters
+# is a poor unit to retrieve: it carries no context of its own and many of them crowd the result. Only whole chunks are
+# joined, so a section is never split to fill one (ADR-0106 addendum).
+PACK_CHARS = 1200
 _SENTENCE_END = re.compile(r"[.!?\u3002][\"')\]]*\s")
 _EXCEPTION = re.compile(
     r"\b(?:except(?:ion)?|unless|however|provided that|notwithstanding|only if)\b",
@@ -47,9 +51,11 @@ def chunk_blocks(
 
     Exception clauses stay with the preceding rule when their exact source span
     fits the target. A heading or an untitled preamble (a banner above the first heading) joins the block that
-    follows it when the two fit together in one chunk, and the chunk takes that block's section; otherwise, or when
-    nothing follows, it is kept as its own chunk. Oversized blocks are split at Unicode
-    character boundaries, preferring a line break, then a sentence end, then a space.
+    follows it when the two fit together in one chunk; otherwise, or when nothing follows, it is kept as its own chunk.
+    Neighbouring chunks are then joined while together they fit PACK_CHARS, so small sections share a chunk and no
+    section is split to fill one. A chunk belongs to the smallest section that contains its blocks (its heading path is
+    their shared titles). Oversized blocks are split at Unicode character boundaries, preferring a line break, then a
+    sentence end, then a space.
     """
     if not blocks or max_chars < 1:
         raise ValueError("blocks and a positive max_chars are required")
@@ -62,11 +68,7 @@ def chunk_blocks(
             same_section = bool(current and current[-1].section_id == block.section_id)
             only_lead = bool(current and all(_is_lead(item) for item in current))
             contiguous = bool(current and block.start_byte >= current[-1].end_byte)
-            combined_size = (
-                len(source_bytes[current[0].start_byte : block.end_byte].decode("utf-8"))
-                if current
-                else 0
-            )
+            combined_size = _chars(source_bytes, current[0], block) if current else 0
             if (
                 current
                 and contiguous
@@ -77,19 +79,33 @@ def chunk_blocks(
             else:
                 groups.append([block])
 
-    raw: list[_ChunkSpan] = []
+    packed: list[list[ParsedBlock]] = []
     for group in groups:
+        previous = packed[-1] if packed else None
+        if (
+            previous
+            and group[0].start_byte >= previous[-1].end_byte
+            and _chars(source_bytes, previous[0], group[-1]) <= min(PACK_CHARS, max_chars)
+        ):
+            previous.extend(group)
+        else:
+            packed.append(group)
+
+    raw: list[_ChunkSpan] = []
+    for group in packed:
         start = group[0].start_byte
         end = group[-1].end_byte
-        content = next((item for item in group if not _is_lead(item)), group[0])
-        section_id = content.section_id
+        # A banner or heading above the first text carries no title of its own; every block after it counts.
+        first_text = next((index for index, item in enumerate(group) if not _is_lead(item)), 0)
+        heading_path = _shared_path([item.heading_path for item in group[first_text:]])
+        section_id = section_id_for(heading_path)
         text = source_bytes[start:end].decode("utf-8", errors="strict")
         identifier = chunk_id(tenant_id, revision_id, start, end)
         raw.append(
             _ChunkSpan(
                 chunk_id=identifier,
                 section_id=section_id,
-                heading_path=content.heading_path,
+                heading_path=heading_path,
                 start_byte=start,
                 end_byte=end,
                 line_start=group[0].line_start,
@@ -99,7 +115,7 @@ def chunk_blocks(
             )
         )
 
-    # Continuation chunks in the same section link to that section's first chunk.
+    # Later chunks of the same section (or of the same parent section, when they pack its subsections) link to the first.
     first_by_section: dict[str, str] = {}
     for record in raw:
         first_by_section.setdefault(record.section_id, record.chunk_id)
@@ -133,6 +149,21 @@ def chunk_blocks(
             )
         )
     return tuple(output)
+
+
+def _chars(source_bytes: bytes, first: ParsedBlock, last: ParsedBlock) -> int:
+    """The characters of the source from the start of `first` to the end of `last`."""
+    return len(source_bytes[first.start_byte : last.end_byte].decode("utf-8"))
+
+
+def _shared_path(paths: Sequence[tuple[str, ...]]) -> tuple[str, ...]:
+    """The titles every block of a chunk is under: the longest common start of their heading paths."""
+    shared: list[str] = []
+    for titles in zip(*paths):
+        if len(set(titles)) != 1:
+            break
+        shared.append(titles[0])
+    return tuple(shared)
 
 
 def _is_lead(block: ParsedBlock) -> bool:

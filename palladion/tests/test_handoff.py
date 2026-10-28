@@ -9,6 +9,7 @@ from evidence_agent.core.retrieval import Candidate
 from evidence_agent.main import create_app
 from evidence_agent.retrieval.embeddings import PassageTokenizer
 
+from .search_support import FILLER
 from .test_pipeline import MemoryIndex
 
 
@@ -210,7 +211,8 @@ def test_http_twenty_passages_and_tool_cap_remain_distinct(handoff):
     from pydantic import ValidationError
 
     from evidence_agent.agent.tools import KnowledgeArgs
-    content = "# Passage budget\n"+"".join(f"\n## Section {n}\n\nCanonical evidence paragraph {n}.\n" for n in range(25))
+    content = "# Passage budget\n"+"".join(
+        f"\n## Section {n}\n\nCanonical evidence paragraph {n}. {FILLER}\n" for n in range(25))
     upload_approved(handoff,content=content)
     response = handoff.client.post("/search",headers={"Authorization":"Bearer reader"},
         json={"case_id":"case-42","query":"evidence paragraph","limit":20})

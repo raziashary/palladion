@@ -18,7 +18,7 @@ from evidence_agent.core.retrieval import Candidate
 from evidence_agent.storage.applicability import Applicability
 from evidence_agent.storage.exact import ExactIndex
 
-from .search_support import NOW, Corpus, at
+from .search_support import FILLER, NOW, Corpus, at
 
 
 @pytest.fixture
@@ -149,7 +149,7 @@ def test_instants_must_be_aware_and_bounded(corpus):
 
 def sectioned(count: int) -> str:
     return "# Packet\n\n" + "\n\n".join(
-        f"## Section {i}\n\n" + " ".join(["clause"] * (count - i) + [f"unique{i}"]) for i in range(count))
+        f"## Section {i}\n\n" + " ".join(["clause"] * (count - i) + [f"unique{i}", FILLER]) for i in range(count))
 
 
 def test_ranked_passages_keep_every_slot_a_neighbour_in_another_section_cannot_take(corpus):

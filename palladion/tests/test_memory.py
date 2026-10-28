@@ -354,17 +354,18 @@ def test_conversation_drops_released_document_text_after_source_revocation(p03):
     revision = p03.revisions["SOP-2026-B"]
     generation = IngestPipeline(catalog, MemoryIndex()).index(p03.admin, revision)
     chunk = catalog.chunks_for_revision(p03.reader, revision)[0]
+    quote = chunk.text[:200]  # a released claim quotes the passage; a conversation keeps claims of at most 512 characters
     store = CaseStore(p03.registry, p03.reader, "case-42")
     store.append("REQUEST", "document-history", {"query": "Please explain the source."})
     store.append("RELEASE", "document-history", {"disposition": "SUPPORTED", "answer": "Attributed source.",
-        "verified_claims": [{"text": chunk.text, "evidence_ids": [chunk.chunk_id]}],
+        "verified_claims": [{"text": quote, "evidence_ids": [chunk.chunk_id]}],
         "citations": [{"kind": "DOCUMENT", "evidence_id": chunk.chunk_id,
             "revision_id": revision, "generation": generation,
             "start_byte": chunk.start_byte, "end_byte": chunk.end_byte}]})
-    assert store.conversation()[0][0].released_claims[0].text == chunk.text
+    assert store.conversation()[0][0].released_claims[0].text == quote
     p03.registry.revoke_source(p03.admin, revision)
     packet = build_packet(store, "follow up")
-    assert chunk.text not in packet.model_dump_json()
+    assert quote not in packet.model_dump_json()
     assert packet.conversation_turns[0].released_claims == ()
     assert packet.conversation_turns[0].assistant_response is None
     assert packet.conversation_turns[0].omitted_claims == 1

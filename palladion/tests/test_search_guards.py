@@ -16,7 +16,7 @@ from evidence_agent.storage.applicability import MAX_APPLICABILITY_INSTANTS, App
 from evidence_agent.storage.catalog import Catalog
 from evidence_agent.storage.exact import ExactIndex
 
-from .search_support import NOW, Corpus, LeakyIndex, at
+from .search_support import FILLER, NOW, Corpus, LeakyIndex, at
 from .test_pipeline import MemoryIndex
 
 
@@ -98,8 +98,8 @@ def test_context_takes_exactly_its_reserved_share_after_the_ranked_passages(corp
 
 
 def test_a_chunk_in_another_section_is_context_only_when_it_is_linked(corpus) -> None:
-    revision = corpus.add("RULE", "# Rule\n\n## Terms\n\nalpha applies to reversals.\n\n## Charities\n\n"
-                          "Merchants that are charities follow the schedule in the annex.")
+    revision = corpus.add("RULE", f"# Rule\n\n## Terms\n\nalpha applies to reversals. {FILLER}\n\n## Charities\n\n"
+                          f"Merchants that are charities follow the schedule in the annex. {FILLER}")
     terms, exception = corpus.catalog.chunks_for_revision(corpus.uploader, revision)
     assert terms.section_id != exception.section_id
     before = corpus.search.search(corpus.uploader, "case-1", "alpha", mode="reranked", limit=4, as_of=NOW)
@@ -200,8 +200,8 @@ def test_documents_indexed_before_a_representation_change_are_not_served_until_i
 
 
 def test_an_identifier_past_the_candidate_bound_is_reported_as_truncated_not_as_unknown(corpus, monkeypatch) -> None:
-    corpus.add("POL-A", "# POL-A\n\n## One\n\nFirst part.\n\n## Two\n\nSecond part.\n\n## Three\n\nThird part.",
-               register_aliases=True)
+    corpus.add("POL-A", f"# POL-A\n\n## One\n\nFirst part. {FILLER}\n\n## Two\n\nSecond part. {FILLER}\n\n"
+                        f"## Three\n\nThird part. {FILLER}", register_aliases=True)
     corpus.add("ERR-B", "# ERR-B\n\nA registered code the lane never reaches.", register_aliases=True)
     monkeypatch.setattr("evidence_agent.storage.exact.MAX_EXACT_CANDIDATES", 2)
     exact = ExactIndex(corpus.catalog).hits(corpus.uploader, "case-1", "POL-A ERR-B")

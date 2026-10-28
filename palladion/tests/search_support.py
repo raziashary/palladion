@@ -19,6 +19,9 @@ def at(text: str) -> datetime:
 
 
 NOW = at("2026-10-18T00:00:00")
+# Sections shorter than this are packed into one chunk (ingest.chunking.PACK_CHARS); a test that needs one chunk per
+# section pads each section past it with words no query uses.
+FILLER = " ".join(f"pad{n}" for n in range(260))
 
 
 class RankedIndex(MemoryIndex):

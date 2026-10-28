@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import PurePosixPath
 
 from evidence_agent.core.errors import ValidationFailure
 
-PARSER_VERSION = "mdtxt-v2"  # v2: lead blocks join the next chunk, sentence-aware splits (ADR-0106)
+PARSER_VERSION = "mdtxt-v3"  # v2: lead blocks join the next chunk, sentence-aware splits; v3: small sections share a chunk (ADR-0106)
 MAX_SOURCE_BYTES = 10 * 1024 * 1024
 _MIME_BY_SUFFIX = {
     ".md": "text/markdown",
@@ -115,7 +116,7 @@ def parse_document(content: bytes, *, filename: str, content_type: str) -> tuple
             title = heading.group(1).strip()
             heading_stack = heading_stack[: level - 1]
             heading_stack.append(title)
-            section_id = _section_id(heading_stack)
+            section_id = section_id_for(heading_stack)
             blocks.append(
                 ParsedBlock(section_id, tuple(heading_stack), line, start, end, line_number, line_number, "heading")
             )
@@ -160,7 +161,7 @@ def parse_document(content: bytes, *, filename: str, content_type: str) -> tuple
         block_lines = "".join(item[3] for item in offsets[index:stop])
         blocks.append(
             ParsedBlock(
-                _section_id(heading_stack),
+                section_id_for(heading_stack),
                 tuple(heading_stack),
                 block_lines,
                 block_start,
@@ -182,7 +183,8 @@ def parse_document(content: bytes, *, filename: str, content_type: str) -> tuple
     return tuple(blocks)
 
 
-def _section_id(path: list[str]) -> str:
+def section_id_for(path: Sequence[str]) -> str:
+    """The identifier of the section a heading path names; `root` above the first heading."""
     if not path:
         return "root"
     return "/".join(_slug(part) for part in path)
