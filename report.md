@@ -22,6 +22,28 @@ answering, is to **find the right documents**: the version of the policy that ap
 the person is allowed to see, the rule and its exception. The benchmark measures that job against other,
 well-known ways of searching, and then measures answering.
 
+### How this differs from a normal RAG system
+
+A normal RAG system finds the passages most similar to the question and lets a language model write the answer, so
+whatever the search returns is trusted. Palladion treats the model as untrusted:
+
+* a found document is only a *candidate* until it is re-checked: approved, readable by this person, valid at the case's
+  time, not replaced, and still identical to the original file;
+* the *version* of a policy that applies is chosen by plain code from a date the policy names, and two valid versions
+  with no recorded precedence are reported as a conflict instead of guessed;
+* *live facts* (a transaction's status) carry their own times and freshness limits;
+* every released claim is re-checked against its evidence, and an operational answer always asks for human review;
+* "I cannot verify this" is a normal, specific answer.
+
+The longer comparison is in [architecture.md](architecture.md) (sections 8 and 10), with worked examples in section 9.
+
+### What this benchmark can and cannot say about that
+
+The benchmark's first test (Test A below) only asks whether a *search* finds the right documents. So it can speak to the
+first bullet above, and, in section 4, to Palladion's checks of version, approval and access. It cannot yet speak to
+the policy engine, the critic or the release gate: those act when the system answers (Tests B and C), which have not
+been re-run on the current Palladion. A good search score does not show that answers are more trustworthy.
+
 ## 2. Who is being compared (plain names)
 
 The benchmark's files use short codes (R0, R1, ... E4). This report uses names.
@@ -38,6 +60,22 @@ The benchmark's files use short codes (R0, R1, ... E4). This report uses names.
 | **LangGraph agent** | The same toolkit's agent that decides its own steps. | E1 |
 | **Palladion without its critic** | The whole Palladion agent with its second-opinion step switched off. | E3 |
 | **Full Palladion** | The whole Palladion agent, critic on. | E4 |
+
+### The eight questions the benchmark is built around
+
+The benchmark's design (its "research protocol") states eight hypotheses, H1 to H8. None has a confirmatory result.
+Here is each one in plain words and what exists so far:
+
+| | The question | What exists so far |
+|---|---|---|
+| H1 | Does Palladion find complete, applicable evidence better, especially for several documents, exceptions and replaced versions? | Test A, exploratory and in-sample (section 4). Not confirmed |
+| H2 | Do the source checks and deterministic policy engine reduce unsupported advice to act? | Test B on an older Palladion: no difference seen between systems. To be re-run |
+| H3 | Does the critic catch missing preconditions that the gate alone misses? | Palladion's own small paired pilot: neutral. Not measured by the benchmark |
+| H4 | Does the graph add enough to justify its cost? | Palladion's own pilot: no extra recoveries (graph stays off). The benchmark's graph systems are not measured |
+| H5 | Does the continuity packet reduce drift across turns? | Not measured |
+| H6 | Does choosing the policy version by time prevent wrong-version decisions? | Test A shows version questions are still hard for search (2 of 10); the policy engine itself is not in Test A. Not measured |
+| H7 | Can the extra checks cut unsupported claims without refusing too many answerable questions? | Not measured |
+| H8 | How do accuracy, safety, cost and slow responses scale? | Search time is measured (section 4); cost at scale is not |
 
 ## 3. What kinds of questions
 
@@ -218,6 +256,7 @@ Palladion's agent answered 3 of 8 turns in an earlier trial. None of this suppor
 | Test C (whole systems) | Partly run; needs model quota |
 | Graph systems | Built; not measured |
 | Final publication package (licence, dataset card, reproducibility) | Not done |
+| Plain-language documentation (README, [architecture.md](architecture.md), this report) | Written; worked examples are reconstructions, not recorded runs |
 
 ## 9. Limits, so nobody over-reads this
 

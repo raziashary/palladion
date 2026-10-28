@@ -7,8 +7,8 @@ recognize when evidence is insufficient, preserve case context, and challenge it
 conclusions before release. The initial research domain is support investigation using
 fictional payment documents and read-only mock operational systems.
 
-The project is being built system-first, without a UI. Its research claims remain
-hypotheses until tested against controlled baselines and held-out cases.
+The system was built first, without a UI; [`palladion-ui/`](palladion-ui/README.md) is now a thin local client on top of its
+HTTP API. Its research claims remain hypotheses until tested against controlled baselines and held-out cases.
 
 **Current state:** P01–P03 are verified. P04's bounded runtime, four read tools, claim
 gate, messages/citations, scoped developer traces/readiness and cancellable search worker
@@ -26,6 +26,28 @@ are explicitly unavailable in the [results](palladion/docs/development/evidence/
 Retrieval uses real dense/BM25 Qdrant; the Docker-free WSL launcher is documented in the
 [application README](palladion/README.md). Generative commands explicitly enable Groq
 Qwen3.8-27B, GPT-OSS120B or GPT-OSS20B; retrieval-only checks need no provider call.
+
+## How Palladion differs from a normal RAG system
+
+A normal RAG system retrieves the passages most similar to a question and asks a language model to write the answer.
+Retrieval is a *relevance* problem, and the model decides what is true. Palladion treats the model as an untrusted
+component: it may investigate, but approved sources, deterministic rules and re-checked evidence decide what can be
+claimed.
+
+| | Normal RAG | Palladion |
+|---|---|---|
+| Question it answers | What text is relevant? | What may be claimed, and what is the evidence? |
+| After retrieval | Passages go straight into the prompt | Every candidate is re-checked against the catalog and the original bytes: approval, validity window, replacement, access list, index generation ([architecture §8](architecture.md#8-what-re-checking-a-candidate-means)) |
+| Which version of a policy applies | Whichever chunk scores highest | Chosen by deterministic code from a time the policy declares; two valid versions with no recorded precedence give `POLICY_CONFLICT`, never a guess |
+| Other evidence | Documents only | Documents, deterministic policy decisions, timestamped read-only observations, case events |
+| A citation | An ID the model attaches | A handle that reads the exact span back under current access and approval |
+| "I cannot tell" | Rare | A first-class outcome that names the missing requirement |
+| Self-check | None | An independent-context critic, then a deterministic gate that re-reads every cited item |
+| Text inside a document or message | May be followed | Evidence to assess, never an instruction |
+
+The price is complexity and latency. The [benchmark](report.md) measures part of the benefit (finding the right,
+current, permitted document) and none of the answer-level benefit yet. Whole sessions, step by step, are in
+[architecture.md §9](architecture.md#9-worked-examples).
 
 ## How Palladion compares today (plain-language scorecard)
 
@@ -76,6 +98,8 @@ The full plain-language report, with every test, the history of the improvements
 | **Continuity packet** | Backend-built bounded context for the next request: current goal, gaps, rechecked handles, memory and own-session conversation turns. It is untrusted context, not new evidence authority. |
 | **Critic / gate** | The critic challenges a draft in a separate model context. The deterministic gate decides which claims may be released under canonical checks. Model agreement is not independent truth. |
 | **Graph** | Optional source-proven navigation between chunks/entities. Relations help discover sources; they cannot authorize an answer or override policy precedence. |
+| **Disposition** | The outcome class of a released answer: `SUPPORTED`, `PARTIALLY_SUPPORTED`, `CONFLICT`, `NOT_ESTABLISHED` or `VERIFICATION_UNAVAILABLE`. Chosen by the gate, never by the model. |
+| **Request ledger** | The evidence handles one request holds (at most 32, of which at most 12 document passages). Every release re-reads each handle's original authority. |
 
 ## From a question to an answer
 
@@ -110,6 +134,28 @@ P10 adds weighted deterministic classification, bounded conversation context, ty
 graph-link administration and extra text/PDF formats. Its current verification and
 limitations are tracked in [P10 evidence](palladion/docs/development/evidence/P10_CLASSIFICATION_AND_FORMATS.md).
 
+## What a released answer looks like
+
+The message endpoint (`POST /v1/cases/{case_id}/messages`) returns a structured response, not free text. The wording of
+each released claim comes from the gate, not from the model.
+
+| Field | Meaning |
+|---|---|
+| `disposition` | One of the five outcome classes above |
+| `answer` | One fixed sentence for the disposition |
+| `verified_claims` | Claims that passed the gate, each with its evidence IDs |
+| `hypotheses` | Unverified possibilities. The gate allows one fixed sentence, and only on informational answers |
+| `missing_requirements` | Named gaps such as `settlement_state` or `authorized_human_review` |
+| `citations` | The document spans, timestamped live observations and policy decisions behind the claims |
+| `tool_status`, `verification_failures` | What each tool returned and what could not be verified |
+| `searched_scope`, `inventory_attested` | What was searched; `inventory_attested` is always `false`, because Palladion cannot know that every company document was supplied |
+| `review_status`, `budget`, `next_steps`, `session_id`, `trace_id` | Critic outcome, budgets used, a fixed next-step sentence, the session and the trace |
+
+Operational guidance (for example "may I reverse this?") always carries `authorized_human_review` as a gap, so it is
+never released as an unqualified go-ahead, and no tool can change a payment. A client therefore has to show
+dispositions, claims with clickable evidence, gaps and observation times, not only text
+([architecture §11](architecture.md#11-what-an-operators-screen-must-show)).
+
 ## Inside a search, and what "policy" means
 
 The longer version, with every stage and file, is in [architecture.md](architecture.md). The short version:
@@ -137,6 +183,20 @@ flowchart TD
   needs; the final gate checks every released claim against the original evidence or the policy decision.
 * A question may name a **version** (`POL-001@v2` means the second version of POL-001) and is then answered by that
   version even if a newer one replaced it. Without a version, only the version that applies at the case time is returned.
+
+The policy tool, `evaluate_policy`, takes only two arguments: the policy `family_id` and the IDs of live observations
+already read in this request. It has no argument for a fact value, a date or an action. It returns one status:
+
+| Status | Meaning |
+|---|---|
+| `DETERMINED` | A rule was applied to verified, fresh inputs; the outcome and matched rules are in the decision |
+| `INCOMPLETE_INPUT` | A required fact or time is missing |
+| `UNVERIFIED_INPUT` | A fact or time source is stale, mistyped, not an allowed value or inconsistent |
+| `VERIFICATION_UNAVAILABLE` | A required live read failed or timed out |
+| `NO_APPLICABLE_POLICY` / `NOT_APPLICABLE` | No approved version fits the case's scope and time |
+| `POLICY_CONFLICT` | Versions or rule outcomes that cannot be ordered, with no approved precedence |
+
+Step by step, with the fixtures it is tested on: [architecture §4](architecture.md#4-the-policy-engine-and-how-it-differs-from-search).
 
 ## What works today
 
@@ -206,7 +266,7 @@ with Linux-owned storage; x86_64 Linux can run the standalone launcher directly.
 
 `palladion/` owns the system. `baseline/` is reserved for later comparisons with standard
 RAG, LangChain RAG, and provider systems. The immediate priority is system behavior and
-falsifiable hypothesis testing. UI development is excluded.
+falsifiable hypothesis testing. The UI is a client only; it adds no evidence authority.
 
 Documentation validation (Python standard library only, from repository root):
 
@@ -224,6 +284,7 @@ These commands validate the documentation's structure and references, not system
 | `palladion/tests/` | Contracts, authorization, ingestion and real retrieval consumers |
 | `palladion/data/demo/` | Fictional sources and pilot fixtures |
 | `palladion/docs/development/` | Atomic plan, ADRs, gates, evidence and current status |
+| `palladion-ui/` | Local operator UI: chat with evidence panels, ingestion, policy creation ([README](palladion-ui/README.md)) |
 
 ## Verification and research limits
 
