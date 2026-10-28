@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Any, Literal
 
 from pydantic import Field
 
-from evidence_agent.agent.search_worker import search
+from evidence_agent.agent.search_worker import MAX_PARALLEL_SEARCHES, SearchWorkers, search
 from evidence_agent.core.errors import EvidenceAgentError, PermissionDenied
 from evidence_agent.core.models import VersionedModel
 from evidence_agent.live.contracts import LookupRequest, Operation
@@ -28,7 +28,6 @@ if TYPE_CHECKING:
 
 
 DEFAULT_SEARCH_LIMIT = 8
-MAX_PARALLEL_SEARCHES = 2
 
 
 class KnowledgeArgs(VersionedModel):
@@ -78,11 +77,12 @@ def definitions() -> list[dict[str, Any]]:
 
 class Tools:
     def __init__(self, ledger: RequestLedger, gateway: LiveGateway, store: CaseStore,
-                 log: EvaluatorLog | None = None) -> None:
+                 log: EvaluatorLog | None = None, workers: SearchWorkers | None = None) -> None:
         self.ledger, self.gateway, self.store = ledger, gateway, store
+        self.workers = workers  # long-lived search processes (ADR-0111); None: a process for every search
         self.log = log  # evaluator mode only (ADR-0100); never read by the runtime
         self.memory_enabled = True
-        self.search_slots = asyncio.Semaphore(MAX_PARALLEL_SEARCHES)  # each search is a process that loads models
+        self.search_slots = asyncio.Semaphore(MAX_PARALLEL_SEARCHES)  # this request's searches at once; the pool bounds them for the application
         self.graph_required = False
         self.memory_vector: VectorMemory | None = None
 
@@ -99,8 +99,9 @@ class Tools:
             omitted_passages = 0
             if isinstance(args, KnowledgeArgs):
                 applicability = self.ledger.applicability()  # validated here, so a bound error is not "worker down"
+                run = self.workers.search if self.workers is not None else search
                 async with self.search_slots:
-                    result = await search(self.ledger.search, principal.principal_id, case,
+                    result = await run(self.ledger.search, principal.principal_id, case,
                                           args.query, args.search_mode, args.limit,
                                           require_graph=args.require_graph or self.graph_required,
                                           applicability=applicability, named_from=self.ledger.question)

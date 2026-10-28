@@ -25,7 +25,7 @@ async def lifecycle(app: FastAPI) -> AsyncIterator[None]:
     finally:
         runtime = getattr(app.state, "agent_services", None)
         if runtime is not None:
-            runtime.close()
+            await runtime.aclose()
         if app.state.graph is not None:
             app.state.graph.backend.close()
 

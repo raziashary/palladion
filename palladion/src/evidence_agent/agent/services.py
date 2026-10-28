@@ -9,6 +9,7 @@ from evidence_agent.agent.evaluator_log import EvaluatorLog
 from evidence_agent.agent.experiments import ExperimentControls
 from evidence_agent.agent.llm import LanguageModel
 from evidence_agent.agent.loop import AgentRuntime, new_trace
+from evidence_agent.agent.search_worker import SearchWorkers
 from evidence_agent.agent.tools import Tools
 from evidence_agent.core.clock import Clock, utc_clock
 from evidence_agent.core.fixtures import load_fixtures
@@ -42,6 +43,9 @@ class AgentServices:
         self.database: Database | None = None
         self.registry: Registry | None = None
         self.gateway: LiveGateway | None = None
+        # One pool for these services: every request's searches reuse its processes, which keep the models loaded (ADR-0111).
+        self.workers = SearchWorkers(idle_seconds=settings.search_worker_idle_seconds) \
+            if settings.search_worker_mode == "persistent" else None
 
     def begin(self, principal_id: str, case_id: str, session_id: str | None = None) -> AgentRuntime:
         if self.database is None:
@@ -58,11 +62,21 @@ class AgentServices:
         ledger = RequestLedger(HybridSearch(Catalog(self.registry), self.index, self.ranker, self.graph),
             principal, case_id, new_trace(), {k: v.max_age_seconds for k, v in self.config.operations.items()}, hotcache=self.hotcache)
         log = EvaluatorLog(self.experiment.arm) if self.experiment is not None else None
-        tools = Tools(ledger,self.gateway,store,log)
+        tools = Tools(ledger,self.gateway,store,log,self.workers)
         tools.graph_required = self.settings.graph_required
         return AgentRuntime(self.model, tools, store, self.settings, experiment=self.experiment)
 
+    async def aclose(self) -> None:
+        """Stop the search workers, then release what the services hold; the serving loop calls this on shutdown."""
+        try:
+            if self.workers is not None:
+                await self.workers.aclose()
+        finally:
+            self.close()
+
     def close(self) -> None:
+        if self.workers is not None:
+            self.workers.terminate()
         self.hotcache.clear()
         if self.database is not None:
             self.database.close()

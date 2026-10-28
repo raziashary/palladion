@@ -178,6 +178,11 @@ authenticated request
   -> released answer with citations; events saved; eligible events may become memory
 ```
 
+* **Searches run in separate processes that are kept alive.** Each `search_knowledge` call runs in a child process (so it can
+  be killed on a deadline, holds no credentials and cannot disturb the server). Loading the two small models takes 8 to 14
+  seconds, so the server keeps up to two such worker processes running and reuses them; a worker is thrown away after a
+  cancelled, late or malformed search and stopped after five idle minutes (`search_worker_mode`, `search_worker_idle_seconds`).
+  The database is opened afresh for every search, so a worker never reads stale data.
 * **The gate is a necessary-condition check, not a proof of meaning.** It confirms the claim matches the evidence
   and is current; it does not prove the model understood it. Model agreement is never treated as independent truth.
 * **Memory** is context, never authority: private preferences of a user, notes of one session, unapproved

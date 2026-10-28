@@ -35,6 +35,10 @@ class Settings(BaseModel):
     max_draft_revisions: int = Field(default=1, ge=0, le=1)
     max_source_passages: int = Field(default=12, ge=1, le=12)
     request_timeout_seconds: int = Field(default=60, ge=1, le=300)
+    # `persistent`: the agent's searches reuse worker processes that keep the models loaded; `per_request`: a process for
+    # every search (ADR-0111). An idle worker is stopped after the given seconds.
+    search_worker_mode: Literal["persistent", "per_request"] = "persistent"
+    search_worker_idle_seconds: float = Field(default=300.0, ge=10, le=3600)
 
     def require_live_llm(self, *, api_key_present: bool) -> None:
         """Fail before dispatch unless explicitly enabled and separately credentialed."""
