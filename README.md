@@ -156,6 +156,24 @@ never released as an unqualified go-ahead, and no tool can change a payment. A c
 dispositions, claims with clickable evidence, gaps and observation times, not only text
 ([architecture §11](architecture.md#11-what-an-operators-screen-must-show)).
 
+### What it looks like in the UI
+
+Two real answers from the [local UI](palladion-ui/README.md) (GPT-OSS 20B through Palladion, on the fictional `case-42`,
+signed in as a reader). In the first, an operational question: the agent took live readings, the policy engine ran, and
+the independent review was unavailable because Groq rate-limited that call. The UI shows all of it: a "Partly supported"
+badge, the verified claims with clickable evidence (E1, E2), a checklist of what is missing, each reading with the time it
+was taken, the failure named instead of hidden, and the side panel's live reading marked "Too old for a decision".
+
+![A real operational answer: partly supported, with live readings, a gap checklist, a failure notice and the evidence panel](palladion-ui/docs/screenshots/operational-answer.png)
+
+In the second, a procedure question: "Supported" and independently reviewed, with the exact source text re-read from the
+original file in the side panel.
+
+![A real supported answer: the verified quote, its citation, and the exact source text re-read from the original bytes](palladion-ui/docs/screenshots/supported-answer.png)
+
+Not shown: a conflict, a not-established answer or a hypothesis. Only a few real agent runs were possible before the
+provider's rate limit (see [palladion-ui/docs/TESTING.md](palladion-ui/docs/TESTING.md)).
+
 ## Inside a search, and what "policy" means
 
 The longer version, with every stage and file, is in [architecture.md](architecture.md). The short version:

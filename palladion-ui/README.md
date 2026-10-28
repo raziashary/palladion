@@ -9,6 +9,13 @@ was and was not verified). Not production software: authentication is Palladion'
 
 ## What it shows
 
+![A real operational answer through the UI: partly supported, live readings, a gap checklist, a failure notice and the evidence panel](docs/screenshots/operational-answer.png)
+
+![A real supported answer through the UI, with the exact source text re-read from the original file](docs/screenshots/supported-answer.png)
+
+Both are real GPT-OSS 20B answers on the fictional demo case (see [docs/TESTING.md](docs/TESTING.md)). Regenerate them
+with `uv run python -m scripts.screenshot`.
+
 | Screen | What it does |
 |---|---|
 | **Chat** | Streams live progress, then the released answer. Shows the verdict badge, verified claims with clickable evidence, a checklist of what must happen before anyone acts, unverified possibilities, tool status, "a system timed out" notices and a standing "only supplied documents were searched" note. Select a citation to read the exact evidence in the side panel. |

@@ -1,7 +1,7 @@
 import { api, qs } from './api.js';
 import { renderChat } from './chat.js';
 import { $, clear, h, icon, popup, toast } from './dom.js';
-import { renderPanel } from './evidence.js';
+import { openEvidence, renderPanel } from './evidence.js';
 import { ago } from './format.js';
 import { renderIngest } from './ingest.js';
 import { renderPolicies } from './policies.js';
@@ -116,6 +116,8 @@ async function boot(reload = false) {
   if (reload) { S.evidence = null; S.run = null; location.hash = '#/chat'; }
   await renderRoute();
   applyLayout();
+  const open = new URLSearchParams(location.search).get('open'); // deep link: ?open=<evidence id> shows it in the panel
+  if (open) await openEvidence(open);
 }
 
 onChange(() => { if (S.boot) { renderTopbar(); renderSidebar(); renderPanel($('#panel')); } });

@@ -13,12 +13,13 @@ Setup: own Qdrant on its own port and data folder, own data root, collection `pa
 | Informational question as `reader-a` | Real agent answered `Supported` / independently reviewed in 19 s with an exact quote of SOP 2026 §2. The citation opened the real document with "original bytes re-checked". |
 | Live progress during the turn | Real timeline events appeared as they happened ("Question received", "Asking the model", "Model replied"). |
 | Operational question (`Can I reverse this?`) | Real live readings were taken (transaction FAILED, settlement UNSETTLED) and the policy engine ran and returned `INCOMPLETE_INPUT` (no trusted time input). The critic call failed with provider HTTP 429, and the UI showed "Review: unavailable" and the failure plainly. **No further model calls were made after the 429.** |
+| Two more operational runs for the screenshots | One answered "Partly supported" with the review passed, two live readings and the policy engine `DETERMINED`, but one model call hit HTTP 429, so the gate released its safe template (no source quote, no policy citation). The next, richer question came back "Could not verify" with `FINALIZATION_UNAVAILABLE` and the 429 named, and no further runs were made. |
 | Policy creation through the UI server | Validated, registered (author resolved to the source's uploader, product defaulted, enum values filled), listed, revoked. |
 | Ingestion | Draft upload invisible to a reader; approved by an admin; then found by search; listing showed it approved. |
 
 ## Not verified
 
-* Only two real agent turns were run. Answer quality, the critic's behavior and a conflict/not-established answer were not
+* Only four real agent turns were run (two of them degraded by the provider rate limit). Answer quality, the critic's behavior and a conflict/not-established answer were not
   observed live; their rendering is covered only by the fake.
 * Streaming was observed in the browser only for the first real turn and against the fake; no timing measurements.
 * Browser-only behavior (drag and drop, PDF upload, light theme, narrow screens beyond one width) was not exercised.
