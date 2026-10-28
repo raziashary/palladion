@@ -14,6 +14,8 @@ configuration, an arm registry, run manifests, a paired runner, a CLI, a secret 
 models. The S-tier fixture (1,200 fictional documents, 100 pilot questions, `scripts/generate_data.py`, `docs/dataset_card.md`) is built; its label audit is done (made by the coordinator under the owner's delegation, with one non-independent reader; see the dataset card). The scorers (`benchmark/eval/`, `benchmark/analysis/`) are proven against perfect, empty and shuffled control arms. R0 to R3 and an HTTP-only adapter for Palladion run end to end through the real runner and validator, but the exploratory pilot has been run on the smoke split (E-B04-005; it supports no ranking claim and the owner can relabel the audit with [the labelling guide](docs/development/OWNER_LABELLING_GUIDE.md)), and there is no confirmatory result yet; hypotheses H1–H8 remain untested. See
 [progress](docs/development/PROGRESS.md).
 
+**Results so far, in plain words:** see the [report](../report.md) and the scorecard in the [repository README](../README.md#how-palladion-compares-today-plain-language-scorecard).
+
 ## What it will compare
 
 - Retrievers R0–R7: BM25, dense, hybrid RRF, hybrid plus reranker, HippoRAG 2, GraphRAG Local, LightRAG and Palladion

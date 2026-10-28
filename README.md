@@ -27,6 +27,36 @@ Retrieval uses real dense/BM25 Qdrant; the Docker-free WSL launcher is documente
 [application README](palladion/README.md). Generative commands explicitly enable Groq
 Qwen3.8-27B, GPT-OSS120B or GPT-OSS20B; retrieval-only checks need no provider call.
 
+## How Palladion compares today (plain-language scorecard)
+
+The [benchmark](palladion-benchmark/README.md) tests how well Palladion's search finds the documents a question
+needs, next to common alternatives, on a fictional document set of 1,200 documents. Latest run (Palladion commit
+`49b25cb`, 72 scored questions). **This is a private, exploratory comparison, not a sealed experiment: it does not
+show that any system is better, and where numbers are close they cannot be told apart.**
+
+| System | Questions where **all** needed documents were found (of 72) | Share of needed documents found | Typical search time |
+|---|---|---|---|
+| **Palladion's retriever** | **13** | **27%** | 1.8 s |
+| Keyword search | 12 | 29% | 0.01 s |
+| Keyword + meaning + re-reader (the strong common baseline) | 6 | 19% | 1.3 s |
+| Keyword + meaning | 4 | 14% | 0.04 s |
+| Meaning search | 1 | 4% | 0.03 s |
+
+In words:
+
+* **Level with plain keyword search, ahead of the strong baseline, but the ranges overlap.** Most methods find the
+  complete set for fewer than one question in five; this is hard for every method tested.
+* **Where Palladion is clearly different:** it almost never returns an out-of-date version of a document (4.5% of
+  questions, against 8% to 39% for the others) and never returns a draft or unapproved document (0%, against 20% to
+  29%). The others ignore approval state and validity dates, so this compares capabilities, not equal effort.
+* **Where it is weak:** looking up an exact code or rule number (3 of 10 questions, keyword search finds 8 of 10),
+  questions where two official sources disagree (0 of 10), who may see what (0 of 5) and broad summaries (0 of 7).
+* **Answering** (separate test, older Palladion version): almost no system answered a question completely right,
+  and the answering model, not only the search, limits the result. To be re-run.
+
+The full plain-language report, with every test, the history of the improvements and what is still to do, is in
+[report.md](report.md).
+
 ## Core terms
 
 | Term | Meaning in Palladion |
