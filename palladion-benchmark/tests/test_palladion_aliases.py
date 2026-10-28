@@ -105,7 +105,7 @@ def test_the_arm_states_in_its_description_whether_aliases_were_registered(tmp_p
     path = table(tmp_path)
     plain = arm(Palladion(), tmp_path)
     plain.read_table(path)
-    assert str(plain.describe()["aliases"]).startswith("none")
+    assert str(plain.describe()["aliases"]).startswith("registered by Palladion's own approval"), "no setup step ran"
     (tmp_path / ALIASES_FILE).write_text(json.dumps({"chunks": 2, "job_sha256": "a" * 64}), encoding="utf-8")
     aliased = arm(Palladion(), tmp_path)
     aliased.read_table(path)

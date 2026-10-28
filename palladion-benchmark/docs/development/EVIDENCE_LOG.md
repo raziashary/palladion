@@ -775,3 +775,28 @@ Total over the six: 410 provider calls (202 HTTP-200 replies, of which the 13 of
 - **Limits:** the figures are descriptive plots of what was measured, not a ranking; Track B latency is not reported because the harness pace (35 s) is inside every pair's duration, only the provider's own latency is; the corpus load time of Palladion was not recorded in these runs.
 
 **Addendum to E-B08-007, 2026-10-27 (corpus load time and reproducibility):** `run_track_a.py` now records `load_seconds` for Palladion's corpus load. A fresh C2 runtime and a third Track A run (`b08-a-c2-timing`, R0 and R7a, same frozen list) measured the load of 1,200 documents (1,164 approved, 9 revoked, 27 left as drafts) at **273 s** (4.6 minutes) with 18 forbidden-reader probes and 0 leaks. Reproducibility: R0 returned 100 of 100 identical candidate lists; R7a returned 98 of 100, and the two that differ (`q-c36b027ab19821d1`, `q-e8dfce2485f36971`) return a different set of 10 candidates after the corpus was reloaded, so Palladion's retrieval is not exactly reproducible across a reload (equal-score ordering, the same effect found for the approximate index in B04). The report's build-time column uses this recorded time only for runs that recorded it; the runs of E-B08-007 predate it and show NOT_OBSERVABLE.
+
+
+## E-B08-010 — B08-T08.02 at four later Palladion pins: Track A re-measured, stage times and a plain-language report
+
+2026-10-28, from `palladion-benchmark/`. Palladion was changed on this benchmark's findings (Palladion ADR-0102 to ADR-0109, E-P11-001, E-P11-002) and the benchmark was re-pinned each time (BADR-0046); runs at different commits are never pooled. Each run: `artifacts/runs/p11_track_a.sh <tag> <condition>` (prepare --reset on a fresh runtime, then `run_track_a.py` for R0 to R3 and R7a, `--palladion-mode reranked --load-palladion`, frozen matched list `7803021a91c1`, K 10, budget 4,000 words, then `scripts/palladion_stage_times.py`). Every arm ended OK in every pair (72 pairs).
+
+| tag | Palladion commit | condition | CompleteSet@10 | ValidSourceRecall@10 | MRR | wrong vintage | p50 query (Track A) |
+|---|---|---|---|---|---|---|---|
+| `b08-a-c2` | `dd70c0e` | C2 | 0.028 | 0.035 | 0.031 | 0.060 | 1,876 ms |
+| `p11b-a-c2` | `2365405` | C2 | 0.125 | 0.216 | 0.152 | 0.075 | 1,581 ms |
+| `p11c-a-c2` | `45a9276` (packing 1,200) | C2 | 0.181 | 0.265 | 0.146 | 0.090 | 2,195 ms |
+| `p11d-a-c2` | `7bafa36` (packing 600) | C2 | 0.181 | 0.271 | 0.155 | 0.045 | 1,986 ms |
+| `p11e-a-c2` | `49b25cb` (final) | C2 | 0.181 | 0.271 | 0.155 | 0.045 | 1,779 ms |
+| `p11f-a-c1` | `49b25cb` | C1 | 0.153 | 0.246 | 0.140 | 0.045 | 1,465 ms |
+
+R0 to R3 are unchanged between pins within the noise of timing (their ranked lists do not depend on Palladion); at `49b25cb`, C2: R0 0.167/0.286, R1 0.014/0.035, R2 0.056/0.144, R3 0.083/0.190. Primary pairing R7a against R3 at `49b25cb`, C2: complete set +0.097 [-0.07, +0.23], recall +0.075 [-0.05, +0.19], MRR +0.032; C1: +0.069 [-0.067, 0.177], +0.076, +0.030. All intervals include zero. Reports: `p11e-report-c2/report.md`, `p11f-report-c1/report.md`. By stratum at `49b25cb` C2 (complete sets of 10 questions): R7a Q1 3, Q2 2, Q3 3, Q4 2, Q5 3, Q6 0, Q8 0 (of 5), Q10 0 (of 7); R0 Q1 8; R3 Q6 4. Under C1 every system exposed forbidden sources in 54 to 74 percent of pairs because the condition gives no access information to anyone; under C2 all five arms are 0.
+
+Stage times of 100 reranked searches (`p11*-stage-times`, stage names from `SearchResult.stage_ms`): see Palladion E-P11-002 for the table; a repeat at `49b25cb` measured 2,331 ms and 1,508 ms median, so the machine's variance between runs is about 1.5 times. The benchmark found a regression made in Palladion itself (a count query filtered to every generation, 888 ms against 25 ms measured against the live index) through the coverage stage of these runs.
+
+Adapter changes that came with the pins (`benchmark/adapters/palladion.py`, `benchmark/adapters/hybrid.py`): the adapter sends the case's event time as applicability instants (BADR-0046), stage times are read by the separate script rather than written in the ledger flags (a flag over 80 characters made 100 pairs INVALID_RUN; found and removed), and R3's reranker budget mirrors Palladion's so the two are not given different candidate counts.
+
+Also produced: the plain-language scorecard in the repository `README.md` and `report.md` at the repository root (names instead of arm codes), to be extended as Track B, Track C and the graph arms are run.
+
+Limits: one run per pin on one machine shared with other programs; 72 scored pairs with wide intervals; the packing target of 600 was chosen after reading the 1,200 result, so that comparison is exploratory; Track B and Track C were not re-run at these pins.
+

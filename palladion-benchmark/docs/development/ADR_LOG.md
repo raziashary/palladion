@@ -960,3 +960,26 @@ Dispositions that change or narrow the wording above (E-B05-004): **item 7**: a 
 
 **Addendum, 2026-10-27 (B08-T08.04, schedule from the measured costs):** the first Track C day (E0 and E1, qwen, 190,000-token day shared by two arms) measured 2,300 prompt tokens a turn for E0 (35,405 tokens for 15 answered turns, 1 turn stopped by the cap) and 13,800 for E1 (its first turn used its whole ceiling of five model calls and four tool calls and is INVALID_RUN, ARM; the second hit a per-minute limit and exhausted its retries; the other 14 turns were stopped by the arm's share of the day, `QUOTA_BLOCKED`). With qwen's day recovering on a rolling 24 hours (the books show 190,000 free at about 12:30 UTC on 2026-10-28), the remaining Track C work is run one arm group per day, each with the whole day: E4 (about 160,000 tokens), then E3 (about 90,000) with the single E0 condition that was stopped, then E1 in two halves of two memory baselines each (`none` and `scoped_episodic` first; `last_n` and `rolling_summary` only if the days allow). E1's missing baselines, if any, are reported as not run for lack of quota, never as a result of E1. The graph comparators are not started: R6 alone needs about 1.1 million qwen tokens (about six days of the model), R4 and R5 are unmeasured, and the four-day horizon of the owner's answer is used by Tracks B and C (priority order of BADR-0044 item 1); the pilot of B06 stands as their only result. Verification: the evidence entry of B08-T08.04 when the card closes.
 
+
+
+## BADR-0046 — Re-pin Palladion at the P11 commit; what the adapter sends; results at earlier pins stay history
+
+**Status:** ACCEPTED; 2026-10-28.
+
+**Authority:** Owner answers in chat, 2026-10-27: "Re-pin, re-run Palladion arms only" and permission to change `palladion/` to fix the causes the benchmark found; Palladion's own record is its ADR-0102 to ADR-0109.
+
+**Question:** Palladion was changed on the benchmark's findings (applicability instants, eligibility before ranking, bounded context, a defining-first identifier lane, chunk context, agent defaults, atomic publication). How does the benchmark move to the new commit without mixing its results with the old ones, and what must its own adapter change?
+
+**Why:** The investigation found two causes in the adapter itself: it sent the evaluation date as Palladion's only applicability instant, so every superseded version the questions needed was expired at that instant, and it invented a `valid_from` of 2026-01-01 for every article that has none. It also treated any Palladion warning it did not list as a transient fault, which would have turned the new honest warnings (all candidates excluded, no eligible sources) into failed pairs.
+
+**Options:** Keep the old pin and report the defects as findings only; re-pin and re-run everything; re-pin and re-run the Palladion arms and keep the unchanged arms' earlier numbers as context.
+
+**Recommendation:** The owner's: re-pin and re-run the Palladion arms. Track A is retrieval only and free, so it is re-run for all of R0 to R3 and R7a at the new commit so that a report never pools two commits; Track B and Track C for the Palladion arms follow as the quota allows.
+
+**What affects what:** `scripts/palladion_runtime.py` `PINNED_COMMIT`, `configs/comparators.yaml` (three arms and the system under test) and `tests/test_config_loader.py` name the new commit; `benchmark/adapters/palladion.py` sends the case's `event_time` as a second applicability instant beside `as_of` (a field every arm receives in the retrieval request; the gold's own time basis is never sent), no longer invents `valid_from`, accepts `ALL_CANDIDATES_EXCLUDED`, `NO_ELIGIBLE_SOURCES`, `ELIGIBILITY_PREFILTER_BOUNDED` and `EXACT_CANDIDATES_TRUNCATED` as normal answers, treats `INTEGRITY_CONFLICT` as the arm being unavailable, and records Palladion's per-stage times in the ledger flags; `tests/test_palladion_runtime.py` expects the new unknown-code contract. `RunManifest.comparability()` already makes the commit part of the plan, so results at `dd70c0e` (E-B08-004 to E-B08-009) cannot be pooled with the new ones and stay as labelled history. The earlier numbers are not corrected or deleted: they show the system before the fixes. Because the fixes were found on the development split and chosen after reading its failures, the new comparison is exploratory and says so.
+
+**My answer (editable):** Owner chose "Re-pin, re-run Palladion arms only (Recommended)" on 2026-10-27.
+
+**Verification:** the pin tests agree on one commit; the adapter and runtime tests pass against a real isolated Palladion at that commit; the new Track A runs record the commit in their manifests and pass `validate_results.py` (E-B08 entry for the P11 re-measurement).
+
+**Addendum 2026-10-28 (the pin moved four more times):** the pin is now `49b25cb` (Palladion packing of 600 characters, shortest-first reranker, corrected generation count). Each move was a Palladion change made on the benchmark's own findings and re-run for Track A before the next, and every earlier run stays history (`dd70c0e`, `2365405`, `45a9276`, `7bafa36`); the measured table is in E-B08-010. The owner chose the packing trial and the reranker-speed work in chat on 2026-10-28.

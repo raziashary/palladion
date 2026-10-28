@@ -39,7 +39,7 @@ sys.path.insert(0, str(BENCH))
 from benchmark.adapters.models import spec_from_pin, verify  # noqa: E402
 from benchmark.config import load_all  # noqa: E402
 
-PINNED_COMMIT = "dd70c0eb4c8949bea858a51deef8868e589b0edf"
+PINNED_COMMIT = "49b25cb00a3569e2c0cee92ff60619b934bd70a5"
 PROJECT = BENCH
 REPO = BENCH.parent
 WORKTREE = BENCH / "artifacts" / f"palladion-{PINNED_COMMIT[:7]}"

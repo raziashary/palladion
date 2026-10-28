@@ -167,9 +167,15 @@ def test_a_real_call_loads_and_retrieves_the_published_corpus_over_http(
             assert target.doc_id in {c.source_document_id for c in hits}
             assert all(c.native_citation_supported and c.locator and c.locator.startswith("chars:") for c in hits)
             assert {c.source_document_id for c in hits} <= {r.doc_id for r in view.records}
-            coded = arm.retrieve(request("what does MS-4021 mean", view.identity.principals[0].principal_id))
-            assert coded == [] and arm.last_notes["palladion_warnings"] == ["EXACT_IDENTIFIER_NOT_FOUND"], (
-                "HTTP-loaded documents get no identifier aliases, so a code query is answered with nothing (BR24)"
+            reader = view.identity.principals[0].principal_id
+            coded = arm.retrieve(request("what does MS-4021 mean", reader))
+            assert coded and "EXACT_IDENTIFIER_NOT_FOUND" in arm.last_notes["palladion_warnings"], (
+                "a question holding a code no document names keeps its ranked passages and says the code is unknown "
+                "(Palladion ADR-0105)"
+            )
+            bare = arm.retrieve(request("MS-4021", reader))
+            assert bare == [] and "EXACT_IDENTIFIER_NOT_FOUND" in arm.last_notes["palladion_warnings"], (
+                "a bare unregistered code is a lookup nothing answers; its look-alikes would substitute for it"
             )
             drafted = {d for d, state in report.states.items() if state in ("DRAFT", "REVOKED")}
             assert not {c.source_document_id for c in hits} & drafted, (

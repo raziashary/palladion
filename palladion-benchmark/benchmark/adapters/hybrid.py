@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import time
 from collections import defaultdict
 from collections.abc import Sequence
@@ -37,8 +38,9 @@ RRF_K = 60
 DEPTH = 50
 RERANK_DEPTH = 30
 RERANKER_NAME = "Xenova/ms-marco-MiniLM-L-6-v2"
-RERANKER_THREADS = 2
-RERANK_BATCH = 16
+# The same CPU budget as Palladion's reranker (its rerank.py, measured in P11-T05): copied, not imported (BADR-0002).
+RERANKER_THREADS = min(4, os.cpu_count() or 2)
+RERANK_BATCH = 8
 RERANKER_LANGUAGE_NOTE = "English-trained cross-encoder; about 30 percent of queries are Bahasa (BR23)"
 
 

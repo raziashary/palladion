@@ -12,7 +12,9 @@ What the arm declares rather than hides:
   rules shows as exposure and is not hidden. Under C1 every reader sees every document.
 * Palladion's search answers at most 12 results (its schema says 40, E-B08-007) and has no word budget. K above 12
   is refused as unsupported and the evidence budget is applied on the harness side. The request carries the case's
-  evaluation time as ``as_of`` (PF01), the same clock the fixture gives every arm.
+  evaluation time as ``as_of`` (PF01) and, when the case has one, its event time as a further applicability instant
+  (ADR-0102), so a policy version that governed the event and has since been superseded is still reachable. Both are
+  fields every arm receives in the retrieval request; the gold's own time basis is never sent.
 * A response is a run state when it is not a usable answer: an unreachable server, an index that cannot be read, or a
   reranked request on a server without the reranker is ``NOT_RUN``; a partial index is a transient fault. An empty
   list is returned only when Palladion itself reports an unknown identifier or finds nothing.
@@ -55,15 +57,24 @@ Mode = Literal["lexical", "dense", "hybrid", "reranked"]
 # schema allows 40, and reranked search refuses 40. K is 10, so the bound the arm relies on is the one that works.
 MAX_PALLADION_LIMIT = 12
 MAX_UPLOAD_CHARACTERS = 65536
-DEFAULT_VALID_FROM = "2026-01-01T00:00:00Z"
 READER = "reader-a"
 UPLOADER = "uploader-a"
 APPROVER = "admin-a"
 CASE = "case-42"
-UNAVAILABLE_WARNINGS = frozenset({"INDEX_UNAVAILABLE", "INDEX_MANIFEST_MISMATCH"})
+UNAVAILABLE_WARNINGS = frozenset({"INDEX_UNAVAILABLE", "INDEX_MANIFEST_MISMATCH", "INTEGRITY_CONFLICT"})
 RETRYABLE_WARNINGS = frozenset({"ACCEPTED_BUT_UNINDEXED"})
-# Warnings that describe a normal answer: a truncated coverage report at scale, an identifier Palladion lacks.
-NOTE_WARNINGS = frozenset({"COVERAGE_SCOPE_TRUNCATED", "EXACT_IDENTIFIER_NOT_FOUND"})
+# Warnings that describe a normal answer: a truncated coverage report at scale, an identifier Palladion lacks,
+# candidates that its canonical checks all refused, a case with nothing that could apply, a bounded prefilter or lane.
+NOTE_WARNINGS = frozenset(
+    {
+        "COVERAGE_SCOPE_TRUNCATED",
+        "EXACT_IDENTIFIER_NOT_FOUND",
+        "EXACT_CANDIDATES_TRUNCATED",
+        "ALL_CANDIDATES_EXCLUDED",
+        "NO_ELIGIBLE_SOURCES",
+        "ELIGIBILITY_PREFILTER_BOUNDED",
+    }
+)
 APPROVE_STATES = frozenset({"approved", "retired", "non_normative", "withdrawn"})
 REVOKE_STATES = frozenset({"withdrawn"})
 TIMEOUT_SECONDS = 60.0
@@ -181,7 +192,8 @@ class PalladionArm:
             "max_limit": MAX_PALLADION_LIMIT,
             "acl": "Palladion's own per-document access list before ranking (C2: one reader per benchmark principal, "
             "output not masked, disagreement with the neutral filter counted as acl_leaked); none under C1",
-            "clock": "the case's evaluation time, sent as as_of (PF01)",
+            "clock": "the case's evaluation time, sent as as_of (PF01), and its event time as an extra applicability "
+            "instant when it has one (ADR-0102)",
             "ingestion": "native: each document uploaded whole and chunked by Palladion",
             "corpus": "approved, retired, non_normative and withdrawn-then-revoked documents are approved in Palladion",
             "unapproved": "drafts and unapproved proposals are uploaded, never approved, and so not retrievable by R7a",
@@ -189,7 +201,7 @@ class PalladionArm:
             "one it supersedes and validity windows are sent; drafts and unapproved proposals stay unapproved",
             "aliases": self._aliases
             if self._aliases is not None
-            else "none: Palladion registers none for HTTP loads (BR24)",
+            else "registered by Palladion's own approval (family, revision and identifiers found in each chunk)",
         }
 
     # -- loading (B04-T03.02) --------------------------------------------------------------------
@@ -319,7 +331,7 @@ class PalladionArm:
             "content": text,
             "owner_id": UPLOADER,
             "allowed_principal_ids": self._allowed_readers(record, access or self.access),
-            "valid_from": record.valid_from or DEFAULT_VALID_FROM,
+            "valid_from": record.valid_from,
             "valid_to": record.valid_to,
             "sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
         }
@@ -490,6 +502,7 @@ class PalladionArm:
                 "mode": mode,
                 "limit": request.limit,
                 "as_of": request.evaluation_time,
+                "applicability_instants": [request.event_time] if request.event_time else [],
             },
         )
         if response.status_code >= 500:
@@ -513,7 +526,11 @@ class PalladionArm:
             raise TransientInfrastructureError(
                 f"Palladion answered with an unknown status or warning: {unexpected or body.get('status')}"
             )
-        self.last_notes = {"palladion_status": body.get("status"), "palladion_warnings": sorted(warnings)}
+        self.last_notes = {
+            "palladion_status": body.get("status"),
+            "palladion_warnings": sorted(warnings),
+            "palladion_stage_ms": body.get("stage_ms") or {},
+        }
         return [self._candidate(passage, rank) for rank, passage in enumerate(body["passages"], start=1)]
 
     def _candidate(self, passage: Mapping[str, Any], rank: int) -> EvidenceCandidate:
