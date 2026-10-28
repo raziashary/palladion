@@ -130,7 +130,7 @@ def _accepted_sources(registry: Registry, principal: Principal, case_id: str,
         (principal.tenant_id, case_id, principal.principal_id, MAX_COVERAGE_SOURCES + 1)).fetchall()
     visible = [row for row in rows[:MAX_COVERAGE_SOURCES]
                if acl_allows(row["acl_json"], principal.principal_id)
-               and at_now.admits(row["valid_from"], row["valid_to"], ())]
+               and at_now.admits(row["revision_id"], row["family_id"], row["valid_from"], row["valid_to"], ())]
     return visible, len(rows) > MAX_COVERAGE_SOURCES
 
 

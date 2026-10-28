@@ -84,6 +84,7 @@ class SearchResult(VersionedModel):
     excluded: dict[str, int] = {}  # candidates dropped by canonical checks, by reason
     unmatched_identifiers: tuple[str, ...] = ()  # code-shaped query tokens with no registered alias
     stage_ms: dict[str, float] = {}  # wall time of each search stage
+    named_versions: tuple[tuple[str, str | None], ...] = ()  # versions the query named: (family ID, revision ID or None)
 
 
 class HybridSearch:
@@ -118,6 +119,14 @@ class HybridSearch:
         applicability = Applicability.at(as_of or self.registry.clock(), also_at)
         watch = _Stopwatch()
         warnings: list[str] = []
+        # A question that names a version (`POL-001@v2`) asks for that revision, not for the one that governs (ADR-0110).
+        named = self.exact.named_versions(principal, case_id, query)
+        if named.resolved:
+            applicability = applicability.naming(named.resolved)
+            if any(revision is None for _, revision in named.resolved):
+                warnings.append("NAMED_VERSION_NOT_FOUND")
+        if named.truncated:
+            warnings.append("NAMED_VERSIONS_TRUNCATED")
         candidates: list[tuple[str, str | None]] = []
         eligible: tuple[str, ...] | None = None  # None: no prefilter, from a frozen list or a bounded case
         try:
@@ -152,6 +161,7 @@ class HybridSearch:
             warnings.append("EXACT_IDENTIFIER_NOT_FOUND")
         if exact.unknown_lookup:
             candidates = []  # a bare unknown code asks for that code; similar-looking neighbours would substitute it
+        semantic = {chunk_id for chunk_id, _ in candidates}
         candidates = ([(chunk_id, None) for chunk_id in exact.leading] + candidates
                       + [(chunk_id, None) for chunk_id in exact.trailing])
         resolved: dict[str, Passage] = {}
@@ -173,9 +183,16 @@ class HybridSearch:
             else:
                 try:
                     with watch.stage("rerank"):
+                        # The exact lane has already placed its chunks (ADR-0105): the reranker orders what the index found
+                        # and cannot move a chunk that defines a code the question names behind the semantic hits.
+                        front = [resolved[c] for c in dict.fromkeys(exact.leading) if c in resolved]
+                        back = [resolved[c] for c in dict.fromkeys(exact.trailing)
+                                if c in resolved and c not in semantic and c not in exact.leading]
+                        placed = {p.citation_id for p in (*front, *back)}
+                        middle = [p for p in ordered if p.citation_id not in placed]
                         chunks = tuple(self.resolver.chunk(principal, passage)
-                                       for passage in ordered[:self.ranker.max_candidates])
-                        ordered = [resolved[chunk.chunk_id] for chunk in self.ranker.rank(query, chunks)]
+                                       for passage in middle[:self.ranker.max_candidates])
+                        ordered = [*front, *(resolved[chunk.chunk_id] for chunk in self.ranker.rank(query, chunks)), *back]
                 except DependencyUnavailable:
                     warnings.append("RERANK_UNAVAILABLE")
         selected = ordered[:limit]
@@ -237,6 +254,9 @@ class HybridSearch:
             warnings.append("INTEGRITY_CONFLICT")
         if not selected and exclusions.total:
             warnings.append("ALL_CANDIDATES_EXCLUDED")
+        wanted = {revision for _, revision in named.resolved if revision is not None}
+        if wanted - {passage.revision_id for passage in selected}:
+            warnings.append("NAMED_VERSION_NOT_SERVED")  # a named version has no passage here: not indexed, or no match
         elapsed = (time.perf_counter() - started) * 1000
         stages = {"discovered": len(candidates), "resolved": resolved_count, "excluded": exclusions.total,
                   "reranked": len(ordered), "expanded": len(selected), "graph_paths":len(graph_paths)}
@@ -260,7 +280,8 @@ class HybridSearch:
                             stage_counts=stages, elapsed_ms=elapsed,graph_paths=graph_paths,
                             evidence_budget=budget_info, excluded=exclusions.as_dict(),
                             unmatched_identifiers=exact.unmatched,
-                            stage_ms={name: round(ms, 3) for name, ms in watch.stages.items()})
+                            stage_ms={name: round(ms, 3) for name, ms in watch.stages.items()},
+                            named_versions=named.resolved)
 
     def _release(self, principal: Principal, case_id: str, chunk_id: str, applicability: Applicability,
                  exclusions: _Exclusions, generation: str | None = None) -> Passage | None:

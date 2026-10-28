@@ -342,12 +342,30 @@ def test_applicability_deduplicates_requires_aware_instants_and_stays_bounded():
 
 def test_applicability_admits_inside_the_half_open_window_and_before_a_successor():
     on = Applicability.at(at("2026-03-01T00:00:00"))
-    assert on.admits("2026-03-01T00:00:00+00:00", None, ()), "valid_from is inclusive"
-    assert not on.admits(None, "2026-03-01T00:00:00+00:00", ()), "valid_to is exclusive"
-    assert not on.admits(None, None, ["2026-03-01T00:00:00+00:00"]), "a successor effective now has taken over"
-    assert on.admits(None, None, ["2026-03-01T00:00:00.000001+00:00"])
+    assert on.admits("r", "F", "2026-03-01T00:00:00+00:00", None, ()), "valid_from is inclusive"
+    assert not on.admits("r", "F", None, "2026-03-01T00:00:00+00:00", ()), "valid_to is exclusive"
+    assert not on.admits("r", "F", None, None, ["2026-03-01T00:00:00+00:00"]), "a successor effective now has taken over"
+    assert on.admits("r", "F", None, None, ["2026-03-01T00:00:00.000001+00:00"])
     both = Applicability.at(at("2026-03-01T00:00:00"), [at("2025-06-01T00:00:00")])
-    assert both.admits("2025-01-01T00:00:00+00:00", "2026-03-01T00:00:00+00:00", ["2026-03-01T00:00:00+00:00"])
+    assert both.admits("r", "F", "2025-01-01T00:00:00+00:00", "2026-03-01T00:00:00+00:00", ["2026-03-01T00:00:00+00:00"])
+
+
+def test_a_named_version_is_admitted_whatever_its_window_and_it_shuts_out_the_rest_of_its_family():
+    on = Applicability.at(at("2026-03-01T00:00:00")).naming([("POL", "old"), ("POL", "older"), ("TKT", None)])
+    expired = ("2025-01-01T00:00:00+00:00", "2025-06-01T00:00:00+00:00", ["2025-06-01T00:00:00+00:00"])
+    assert on.admits("old", "POL", *expired) and on.admits("older", "POL", *expired), "named: window and successor waived"
+    assert not on.admits("current", "POL", None, None, ()), "the family's other versions do not answer"
+    assert not on.admits("any", "TKT", None, None, ()), "a family named with a version it lacks answers nothing"
+    assert on.admits("x", "OTHER", None, None, ()) and not on.admits("x", "OTHER", None, "2026-01-01T00:00:00+00:00", ()),         "a family not named keeps the window rule"
+    assert Applicability.at(at("2026-03-01T00:00:00")).named == ()
+
+
+def test_named_versions_are_bounded_and_distinct_by_family():
+    base = Applicability.at(at("2026-03-01T00:00:00"))
+    with pytest.raises(ValueError, match="Named versions"):
+        base.naming([("F", f"r{n}") for n in range(9)])
+    with pytest.raises(ValueError, match="Named versions"):
+        Applicability(base.instants, (("F", ("a",)), ("F", ("b",))))
 
 
 # ---------------------------------------------------------------- ADR-0108: publication is atomic and fails closed

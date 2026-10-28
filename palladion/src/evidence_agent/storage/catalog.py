@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import sqlite3
 from collections.abc import Collection, Mapping, Sequence
 from dataclasses import dataclass
@@ -27,11 +28,15 @@ _SPAN_COLUMNS = ("tenant_id", "revision_id", "case_id", "start_byte", "end_byte"
                  "content_sha256", "source_sha256")
 MAX_ALIAS_ROWS = 5000
 MAX_ALIAS_LENGTH = 256
+# A code-shaped token: capitals and digits in parts joined by a dash or dot (`POL-001`, `MS-1817`, `V2.1`). The code
+# ends on a letter or digit, so the full stop or dash that closes a sentence is not part of it ("with code MS-1817.").
+CODE_PATTERN = re.compile(r"(?<![A-Za-z0-9])[A-Z][A-Z0-9_]*(?:[-.][A-Z0-9_]+)+(?![A-Za-z0-9])")
 
 
 @dataclass(frozen=True)
 class AliasHit:
-    """A chunk reached through an exact alias; `defining` when the alias is its revision's own family or revision ID."""
+    """A chunk reached through an exact alias; `defining` when the alias is its revision's own family or revision ID,
+    or is named in a title above the chunk."""
 
     chunk_id: str
     revision_id: str
@@ -477,8 +482,9 @@ class Catalog:
                    generations: Collection[str] | None = None) -> tuple[AliasHit, ...]:
         """Resolve only exact normalized aliases within the caller's case scope, defining chunks first.
 
-        Order is stable and meaningful: chunks of a revision the alias names (its family or revision ID) before chunks
-        that merely mention it, then revision, then position in the document. The alias row records which it is.
+        Order is stable and meaningful: chunks the alias defines (it is the family or revision ID of their revision, or
+        it is named in a title above them) before chunks that merely mention it, then revision, then position in the
+        document. The alias row records the first kind; the title is read from the chunk.
         Given `generations` (the prefilter's answer), a hit whose revision is served from another generation is
         left out before `limit` counts, so a superseded version cannot crowd out the one that applies.
         """
@@ -490,8 +496,10 @@ class Catalog:
         )
         if limit is not None and not 1 <= limit <= 101:
             raise ValidationFailure
+        wanted = _normalize_alias(alias)
         rows = self.database.connection.execute(
-            "SELECT aliases.chunk_id, aliases.revision_id, aliases.defining, revisions.index_generation "
+            "SELECT aliases.chunk_id, aliases.revision_id, aliases.defining, revisions.index_generation, "
+            "chunks.heading_path_json "
             "FROM exact_aliases AS aliases "
             "JOIN document_revisions AS revisions "
             "ON revisions.tenant_id = aliases.tenant_id AND revisions.revision_id = aliases.revision_id "
@@ -501,13 +509,16 @@ class Catalog:
             "AND (COALESCE(json_array_length(json_extract(revisions.acl_json,'$.allowed_principal_ids')), 0)=0 "
             "OR EXISTS(SELECT 1 FROM json_each(revisions.acl_json,'$.allowed_principal_ids') WHERE value=?)) "
             "ORDER BY aliases.defining DESC, aliases.revision_id, chunks.start_byte, aliases.chunk_id LIMIT ?",
-            (principal.tenant_id, case_id, _normalize_alias(alias), principal.principal_id, MAX_ALIAS_ROWS),
+            (principal.tenant_id, case_id, wanted, principal.principal_id, MAX_ALIAS_ROWS),
         ).fetchall()
+        # Chunks titled with the code join the family and revision IDs in front (a stable sort keeps the order inside
+        # each kind). The cap above keeps the stored defining rows; a title-defined row past it is not reached.
+        hits = sorted((AliasHit(row["chunk_id"], row["revision_id"],
+                                bool(row["defining"]) or _in_title(wanted, row["heading_path_json"]))
+                       for row in rows if generations is None or row["index_generation"] in generations),
+                      key=lambda hit: not hit.defining)
         result: list[AliasHit] = []
-        for row in rows:
-            if generations is not None and row["index_generation"] not in generations:
-                continue
-            hit = AliasHit(row["chunk_id"], row["revision_id"], bool(row["defining"]))
+        for hit in hits:
             if limit is not None and len(result) >= limit:
                 break
             try:
@@ -516,6 +527,34 @@ class Catalog:
                 continue
             result.append(hit)
         return tuple(result)
+
+    def family_version(self, principal: Principal, case_id: str, family: str,
+                       ordinal: int) -> tuple[str, str | None] | None:
+        """The family's `ordinal`-th version (1 is the earliest), as (family ID, revision ID).
+
+        Versions are the family's approved and revoked revisions in the order their validity starts, then their
+        registration, then ID: a revoked version keeps its number, a draft has none, and a version approved later with
+        an earlier start is numbered before the ones that start after it. The revision ID is None when the family has
+        no such version or the caller may not read it, the same answer for both, so a hidden version is not told apart
+        from a missing one. None when the caller can read no revision of a family of that name, so a hidden family is
+        not told apart from one the case does not hold.
+        """
+        self.registry.access.authorize(principal, tenant_id=principal.tenant_id, case_id=case_id, grant="source:read")
+        rows = self.database.connection.execute(
+            "SELECT revision_id, family_id, approval_status, acl_json FROM document_revisions "
+            "WHERE tenant_id = ? AND case_id = ? AND family_id = ? "
+            "AND approval_status IN ('APPROVED', 'REVOKED') "
+            "ORDER BY valid_from IS NOT NULL, valid_from, registered_at, revision_id LIMIT ?",
+            (principal.tenant_id, case_id, family.strip(), MAX_ELIGIBLE_REVISIONS + 1),
+        ).fetchall()
+        if not any(acl_allows(row["acl_json"], principal.principal_id) for row in rows):
+            return None
+        family_id = rows[0]["family_id"]
+        if not 1 <= ordinal <= len(rows):
+            return family_id, None
+        row = rows[ordinal - 1]
+        readable = row["approval_status"] == "APPROVED" and acl_allows(row["acl_json"], principal.principal_id)
+        return family_id, row["revision_id"] if readable else None
 
     def effective_supersessions(self, tenant_id: str, case_id: str, fingerprint: str,
                                 revision_id: str | None = None) -> dict[str, list[str]]:
@@ -557,8 +596,8 @@ class Catalog:
         """
         self.registry.access.authorize(principal, tenant_id=principal.tenant_id, case_id=case_id, grant="source:read")
         rows = self.database.connection.execute(
-            "SELECT revisions.revision_id, revisions.index_generation, revisions.valid_from, revisions.valid_to, "
-            "revisions.acl_json "
+            "SELECT revisions.revision_id, revisions.family_id, revisions.index_generation, revisions.valid_from, "
+            "revisions.valid_to, revisions.acl_json "
             "FROM document_revisions AS revisions "
             "JOIN approval_records AS approvals ON approvals.approval_record_id = revisions.approval_record_id "
             "AND approvals.tenant_id = revisions.tenant_id AND approvals.revision_id = revisions.revision_id "
@@ -575,7 +614,8 @@ class Catalog:
         return tuple(
             row["index_generation"] for row in rows
             if acl_allows(row["acl_json"], principal.principal_id)
-            and applicability.admits(row["valid_from"], row["valid_to"], superseded.get(row["revision_id"], ()))
+            and applicability.admits(row["revision_id"], row["family_id"], row["valid_from"], row["valid_to"],
+                                 superseded.get(row["revision_id"], ()))
         )
 
     def add_context_link(
@@ -651,6 +691,12 @@ class Catalog:
             or source["approval_record_status"] != "APPROVED"
         ):
             raise PermissionDenied
+
+
+def _in_title(alias: str, heading_path_json: str) -> bool:
+    """True when the code is named in a title above the chunk: a chunk of the section called `API note: MS-1817
+    response` that names MS-1817 is what defines it, which a table that merely lists the code is not."""
+    return any(code.casefold() == alias for code in CODE_PATTERN.findall(" ".join(json.loads(heading_path_json))))
 
 
 def _normalize_alias(alias: str) -> str:

@@ -73,7 +73,8 @@ class EvidenceResolver:
                 raise PermissionDenied
             supersessions = self.catalog.effective_supersessions(chunk.tenant_id, case_id, self.fingerprint,
                                                                  chunk.revision_id)
-            if not applicability.admits(row["valid_from"], row["valid_to"], supersessions.get(chunk.revision_id, [])):
+            if not applicability.admits(chunk.revision_id, row["family_id"], row["valid_from"], row["valid_to"],
+                                        supersessions.get(chunk.revision_id, [])):
                 raise PermissionDenied
             try:
                 original = self.registry.originals.read(row["content_sha256"])  # verifies the whole digest
@@ -120,6 +121,7 @@ class RequestLedger:
         self.envelopes: dict[str, EvidenceRecord] = {}
         self.failures: list[str] = []
         self.tool_status: dict[str, str] = {}
+        self.named: dict[str, tuple[tuple[str, str | None], ...]] = {}  # versions the search that found a chunk named
 
     def applicability(self) -> Applicability:
         """The clock plus the case's trusted instants (ADR-0102): when it opened, its named domain events and the
@@ -150,16 +152,21 @@ class RequestLedger:
         def load() -> dict[str, Any]:
             return read_runtime_evidence(self.search, self.principal, self.case_id, identifier,
                 freshness_seconds=self.freshness_seconds,
-                applicability=self.applicability() if identifier.startswith("chunk_") else None)
+                applicability=self.applicability().naming(self.named.get(identifier, ()))
+                if identifier.startswith("chunk_") else None)
         if self.hotcache is not None and identifier.startswith("chunk_"):
             from evidence_agent.memory.store import CaseStore
             epoch = CaseStore(self.search.registry, self.principal, self.case_id).memory().epoch()
             return self.hotcache.read(load, principal=self.principal, case_id=self.case_id, epoch=epoch)
         return load()
 
-    def add(self, identifier: str) -> dict[str, Any]:
+    def add(self, identifier: str, named: tuple[tuple[str, str | None], ...] = ()) -> dict[str, Any]:
+        """Record evidence; `named` is the versions the search that returned this passage was asked for, so a version the
+        question named is read back under the terms it was found (and nothing else is widened)."""
         if identifier not in self.records and len(self.records) >= 32:
             raise LedgerBound("Ledger bound exceeded")
+        if named:
+            self.named[identifier] = named
         data = self.read(identifier)
         if (data["kind"] == "DOCUMENT" and identifier not in self.records and
                 sum(d["kind"] == "DOCUMENT" for d in self.records.values()) >= 12):
@@ -255,6 +262,9 @@ def read_runtime_evidence(search: object, principal: Principal, case_id: str,
         return {"evidence_id": identifier, "kind": "DOCUMENT", "text": item.text,
             "revision_id": item.revision_id, "section_id": item.section_id,
             "family_id": source["family_id"], "valid_from": source["valid_from"], "valid_to": source["valid_to"],
+            "replaced_from": min(search.catalog.effective_supersessions(
+                principal.tenant_id, case_id, search.resolver.fingerprint, item.revision_id).get(item.revision_id, ()),
+                default=None),
             "heading_path": list(item.heading_path),
             "generation": item.generation, "start_byte": item.start_byte, "end_byte": item.end_byte,
             "content_sha256": item.sha256,
@@ -357,7 +367,7 @@ def model_view(item: dict[str, Any]) -> dict[str, Any]:
     if item.get("kind") == "DOCUMENT":
         # What a reader needs to tell a policy from a ticket and one version from another (ADR-0107).
         view = {k: v for k, v in item.items() if k in {"evidence_id", "kind", "section_id", "family_id",
-                                                        "heading_path", "valid_from", "valid_to"}}
+                                                        "heading_path", "valid_from", "valid_to", "replaced_from"}}
         text = str(item["text"])
         view.update(text_preview=text[:800], text_truncated=len(text) > 800)
     elif item.get("kind") == "POLICY_DECISION":

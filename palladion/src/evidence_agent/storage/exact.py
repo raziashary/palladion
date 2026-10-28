@@ -6,9 +6,11 @@ from collections.abc import Collection
 from dataclasses import dataclass
 
 from evidence_agent.core.models import Principal
-from evidence_agent.storage.catalog import MAX_ALIAS_LENGTH, AliasHit, Catalog
+from evidence_agent.storage.applicability import MAX_NAMED_VERSIONS
+from evidence_agent.storage.catalog import CODE_PATTERN, MAX_ALIAS_LENGTH, AliasHit, Catalog
 
-_CODE = re.compile(r"(?<![A-Za-z0-9])(?:[A-Z][A-Z0-9_.]*[-.][A-Z0-9_.-]+)(?![A-Za-z0-9])")
+# A code with a version number: `POL-001@v2` names the second version of POL-001 (ADR-0110).
+_VERSIONED = re.compile(rf"({CODE_PATTERN.pattern})@v([1-9][0-9]{{0,2}})(?![A-Za-z0-9])")
 MAX_EXACT_CANDIDATES = 100
 MAX_ALIAS_CHUNKS = 1000
 MAX_ALIASES_PER_CHUNK = 64
@@ -34,6 +36,15 @@ class ExactHits:
     unknown_lookup: bool  # the query is only unregistered code(s): a lookup that nothing answers, not a question
 
 
+@dataclass(frozen=True)
+class NamedVersions:
+    """The versions a query names: (family ID, revision ID or None when that family has no readable version of that
+    number), and whether more references were written than are read."""
+
+    resolved: tuple[tuple[str, str | None], ...]
+    truncated: bool
+
+
 class ExactIndex:
     def __init__(self, catalog: Catalog) -> None:
         self.catalog = catalog
@@ -41,7 +52,7 @@ class ExactIndex:
     def _collect(self, principal: Principal, case_id: str, query: str,
                  generations: Collection[str] | None = None) -> tuple[dict[str, list[AliasHit]], bool]:
         """Alias hits per identifier in lookup order; at most MAX_EXACT_CANDIDATES distinct chunks in all."""
-        identifiers = dict.fromkeys((query.strip(), *_CODE.findall(query)))
+        identifiers = dict.fromkeys((query.strip(), *CODE_PATTERN.findall(query)))
         found: dict[str, list[AliasHit]] = {}
         seen: set[str] = set()
         truncated = False
@@ -88,12 +99,23 @@ class ExactIndex:
                     trailing[hit.chunk_id] = None
         # Only identifiers the lane looked up can be called unmatched; past the candidate bound the rest were not tried.
         unmatched = tuple(token for token in self.identifiers(query) if token in found and not found[token])
-        lookup_only = not re.search(r"\w", _CODE.sub(" ", query))
+        lookup_only = not re.search(r"\w", CODE_PATTERN.sub(" ", query))
         return ExactHits(tuple(leading), tuple(c for c in trailing if c not in leading), unmatched, truncated,
                          unknown_lookup=bool(unmatched) and lookup_only and not truncated and not leading and not trailing)
 
     def identifiers(self, query: str) -> tuple[str, ...]:
-        return tuple(dict.fromkeys(_CODE.findall(query)))
+        return tuple(dict.fromkeys(CODE_PATTERN.findall(query)))
+
+    def named_versions(self, principal: Principal, case_id: str, query: str) -> NamedVersions:
+        """The versions the query names (`POL-001@v2`). A reference to a family the caller cannot read, or the case does
+        not hold, names nothing and is left out; at most MAX_NAMED_VERSIONS references are read."""
+        references = list(dict.fromkeys(_VERSIONED.findall(query)))
+        named: list[tuple[str, str | None]] = []
+        for family, number in references[:MAX_NAMED_VERSIONS]:
+            found = self.catalog.family_version(principal, case_id, family, int(number))
+            if found is not None:
+                named.append(found)
+        return NamedVersions(tuple(named), truncated=len(references) > MAX_NAMED_VERSIONS)
 
     def register_approved(self, actor: Principal, revision_id: str) -> AliasRegistration:
         """Register bounded canonical identifiers under the existing alias authority.

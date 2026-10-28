@@ -1537,6 +1537,7 @@ Owner GO 2026-10-27 (benchmark investigation; "all of the fixes ... an actual fi
 | P11-T03 | The agent asks for enough ranked passages and sees which policy and version each comes from | G-RETRIEVAL, G-E2E |
 | P11-T04 | Publication is atomic and fails closed; readers take no write lock | G-SOURCE, G-SECURITY |
 | P11-T05 | Search speed: measured stage times, search-path audit, reranker | G-RETRIEVAL, G-BUDGET |
+| P11-T07 | Exact codes and named versions: a code in a title defines its section, the reranker leaves the exact lane in place, a question that names a version is answered by it | G-RETRIEVAL, G-SOURCE, G-SECURITY |
 | P11-T06 | End to end: stack gates, benchmark re-measurement at the new commit, final review and checkpoint | G-E2E, G-DOC |
 
 <a id="p11-t01-01"></a>
@@ -1607,9 +1608,17 @@ Owner GO 2026-10-27 (benchmark investigation; "all of the fixes ... an actual fi
 
 - [ ] **P11-T06.01 — Verify end to end, re-measure in the benchmark and close**
   - **Files:** `palladion/docs/development/MASTER_DEV_PLAN.md`, `palladion/docs/development/PROGRESS.md`, `palladion/docs/development/EVIDENCE_LOG.md`, `palladion/docs/development/GOAL.md`.
-  - **Depends:** P11-T05.01, P11-T04.01, P11-T03.01, P11-T02.02.
+  - **Depends:** P11-T07.01, P11-T05.01, P11-T04.01, P11-T03.01, P11-T02.02.
   - **Change:** Stack gates, actual entry-point smoke, the benchmark's Track A and Track B re-run for the Palladion arms at the new commit, end review and resolution, scoped commit.
   - **Proof:** SMOKE; G-E2E, G-DOC; benchmark evidence pointers and no stale claims.
+
+<a id="p11-t07-01"></a>
+
+- [x] **P11-T07.01 — Exact codes and named versions**
+  - **Files:** `palladion/src/evidence_agent/storage/applicability.py`, `palladion/src/evidence_agent/storage/catalog.py`, `palladion/src/evidence_agent/storage/exact.py`, `palladion/src/evidence_agent/retrieval/hybrid.py`, `palladion/src/evidence_agent/retrieval/evidence.py`, `palladion/src/evidence_agent/retrieval/coverage.py`, `palladion/tests/test_exact_codes.py`, `palladion/tests/test_search_correctness.py`.
+  - **Depends:** P11-T01.02.
+  - **Change:** The benchmark's exact-code questions found the complete set for 3 of 10 where keyword search found 8. Causes read from the running system: a code that titles a section was only one of many mentions; the reranker moved the exact lane's chunks behind semantic hits; a full stop closing a sentence was part of the code; and a question that names a replaced version (`POL-001@v1`) can never be answered because the version is no longer eligible. A code in a chunk's title defines it, the cross-encoder orders only what the index found, a code ends on a letter or digit, and `FAMILY@vN` names the family's Nth version (ADR-0105 addendum, ADR-0110, owner-approved 2026-10-28).
+  - **Proof:** INTEGRATION; G-RETRIEVAL, G-SOURCE, G-SECURITY; tests with a violating and a valid case for each rule and mutants of the new code, then the benchmark's Track A at the new commit (E-P11-003).
 
 ## Definition of done
 

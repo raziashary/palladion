@@ -107,7 +107,7 @@ class Tools:
                 data = []
                 for passage in result.passages:
                     try:
-                        data.append(self.ledger.add(passage.citation_id))
+                        data.append(self.ledger.add(passage.citation_id, result.named_versions))
                     except LedgerBound:
                         omitted_passages += 1  # the ledger is full: the model is told, the call does not fail
                 if any(w in {"INDEX_UNAVAILABLE", "RERANK_UNAVAILABLE", "GRAPH_REQUIRED_UNAVAILABLE"} for w in result.warnings):
