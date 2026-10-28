@@ -29,6 +29,25 @@ with `uv run python -m scripts.screenshot`.
 The answer is revealed piece by piece only *after* Palladion's gate has re-read the evidence. Raw model tokens are never
 shown, because until the gate runs a sentence is a proposal, not an answer.
 
+## Adding documents and policies
+
+Every screen has a how-to guide at the top: how to read an answer (Chat), how to add a document (Ingestion), and what a
+policy is, with a worked example, and how to make one (Policies). They open the first time and remember if you close them.
+
+![The chat screen with its guide](docs/screenshots/chat-howto.png)
+
+![Ingestion as an uploader](docs/screenshots/ingestion-upload.png)
+
+![Ingestion as an administrator](docs/screenshots/ingestion-approve.png)
+
+![The policy wizard at its review step](docs/screenshots/policy-wizard.png)
+
+![The Policies screen with its how-to guide](docs/screenshots/policy-howto.png)
+
+Captured against the real Palladion in search-only mode (no model). Deep links make them reproducible:
+`?as=<identity>` signs in as a demo identity, and on Policies `?example=1&step=4` opens the example at its review step
+(`uv run python -m scripts.screenshot --route policies --query "as=admin-a&example=1&step=4" --out ...`).
+
 ## Run it
 
 Prerequisites: `uv`, WSL Ubuntu with Palladion's Qdrant binary (see the [application README](../palladion/README.md)),

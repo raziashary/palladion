@@ -17,12 +17,21 @@ Setup: own Qdrant on its own port and data folder, own data root, collection `pa
 | Policy creation through the UI server | Validated, registered (author resolved to the source's uploader, product defaulted, enum values filled), listed, revoked. |
 | Ingestion | Draft upload invisible to a reader; approved by an admin; then found by search; listing showed it approved. |
 
+## Ingestion and policy screens, 2026-10-28 (real Palladion, search-only, no model)
+
+| Check | Result |
+|---|---|
+| Ingestion screen as an uploader and as an admin | Rendered from live data: the drop zone, the draft and approved steps, one-click switch to the approver, Approve and Revoke. Captured as screenshots. |
+| Policy wizard "Start from an example" | Built a policy from a real approved passage and reached the review step with "Ready to register" (server validation). Captured as a screenshot. |
+| How-to guides on Chat, Ingestion and Policies | Rendered from the real UI and captured as screenshots (open by default in a fresh browser; the open or closed choice is remembered per browser). Their wording was checked against the code: the policy example is the real demo policy, and the stale-reading outcome is `UNVERIFIED_INPUT`. |
+| Upload, approve and policy registration clicks | Driven in a browser against the fake Palladion earlier; against the real Palladion they were exercised through the UI server's API (see above), not by clicking. |
+
 ## Not verified
 
 * Only four real agent turns were run (two of them degraded by the provider rate limit). Answer quality, the critic's behavior and a conflict/not-established answer were not
   observed live; their rendering is covered only by the fake.
 * Streaming was observed in the browser only for the first real turn and against the fake; no timing measurements.
-* Browser-only behavior (drag and drop, PDF upload, light theme, narrow screens beyond one width) was not exercised.
+* Browser-only behavior (drag and drop, PDF upload, "Load from a file", "Save a copy as a file", light theme, narrow screens beyond one width) was not exercised.
 * The `supersede` flow was tested against Palladion's test suite and the fake, not through the live UI.
 * Models other than GPT-OSS 20B were not started.
 

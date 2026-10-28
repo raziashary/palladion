@@ -1,6 +1,7 @@
 import { api } from './api.js';
 import { clear, h, icon, toast } from './dom.js';
 import { OPERATOR_WORDS, fmtDay, policySentences, toneOf } from './format.js';
+import { policyHelp } from './help.js';
 import { S, persona } from './state.js';
 
 const STEPS = ['Basics', 'Source', 'Facts', 'Rules', 'Review'];
@@ -53,11 +54,34 @@ export async function renderPolicies(host) {
           try { await api(`/policies/${p.version_id}/revoke`, { method: 'POST', body: { case_id: S.caseId } }); toast('Revoked'); refresh(); } catch (error) { toast(error.message, 'error'); } } }, 'Revoke') : null));
   }
 
+  async function exampleDraft() {
+    const found = await api('/search', { method: 'POST', body: { case_id: S.caseId, query: 'current reversal review', mode: 'hybrid', limit: 3 } });
+    const p = found.passages[0];
+    if (!p) throw new Error('There is no approved document to base an example on yet. Upload and approve one first.');
+    return { version_id: 'EXAMPLE.REVERSAL-v1', family_id: 'EXAMPLE.REVERSAL', case_ids: [S.caseId], time_basis: 'TRANSACTION_OCCURRED_AT', domain_event: '', valid_from: today(), valid_to: '',
+      clauses: [{ revision_id: p.revision_id, section_id: p.section_id, start_byte: p.start_byte, end_byte: p.end_byte, sha256: p.sha256, preview: p.text.replace(/\s+/g, ' ').slice(0, 220) }],
+      facts: [{ name: 'settlement_state', operation: 'get_settlement_status', field: 'settlement_state', type: 'enum', allowed_values: [], max_age_seconds: 300 }],
+      rules: [{ id: 'settled-not-permitted', match: 'all', clause_index: 0, outcome: 'NOT_PERMITTED', conditions: [{ fact: 'settlement_state', operator: 'eq', value: 'SETTLED' }] }],
+      default_outcome: 'ESCALATE' };
+  }
+  async function openExample(step = 0) {
+    try { clear(wizardHost).append(wizard(await exampleDraft(), typeof step === 'number' ? step : 0)); } catch (error) { toast(error.message, 'error'); }
+  }
+  async function loadFile(event) {
+    const file = event.target.files[0]; event.target.value = '';
+    if (!file) return;
+    try {
+      const d = JSON.parse(await file.text());
+      if (typeof d !== 'object' || !d || !Array.isArray(d.clauses)) throw new Error('This does not look like a saved policy.');
+      clear(wizardHost).append(wizard({ ...blankDraft(), ...d, case_ids: [S.caseId], clauses: d.clauses.map((c) => ({ preview: '(loaded from file)', ...c })) }, 4));
+    } catch (error) { toast(error.message, 'error'); }
+  }
+
   // The wizard ---------------------------------------------------------------------------------------------------------
 
-  function wizard() {
-    const d = blankDraft();
-    let step = 0;
+  function wizard(initial = null, startStep = 0) {
+    const d = initial || blankDraft();
+    let step = startStep;
     let problems = [];
     const body = h('div');
     const nav = h('div', { style: 'display:flex;justify-content:space-between;margin-top:14px' });
@@ -158,7 +182,12 @@ export async function renderPolicies(host) {
       const list = h('ul', { class: 'summary' }, policySentences({ ...d, required_facts: d.facts }).map((s) => h('li', {}, s)));
       const out = h('div');
       api('/policies/validate', { method: 'POST', body: d }).then((r) => { problems = r.problems; clear(out).append(r.ok ? h('p', { class: 'verified' }, icon('check', 14), 'Ready to register.') : h('ul', { class: 'problems', id: 'problems' }, r.problems.map((p) => h('li', {}, p.message)))); });
-      return [h('p', { class: 'hint', style: 'margin-top:0' }, 'This is exactly what Palladion will apply. Read it as a colleague would.'), list, d.clauses.length ? h('p', { class: 'hint' }, `Based on ${d.clauses.length} approved source clause${d.clauses.length === 1 ? '' : 's'}.`) : null, out];
+      const save = () => {
+        const link = h('a', { href: URL.createObjectURL(new Blob([JSON.stringify(d, null, 2)], { type: 'application/json' })), download: `${d.version_id || 'policy'}.json` });
+        document.body.append(link); link.click(); link.remove();
+      };
+      return [h('p', { class: 'hint', style: 'margin-top:0' }, 'This is exactly what Palladion will apply. Read it as a colleague would.'), list,
+        h('button', { class: 'btn small', id: 'save-policy', style: 'margin:8px 0', onclick: save }, 'Save a copy as a file'), d.clauses.length ? h('p', { class: 'hint' }, `Based on ${d.clauses.length} approved source clause${d.clauses.length === 1 ? '' : 's'}.`) : null, out];
     }
 
     async function register(event) {
@@ -178,6 +207,12 @@ export async function renderPolicies(host) {
 
   page.append(h('div', { style: 'display:flex;justify-content:space-between;align-items:flex-start;gap:12px' }, h('div', {}, h('h1', {}, 'Policies'),
     h('p', { class: 'lead' }, `Rules that Palladion applies in plain code for ${S.caseId}, each tied to approved source text. The agent can run a policy but never write or change one.`)),
-  h('button', { class: 'btn primary', id: 'new-policy', onclick: () => clear(wizardHost).append(wizard()) }, icon('plus', 14), ' New policy')), wizardHost, listHost);
+  h('div', { style: 'display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end' },
+    h('button', { class: 'btn', id: 'example-policy', title: 'A ready-made policy built from a real approved passage; edit anything', onclick: openExample }, 'Start from an example'),
+    h('label', { class: 'btn', style: 'cursor:pointer', title: 'Load a policy you saved earlier' }, 'Load from a file',
+      h('input', { type: 'file', accept: '.json,application/json', class: 'sr', id: 'policy-file', onchange: loadFile })),
+    h('button', { class: 'btn primary', id: 'new-policy', onclick: () => clear(wizardHost).append(wizard()) }, icon('plus', 14), ' New policy'))), policyHelp(), wizardHost, listHost);
   await refresh();
+  const link = new URLSearchParams(location.search);
+  if (link.get('example')) await openExample(Number(link.get('step') || 0)); // deep link for docs: ?example=1&step=4
 }

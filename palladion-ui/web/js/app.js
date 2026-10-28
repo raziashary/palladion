@@ -107,6 +107,8 @@ async function renderRoute() {
 }
 
 async function boot(reload = false) {
+  const as = new URLSearchParams(location.search).get('as'); // deep link: ?as=admin-a signs in as that demo identity
+  if (as && !reload) await api('/persona', { method: 'POST', body: { persona: as } }).catch(() => null);
   S.boot = await api('/bootstrap');
   if (!S.boot.cases.some((c) => c.id === S.caseId)) {
     const saved = recall('case');

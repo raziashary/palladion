@@ -3,6 +3,7 @@ import { loadSessions } from './app.js';
 import { $, clear, h, icon, toast } from './dom.js';
 import { openEvidence } from './evidence.js';
 import { KIND_LABEL, citationTitle, disposition, evidenceKind, failureText, fmtTime, gap, partsOf, toneOf } from './format.js';
+import { chatHelp } from './help.js';
 import { openModelMenu, runtimeChip } from './runtime.js';
 import { S, emit, modelLabel } from './state.js';
 
@@ -149,6 +150,7 @@ export async function renderChat(host, { id }) {
   const empty = () => h('div', { class: 'empty' }, h('div', { class: 'logo' }, icon('shield', 24)), h('h1', {}, 'What would you like to check?'),
     h('p', { class: 'lead' }, 'Answers come with the evidence behind each claim, and say plainly what could not be verified.'),
     h('div', { class: 'suggestions' }, SUGGESTIONS.map((q) => h('button', { onclick: () => { input.value = q; input.focus(); sync(); } }, q))));
+  thread.append(chatHelp(messages.length > 0));
   if (messages.length) messages.forEach(paint); else thread.append(empty());
 
   async function ask(question) {

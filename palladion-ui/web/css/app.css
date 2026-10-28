@@ -223,3 +223,19 @@ input:focus, select:focus, textarea.box:focus { outline: none; border-color: var
 .steps summary::after { content: "▸"; margin-left: 2px; } .steps[open] summary::after { content: "▾"; }
 .steps ol { padding-left: 2px; }
 .panel .tabs { display: none; }
+
+/* How-to guides */
+.howto { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: var(--radius); margin: 0 0 18px; }
+.howto summary { padding: 11px 16px; cursor: pointer; color: var(--text); list-style: none; display: flex; align-items: center; gap: 8px; }
+.howto summary::-webkit-details-marker { display: none; }
+.howto summary::before { content: "?"; display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-weight: 700; font-size: 12px; }
+.howto summary::after { content: "▸"; margin-left: auto; color: var(--muted); } .howto[open] summary::after { content: "▾"; }
+.howto-body { padding: 0 18px 16px 18px; color: var(--text-2); }
+.howto-p { margin: 8px 0; }
+.howto-steps { margin: 8px 0 12px; padding-left: 22px; display: flex; flex-direction: column; gap: 6px; }
+.howto-terms { display: grid; grid-template-columns: 170px 1fr; gap: 8px 16px; margin: 10px 0; }
+.howto-terms dt { color: var(--text); font-weight: 600; } .howto-terms dd { margin: 0; }
+.howto-list { margin: 6px 0; padding-left: 20px; } .howto-list li { margin: 3px 0; }
+.example { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin: 10px 0 12px; }
+.example .howto-p { margin-top: 4px; }
+@media (max-width: 760px) { .howto-terms { grid-template-columns: 1fr; gap: 2px; } .howto-terms dd { margin-bottom: 8px; } }

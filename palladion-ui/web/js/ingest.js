@@ -1,6 +1,7 @@
 import { api, qs } from './api.js';
 import { clear, h, icon, toast } from './dom.js';
 import { bytes, fmtDay, fmtTime, shortId, toneOf } from './format.js';
+import { ingestHelp } from './help.js';
 import { S, emit, persona } from './state.js';
 
 const TEXT = /\.(md|markdown|txt|json|jsonl|csv|tsv|py|js|jsx|ts|tsx|java|go|rs|c|h|cpp|cs|sql|sh|ps1|ya?ml|toml|ini|cfg|xml|html|css|log)$/i;
@@ -24,6 +25,7 @@ function stepper(source) {
 
 export async function renderIngest(host) {
   const me = persona();
+  const approver = S.boot.personas.find((p) => p.can_approve && p.tenant_id === me.tenant_id);
   const queue = [];
   const page = h('div', { class: 'page' });
   host.append(h('div', { class: 'scroll' }, page));
@@ -58,7 +60,7 @@ export async function renderIngest(host) {
     };
     const approve = h('button', { class: 'btn primary small', onclick: async (e) => { e.target.disabled = true; e.target.textContent = 'Approving and indexing…'; await act('Approved and indexed', `/sources/${s.revision_id}/approve`, { supersedes_revision_id: replaces.value || null }); } }, 'Approve');
     return h('div', { class: 'item-card' }, icon(s.pdf ? 'file' : 'doc', 22),
-      h('div', { class: 'grow' }, h('div', { class: 'name' }, s.filename || shortId(s.revision_id)),
+      h('div', { class: 'grow' }, h('div', { class: 'name', title: s.filename }, String(s.filename || shortId(s.revision_id)).split('/').pop()),
         h('div', { class: 'sub' }, `${s.family_id} · uploaded by ${s.uploader_id}${s.size ? ' · ' + bytes(s.size) : ''}${s.pages ? ` · ${s.pages} pages` : ''}`),
         h('div', { class: 'sub' }, s.valid_from || s.valid_to ? `Valid ${s.valid_from ? 'from ' + fmtDay(s.valid_from) : ''}${s.valid_to ? ' until ' + fmtDay(s.valid_to) : ''}` : 'No validity dates: always applies while approved'),
         stepper(s)),
@@ -66,6 +68,9 @@ export async function renderIngest(host) {
         h('span', { class: `chip ${toneOf(s.state)}` }, s.state),
         canApprove ? [older.length ? replaces : null, approve] : null,
         s.state === 'DRAFT' && !canApprove ? h('span', { class: 'hint' }, s.uploader_id === me.id ? 'Waiting for another person to approve' : me.can_approve ? '' : 'Needs an administrator') : null,
+        s.state === 'DRAFT' && !canApprove && approver && approver.id !== me.id ? h('button', { class: 'btn small', onclick: async () => {
+          await api('/persona', { method: 'POST', body: { persona: approver.id } }); location.hash = '#/ingest'; location.reload();
+        } }, `Switch to ${approver.id} to approve`) : null,
         me.can_approve && s.state === 'APPROVED' ? h('button', { class: 'btn danger small', onclick: () => confirm('Revoke this document? It stops being searchable and citable immediately.') && act('Revoked', `/sources/${s.revision_id}/revoke`, {}) }, 'Revoke') : null));
   }
 
@@ -115,11 +120,13 @@ export async function renderIngest(host) {
 
   page.append(h('h1', {}, 'Ingestion'),
     h('p', { class: 'lead' }, `Add documents to ${S.caseId}. An upload is a draft that nobody can search or cite until a different person approves it.`),
+    ingestHelp(),
     ...(me.can_upload ? [drop, queueHost,
       h('details', { style: 'margin-top:12px' }, h('summary', { class: 'hint', style: 'cursor:pointer' }, 'Or paste text instead'),
         h('div', { class: 'field', style: 'margin-top:8px' }, h('label', {}, 'File name'), pasteName), h('div', { class: 'field' }, pasteText),
         h('button', { class: 'btn', onclick: () => { if (!pasteText.value.trim()) return; queue.push({ filename: pasteName.value || 'note.md', size: pasteText.value.length, family: familyOf(pasteName.value || 'note'), valid_from: today(), valid_to: '', content: pasteText.value }); pasteText.value = ''; drawQueue(); } }, 'Add to the upload list'))]
-      : [h('div', { class: 'card' }, `${me.id} can’t upload. Switch identity (bottom left) to uploader-a to add documents, then to admin-a to approve them.`)]),
+      : [h('div', { class: 'card' }, me.can_approve ? 'You can approve the drafts below. To add a document, switch to an uploader (bottom left); an uploader cannot approve their own.'
+        : `${me.id} can’t upload documents. Switch identity (bottom left) to an uploader.`)]),
     h('div', { class: 'section-title' }, h('h2', {}, 'Documents in this case'), h('button', { class: 'btn small', onclick: refresh }, 'Refresh')),
     h('p', { class: 'hint', style: 'margin-top:0' }, me.can_approve ? 'You can approve drafts uploaded by someone else, and revoke approved documents.' : 'Approving is for administrators. Drafts you did not upload are not shown to you.'),
     listHost);

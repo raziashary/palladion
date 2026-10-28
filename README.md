@@ -158,6 +158,11 @@ dispositions, claims with clickable evidence, gaps and observation times, not on
 
 ### What it looks like in the UI
 
+Every screen opens with a short how-to guide (open the first time, then remembered): how to read an answer, how to add
+a document, and what a policy is with a worked example. This is the chat one:
+
+![The chat screen with its "How to read an answer" guide: what each badge means, what the blue chips open, and what the notes at the end say](palladion-ui/docs/screenshots/chat-howto.png)
+
 Two real answers from the [local UI](palladion-ui/README.md) (GPT-OSS 20B through Palladion, on the fictional `case-42`,
 signed in as a reader). In the first, an operational question: the agent took live readings, the policy engine ran, and
 the independent review was unavailable because Groq rate-limited that call. The UI shows all of it: a "Partly supported"
@@ -171,7 +176,29 @@ original file in the side panel.
 
 ![A real supported answer: the verified quote, its citation, and the exact source text re-read from the original bytes](palladion-ui/docs/screenshots/supported-answer.png)
 
-Not shown: a conflict, a not-established answer or a hypothesis. Only a few real agent runs were possible before the
+### Adding documents and policies in the UI
+
+Both screens are built to be used without reading the docs. These captures are of the real Palladion with no model
+(search-only mode), on the fictional `case-42`.
+
+**Documents.** The guide at the top explains the steps. Drop files or paste text; each one becomes a draft that nobody can search or cite. The card shows the
+three steps (uploaded, approved by someone else, searchable), and a draft waits for a *different* person: one click
+switches to the approver. An administrator approves it, optionally saying which older version it replaces.
+
+![Ingestion as an uploader: a drop zone, paste-text option, and each document's draft, approved and searchable steps](palladion-ui/docs/screenshots/ingestion-upload.png)
+
+![Ingestion as an administrator: Approve on each draft, Revoke on approved documents](palladion-ui/docs/screenshots/ingestion-approve.png)
+
+**Policies.** The guide explains what a policy is, with a worked example. A policy is built in five plain steps (basics, source passage, facts, rules, review). Nobody has to start
+from a blank page: "Start from an example" fills in a policy from a real approved passage, "Load from a file" and "Save a
+copy as a file" move policies between people, and the last step reads the policy back as sentences and validates it
+before anything is registered.
+
+![The policy wizard at its review step, reading an example policy back in plain words, with Ready to register](palladion-ui/docs/screenshots/policy-wizard.png)
+
+![The Policies screen with its guide: what a policy is, a worked example, the pieces, and how to make one, above the list of policies](palladion-ui/docs/screenshots/policy-howto.png)
+
+Not shown in the answer screenshots: a conflict, a not-established answer or a hypothesis. Only a few real agent runs were possible before the
 provider's rate limit (see [palladion-ui/docs/TESTING.md](palladion-ui/docs/TESTING.md)).
 
 ## Inside a search, and what "policy" means
