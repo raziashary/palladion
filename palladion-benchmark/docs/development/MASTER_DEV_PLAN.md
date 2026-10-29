@@ -1319,9 +1319,10 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
 
 <a id="b09-t03-01"></a>
 
-- [ ] **B09-T03.01 — External validation datasets**
+- [x] **B09-T03.01 — External validation datasets**
   - **Files:** `palladion-benchmark/scripts/run_track_a.py`.
   - **Depends:** B08-T07.01.
   - **Change:** Verify availability and licenses of public enterprise benchmarks at run time and evaluate without using their test answers for tuning.
   - **Proof:** MEASUREMENT; BG-TRACKA; unavailable datasets recorded as NOT_RUN.
-  - **Evidence:** Not yet executed.
+  - **Scope:** SciFact only (owner approval 2026-10-29); the other candidates (BEIR FiQA, RAGBench subsets, EnterpriseRAG-Bench at about 500,000 documents) are not run. The set has no approval states, versions or access rules, so the card tests ordinary search only.
+  - **Evidence:** E-B08-014 (2,100 pairs OK; Palladion on par with the strong baseline, +0.010 [-0.020, +0.040]; exploratory).

@@ -169,7 +169,31 @@ The registered result is the first run and was not picked among the three.
 **What this does not show.** It does not show that Palladion's *answers* are better (that is tests B and C). It
 does not show that real people's questions behave like these: one generator wrote the documents, the questions and
 the labels, and no human has checked the labels. It does not show that Palladion works on other document sets.
-A test with questions reworded by a different model, and a test on public documents, are still to do.
+A test with questions reworded by a different model is still to do; a test on one public set (section 4.3)
+shows Palladion on par with the baseline for ordinary search.
+
+### 4.3 A public dataset: ordinary search on SciFact (exploratory)
+
+To see whether Palladion's lead depends on the invented company, the same systems were run on **SciFact**, a public
+set of 5,183 science abstracts and 300 claims, each with the abstracts that support or contradict it (downloaded with
+the owner's approval; license CC BY-NC 2.0). It has no approval states, versions or access rules, so it tests
+**ordinary search only**. The settings were the ones tuned on the invented worlds; nothing was tuned on SciFact.
+
+| System | Questions where all relevant abstracts were found (of 300) |
+|---|---|
+| **Palladion's retriever** | **78.0%** |
+| Strong common baseline | 77.0% |
+| Keyword search | 75.3% |
+| Keyword + meaning | 71.3% |
+| Meaning search | 49.0% |
+
+Palladion minus the strong baseline is +1.0 point (range -2.0 to +4.0): **no difference we can measure**. So
+Palladion's lead on the invented worlds (section 4.1) does not come from searching ordinary text better. It comes from
+what that data has and SciFact does not: approved and withdrawn versions, validity dates, exact codes, questions that
+need several documents. It also says Palladion does not give up ordinary search to get those rules, to within about
+3 points. The baseline with Palladion's approval-and-date rule scores exactly the same as the baseline here, as it
+must when no document has an approval state or a date. Only one public set was run, it is science, not company
+documents, and the judgements are per abstract.
 
 ### 4.2 The earlier run on the first 72 questions (in-sample, untuned baselines)
 
@@ -318,8 +342,9 @@ Palladion's agent answered 3 of 8 turns in an earlier trial. None of this suppor
   result is not scored yet.
 * **Test C for the full Palladion (E4)**: the first attempt is void, because a test run of mine stopped a shared
   service under it; it is re-run when the quota allows, and the other Palladion variant (E3) is not run yet.
-* **Questions reworded by a different model, and public documents**: not done yet. The first needs a little model
-  quota and has its own seal; the second needs permission to download named public datasets.
+* **Questions reworded by a different model**: not done yet. It needs gpt-oss quota (about two days for the 600 test
+  questions) and has its own seal.
+* **More public datasets**: one (SciFact, section 4.3) was run with the owner's approval; the others were not.
 * **Labels checked by a person**: not done; the owner accepted the generator's labels in writing.
 * **Keeping the search process running** (section 5) and **conflicts / access / summary questions**, where
   Palladion still scores 0.
@@ -330,6 +355,7 @@ Palladion's agent answered 3 of 8 turns in an earlier trial. None of this suppor
 |---|---|
 | Harness, fictional dataset, scoring rules and statistics | Built and tested |
 | Test A (finding documents), all search systems and Palladion | **Sealed run on six new worlds done (section 4.1)**; the earlier 72-question run is history (4.2) |
+| Public data (SciFact, ordinary search) | Run, exploratory (section 4.3): Palladion on par with the strong baseline |
 | Palladion improvements (correctness, speed, packing, exact codes, named versions) | Done, measured, reviewed; 645 automated tests pass |
 | Test B (answering) | Run at the current Palladion: 196 of 200 pairs done, 4 wait for quota; not scored yet |
 | Test C (whole systems) | Partly run; the first attempt at the full Palladion is void and will be re-run |

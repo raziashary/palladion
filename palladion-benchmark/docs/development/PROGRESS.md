@@ -40,7 +40,7 @@ Still open and tracked: OQ03 (read Palladion's interface at B04), OQ09 (license,
 | B06 | DONE | Built and audited, E-B06-001 to E-B06-005; the live graph pilot is partial (R6 63 of 103 chunks, no query answered; R4 and R5 not attempted; BR39) and no graph arm has a measured result |
 | B07 | DONE | E-B07-001 to E-B07-004; the live pilot is partial (E3 3 of 8 turns, E4 NOT_RUN, E0 and E1 not live; BR47) and no system arm has a measured ranking result |
 | B08 | IN_PROGRESS | Descriptive comparison (BADR-0043, BADR-0044) plus, since BADR-0047, a **sealed retrieval-only Track A run on six fresh worlds, done and confirmed** (E-B08-013: Palladion `caebd53` 0.399 against 0.226 for the tuned strong baseline, +0.173 [+0.118, +0.227], above the registered 0.05; every arm tuned equally on development worlds, E-B08-012). Open: Track B at `caebd53` (196 of 200 pairs, 4 quota-blocked, not scored), E4 (first attempt void, re-run on quota), E3, the wording-variant study, B09-T03.01 external data, the graph arms, B08-T05.01 ablations, B08-T07.01 package |
-| B09 | DEFERRED | Conditional replication and stress |
+| B09 | IN_PROGRESS | B09-T03.01 done for SciFact only (E-B08-014, exploratory, owner-approved download); the L-tier stress run (B09-T01.01) and the robustness replication (B09-T02.01) stay deferred |
 
 ## Gate state
 
