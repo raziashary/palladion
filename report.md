@@ -5,14 +5,17 @@ ways of searching and answering, what changed while we improved it, and what is 
 people who were not in the room. Technical detail lives in the linked files; the numbers here come from them. How
 the system itself works is in [architecture.md](architecture.md).
 
-**Status: a private, exploratory comparison. It is not a sealed experiment.** Nothing here says one system is
-"better" than another. Where two numbers are close, they are not distinguishable. All data is fictional (an
-invented payments company called Meridian Switchworks). Last updated 2026-10-28, and it will keep growing as the
-benchmark runs.
+**Status: the document-finding comparison now has a sealed run on new questions (section 4.1); everything else is
+still exploratory.** Where two numbers are close, they are not distinguishable. All data is fictional (an invented
+payments company called Meridian Switchworks). Last updated 2026-10-29, and it will keep growing as the benchmark
+runs.
 
-> **Read this first.** Palladion was improved *after* the benchmark showed where it failed, and then measured on
-> the *same* 72 questions. The improvement below is therefore "in-sample": it shows the fixes worked on the cases
-> that guided them, not that Palladion would do as well on new questions. The held-out questions have not been used.
+> **Read this first.** Two kinds of result are in this report. Section 4.1 is a **sealed run on six new worlds**:
+> the systems were tuned equally on separate worlds, the way of judging was written down and hashed first, and the
+> questions were not looked at one by one. Section 4.2 and section 5 describe the **earlier work on the first 72
+> questions**, which is "in-sample": Palladion was improved after seeing those questions' results and measured on
+> them again, and the other systems were not tuned. Trust 4.1 for the size of Palladion's lead; read 4.2 as a
+> history of how Palladion changed.
 
 ## 1. What Palladion is, and what the benchmark asks
 
@@ -95,14 +98,85 @@ apply to the "finding documents" test, so they have no scores in section 4.
 | Q9 | The answer depends on live system status |
 | Q10 | A broad summary across many documents |
 
-## 4. Test A: finding the right documents (latest results)
+## 4. Test A: finding the right documents
 
 For each question, the system returns its ten best documents. We ask: did it find **every** document needed
 (the "complete set"), and what share of the **needed** documents did it find?
 
-Latest run: Palladion commit `5acc825`, 72 scored questions, every system saw the same 1,200 documents, no model
-was used in the search arms. Condition "C2": Palladion enforces its own per-person access lists, the other
-systems use a simple shared filter.
+### 4.1 The sealed run on six new worlds (the result that counts)
+
+How it was done, in order: (1) six new fictional worlds were generated with new random seeds, 1,200 documents and
+100 questions each; (2) two other worlds were used to **tune every system the same amount** (a baseline run and at
+most six one-change trials each, the best kept only if it clearly helped); (3) the way of judging was written down
+(the main comparison, the smallest gain that would count, how to handle the many comparisons) and the new worlds,
+the settings and the code were **hashed into a seal**; (4) the systems were run, three times each for the main
+condition and once for the other, and scored by a program that prints only totals, so nobody tuned on the sealed
+questions. Palladion is the commit `caebd53`. No answering model is used in the search arms (they use small pre-trained search models only). Condition "C2": Palladion
+enforces its own per-person access lists, the other systems use a simple shared filter. 600 questions were asked and
+446 test document-finding.
+
+| System | Questions where **all** needed documents were found | Share of needed documents found |
+|---|---|---|
+| **Palladion's retriever** | **39.9%** | **49.5%** |
+| Strong baseline plus Palladion's approval-and-date rule | 26.9% | 33.2% |
+| Keyword + meaning | 24.7% | 29.4% |
+| Strong common baseline (keyword + meaning + re-reader) | 22.6% | 28.4% |
+| Keyword + exact-code rule | 22.4% | 29.9% |
+| Keyword search | 22.2% | 29.7% |
+| Meaning search | 13.2% | 19.2% |
+
+**The check written down beforehand: Palladion minus the strong baseline is +17 percentage points, range +12 to
++23; the bar was +5, so it passed.** Against the three other comparisons: keyword search +18 (range +13 to +22),
+keyword with the exact-code rule +18 (+13 to +22), and the strong baseline with Palladion's own approval-and-date
+rule +13 (+7 to +19). The range covers 95% of what chance would give when questions about the same document family
+are counted as one cluster.
+
+What explains the lead? Part of it is a rule any system could apply: only look at documents that are approved and
+valid at the time of the question, and treat a named version (like POL-001@v1) as asking for exactly that version.
+Adding that rule to the strong baseline lifts it from 22.6% to 26.9%. The rest of the lead, 13 points, is the rest
+of Palladion's design (how it cuts documents into pieces, how it finds an exact code, and how it orders results).
+
+By question type, questions where all needed documents were found (60 each unless stated):
+
+| Type | Palladion | Strong baseline | Baseline + rule | Keyword | Keyword + code rule |
+|---|---|---|---|---|---|
+| Q1 exact codes | **100%** | 38% | 40% | 67% | 68% |
+| Q2 different words | **45%** | 32% | 35% | 15% | 15% |
+| Q3 several documents | **37%** | 3% | 3% | 2% | 2% |
+| Q4 which version | 20% | 27% | **45%** | 13% | 13% |
+| Q5 exceptions | **43%** | 20% | 15% | 42% | 42% |
+| Q6 conflicts | 52% | 48% | **62%** | 27% | 27% |
+| Q8 access (26 questions) | 0% | 0% | 0% | 0% | 0% |
+| Q10 summaries | 0% | 0% | 0% | 0% | 0% |
+
+Palladion's gain is concentrated in exact codes and several-document questions. It is **behind** on "which
+version" and on conflicts, and no system finds the access and summary questions at all.
+
+**Wrong kinds of document** (condition C2, share of questions whose ten results included at least one):
+an out-of-date version of the right document: Palladion 0.3%, strong baseline plus rule 0.5%, the others 8% to 10%;
+a document of unclear authority (a draft, a withdrawn one): Palladion 0%, baseline plus rule 0%, the others 10% to
+15%; a document the person may not see: 0% for every system.
+
+**Other condition, "C1": nobody is told who may see what.** Palladion 35.9% of questions complete, strong baseline
+plus rule 25.6%, strong baseline 22.4%, keyword 20.9%, keyword + meaning 20.9%, meaning 11.4%. Because no access
+rules apply here, every system shows some documents the person should not see; that is the condition, not a finding
+about access control.
+
+**Repeats.** Rebuilding Palladion from scratch and asking again gave the same ten documents in the same order for
+92% (second run) and 95% (third run) of the questions; the other systems gave exactly the same lists every time.
+The registered result is the first run and was not picked among the three.
+
+**What this does not show.** It does not show that Palladion's *answers* are better (that is tests B and C). It
+does not show that real people's questions behave like these: one generator wrote the documents, the questions and
+the labels, and no human has checked the labels. It does not show that Palladion works on other document sets.
+A test with questions reworded by a different model, and a test on public documents, are still to do.
+
+### 4.2 The earlier run on the first 72 questions (in-sample, untuned baselines)
+
+This is the run reported before the sealed one. It is kept for the history of how Palladion changed, not as the
+size of its lead (see the box at the top).
+
+Palladion commit `5acc825`, 72 scored questions, every system saw the same 1,200 documents.
 
 | System | Questions where **all** needed documents were found (of 72) | Share of needed documents found | How fast (typical search) |
 |---|---|---|---|
@@ -237,11 +311,16 @@ Palladion's agent answered 3 of 8 turns in an earlier trial. None of this suppor
   No measured result. They are on hold until quota allows.
 * **Google's managed system**: no access, not run.
 * **Palladion with graph links**: not supported by the benchmark yet.
-* **The sealed, confirmatory run**: never run. This benchmark is exploratory, uses one small document set
-  (1,200 documents, 100 questions of which 97 are scored), and the answer labels were produced by the benchmark's
-  author, not an independent reader. The held-out questions have not been touched.
-* **Test B and Test C at the current Palladion**, when the model quota allows (the daily limit renews about
-  2026-10-28 12:35 UTC).
+* **A sealed run for answering (tests B and C)**: not possible on the free model quota (it would take millions of
+  tokens); those tests stay descriptive. The sealed run in section 4.1 covers document-finding only.
+* **Test B at the current Palladion**: run on 2026-10-29, 196 of 200 question-and-system pairs are done (189 gave a
+  valid answer and 7 gave an answer outside the required form); 4 pairs wait for the model quota and the
+  result is not scored yet.
+* **Test C for the full Palladion (E4)**: the first attempt is void, because a test run of mine stopped a shared
+  service under it; it is re-run when the quota allows, and the other Palladion variant (E3) is not run yet.
+* **Questions reworded by a different model, and public documents**: not done yet. The first needs a little model
+  quota and has its own seal; the second needs permission to download named public datasets.
+* **Labels checked by a person**: not done; the owner accepted the generator's labels in writing.
 * **Keeping the search process running** (section 5) and **conflicts / access / summary questions**, where
   Palladion still scores 0.
 
@@ -250,17 +329,20 @@ Palladion's agent answered 3 of 8 turns in an earlier trial. None of this suppor
 | Piece | State |
 |---|---|
 | Harness, fictional dataset, scoring rules and statistics | Built and tested |
-| Test A (finding documents), all search systems and Palladion | Run, current Palladion measured (section 4), in-sample |
+| Test A (finding documents), all search systems and Palladion | **Sealed run on six new worlds done (section 4.1)**; the earlier 72-question run is history (4.2) |
 | Palladion improvements (correctness, speed, packing, exact codes, named versions) | Done, measured, reviewed; 645 automated tests pass |
-| Test B (answering) | Run once on an older Palladion; re-run pending quota |
-| Test C (whole systems) | Partly run; needs model quota |
+| Test B (answering) | Run at the current Palladion: 196 of 200 pairs done, 4 wait for quota; not scored yet |
+| Test C (whole systems) | Partly run; the first attempt at the full Palladion is void and will be re-run |
 | Graph systems | Built; not measured |
 | Final publication package (licence, dataset card, reproducibility) | Not done |
 | Plain-language documentation (README, [architecture.md](architecture.md), this report) | Written; worked examples are reconstructions, not recorded runs |
 
 ## 9. Limits, so nobody over-reads this
 
-* **In-sample.** Palladion was changed after seeing these questions' results and measured on the same questions.
+* **In-sample, for the earlier run only.** The first 72 questions (section 4.2) were seen before Palladion was
+  changed. The sealed run (section 4.1) was not.
+* **One author.** One generator wrote the documents, the questions and the answer labels, and no human checked
+  them; the sealed run cannot show that real questions behave the same way.
 * One small, invented document set; results may not carry to real company data.
 * Single runs, one machine shared with other programs; timings move by up to 1.5 times between runs.
 * The 72 questions give wide uncertainty for most comparisons.
@@ -274,7 +356,10 @@ Palladion's agent answered 3 of 8 turns in an earlier trial. None of this suppor
 
 ## 10. Where the raw material is
 
-* Latest numbers and tables: `palladion-benchmark/artifacts/runs/p11g-report-c2/report.md` (C2) and
+* The sealed result: `palladion-benchmark/docs/development/EVIDENCE_LOG.md` entry E-B08-013, the registered design in
+  `palladion-benchmark/docs/development/PREREGISTRATION_TRACK_A.md`, and the aggregate cards
+  `palladion-benchmark/artifacts/comparison/sealed-track-a-c2.md` and `-c1.md` (regenerable)
+* The earlier run's tables: `palladion-benchmark/artifacts/runs/p11g-report-c2/report.md` (C2) and
   `p11h-report-c1/report.md` (C1)
 * Full records of every run, decisions and evidence: `palladion-benchmark/docs/development/`
 * Palladion's change records: `palladion/docs/development/ADR_LOG.md` and `EVIDENCE_LOG.md`

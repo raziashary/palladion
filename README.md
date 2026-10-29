@@ -52,32 +52,43 @@ current, permitted document) and none of the answer-level benefit yet. Whole ses
 ## How Palladion compares today (plain-language scorecard)
 
 The [benchmark](palladion-benchmark/README.md) tests how well Palladion's search finds the documents a question
-needs, next to common alternatives, on a fictional document set of 1,200 documents. Latest run (Palladion commit
-`5acc825`, 72 scored questions). **This is a private, exploratory comparison, not a sealed experiment: it does not
-show that any system is better. Palladion was improved after seeing these same questions, so the result is
-in-sample and may not carry to new questions.**
+needs, next to common alternatives. The result below is from a **sealed run on six new fictional worlds** (600
+questions, 446 of which test finding documents; each world has 1,200 documents). Before the run, every system was
+tuned the same amount on separate development worlds, the way of judging was written down, and the questions were
+not looked at one by one. It tests **finding documents only** (not answering), on **invented data**, with answer
+labels made by the benchmark's generator that no human has checked.
 
-| System | Questions where **all** needed documents were found (of 72) | Share of needed documents found | Typical search time |
-|---|---|---|---|
-| **Palladion's retriever** | **22** | **40%** | 1.0 s |
-| Keyword search | 12 | 29% | 0.01 s |
-| Keyword + meaning + re-reader (the strong common baseline) | 6 | 19% | 0.7 s |
-| Keyword + meaning | 4 | 14% | 0.04 s |
-| Meaning search | 1 | 4% | 0.03 s |
+| System | Questions where **all** needed documents were found | Share of needed documents found |
+|---|---|---|
+| **Palladion's retriever** | **39.9%** | **49.5%** |
+| Strong baseline plus Palladion's approval-and-date rule | 26.9% | 33.2% |
+| Keyword + meaning | 24.7% | 29.4% |
+| Strong common baseline (keyword + meaning + re-reader) | 22.6% | 28.4% |
+| Keyword + exact-code rule | 22.4% | 29.9% |
+| Keyword search | 22.2% | 29.7% |
+| Meaning search | 13.2% | 19.2% |
 
 In words:
 
-* **Ahead of the strong baseline on this run** (22 against 6 complete sets; range of the difference +6 to +35
-  percentage points), and ahead of plain keyword search on the complete set. Most methods still find the complete
-  set for fewer than a third of the questions.
-* **Where Palladion is clearly different:** it almost never returns an out-of-date version of a document (4.5% of
-  questions, against 8% to 39% for the others) and never returns a draft or unapproved document (0%, against 20% to
-  29%). The others ignore approval state and validity dates, so this compares capabilities, not equal effort.
-* **Exact codes and rule numbers:** 10 of 10 questions, against 8 for keyword search (it was 3 before this work).
-* **Where it is still weak:** two official sources that disagree (0 of 10 questions; the strong baseline finds 4),
-  who may see what (0 of 5) and broad summaries (0 of 7).
+* **The check written down beforehand passed.** Palladion minus the strong baseline is +17 percentage points
+  (range +12 to +23), above the 5-point bar fixed before the run. Against the baseline that also gets Palladion's
+  approval-and-date rule it is still +13 points (range +7 to +19), so the rule explains about a quarter of the lead
+  and the rest of Palladion's design the rest.
+* **The earlier, bigger lead was partly an artefact.** On the first 72 questions Palladion looked +22 points ahead
+  of the strong baseline. That run had weak baselines (their text pieces were too small) and Palladion had been
+  improved on those very questions. With every baseline tuned and new questions, the lead is about +17.
+* **Where Palladion helps most:** exact codes and rule numbers (every one found, against two thirds for keyword
+  search) and questions that need several documents (37%, against 3% or less for the others).
+* **Where it does not:** "which version" questions (20%, against 45% for the baseline with the approval-and-date
+  rule) and conflicting sources (52%, against 62%). **No system finds** the who-may-see-what or the broad-summary
+  questions.
+* **Fewer wrong kinds of document:** Palladion returns an out-of-date version in 0.3% of questions (the others 8%
+  to 10%, except the baseline with its rule at 0.5%), a document of unclear authority in 0% (others 10% to 15%),
+  and no system showed a document the person may not see.
+* **Repeatable?** Rebuilding Palladion from scratch gave the same ten documents in the same order for 92% to 95% of
+  questions; the other systems gave exactly the same lists every time.
 * **Answering** (separate test, older Palladion version): almost no system answered a question completely right,
-  and the answering model, not only the search, limits the result. To be re-run when the model quota renews.
+  and the answering model, not only the search, limits the result. Re-run in progress (see the report).
 
 The full plain-language report, with every test, the history of the improvements and what is still to do, is in
 [report.md](report.md).
