@@ -19,9 +19,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from benchmark.config import load_benchmark_config
+from benchmark.config import GeneratorSettings, load_benchmark_config
 from benchmark.generator import GenerationError, GeneratorPool
-from benchmark.paraphrase import OutcomeLog, ParaphraseError, Paraphraser, QuestionText, collect
+from benchmark.paraphrase import MAX_COMPLETION_TOKENS, OutcomeLog, ParaphraseError, Paraphraser, QuestionText, collect
 from benchmark.quota import QuotaError, remaining_today
 from benchmark.track_a import TrackAError, read_annotations
 from benchmark.track_b import make_pool_paths
@@ -29,6 +29,17 @@ from benchmark.track_b import make_pool_paths
 PROJECT = Path(__file__).resolve().parents[1]
 MODELS = ("openai/gpt-oss-120b", "openai/gpt-oss-20b")
 ESTIMATED_TOKENS_PER_QUESTION = 450  # the prompt, the reasoning at low effort and the rewrite, from the first dev run
+
+
+def generator_settings() -> GeneratorSettings:
+    """The benchmark's generator settings for this job: the two gpt-oss models, no failover, and a completion cap that
+    holds the rewrite (the pool refuses a call above the configured cap)."""
+    return replace(
+        load_benchmark_config(PROJECT / "configs" / "benchmark.yaml").generator,
+        models=MODELS,
+        allow_automatic_failover=False,
+        max_completion_tokens=MAX_COMPLETION_TOKENS,
+    )
 
 
 def questions_of(root: Path, split: str) -> list[QuestionText]:
@@ -65,11 +76,7 @@ def main(argv: list[str] | None = None) -> int:
         if not options.enable_live or options.call_budget is None or options.daily_token_cap is None:
             print("refused: a live run needs --enable-live, --call-budget and --daily-token-cap", file=sys.stderr)
             return 2
-        generator = replace(
-            load_benchmark_config(PROJECT / "configs" / "benchmark.yaml").generator,
-            models=MODELS,
-            allow_automatic_failover=False,
-        )
+        generator = generator_settings()
         models = {q.question_id: MODELS[i % len(MODELS)] for i, q in enumerate(questions)}
         options.out.mkdir(parents=True, exist_ok=True)
         record_path, prompt_path = make_pool_paths(options.out)

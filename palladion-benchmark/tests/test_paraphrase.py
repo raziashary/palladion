@@ -263,3 +263,29 @@ def test_only_the_words_and_the_language_of_a_question_leave_the_gold_file(s_roo
     assert found and all(isinstance(q, QuestionText) for q in found)
     assert [q.question_id for q in found] == sorted(q.question_id for q in found)
     assert set(QuestionText.__dataclass_fields__) == {"question_id", "text", "language"}
+
+
+def test_the_jobs_generator_settings_let_the_real_pool_take_the_paraphrase_call(s_root: Path) -> None:
+    """A fake pool hid that the real pool refuses a call above its completion cap; this uses the real one."""
+    from benchmark.generator import GeneratorPool
+    from benchmark.paraphrase import MAX_COMPLETION_TOKENS
+    from benchmark.track_b import ExtractiveStubTransport
+
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import paraphrase_questions
+
+    settings = paraphrase_questions.generator_settings()
+    assert settings.models == paraphrase_questions.MODELS and settings.allow_automatic_failover is False
+    assert settings.max_completion_tokens >= MAX_COMPLETION_TOKENS
+    question = paraphrase_questions.questions_of(s_root, "smoke")[0]
+    pool = GeneratorPool(
+        settings,
+        ExtractiveStubTransport(),
+        enabled=True,
+        assignment={question.question_id: paraphrase_questions.MODELS[0]},
+        call_budget=5,
+    )
+    outcome = Paraphraser(pool, {question.question_id: paraphrase_questions.MODELS[0]}).rewrite(question)
+    assert outcome.verdict is Verdict.REJECTED and outcome.findings == ("NO_REWRITE",), (
+        "the stub answers, it is not JSON"
+    )
