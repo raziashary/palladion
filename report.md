@@ -390,8 +390,12 @@ Palladion's agent answered 3 of 8 turns in an earlier trial. None of this suppor
 * **Palladion with graph links**: not supported by the benchmark yet.
 * **A sealed run for answering (tests B and C)**: not possible on the free model quota (it would take millions of
   tokens); those tests stay descriptive. The sealed run in section 4.1 covers document-finding only.
-* **Test C for the full Palladion (E4)**: the first attempt is void, because a test run of mine stopped a shared
-  service under it; it is re-run when the quota allows, and the other Palladion variant (E3) is not run yet.
+* **Test C for the full Palladion (E4)**: run again in a clean block on 2026-10-30, but no question was answered. All
+  four questions and both change-and-ask checks were cut off by the model provider (9 of 25 calls refused: 3 "too
+  many requests", 6 "request too large"), so there is no score and no statement about Palladion. The first attempt
+  is void for a different reason (a test run of mine stopped a shared service). Running it again needs a recorded
+  change first (for example storing the provider's error text); the other Palladion variant (E3) is planned for
+  2026-10-31.
 * **Questions reworded by a different model**: done for the search test (section 4.5, exploratory). Not done for
   answering (tests B and C), and the rewrites were not read by a person.
 * **More public datasets**: one (SciFact, section 4.3) was run with the owner's approval; the others were not.
@@ -409,7 +413,7 @@ Palladion's agent answered 3 of 8 turns in an earlier trial. None of this suppor
 | Public data (SciFact, ordinary search) | Run, exploratory (section 4.3): Palladion on par with the strong baseline |
 | Palladion improvements (correctness, speed, packing, exact codes, named versions) | Done, measured, reviewed; 645 automated tests pass |
 | Test B (answering) | Run at the current Palladion, 200 of 200 pairs, scored (section 6); descriptive |
-| Test C (whole systems) | Partly run; the first attempt at the full Palladion is void and will be re-run |
+| Test C (whole systems) | Partly run; the full Palladion (E4) was run in a clean block but every unit was cut off by the model provider, so it has no score; E3 is planned for 2026-10-31 |
 | Graph systems | Built; not measured |
 | Final publication package (licence, dataset card, reproducibility) | Not done |
 | Plain-language documentation (README, [architecture.md](architecture.md), this report) | Written; worked examples are reconstructions, not recorded runs |
