@@ -1607,11 +1607,12 @@ Owner GO 2026-10-27 (benchmark investigation; "all of the fixes ... an actual fi
 
 <a id="p11-t06-01"></a>
 
-- [ ] **P11-T06.01 — Verify end to end, re-measure in the benchmark and close**
+- [x] **P11-T06.01 — Verify end to end, re-measure in the benchmark and close**
   - **Files:** `palladion/docs/development/MASTER_DEV_PLAN.md`, `palladion/docs/development/PROGRESS.md`, `palladion/docs/development/EVIDENCE_LOG.md`, `palladion/docs/development/GOAL.md`.
   - **Depends:** P11-T08.01, P11-T07.01, P11-T05.01, P11-T04.01, P11-T03.01, P11-T02.02.
   - **Change:** Stack gates, actual entry-point smoke, the benchmark's Track A and Track B re-run for the Palladion arms at the new commit, end review and resolution, scoped commit.
   - **Proof:** SMOKE; G-E2E, G-DOC; benchmark evidence pointers and no stale claims.
+  - **Evidence:** E-P11-005 (suite 687 passed, 33 skipped; the benchmark's sealed Track A and Track B at `caebd53`; Track C is the benchmark's own open card).
 
 <a id="p11-t07-01"></a>
 

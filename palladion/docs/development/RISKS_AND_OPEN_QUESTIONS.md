@@ -182,7 +182,7 @@ End-review R4 identified invalid@5/10/20 labels on a final top4 packet. ADR0086 
 - **`Candidate.channel` is written and never read** but is part of the evaluation study's frozen candidate files; removed only with that artifact's next version.
 - **Chunking limits.** Chunks do not overlap (the catalog requires non-overlapping spans) and a table's header row is not repeated in continuation chunks.
 - **Aliases beyond 1,000 chunks or 64 identifiers per chunk** are not registered; the approval response says `truncated`.
-- **P11 results are source-level.** The effect on retrieval quality and speed is not claimed until the benchmark re-measures at the new commit (P11-T06.01).
+- ~~**P11 results are source-level.** The effect on retrieval quality and speed is not claimed until the benchmark re-measures at the new commit (P11-T06.01).~~ **Re-measured (E-P11-005):** the benchmark's sealed Track A, Track B and SciFact runs at `caebd53`; the claim stays retrieval-only on invented data with delegated labels. Still open: Track C at this commit (the benchmark's B08-T08.04), Palladion's 92 to 95 percent list repeatability on a fresh load, weak strata Q4 and Q6, no result for Q8 and Q10.
 
 ## P09 current owner decisions and retained limits
 
