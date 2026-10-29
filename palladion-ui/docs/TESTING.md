@@ -17,6 +17,21 @@ Setup: own Qdrant on its own port and data folder, own data root, collection `pa
 | Policy creation through the UI server | Validated, registered (author resolved to the source's uploader, product defaulted, enum values filled), listed, revoked. |
 | Ingestion | Draft upload invisible to a reader; approved by an admin; then found by search; listing showed it approved. |
 
+## Power and settings, 2026-10-29 (real Palladion `68f6df6`, GPT-OSS 20B only)
+
+| Check | Result |
+|---|---|
+| Runtime re-pinned from `5acc825` to `68f6df6` | Gives the agent's searches the persistent workers. Started ready with the generated settings file; the data folder opened without a migration problem. |
+| Power report from the real source | Real embedding and reranker names and rerank depth (20) were read from Palladion's source; seven locked layers listed; graph shown as not available (no Neo4j). |
+| Reranker off then on, real search | Off: the rerank stage took 0.9 ms and returned no warnings. On: 717 ms (the real cross-encoder). Ordinary search results came back either way. |
+| Reduced options applied and reset | The restarted command lacked `--rerank` and carried `--settings`; the settings file held `continuity_enabled: false`, `critic_search_max_calls: 1`, `tool_max_calls: 4`, `search_worker_mode: "per_request"`. Reset restored every value. |
+| Critic off with the agent enabled | Palladion accepted the evaluator arm (`--evaluator-arm B5 --acknowledge-not-serving`), reported ready, and no key appeared on the command line. Reset removed the arm. **No question was asked in this mode.** |
+| One full-power agent turn | Finished in 9.9 s with 18 progress steps, but Groq returned HTTP 429: the review was unavailable, search was degraded, and the gate released its safe template. **A full-power answer with the critic passing was not captured**, and the speed-up from the persistent workers is not a controlled measurement (different question, different day). |
+
+Not verified here: the experiment-mode notice on a live answer (it is covered by a server test through the fake only), the
+Apply and Discard buttons by clicking (the Settings screens were rendered and captured, not driven), and any effect of a
+toggle on answer quality.
+
 ## Ingestion and policy screens, 2026-10-28 (real Palladion, search-only, no model)
 
 | Check | Result |
@@ -34,6 +49,7 @@ Setup: own Qdrant on its own port and data folder, own data root, collection `pa
 * Browser-only behavior (drag and drop, PDF upload, "Load from a file", "Save a copy as a file", light theme, narrow screens beyond one width) was not exercised.
 * The `supersede` flow was tested against Palladion's test suite and the fake, not through the live UI.
 * Models other than GPT-OSS 20B were not started.
+* The provider's daily quota was exhausted on 2026-10-29 before a full-power answer could be captured.
 
 ## Incident worth knowing
 

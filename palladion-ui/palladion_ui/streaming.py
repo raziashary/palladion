@@ -58,7 +58,7 @@ async def reveal(response: dict[str, Any], delay: float) -> AsyncIterator[str]:
         yield sse("part", {"id": f"citation:{citation.get('evidence_id')}", "type": "citation", "citation": citation})
     yield sse("part", {"id": "meta", "type": "meta", **{k: response.get(k) for k in (
         "tool_status", "verification_failures", "searched_scope", "inventory_attested", "review_status",
-        "budget", "next_steps", "trace_id", "session_id", "case_id")}})
+        "budget", "next_steps", "trace_id", "session_id", "case_id", "experiment")}})
 
 
 def describe(event: dict[str, Any]) -> dict[str, Any]:

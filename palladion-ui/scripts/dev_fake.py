@@ -9,12 +9,14 @@ import shutil
 import tempfile
 import threading
 import time
+from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
 import uvicorn
 
 from palladion_ui.app import create_app
+from palladion_ui.power import PowerOptions
 from palladion_ui.settings import MODELS, Settings
 from tests.fake_palladion import create_fake
 
@@ -28,15 +30,20 @@ class DemoStack:
 
     def __init__(self) -> None:
         self.state, self.model, self._since = "ready", MODELS[0][0], time.time()
+        self.options = PowerOptions()
 
     async def status(self) -> dict[str, Any]:
         if self.state == "starting" and time.time() - self._since > 2:
             self.state = "ready"
         return {"state": self.state, "model": self.model, "mode": "agent" if self.model else "search", "error": None,
+                "options": asdict(self.options), "full_power": self.options.full,
+                "reductions": self.options.reductions(),
                 "api": True, "managed": True, "qdrant": True, "since": self._since}
 
-    def begin(self, model: str | None) -> None:
+    def begin(self, model: str | None, options: PowerOptions | None = None) -> None:
         self.state, self.model, self._since = "starting", model, time.time()
+        if options is not None:
+            self.options = options
 
     async def shutdown(self) -> None:
         return None

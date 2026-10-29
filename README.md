@@ -195,6 +195,30 @@ original file in the side panel.
 
 ![A real supported answer: the verified quote, its citation, and the exact source text re-read from the original bytes](palladion-ui/docs/screenshots/supported-answer.png)
 
+### Settings: Palladion's power, and what can be turned down
+
+The Settings screen shows each layer Palladion uses to find and check evidence, whether it is on, and what happens if you
+turn it down. Full power is the default: the reranker (a cross-encoder that re-reads the best passages), the independent
+critic, memory and continuity, persistent search workers and the full call budgets. You can turn down the reranker, the
+critic, memory, the critic's counter-searches, the tool-call budget and the persistent workers. Each change restarts
+Palladion (10 to 20 seconds), and a "Reduced power" chip stays in the top bar until you reset.
+
+**Some things have no switch, on purpose.** The final gate, current access checks, canonical sources, trusted policy
+time, the safe rule interpreter, the deterministic preflight and the four read-only tools are what make an answer
+checkable. Palladion itself lists them as boundaries it will not make optional, so the screen shows them as locked.
+The independent critic can only be turned off through Palladion's measurement mode, which it says is not a serving mode:
+the gate then withholds policy-based and operational claims, and every such answer is marked as made in experiment mode.
+
+![The Settings screen at full power: every optional layer on, the locked layers marked Always on](palladion-ui/docs/screenshots/settings-full-power.png)
+
+![The Settings screen with the reranker, critic and memory turned down, the Reduced power chip and banner showing](palladion-ui/docs/screenshots/settings-reduced.png)
+
+**Which screenshots ran in which mode.** The Settings captures ran on the real Palladion with GPT-OSS 20B enabled. The
+ingestion and policy captures ran with no model (search only), because those screens need none. The two answer
+screenshots above were GPT-OSS 20B answers with the critic on (the first one's review was unavailable because Groq
+rate-limited that call). A full-power answer with every layer working was not captured, because the provider's daily
+quota was exhausted; see [palladion-ui/docs/TESTING.md](palladion-ui/docs/TESTING.md).
+
 ### Adding documents and policies in the UI
 
 Both screens are built to be used without reading the docs. These captures are of the real Palladion with no model

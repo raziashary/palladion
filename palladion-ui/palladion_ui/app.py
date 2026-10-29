@@ -17,8 +17,9 @@ from pydantic import BaseModel, ConfigDict, Field
 from palladion_ui import __version__, policies
 from palladion_ui.chat import Context, stream_chat
 from palladion_ui.personas import Directory, Persona
+from palladion_ui.power import PowerOptions, report
 from palladion_ui.settings import Settings
-from palladion_ui.stack import Stack, StackError
+from palladion_ui.stack import Stack, StackError, tcp_up
 from palladion_ui.store import Store
 from palladion_ui.upstream import Upstream, UpstreamError
 
@@ -46,6 +47,17 @@ class PersonaBody(Body):
 
 class ModelBody(Body):
     model: str | None = None  # None means search only, with no model
+
+
+class OptionsBody(Body):
+    model_config = ConfigDict(extra="forbid", strict=True)  # "off" is not false: say true or false
+
+    rerank: bool | None = None
+    critic: bool | None = None
+    memory: bool | None = None
+    critic_searches: int | None = Field(default=None, ge=0, le=2)
+    tool_budget: int | None = Field(default=None, ge=1, le=8)
+    persistent_search: bool | None = None
 
 
 class SessionBody(Body):
@@ -195,6 +207,22 @@ def create_app(settings: Settings | None = None, *, upstream_factory: Callable[[
     async def choose_model(request: Request, body: ModelBody) -> dict[str, Any]:
         ctx = _ctx(request)
         ctx.stack.begin(body.model)
+        return await ctx.stack.status()
+
+    @app.get("/api/power")
+    async def power(request: Request) -> dict[str, Any]:
+        ctx = _ctx(request)
+        runtime_status = await ctx.stack.status()
+        return report(settings, PowerOptions.from_dict(runtime_status["options"]), runtime_status,
+                      await tcp_up("127.0.0.1", 17687))
+
+    @app.post("/api/runtime/options")
+    async def choose_options(request: Request, body: OptionsBody) -> dict[str, Any]:
+        """Turn parts of Palladion's power up or down. Only what is sent changes; Palladion restarts to apply it."""
+        ctx = _ctx(request)
+        current = (await ctx.stack.status())["options"]
+        ctx.stack.begin((await ctx.stack.status())["model"],
+                        PowerOptions.from_dict({**current, **body.model_dump(exclude_none=True)}))
         return await ctx.stack.status()
 
     # Conversations --------------------------------------------------------------------------------------------

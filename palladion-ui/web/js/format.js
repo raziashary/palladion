@@ -115,7 +115,7 @@ export function partsOf(response) {
   const origins = response.requirement_origins || {};
   for (const g of response.missing_requirements || []) parts.push({ id: `gap:${g}`, type: 'gap', value: g, origin: origins[g] });
   for (const c of response.citations || []) parts.push({ id: `citation:${c.evidence_id}`, type: 'citation', citation: c });
-  parts.push({ id: 'meta', type: 'meta', ...Object.fromEntries(['tool_status', 'verification_failures', 'searched_scope', 'inventory_attested', 'review_status', 'budget', 'next_steps', 'trace_id', 'session_id', 'case_id'].map((k) => [k, response[k]])) });
+  parts.push({ id: 'meta', type: 'meta', ...Object.fromEntries(['tool_status', 'verification_failures', 'searched_scope', 'inventory_attested', 'review_status', 'budget', 'next_steps', 'trace_id', 'session_id', 'case_id', 'experiment'].map((k) => [k, response[k]])) });
   return parts;
 }
 

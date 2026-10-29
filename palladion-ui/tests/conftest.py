@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import shutil
 from collections.abc import Iterator
+from dataclasses import asdict
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -12,6 +13,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from palladion_ui.app import create_app
+from palladion_ui.power import PowerOptions
 from palladion_ui.settings import Settings
 from tests.fake_palladion import create_fake
 
@@ -24,15 +26,19 @@ class StubStack:
     """Stands in for the process manager: the server logic is under test here, not subprocesses."""
 
     def __init__(self, state: str = "ready", model: str | None = MODEL) -> None:
-        self.state, self.model, self.began = state, model, []
+        self.state, self.model, self.began, self.options = state, model, [], PowerOptions()
 
     async def status(self) -> dict[str, Any]:
         return {"state": self.state, "model": self.model, "mode": "agent" if self.model else "search",
-                "error": None, "api": True, "managed": True, "qdrant": True, "since": 0}
+                "options": asdict(self.options), "full_power": self.options.full,
+                "reductions": self.options.reductions(), "error": None, "api": True, "managed": True,
+                "qdrant": True, "since": 0}
 
-    def begin(self, model: str | None) -> None:
-        self.began.append(model)
+    def begin(self, model: str | None, options: PowerOptions | None = None) -> None:
+        self.began.append((model, options))
         self.state, self.model = "starting", model
+        if options is not None:
+            self.options = options
 
     async def shutdown(self) -> None:
         return None

@@ -82,3 +82,22 @@ export function policyHelp() {
     para('When a new version replaces an old one, open the new version under “This version replaces another” and record why. Without it, both stay valid and answers show a conflict instead of choosing.'),
   ]);
 }
+
+export function settingsHelp() {
+  return howTo('settings', 'How to read and change these settings', [
+    para('Palladion checks an answer in layers. This screen shows each layer, whether it is on, and what happens if you turn it down. Full power is the default and what real use should keep.'),
+    terms([
+      ['On, Off', 'Whether the layer is running now. A switch you can flip is optional; the rest are not.'],
+      ['Always on', 'The parts that guard authority: the final gate, access checks, canonical sources, trusted policy time, the safe rule interpreter and the read-only tools. Palladion has no switch for them, so neither does this screen.'],
+      ['Changed, not applied', 'You moved a switch but have not applied it. Nothing changes until you press Apply, which restarts Palladion (10 to 20 seconds).'],
+      ['Experiment mode', 'The independent critic can only be turned off in Palladion’s measurement mode, which it says is not a serving mode. Policy-based and operational claims are then withheld, and every answer says it was made that way.'],
+      ['Reduced power', 'Shown in the top bar and on answers whenever anything is turned down, so a quieter setup is never mistaken for the real thing.'],
+    ]),
+    steps([
+      'Read each switch’s “if you turn it down” line before you flip it.',
+      'Flip what you want to compare, for example the reranker, then press Apply changes.',
+      'Ask the same question again and compare. Chat answers show the review status and what could not be verified.',
+      'Press “Reset to full power” when you are done.',
+    ]),
+  ], { open: false });
+}

@@ -86,6 +86,9 @@ function answerView() {
           c.status ? h('span', { class: `chip ${toneOf(c.status)}` }, c.status) : null));
       log.evidence.push(`E${number(c.evidence_id)} ${citationTitle(c)}`);
     } else if (p.type === 'meta') {
+      if (p.experiment) card.insertBefore(h('div', { class: 'gap', id: 'experiment-note', style: 'margin:0 0 12px' }, h('span', { class: 'box' }),
+        h('div', {}, `Experiment mode (${p.experiment.arm}): the independent critic was off for this answer.`,
+          h('small', {}, 'Palladion’s measurement mode is not a serving mode. The gate withheld what it could not see reviewed.'))), card.firstChild);
       const foot = h('div', { class: 'foot' });
       for (const [k, v] of Object.entries(p.tool_status || {})) foot.append(h('span', { class: `chip ${toneOf(v)}` }, `${k.replace(/_/g, ' ')}: ${v}`));
       if ((p.verification_failures || []).length) card.append(h('div', { class: 'gap', style: 'margin-top:12px' }, h('span', { class: 'box' }),

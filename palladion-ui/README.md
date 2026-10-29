@@ -23,11 +23,23 @@ with `uv run python -m scripts.screenshot`.
 | **Search documents** | Retrieval only, no model: ranked passages with how many candidates the checks excluded. |
 | **Ingestion** | Drop or paste documents, set validity dates, see the draft → approved → searchable steps. A different person must approve. |
 | **Policies** | A five-step wizard builds a policy from a cited passage in plain words, reads it back, validates it, and registers it. Lists, revokes and records replacements. |
+| **Settings** | Palladion's power at a glance: what is on, the real model names, and switches for the reranker, the independent critic, memory, the critic's counter-searches, the tool-call budget and the persistent search workers, each with what turning it down costs. Always-on layers (the final gate, access checks, canonical sources, trusted policy time, the safe rule interpreter, the preflight, the read-only tools) are shown locked. Changes restart Palladion; a "Reduced power" chip and a notice on each answer show when anything is turned down. |
 | **Model menu** | Search only, or one of Palladion's three Groq models. Choosing one is the explicit enablement: it restarts Palladion with that model. |
 
 **Streaming, and why it is not token streaming.** Progress is live (read from Palladion's case timeline while it works).
 The answer is revealed piece by piece only *after* Palladion's gate has re-read the evidence. Raw model tokens are never
 shown, because until the gate runs a sentence is a proposal, not an answer.
+
+## Settings
+
+![The Settings screen at full power](docs/screenshots/settings-full-power.png)
+
+![The Settings screen with parts turned down](docs/screenshots/settings-reduced.png)
+
+Only levers Palladion itself supports are used: its validated settings file, the reranker switch on its server, and the
+evaluator arm that skips the independent critic. The UI writes the settings file to `.runtime/palladion-settings.yaml`
+and remembers your choices in `.runtime/ui-power.json`; a missing or damaged file means full power, never a silently
+reduced setup.
 
 ## Adding documents and policies
 
@@ -77,7 +89,8 @@ uv run python -m scripts.check     # ruff, server tests, front-end syntax, front
 ## Provisioning
 
 `.runtime/` is not committed. One-time setup, as done for the verified run: `git worktree add --detach
-.runtime/palladion-src <commit>` (a commit that contains the policy and source-listing routes; see below), `uv sync
+.runtime/palladion-src <commit>` (a commit that contains the policy and source-listing routes and the persistent search
+workers; the last run used `68f6df6`), `uv sync
 --frozen` inside `.runtime/palladion-src/palladion`, copy `palladion/runtime/model_cache` into that folder's
 `runtime/`, then seed with `scripts/seed.py --policies --root ../../data --url http://127.0.0.1:17533 --collection
 palladion_ui_dev`. The UI runs a clean worktree so another contributor's in-progress edits to `palladion/` can't break it.

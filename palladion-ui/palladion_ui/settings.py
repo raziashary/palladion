@@ -62,6 +62,14 @@ class Settings:
         return self.runtime_dir / "ui-state.json"
 
     @property
+    def power_file(self) -> Path:
+        return self.runtime_dir / "ui-power.json"
+
+    @property
+    def palladion_settings_file(self) -> Path:
+        return self.runtime_dir / "palladion-settings.yaml"
+
+    @property
     def log_dir(self) -> Path:
         return self.runtime_dir / "logs"
 

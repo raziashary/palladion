@@ -11,11 +11,13 @@ import os
 import subprocess
 import time
 from collections.abc import Awaitable, Callable
+from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
 import httpx
 
+from palladion_ui.power import PowerOptions, write_settings
 from palladion_ui.settings import Settings
 
 KEY_VARIABLE = "PALLADION_UI_GROQ_KEY"
@@ -40,10 +42,15 @@ def read_groq_key(env_file: Path) -> str:
     raise StackError(f"No {KEY_NAME} in the repository .env file, so no model can be started.")
 
 
-def palladion_command(settings: Settings, model: str | None) -> list[str]:
+def palladion_command(settings: Settings, model: str | None, options: PowerOptions | None = None,
+                      settings_file: Path | None = None) -> list[str]:
+    options = options or PowerOptions()
     python = settings.app_dir / ".venv" / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
     command = [str(python), "scripts/serve.py", "--root", str(settings.data_root), "--url", settings.qdrant_url,
-               "--collection", settings.collection, "--port", str(settings.upstream_port), "--rerank"]
+               "--collection", settings.collection, "--port", str(settings.upstream_port)]
+    if settings_file is not None:
+        command += ["--settings", str(settings_file)]
+    command += options.cli_args(model)
     if model is not None:
         command += ["--enable-live-llm", "--model", model, "--key-env", KEY_VARIABLE,
                     "--request-timeout", str(settings.request_timeout), "--model-timeout", str(LIVE_TIMEOUT)]
@@ -56,6 +63,15 @@ async def http_up(url: str) -> bool:
             return (await client.get(url)).status_code < 500
     except httpx.HTTPError:
         return False
+
+
+async def tcp_up(host: str, port: int) -> bool:
+    try:
+        _, writer = await asyncio.wait_for(asyncio.open_connection(host, port), timeout=0.6)
+    except (OSError, TimeoutError):
+        return False
+    writer.close()
+    return True
 
 
 def kill_tree(process: subprocess.Popen[Any]) -> None:
@@ -78,6 +94,7 @@ class Stack:
         self._qdrant: subprocess.Popen[Any] | None = None
         self.state = "stopped"  # stopped | starting | ready | error
         self.model: str | None = None
+        self.options = PowerOptions.load(settings.power_file)
         self.error: str | None = None
         self.since = time.time()
 
@@ -88,6 +105,8 @@ class Stack:
         if self.state == "ready" and not api_up:
             self.state, self.error = "error", "Palladion stopped unexpectedly. Check the log in .runtime/logs."
         return {"state": self.state, "model": self.model, "mode": "agent" if self.model else "search",
+                "options": asdict(self.options), "full_power": self.options.full,
+                "reductions": self.options.reductions(),
                 "error": self.error, "api": api_up, "managed": self.settings.managed,
                 "qdrant": await self._probe(self.settings.qdrant_url), "since": self.since}
 
@@ -96,8 +115,11 @@ class Stack:
 
     # Control --------------------------------------------------------------------------------------------------
 
-    async def start(self, model: str | None) -> None:
-        """Start (or restart) the API in search-only mode (model None) or with one explicitly chosen model."""
+    async def start(self, model: str | None, options: PowerOptions | None = None) -> None:
+        """Start (or restart) the API in search-only mode (model None) or with one explicitly chosen model.
+
+        `options` turns parts of Palladion's power down; omitted, the options chosen last are kept.
+        """
         if model is not None and model not in self.settings.model_ids:
             raise StackError("That model is not one Palladion allows.")
         if not self.settings.managed:
@@ -105,6 +127,9 @@ class Stack:
         async with self._lock:
             self._set("starting")
             self.model = model
+            if options is not None:
+                self.options = options
+                options.save(self.settings.power_file)
             try:
                 env = dict(os.environ)
                 if model is not None:
@@ -116,7 +141,9 @@ class Stack:
                                      "did not start. Stop it, or choose another port.")
                 self.settings.log_dir.mkdir(parents=True, exist_ok=True)
                 log = (self.settings.log_dir / f"palladion-{self.settings.upstream_port}.log").open("ab")
-                self._api = self._spawn(palladion_command(self.settings, model), cwd=self.settings.app_dir, env=env,
+                settings_file = write_settings(self.settings, self.options)
+                self._api = self._spawn(palladion_command(self.settings, model, self.options, settings_file),
+                                        cwd=self.settings.app_dir, env=env,
                                         stdout=log, stderr=subprocess.STDOUT)
                 await self._wait_for_api(model is not None)
             except StackError as error:
@@ -129,7 +156,7 @@ class Stack:
                 raise StackError(self.error or "") from error
             self._set("ready")
 
-    def begin(self, model: str | None) -> None:
+    def begin(self, model: str | None, options: PowerOptions | None = None) -> None:
         """Start in the background and report "starting" at once, so a client never sees the old state."""
         if model is not None and model not in self.settings.model_ids:
             raise StackError("That model is not one Palladion allows.")
@@ -137,11 +164,11 @@ class Stack:
             raise StackError("This UI does not manage Palladion; start it yourself and point the UI at it.")
         self._set("starting")
         self.model = model
-        self._task = asyncio.create_task(self._start_quietly(model))
+        self._task = asyncio.create_task(self._start_quietly(model, options))
 
-    async def _start_quietly(self, model: str | None) -> None:
+    async def _start_quietly(self, model: str | None, options: PowerOptions | None) -> None:
         try:
-            await self.start(model)
+            await self.start(model, options)
         except StackError:
             pass  # start() has already recorded the reason in self.error
 

@@ -77,13 +77,15 @@ def create_fake(data_root: Path, *, step_delay: float = 0.12, agent: bool = True
 
     def answer(case_id: str, query: str, session_id: str, trace: str) -> dict[str, Any]:
         q = query.lower()
+        experiment = {"arm": "B5", "planner_used": 0, "total_model_calls": 3, "operational_guidance": False}
         base: dict[str, Any] = {
             "case_id": case_id, "session_id": session_id, "trace_id": trace, "hypotheses": [],
             "missing_requirements": [], "requirement_origins": {}, "citations": [], "verified_claims": [],
             "tool_status": {"search_knowledge": "OK"}, "verification_failures": [], "inventory_attested": False,
             "searched_scope": "Current authorized case and supplied index searched; inventory completeness is "
                               "not attested.",
-            "review_status": "PASS", "budget": {"main_used": 3, "critic_used": 1},
+            "review_status": "UNAVAILABLE" if "experiment" in q else "PASS", "budget": {"main_used": 3, "critic_used": 1},
+            **({"experiment": experiment} if "experiment" in q else {}),
             "next_steps": ["Obtain missing scoped evidence or request authorized human review."]}
         doc = {"evidence_id": "chunk_sop2026", "kind": "DOCUMENT", "revision_id": "rev_sop2026", "section_id": "3",
                "generation": "gen-1", "start_byte": 705, "end_byte": 1124}

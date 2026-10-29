@@ -7,11 +7,12 @@ import { renderIngest } from './ingest.js';
 import { renderPolicies } from './policies.js';
 import { openModelMenu, refreshRuntime, runtimeChip } from './runtime.js';
 import { renderSearch } from './search.js';
+import { renderSettings } from './settings.js';
 import { S, emit, onChange, persona, recall, remember } from './state.js';
 
 const route = () => {
   const [, view = 'chat', id = null] = location.hash.split('/');
-  return { view: ['chat', 'search', 'ingest', 'policies'].includes(view) ? view : 'chat', id };
+  return { view: ['chat', 'search', 'ingest', 'policies', 'settings'].includes(view) ? view : 'chat', id };
 };
 
 export async function loadSessions() {
@@ -41,6 +42,7 @@ function renderSidebar() {
     navItem('search', 'Search documents', 'search'),
     navItem('ingest', 'Ingestion', 'upload'),
     navItem('policies', 'Policies', 'book'),
+    navItem('settings', 'Settings', 'cpu'),
     h('div', { class: 'nav-sep' }),
     h('div', { class: 'nav-title' }, h('span', {}, S.caseId ? `Sessions · ${S.caseId}` : 'Sessions')),
     h('div', { class: 'sessions' }, S.sessions.length
@@ -68,7 +70,7 @@ function personaMenu(anchor) {
 
 // Top bar -----------------------------------------------------------------------------------------------------------
 
-const TITLES = { chat: 'Chat', search: 'Search documents', ingest: 'Ingestion', policies: 'Policies' };
+const TITLES = { chat: 'Chat', search: 'Search documents', ingest: 'Ingestion', policies: 'Policies', settings: 'Settings' };
 
 function renderTopbar() {
   const bar = clear($('#topbar'));
@@ -80,6 +82,7 @@ function renderTopbar() {
     h('div', { class: 'title' }, view === 'chat' && session ? session.title : TITLES[view]),
     S.boot.cases.length > 1 ? h('select', { 'aria-label': 'Case', onchange: async (e) => { S.caseId = e.target.value; remember('case', S.caseId); S.sessionId = null; await loadSessions(); location.hash = '#/chat'; emit(); } },
       S.boot.cases.map((c) => h('option', { value: c.id, selected: c.id === S.caseId }, `${c.id} · ${c.transaction_id}`))) : h('span', { class: 'chip' }, S.caseId || 'No case'),
+    S.boot.runtime?.full_power === false ? h('a', { class: 'chip amber', id: 'reduced-chip', href: '#/settings', title: (S.boot.runtime.reductions || []).join(', ') }, 'Reduced power') : '',
     h('button', { class: `chip ${chip.tone}`, id: 'runtime-chip', title: 'Choose the model', onclick: (e) => openModelMenu(e.currentTarget, false) },
       chip.spin ? h('span', { class: 'spinner' }) : h('span', { class: 'dot' }), chip.text),
     h('button', { class: 'icon-btn', title: 'Show or hide evidence', 'aria-label': 'Toggle evidence panel', onclick: () => { S.panelOpen = !S.panelOpen; applyLayout(); } }, icon('panel')));
@@ -101,7 +104,7 @@ async function renderRoute() {
   renderTopbar();
   disposeView?.();
   const host = clear($('#view'));
-  const draw = { chat: renderChat, search: renderSearch, ingest: renderIngest, policies: renderPolicies }[view];
+  const draw = { chat: renderChat, search: renderSearch, ingest: renderIngest, policies: renderPolicies, settings: renderSettings }[view];
   disposeView = (await draw(host, { id })) || null;
   renderPanel($('#panel'));
 }

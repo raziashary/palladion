@@ -57,6 +57,16 @@ def test_a_turn_streams_progress_then_the_released_answer_in_order(env):
     assert text.startswith("Last observed mock_transaction_api state: FAILED")
 
 
+def test_an_answer_made_in_experiment_mode_says_so_in_its_streamed_details(env):
+    with env.client.stream("POST", "/api/chat", json={**QUESTION, "query": "experiment: what is the rule?"}) as response:
+        parts = [d for n, d in read_sse(response) if n == "part"]
+    meta = parts[-1]
+    assert meta["type"] == "meta" and meta["experiment"]["arm"] == "B5"  # the UI shows a notice from this
+    with env.client.stream("POST", "/api/chat", json={**QUESTION, "query": "What is the rule?"}) as response:
+        plain = [d for n, d in read_sse(response) if n == "part"][-1]
+    assert plain["experiment"] is None  # an ordinary answer carries no such notice
+
+
 def test_the_conversation_is_remembered_and_can_continue(env):
     with env.client.stream("POST", "/api/chat", json=QUESTION) as response:
         session_id = read_sse(response)[0][1]["session_id"]
