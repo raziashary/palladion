@@ -72,7 +72,7 @@ Here is each one in plain words and what exists so far:
 | | The question | What exists so far |
 |---|---|---|
 | H1 | Does Palladion find complete, applicable evidence better, especially for several documents, exceptions and replaced versions? | Test A, exploratory and in-sample (section 4). Not confirmed |
-| H2 | Do the source checks and deterministic policy engine reduce unsupported advice to act? | Test B on an older Palladion: no difference seen between systems. To be re-run |
+| H2 | Do the source checks and deterministic policy engine reduce unsupported advice to act? | Test B at the current Palladion: no difference seen between systems (directive rates 20% to 36%); cleaner citations for Palladion |
 | H3 | Does the critic catch missing preconditions that the gate alone misses? | Palladion's own small paired pilot: neutral. Not measured by the benchmark |
 | H4 | Does the graph add enough to justify its cost? | Palladion's own pilot: no extra recoveries (graph stays off). The benchmark's graph systems are not measured |
 | H5 | Does the continuity packet reduce drift across turns? | Not measured |
@@ -342,13 +342,18 @@ process running would remove most of that, but it is a design decision that has 
 
 ## 6. Test B: answering the questions, and Test C: whole systems
 
-**Test B (every system's search results are given to the same answering model).** Run earlier, at an older
-Palladion version, on 40 questions. The headline: **almost no system answered a question completely correctly.**
-Of the 31 questions with a checkable answer, the best systems had 2 right; Palladion's retriever had 0, the
-others 1 or 2. The share of answers that stated an action the evidence did not support was about 28% to 40% for
-every system, with no real difference between them. The answers are limited by what the answering model does with
-the evidence, not only by what was retrieved. These results are **older than the current Palladion** and have to
-be re-run (needs a day's model quota); until then they should not be used to judge the current retriever.
+**Test B (every system's search results are given to the same answering model).** Run at the current Palladion
+(`caebd53`) on 40 questions, 200 question-and-system pairs: 193 gave a valid answer and 7 gave an answer outside the
+required form (6 of them by the smaller answering model). The headline is unchanged: **almost no system answered a
+question completely correctly.** Of the 31 questions with a checkable answer, Palladion's retriever had 4 right
+(13%), keyword plus meaning 3 and each of the other three 2. The difference between Palladion and the strong baseline
+is +6.5 points with a range of 0 to +18, so it cannot be told from chance. The share of answers that stated an
+action the evidence did not support was about 20% to 36% for every system, with no real difference between them.
+What does stand out is the citations: Palladion's retriever returned 80 citations, every one of them to a real
+passage and only 1 to a wrong version, with the best precision (25%) and recall (47%); keyword search, keyword plus meaning and the
+strong baseline each had 3 or 4 fabricated citations and 6 to 12 citations to the wrong version. The answers are limited by what the
+answering model does with the evidence, not only by what was retrieved. One run per question, one answering model
+per question, in-sample for Palladion; it supports no ranking.
 
 **Test C (the whole systems with an agent).** Run only partly because of daily model limits: the plain
 LangChain pipeline answered 15 of 16 turns, the LangGraph agent was mostly blocked by the daily limit, and
@@ -362,9 +367,6 @@ Palladion's agent answered 3 of 8 turns in an earlier trial. None of this suppor
 * **Palladion with graph links**: not supported by the benchmark yet.
 * **A sealed run for answering (tests B and C)**: not possible on the free model quota (it would take millions of
   tokens); those tests stay descriptive. The sealed run in section 4.1 covers document-finding only.
-* **Test B at the current Palladion**: run on 2026-10-29, 196 of 200 question-and-system pairs are done (189 gave a
-  valid answer and 7 gave an answer outside the required form); 4 pairs wait for the model quota and the
-  result is not scored yet.
 * **Test C for the full Palladion (E4)**: the first attempt is void, because a test run of mine stopped a shared
   service under it; it is re-run when the quota allows, and the other Palladion variant (E3) is not run yet.
 * **Questions reworded by a different model**: not done yet. It needs gpt-oss quota (about two days for the 600 test
@@ -382,7 +384,7 @@ Palladion's agent answered 3 of 8 turns in an earlier trial. None of this suppor
 | Test A (finding documents), all search systems and Palladion | **Sealed run on six new worlds done (section 4.1)**; the earlier 72-question run is history (4.2) |
 | Public data (SciFact, ordinary search) | Run, exploratory (section 4.3): Palladion on par with the strong baseline |
 | Palladion improvements (correctness, speed, packing, exact codes, named versions) | Done, measured, reviewed; 645 automated tests pass |
-| Test B (answering) | Run at the current Palladion: 196 of 200 pairs done, 4 wait for quota; not scored yet |
+| Test B (answering) | Run at the current Palladion, 200 of 200 pairs, scored (section 6); descriptive |
 | Test C (whole systems) | Partly run; the first attempt at the full Palladion is void and will be re-run |
 | Graph systems | Built; not measured |
 | Final publication package (licence, dataset card, reproducibility) | Not done |

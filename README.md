@@ -95,8 +95,10 @@ In words:
   rules, Palladion's retriever finds the complete set for 78.0% of 300 questions against 77.0% for the strong
   baseline: no difference we can measure. Its lead on the invented company comes from versions, approval and exact
   codes, not from searching ordinary text better.
-* **Answering** (separate test, older Palladion version): almost no system answered a question completely right,
-  and the answering model, not only the search, limits the result. Re-run in progress (see the report).
+* **Answering** (separate test, current Palladion): almost no system answered a question completely right (Palladion's
+  retriever 4 of 31, the strong baseline 2; a difference that cannot be told from chance), and the answering model,
+  not only the search, limits the result. Palladion's retriever gave the cleanest citations: all 80 real, 1 to a
+  wrong version, against 3 to 4 fabricated ones for three of the others.
 
 The full plain-language report, with every test, the history of the improvements and what is still to do, is in
 [report.md](report.md).
