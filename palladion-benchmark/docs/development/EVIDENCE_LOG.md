@@ -845,3 +845,33 @@ Limits: **in-sample** (Palladion was changed after the smoke split showed where 
 **Validation.** Full suite: 1,833 passed in one run and the 9 tests that failed or errored in it (arm counts 15 to 17, a fixture ordering) passed after the fix; ruff and mypy clean; mutation tests of the eligibility, exact-lane, tuning, paraphrase, pooling, seal and scorer code killed every mutant after two tests were strengthened; one read-only Haiku 5.5 High review, 14 findings, the real ones fixed.
 
 **Limits.** One run per condition on a shared machine; the labels are the generator's (delegated, unaudited by a human); the questions come from one generator, so wording sensitivity (the paraphrase set) and external data are not yet tested; the eligibility rule mirrors Palladion's but counts `@vN` by version id; Track B is not scored and Track C E3 and E4 are not run at this pin.
+
+
+## E-B08-013 — The sealed Track A run on six fresh worlds (B08-T04.01, BADR-0047), 2026-10-29
+
+From `palladion-benchmark/`. The seal (SHA-256 `2e26d50e...`, BADR-0047 addendum) verified before the run, before the scoring and after it (`{"intact": true, "problems": 0}`); no sealed input changed. Worlds T101 to T106 (seeds 101 to 106, 1,200 documents and 100 questions each, 600 questions), arms R0, R0x, R1, R2, R3, R3f at `configs/tuned_arms.json` and R7a (Palladion `caebd53`, reranked mode, its own access lists), K 10, 4,000 words. Runs by `artifacts/runs/sealed_track_a.sh`: C2 three times (each on a freshly prepared runtime) and C1 once, 24 runs, every pair OK (no run state other than OK in any run). Scored with `scripts/score_sealed.py` (aggregates only; the coordinator did not open a test world's questions or ledgers); cards `artifacts/comparison/sealed-track-a-c2.md` and `-c1.md` (not committed, regenerable from the run directories and the seal).
+
+**Harness defect found and handled in the open.** Repeat 2 first ran with Palladion's arm `NOT_RUN` in every world: Palladion's revision table sits in the index folder, repeat 1 left it there, and the load refused ("the corpus is already loaded"). The six local arms in those runs were fine. The chain was stopped, the six repeat-2 directories were renamed `sealed-T10x-c2-r2-attempt1-r7a-not-run` (kept), the script now removes the table before each run and skips finished runs, and repeat 2 was redone. The chain script is outside the sealed code; no sealed input changed. Repeat 1 (the registered one) was unaffected.
+
+**The registered result (C2, repeat 1, pooled over the six worlds, 446 questions owe the metric).** CompleteSet@10 with 95% intervals clustered by document family within each world: R7a 0.399 [0.346, 0.451], R3f 0.269 [0.217, 0.322], R2 0.247, R3 0.226 [0.181, 0.275], R0x 0.224, R0 0.222 [0.185, 0.261], R1 0.132. ValidSourceRecall@10: R7a 0.495, R3f 0.332, R0x 0.299, R0 0.297, R2 0.294, R3 0.284, R1 0.192. MRR: R7a 0.275, R0x 0.207, R3f 0.185, R0 0.184, R3 0.154, R2 0.138, R1 0.106.
+
+| pairing | difference [95%] | only R7a / only the other | exact p | Holm p |
+|---|---|---|---|---|
+| R7a - R3 (primary) | +0.173 [+0.118, +0.227] | 95 / 18 | 8.0e-14 | not adjusted |
+| R7a - R0 | +0.177 [+0.131, +0.223] | 92 / 13 | 8.0e-16 | 2.4e-15 |
+| R7a - R0x | +0.175 [+0.129, +0.221] | 91 / 13 | 1.4e-15 | 2.8e-15 |
+| R7a - R3f | +0.130 [+0.067, +0.193] | 93 / 35 | 3.0e-07 | 3.0e-07 |
+
+**Claim on the registered primary pairing: CONFIRMED** (the lower bound, +0.118, is above the registered minimum of 0.05). The same holds for each secondary pairing. The exact p-values assume independent questions and are descriptive; the clustered interval decided.
+
+**By stratum, CompleteSet@10 under C2** (60 questions each unless stated): exact codes Q1: R7a 1.00, R0x 0.68, R0 0.67, R3f 0.40, R3 0.38; Q2: R7a 0.45, R2 0.40, R3f 0.35; Q3: R7a 0.37, others at most 0.03; Q4: R7a 0.20, R3f 0.45, R1 0.40, R2 0.33 (**Palladion is behind here**); Q5: R7a 0.43, R0 0.42; Q6: R3f 0.62, R7a 0.52, R3 0.48 (**R3f is ahead**); Q8 (26 questions) and Q10: 0.00 for every arm; Q7 and Q9 have no questions owing the metric. The gain is concentrated in Q1 and Q3, with Q2 and Q5 smaller and Q4 and Q6 not in Palladion's favour.
+
+**Harm under C2 (pooled, 600 pairs per arm).** Forbidden-source exposure 0 for every arm. Authority confusion: R7a 0 and R3f 0, R1 0.097, R2 0.130, R0 and R0x 0.133, R3 0.148. Wrong-vintage intrusion (416 questions that owe it): R7a 0.003, R3f 0.005, R0 and R0x 0.080, R2 0.088, R1 0.095, R3 0.097. So the eligibility rule (R3f) and Palladion remove almost all of the baselines' authority and old-version errors; part of Palladion's complete-set lead over R3 is the rule (R3f is +0.043 over R3), and the rest (+0.130 over R3f) is the rest of its design.
+
+**C1 (no access information for anyone; reported, not registered).** CompleteSet@10: R7a 0.359, R3f 0.256, R3 0.224, R0x 0.211, R2 0.209, R0 0.209, R1 0.114.
+
+**Reproducibility (repeats 2 and 3 against repeat 1, questions returning the same documents in the same order).** Every benchmark-built arm 600 of 600 in both repeats; R7a 552 of 600 in repeat 2 and 569 of 600 in repeat 3 (92% and 95%): Palladion's retrieval changes on a fresh load for about 1 question in 12, as in E-B08-009 (equal-score ordering after a reload). The registered result is repeat 1 and was not chosen among the repeats.
+
+**What this does and does not show.** It shows that, on six new fictional worlds that nobody tuned on, with every baseline tuned under the same budget and the claim rule and minimum effect fixed before the run, Palladion's retriever finds the complete set of applicable documents more often than the strong hybrid baseline, by about 17 points (11 to 23), and than the baseline with the same eligibility rule by about 13 points (7 to 19). It does not show that answers are better (Tracks B and C), that real users' questions behave like these (one generator wrote the corpus, the questions and the labels), that the labels are right (delegated, unaudited by a human), or that Palladion generalises to other corpora (B09-T03.01 is not done). It does not remove Palladion's weak strata (Q4, Q6, Q8, Q10).
+
+**Limits.** One generator; one run per condition and repeat on a shared machine; the primary result is retrieval only; the wording-variant study (paraphrases by a different model family) is not run yet (it needs gpt-oss quota and its own seal); `bash.exe.stackdump` is an untracked crash file of the host shell, outside the sealed paths.
