@@ -384,8 +384,9 @@ class RunSpec:
     order_seed: int | None = None
     config_dir: Path = Path(__file__).resolve().parents[1] / "configs"
     matched_list_sha256: str | None = None  # the frozen list the run was checked against (BADR-0044)
-    # Wording variants (BADR-0047): question id -> the accepted rewrite. When given, the run asks only these questions,
-    # with these words, against the originals' gold.
+    # Wording variants (BADR-0047): question id -> the accepted rewrite. When given, the run asks every question and
+    # uses the rewrite where there is one (the others keep their words), against the originals' gold, so the ledger is
+    # complete and the run scores like any other; a scorer then restricts itself to the rewritten questions.
     paraphrases: Mapping[str, str] | None = None
     paraphrase_sha256: str | None = None
     # The levers each of the benchmark's own arms ran with (BADR-0047), recorded so a sealed run can be held to them.
@@ -492,11 +493,10 @@ def execute(
         unknown = set(spec.paraphrases) - {r.question_id for r in records}
         if unknown or not spec.paraphrases or spec.paraphrase_sha256 is None:
             raise TrackAError("the wording variants name questions the split does not hold, or are empty or unsigned")
-        records = tuple(r for r in records if r.question_id in spec.paraphrases)
     requests = [
         build_request(
             r, identity, k=spec.k, budget=spec.budget_words, condition=spec.condition,
-            query=None if spec.paraphrases is None else spec.paraphrases[r.question_id],
+            query=None if spec.paraphrases is None else spec.paraphrases.get(r.question_id),
         )
         for r in records
     ]  # fmt: skip

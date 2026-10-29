@@ -14,6 +14,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from collections.abc import Mapping
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -37,7 +38,9 @@ PROJECT = Path(__file__).resolve().parents[1]
 RUNS = PROJECT / "artifacts" / "runs"
 
 
-def score_world(root: Path, run_dir: Path, arms: list[str], k: int) -> RunScore:
+def score_world(
+    root: Path, run_dir: Path, arms: list[str], k: int, withdrawn: Mapping[str, str] | None = None
+) -> RunScore:
     evaluation = load_evaluation_config(PROJECT / "configs" / "evaluation.yaml")
     published = Layout(root).path(Namespace.PUBLISHED)
     return score_run(
@@ -48,7 +51,7 @@ def score_world(root: Path, run_dir: Path, arms: list[str], k: int) -> RunScore:
         roles={p.principal_id: p.role_id for p in read_identity(published).principals},
         kinds=evaluation.slot_kinds,
         k=k,
-        withdrawn={},
+        withdrawn=dict(withdrawn or {}),
     )
 
 

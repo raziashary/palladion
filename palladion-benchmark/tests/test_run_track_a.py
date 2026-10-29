@@ -198,7 +198,7 @@ class SpyArm:
         return self.inner.describe()
 
 
-def test_a_wording_variant_run_asks_only_the_accepted_questions_in_their_new_words(
+def test_a_wording_variant_run_asks_every_question_and_rewords_only_the_accepted_ones(
     s_root: Path, tmp_path: Path, s_questions: tuple[GoldRecord, ...]
 ) -> None:
     chosen = {s_questions[0].question_id: "first, reworded", s_questions[3].question_id: "fourth, reworded"}
@@ -209,10 +209,11 @@ def test_a_wording_variant_run_asks_only_the_accepted_questions_in_their_new_wor
         paraphrases=chosen, paraphrase_sha256="d" * 64,
     )  # fmt: skip
     outcome = execute(variants, {"R0": spy}, builds=builds)
-    assert outcome.questions == 2 and outcome.summary.planned_pairs == 2
-    assert spy.queries == chosen, "only the accepted questions, with the rewritten words"
+    assert outcome.questions == len(s_questions) and outcome.summary.planned_pairs == len(s_questions)
+    expected = {r.question_id: chosen.get(r.question_id, r.query) for r in s_questions}
+    assert spy.queries == expected, "the accepted questions in their new words, every other question in its own"
     config = json.loads((tmp_path / "run" / "run_config.json").read_text(encoding="utf-8"))
-    assert config["paraphrase_sha256"] == "d" * 64 and config["questions"] == 2
+    assert config["paraphrase_sha256"] == "d" * 64 and config["questions"] == len(s_questions)
     manifest = json.loads((tmp_path / "run" / "manifest-R0.json").read_text(encoding="utf-8"))
     assert manifest["manifest"]["retrieval_config"]["paraphrase_sha256"] == "d" * 64
 
