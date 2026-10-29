@@ -1116,8 +1116,8 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
   - **Depends:** B07-T07.01, B02-T07.02, B05-T07.01.
   - **Change:** Generate 12,000 documents, 1,000 single-turn questions and 100 episodes with actual composition reports.
   - **Proof:** SMOKE; BG-FIXTURE, BG-GOLD; actual document mix, language shares and partition counts are reported from the output; 10, 30 and 60 questions per stratum for smoke, dev and test are verified by count; human-authored question variants are added to the audit sample (OQ08).
-  - **Deferred:** BADR-0043 and BADR-0044: not run on the descriptive path; the card belongs to a sealed confirmatory run, which needs a budget and answers (OQ13) the owner has not given.
-  - **Evidence:** Not yet executed.
+  - **Deferred:** BADR-0047 (2026-10-29): not run as the M tier (the generator builds only S). The sealed Track A run uses six independent S-tier worlds instead (seeds 101 to 106, 1,200 documents and 100 questions each, 60 per stratum in all, the protocol's test size) and two development worlds (seeds 11 and 12); the M tier, its 12,000 documents and its 100 episodes stay deferred, so this card stays open.
+  - **Evidence:** E-B08-012 and E-B08-013 for the six-world substitute; the M tier itself is not executed.
 
 <a id="b08-t01-02"></a>
 
@@ -1126,28 +1126,28 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
   - **Depends:** B08-T01.01, BADR-0009.
   - **Change:** Optional rewriting through the shared generator accepted only when IDs, dates, thresholds and negations are unchanged.
   - **Proof:** UNIT; BG-FIXTURE; a paraphrase that drops a negation is rejected; rejected rewrites keep the template text.
-  - **Deferred:** BADR-0043 and BADR-0044: not run on the descriptive path; the card belongs to a sealed confirmatory run, which needs a budget and answers (OQ13) the owner has not given.
-  - **Evidence:** Not yet executed.
+  - **Deferred:** BADR-0047 (2026-10-29): the checker and the paraphraser are built (`benchmark/paraphrase.py`, `scripts/paraphrase_questions.py`, a different-family model, rewrites accepted only when identifiers, numbers and the count of negation words are unchanged, Track A can ask the variants against the originals' gold); the variant sets for the development and test worlds wait for gpt-oss quota and the test worlds' set has its own second seal, so the card stays open. It rewrites questions, not documents (the document rewriting of the card text is not done).
+  - **Evidence:** Module and tests only (a dropped negation, a changed number and a lost identifier are each rejected; mutants killed); no variant set has been generated yet.
 
 <a id="b08-t02-01"></a>
 
-- [ ] **B08-T02.01 — Development-stage tuning on dev questions only**
+- [x] **B08-T02.01 — Development-stage tuning on dev questions only**
   - **Files:** `palladion-benchmark/configs/benchmark.yaml`, `palladion-benchmark/configs/comparators.yaml`, `palladion-benchmark/configs/evaluation.yaml`.
   - **Depends:** B04-T05.01, B05-T06.01, B06-T06.01, B07-T09.01, B08-T01.01, B08-T01.02, B08-T08.01.
   - **Change:** Tune K, candidate pools, reranker cutoff, graph depth, critic activation and thresholds one lever at a time using a held-out calibration split for confidence work; log every trial; never read test results; define per-arm eligibility in comparators.yaml.
   - **Proof:** MEASUREMENT; BG-PREREG; each configuration change cites a dev result; access to locked-test annotations is not used.
-  - **Deferred:** BADR-0043 and BADR-0044: not run on the descriptive path; the card belongs to a sealed confirmatory run, which needs a budget and answers (OQ13) the owner has not given.
-  - **Evidence:** Not yet executed.
+  - **Scope:** none for the retrieval arms (BADR-0047). Graph depth, critic activation and calibration thresholds are not tuned (Track B and C stay descriptive).
+  - **Evidence:** E-B08-012 (39 runs on development worlds D11 and D12 under one budget per arm; frozen in `configs/tuned_arms.json`; Palladion itself is not re-tuned and keeps the changes made on the smoke split, which the card text discloses as unequal history).
 
 <a id="b08-t02-02"></a>
 
-- [ ] **B08-T02.02 — Power simulation and security-suite sizing**
+- [x] **B08-T02.02 — Power simulation and security-suite sizing**
   - **Files:** `palladion-benchmark/benchmark/eval/statistics.py`, `palladion-benchmark/docs/development/EVIDENCE_LOG.md`.
   - **Depends:** B08-T02.01, B03-T04.01, B08-T01.02.
   - **Change:** Estimate disagreement and cluster correlation from pilot and dev only; simulate paired power; size the targeted security suite from the zero-failure bound.
   - **Proof:** MEASUREMENT; BG-STATS; locked-test data is not read; underpowered endpoints are declared.
-  - **Deferred:** BADR-0043 and BADR-0044: not run on the descriptive path; the card belongs to a sealed confirmatory run, which needs a budget and answers (OQ13) the owner has not given.
-  - **Evidence:** Not yet executed.
+  - **Scope:** the targeted security suite sizing (zero-failure bound) belongs to B08-T02.03 and is not done.
+  - **Evidence:** E-B08-012 and `PREREGISTRATION_TRACK_A.md` (Monte Carlo power of the registered rule with six worlds: 0.92 for a true gain of 0.128, 0.63 for 0.10, 0.30 for 0.08; the minimum effect stays 0.05).
 
 <a id="b08-t02-03"></a>
 
@@ -1161,23 +1161,23 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
 
 <a id="b08-t03-01"></a>
 
-- [ ] **B08-T03.01 — Preregistration and seal**
+- [x] **B08-T03.01 — Preregistration and seal**
   - **Files:** `palladion-benchmark/docs/development/RESEARCH_PROTOCOL.md`, `palladion-benchmark/configs/evaluation.yaml`, `palladion-benchmark/docs/reproducibility.md`.
   - **Depends:** B08-T02.03, OQ10, OQ13.
   - **Change:** Complete the protocol checklist, freeze methods, code, prompts, the ablation list with its base treatments, minimum meaningful effects and the calibration plan, seal test manifests with SHA-256, lock primary pairings, equivalence margin and multiplicity procedure. Before the seal the owner either relabels the 30-item pilot packet or accepts the delegated reading in writing, and the synthesis golds are corrected at the generator (BADR-0026, BR29).
   - **Proof:** DOC; BG-PREREG; sealed hashes verify; an edit after sealing is detected and flags later results exploratory.
-  - **Deferred:** BADR-0043 and BADR-0044: not run on the descriptive path; the card belongs to a sealed confirmatory run, which needs a budget and answers (OQ13) the owner has not given.
-  - **Evidence:** Not yet executed.
+  - **Scope:** the seal covers the retrieval-only Track A run (BADR-0047); the answer-level and system-level tracks are not sealed. OQ10 and OQ13 are answered for this run (labels delegated and accepted in writing).
+  - **Evidence:** E-B08-012 and the BADR-0047 addendum (seal SHA-256 `2e26d50e639882d16ec54c0c0c2b2e4638ee66e6a6b99b7033d2b7ac66f93850`, verified before and after the run; `benchmark/seal.py`, `scripts/seal_worlds.py`).
 
 <a id="b08-t04-01"></a>
 
-- [ ] **B08-T04.01 — Confirmatory run**
+- [x] **B08-T04.01 — Confirmatory run**
   - **Files:** `palladion-benchmark/docs/development/EVIDENCE_LOG.md`, `palladion-benchmark/docs/development/PROGRESS.md`.
   - **Depends:** B08-T03.01.
   - **Change:** Run all eligible arms on the sealed 600 test questions and 100 episodes in both the common-chunk and native-ingestion tracks; at least three repetitions of the stochastic subset; no selective reruns.
   - **Proof:** MEASUREMENT; BG-TRACKA, BG-TRACKB, BG-TRACKC; initial and post-retry outcomes both reported; every failure preserved.
-  - **Deferred:** BADR-0043 and BADR-0044: not run on the descriptive path; the card belongs to a sealed confirmatory run, which needs a budget and answers (OQ13) the owner has not given.
-  - **Evidence:** Not yet executed.
+  - **Scope:** the sealed run covers Track A only, one document-finding condition set (C2 three times, C1 once) on six worlds; Track B and C (600 questions, 100 episodes, three repeats) cannot be afforded on the free tier and stay descriptive (B08-T08.03, B08-T08.04). The native-ingestion track is not run.
+  - **Evidence:** E-B08-013 (24 runs, every pair OK; registered primary pairing R7a against R3 +0.173 [+0.118, +0.227], CONFIRMED against the registered minimum of 0.05).
 
 <a id="b08-t05-01"></a>
 
@@ -1186,8 +1186,8 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
   - **Depends:** B08-T04.01, B08-T08.01.
   - **Change:** Run the preregistered A01-A16 and declared factorials, labeling A09 and A14 as system ablations and A15 as fixtures-only; any ablation Palladion cannot express without code changes is FEATURE_NOT_SUPPORTED, and ablations not in the sealed list are exploratory. Palladion exposes graph hop depth and counter-search limits but no switch for the critic, gate, preflight, authority check, parser or temporal resolver today.
   - **Proof:** MEASUREMENT; BG-ABLATION; each ablation removes exactly one component against a stated base; interactions reported.
-  - **Deferred:** BADR-0043 and BADR-0044: not run on the descriptive path; the card belongs to a sealed confirmatory run, which needs a budget and answers (OQ13) the owner has not given.
-  - **Evidence:** Not yet executed.
+  - **Deferred:** BADR-0047 (2026-10-29): the attributing baselines R0x and R3f (the exact-code rule and the eligibility rule, one each) were run in the sealed Track A instead of the A01 to A16 list; the ablations Palladion can express without code changes (rerank off, packing, exact lane off, named versions off) and the preregistered list are not run, so this card stays open.
+  - **Evidence:** E-B08-013 for R0x and R3f (they attribute about a quarter of Palladion's lead to the eligibility rule); no preregistered ablation is executed.
 
 <a id="b08-t06-01"></a>
 
