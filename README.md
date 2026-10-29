@@ -87,6 +87,10 @@ In words:
   and no system showed a document the person may not see.
 * **Repeatable?** Rebuilding Palladion from scratch gave the same ten documents in the same order for 92% to 95% of
   questions; the other systems gave exactly the same lists every time.
+* **What equal tuning changed:** every baseline did best with bigger text pieces (250 words instead of 120),
+  and nothing else helped. That handicap explains part of the first, bigger lead. On two separate invented
+  worlds Palladion had never been changed on, it found the complete set for 36.2% of questions against 23.5% for
+  the strong baseline.
 * **On public data (ordinary search):** on SciFact, a public set of science abstracts with no versions or access
   rules, Palladion's retriever finds the complete set for 78.0% of 300 questions against 77.0% for the strong
   baseline: no difference we can measure. Its lead on the invented company comes from versions, approval and exact

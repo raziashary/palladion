@@ -172,29 +172,6 @@ the labels, and no human has checked the labels. It does not show that Palladion
 A test with questions reworded by a different model is still to do; a test on one public set (section 4.3)
 shows Palladion on par with the baseline for ordinary search.
 
-### 4.3 A public dataset: ordinary search on SciFact (exploratory)
-
-To see whether Palladion's lead depends on the invented company, the same systems were run on **SciFact**, a public
-set of 5,183 science abstracts and 300 claims, each with the abstracts that support or contradict it (downloaded with
-the owner's approval; license CC BY-NC 2.0). It has no approval states, versions or access rules, so it tests
-**ordinary search only**. The settings were the ones tuned on the invented worlds; nothing was tuned on SciFact.
-
-| System | Questions where all relevant abstracts were found (of 300) |
-|---|---|
-| **Palladion's retriever** | **78.0%** |
-| Strong common baseline | 77.0% |
-| Keyword search | 75.3% |
-| Keyword + meaning | 71.3% |
-| Meaning search | 49.0% |
-
-Palladion minus the strong baseline is +1.0 point (range -2.0 to +4.0): **no difference we can measure**. So
-Palladion's lead on the invented worlds (section 4.1) does not come from searching ordinary text better. It comes from
-what that data has and SciFact does not: approved and withdrawn versions, validity dates, exact codes, questions that
-need several documents. It also says Palladion does not give up ordinary search to get those rules, to within about
-3 points. The baseline with Palladion's approval-and-date rule scores exactly the same as the baseline here, as it
-must when no document has an approval state or a date. Only one public set was run, it is science, not company
-documents, and the judgements are per abstract.
-
 ### 4.2 The earlier run on the first 72 questions (in-sample, untuned baselines)
 
 This is the run reported before the sealed one. It is kept for the history of how Palladion changed, not as the
@@ -267,6 +244,54 @@ until it learned that syntax (section 5), so that column is the clearest example
 **Where Palladion is still weak:** two official sources that disagree (Q6: 0 of 10, the strong baseline gets 4),
 who may see what (Q8: 0 of 5, no system finds these), and broad summaries (Q10: 0 of 7, no system does). Version
 questions (Q4) improved from 0 to 2 of 10 and are still low.
+
+### 4.3 A public dataset: ordinary search on SciFact (exploratory)
+
+To see whether Palladion's lead depends on the invented company, the same systems were run on **SciFact**, a public
+set of 5,183 science abstracts and 300 claims, each with the abstracts that support or contradict it (downloaded with
+the owner's approval; license CC BY-NC 2.0). It has no approval states, versions or access rules, so it tests
+**ordinary search only**. The settings were the ones tuned on the invented worlds; nothing was tuned on SciFact.
+
+| System | Questions where all relevant abstracts were found (of 300) |
+|---|---|
+| **Palladion's retriever** | **78.0%** |
+| Strong common baseline | 77.0% |
+| Keyword search | 75.3% |
+| Keyword + meaning | 71.3% |
+| Meaning search | 49.0% |
+
+Palladion minus the strong baseline is +1.0 point (range -2.0 to +4.0): **no difference we can measure**. So
+Palladion's lead on the invented worlds (section 4.1) does not come from searching ordinary text better. It comes from
+what that data has and SciFact does not: approved and withdrawn versions, validity dates, exact codes, questions that
+need several documents. It also says Palladion does not give up ordinary search to get those rules, to within about
+3 points. The baseline with Palladion's approval-and-date rule scores exactly the same as the baseline here, as it
+must when no document has an approval state or a date. Only one public set was run, it is science, not company
+documents, and the judgements are per abstract.
+
+### 4.4 What tuning every system equally changed
+
+Before the sealed run, each benchmark-built system got the same tuning budget on two separate invented worlds (200
+questions): its settings as they were, then at most six single changes (text-piece size, how strongly long pieces are
+penalised, how the keyword and meaning lists are merged, how many results are re-read). A change was kept only if it
+added at least one point. **One change won for every system: bigger text pieces (250 words instead of 120)**, and
+nothing else beat the margin for any of them. Share of questions where all needed documents were found, on those
+separate worlds:
+
+| System | Before tuning | After tuning |
+|---|---|---|
+| Keyword search | 16.8% | 26.2% |
+| Keyword + exact-code rule | 16.8% | 26.2% |
+| Meaning search | 2.0% | 15.4% |
+| Keyword + meaning | 12.1% | 26.2% |
+| Strong common baseline | 15.4% | 23.5% |
+| Strong baseline + approval-and-date rule | 16.8% | 28.2% |
+
+So the earlier baselines were running with a handicap Palladion's own text pieces did not have. This is why the
+lead over the strong baseline is +17 points in the sealed run and was +22 in the first, untuned run. On those same
+separate worlds, which Palladion had never been changed on, Palladion found the complete set for 36.2% of questions
+(strong baseline 23.5%, +12.8 points, range +6.6 to +18.9). The exact-code rule on its own changed the order of
+results a little and the count of complete sets not at all; Palladion's approval-and-date rule on its own was worth
+about 5 points over the strong baseline.
 
 ## 5. How Palladion changed during this work
 
@@ -369,6 +394,12 @@ Palladion's agent answered 3 of 8 turns in an earlier trial. None of this suppor
   changed. The sealed run (section 4.1) was not.
 * **One author.** One generator wrote the documents, the questions and the answer labels, and no human checked
   them; the sealed run cannot show that real questions behave the same way.
+* **Mistakes made and caught during this work** (all recorded in the benchmark's evidence log): the first attempt at
+  the full-Palladion whole-system test (E4) is void, because I ran a test that restarts a shared search service while
+  it was running; the first attempt at the second repeat of the sealed run had Palladion's side unrun in every world, because
+  Palladion's table of loaded documents survived between repeats (found by a monitor, the attempt is kept under a
+  renamed folder, and the repeat was redone); and four of the 200 answering pairs of test B wait for model quota. None of
+  them touched the sealed result, which is the first repeat.
 * One small, invented document set; results may not carry to real company data.
 * Single runs, one machine shared with other programs; timings move by up to 1.5 times between runs.
 * The 72 questions give wide uncertainty for most comparisons.
