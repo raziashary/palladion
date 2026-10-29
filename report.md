@@ -293,6 +293,29 @@ separate worlds, which Palladion had never been changed on, Palladion found the 
 results a little and the count of complete sets not at all; Palladion's approval-and-date rule on its own was worth
 about 5 points over the strong baseline.
 
+### 4.5 Do the results hold when the questions are reworded? (exploratory)
+
+The questions in the sealed run came from one generator, so a system might have learned its phrasing. A model of a
+different family (the two gpt-oss models) rewrote 550 of the 600 test questions without changing any code, number
+or negation (on average a third of the words differ), and every system was run again on those questions. Share of
+the 404 rewritten questions where all needed documents were found:
+
+| System | Original wording | Reworded | Change |
+|---|---|---|---|
+| Keyword search | 23.8% | 26.2% | +2.5 |
+| Keyword + exact-code rule | 24.0% | 26.7% | +2.7 |
+| Meaning search | 13.6% | 12.1% | -1.5 |
+| Keyword + meaning | 26.0% | 25.7% | -0.2 |
+| Strong common baseline | 24.3% | 26.7% | +2.5 |
+| Strong baseline + approval-and-date rule | 28.5% | 29.5% | +1.0 |
+| **Palladion** | **40.3%** | **37.6%** | **-2.7** |
+
+Every change is within the margin of error (the ranges touch zero), and running the original questions a second time
+changed nothing for the benchmark's systems and one question for Palladion. So the reword did not move anyone by more
+than three points, and Palladion was still ahead of the strong baseline on the reworded questions (37.6% against
+26.7%). This is a sensitivity check, not a new test: a rewrite can change meaning in ways the checker does not read,
+nobody read the rewrites, and only one other model family wrote them.
+
 ## 5. How Palladion changed during this work
 
 The first measurement (Palladion at an earlier commit) was poor: Palladion found the complete set for 2 questions
@@ -369,8 +392,8 @@ Palladion's agent answered 3 of 8 turns in an earlier trial. None of this suppor
   tokens); those tests stay descriptive. The sealed run in section 4.1 covers document-finding only.
 * **Test C for the full Palladion (E4)**: the first attempt is void, because a test run of mine stopped a shared
   service under it; it is re-run when the quota allows, and the other Palladion variant (E3) is not run yet.
-* **Questions reworded by a different model**: not done yet. It needs gpt-oss quota (about two days for the 600 test
-  questions) and has its own seal.
+* **Questions reworded by a different model**: done for the search test (section 4.5, exploratory). Not done for
+  answering (tests B and C), and the rewrites were not read by a person.
 * **More public datasets**: one (SciFact, section 4.3) was run with the owner's approval; the others were not.
 * **Labels checked by a person**: not done; the owner accepted the generator's labels in writing.
 * **Keeping the search process running** (section 5) and **conflicts / access / summary questions**, where
@@ -382,6 +405,7 @@ Palladion's agent answered 3 of 8 turns in an earlier trial. None of this suppor
 |---|---|
 | Harness, fictional dataset, scoring rules and statistics | Built and tested |
 | Test A (finding documents), all search systems and Palladion | **Sealed run on six new worlds done (section 4.1)**; the earlier 72-question run is history (4.2) |
+| Reworded questions (search test) | Run on 404 questions, exploratory (section 4.5): no system moved more than 3 points |
 | Public data (SciFact, ordinary search) | Run, exploratory (section 4.3): Palladion on par with the strong baseline |
 | Palladion improvements (correctness, speed, packing, exact codes, named versions) | Done, measured, reviewed; 645 automated tests pass |
 | Test B (answering) | Run at the current Palladion, 200 of 200 pairs, scored (section 6); descriptive |
