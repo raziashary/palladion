@@ -13,7 +13,13 @@ from typing import Any
 
 import pytest
 
-from benchmark.generator import GenerationError, GenerationTransientError, TransportResponse
+from benchmark.generator import (
+    GenerationError,
+    GenerationTransientError,
+    TransportResponse,
+    _quota_window,
+    refusal_facts,
+)
 from benchmark.llm_proxy import (
     CHAT_PATH,
     EMBEDDINGS_PATH,
@@ -445,3 +451,127 @@ def test_a_cap_or_a_daily_limit_is_counted_as_a_quota_refusal_and_a_parameter_re
     other = make(Fake(), tmp_path)
     assert isinstance(other.chat(body(stream=True)), Refusal)
     assert other.usage()["refused"] == 1 and other.usage()["quota_refused"] == 0, "a malformed request is not a limit"
+
+
+# --------------------------------------------------------------------------- the provider's refusal facts (BADR-0048)
+
+ORG = "org_01abcdefghijklmnop"
+TOO_LARGE = (
+    "Request too large for model `qwen/qwen3.8-27b` in organization `" + ORG + "` service tier `on_demand` on tokens "
+    "per minute (TPM): Limit 6000, Requested 9034, please reduce your message size and try again."
+)
+THROTTLED = (
+    "Rate limit reached for model `qwen/qwen3.8-27b` in organization `" + ORG + "` service tier `on_demand` on tokens "
+    "per minute (TPM): Limit 6000, Used 5100, Requested 1900. Please try again in 1m2.5s."
+)
+
+
+def refused(
+    message: str, *, status: int, code: str = "rate_limit_exceeded", headers: Mapping[str, str] | None = None
+) -> Any:
+    error = {"message": message, "type": "tokens", "code": code}
+    return TransportResponse(status, dict(headers or {}), json.dumps({"error": error}).encode())
+
+
+def book(tmp_path: Path) -> list[dict[str, Any]]:
+    return [json.loads(line) for line in (tmp_path / "proxy.jsonl").read_text(encoding="utf-8").splitlines()]
+
+
+def test_a_413_is_kept_as_its_window_and_figures_and_not_as_its_message(tmp_path: Path) -> None:
+    proxy = make(Fake(refused(TOO_LARGE, status=413, code="request_too_large")), tmp_path)
+    assert isinstance(proxy.chat(body()), TransportResponse)
+    row = book(tmp_path)[0]
+    assert row["http_status"] == 413 and row["outcome"] == "ERROR"
+    assert row["refusal"] == {
+        "window": "TOKENS_MINUTE", "limit": 6000, "requested": 9034, "error_type": "tokens",
+        "error_code": "request_too_large",
+    }  # fmt: skip
+    assert ORG not in json.dumps(row) and "reduce your message" not in json.dumps(row)
+
+
+def test_a_429_keeps_the_used_figure_the_wait_and_the_bounded_headers(tmp_path: Path) -> None:
+    headers = {
+        "x-ratelimit-limit-tokens": "6000",
+        "x-ratelimit-remaining-tokens": "0",
+        "x-ratelimit-reset-tokens": "1m2s",
+    }
+    proxy = make(Fake(refused(THROTTLED, status=429, headers=headers)), tmp_path)
+    proxy.chat(body())
+    row = book(tmp_path)[0]
+    assert row["outcome"] == "RATE_LIMITED"
+    assert row["refusal"] == {
+        "window": "TOKENS_MINUTE", "limit": 6000, "used": 5100, "requested": 1900, "retry_after_seconds": 62.5,
+        "error_type": "tokens", "error_code": "rate_limit_exceeded",
+        "rate_limits": {"limit-tokens": 6000, "remaining-tokens": 0, "reset-tokens": "1m2s"},
+    }  # fmt: skip
+    assert ORG not in json.dumps(row)
+
+
+def test_an_unreadable_or_hostile_refusal_adds_no_text_it_says(tmp_path: Path) -> None:
+    hostile = {"message": "secret prompt text " + KEY, "type": KEY, "code": ORG}
+    proxy = make(
+        Fake(
+            TransportResponse(502, {}, b"<html>gateway</html>"),
+            TransportResponse(500, {}, json.dumps({"error": hostile}).encode()),
+            TransportResponse(500, {}, json.dumps({"error": [KEY]}).encode()),
+            TransportResponse(500, {}, json.dumps({"error": KEY}).encode()),
+            TransportResponse(500, {}, json.dumps([KEY]).encode()),
+        ),
+        tmp_path,
+        max_calls=5,
+    )
+    for _ in range(5):
+        proxy.chat(body())
+    rows = book(tmp_path)
+    assert [r["refusal"] for r in rows] == [
+        {"window": "UNKNOWN"},
+        {"window": "UNKNOWN", "error_type": "OTHER", "error_code": "OTHER"},
+        {"window": "UNKNOWN"},
+        {"window": "UNKNOWN"},
+        {"window": "UNKNOWN"},
+    ]
+    assert KEY not in json.dumps(rows) and ORG not in json.dumps(rows) and "secret prompt" not in json.dumps(rows)
+
+
+def test_absurd_numbers_and_nesting_in_a_refusal_never_stop_the_book_from_being_written(tmp_path: Path) -> None:
+    huge = "Limit " + "9" * 5000 + ", Requested 13. Please try again in " + "9" * 5000 + "h1s."
+    nested = b'{"error":' * 60000 + b"1" + b"}" * 60000
+    proxy = make(
+        Fake(
+            refused(huge, status=429),
+            TransportResponse(500, {}, nested),
+            refused(THROTTLED, status=429, headers={"retry-after": "soon"}),
+        ),
+        tmp_path,
+    )
+    for _ in range(3):
+        assert isinstance(proxy.chat(body()), TransportResponse)
+    rows = book(tmp_path)
+    assert len(rows) == 3 and proxy.usage()["calls"] == 3
+    assert rows[0]["refusal"].get("requested") == 13 and "limit" not in rows[0]["refusal"]
+    assert rows[1]["refusal"] == {"window": "UNKNOWN"}
+    assert rows[2]["refusal"]["retry_after_seconds"] == 62.5  # a non-numeric header falls back to the body's wait
+
+
+def test_figures_are_read_with_a_colon_or_extra_spaces_and_an_unknown_code_is_kept_as_other() -> None:
+    facts = refusal_facts(
+        {},
+        refused(
+            "on tokens per day (TPD): Limit:  500000,  Used 499990, Requested 20", status=429, code="brand_new"
+        ).body,
+    )
+    assert facts == {"window": "TOKENS_DAILY", "limit": 500000, "used": 499990, "requested": 20,
+                     "error_type": "tokens", "error_code": "OTHER"}  # fmt: skip
+
+
+def test_a_successful_call_carries_no_refusal_field(tmp_path: Path) -> None:
+    proxy = make(Fake(), tmp_path)
+    proxy.chat(body())
+    assert "refusal" not in book(tmp_path)[0]
+
+
+def test_the_facts_read_the_same_window_and_wait_as_the_pool_does() -> None:
+    body_ = refused(THROTTLED, status=429).body
+    facts = refusal_facts({}, body_)
+    assert (facts["window"], facts["retry_after_seconds"]) == _quota_window(body_)
+    assert refusal_facts({"retry-after": "9"}, body_)["retry_after_seconds"] == 9.0

@@ -301,16 +301,57 @@ _WINDOWS = (
 DAILY_WINDOWS = frozenset({"TOKENS_DAILY", "REQUESTS_DAILY"})
 
 
+def _error_object(body: bytes) -> Mapping[str, Any]:
+    """The ``error`` object of a provider reply, or an empty one when the body is not that."""
+    try:
+        error = json.loads(body).get("error", {})
+    except (ValueError, AttributeError, RecursionError):
+        return {}
+    return error if isinstance(error, dict) else {}
+
+
 def _quota_window(body: bytes) -> tuple[str, float | None]:
     """Classify a rate-limit body into a window label and a suggested wait, keeping no provider text."""
-    try:
-        message = str(json.loads(body).get("error", {}).get("message", "")).lower()
-    except (ValueError, AttributeError):
-        return "UNKNOWN", None
+    message = str(_error_object(body).get("message", "")).lower()
     window = next((label for needle, label in _WINDOWS if needle in message), "UNKNOWN")
-    wait = re.search(r"try again in (?:(\d+)h)?(?:(\d+)m)?(\d+(?:\.\d+)?)s", message)
+    wait = re.search(r"try again in (?:(\d{1,4})h)?(?:(\d{1,4})m)?(\d{1,6}(?:\.\d{1,6})?)s", message)
     seconds = int(wait[1] or 0) * 3600 + int(wait[2] or 0) * 60 + float(wait[3]) if wait else None
     return window, seconds
+
+
+_FIGURES = re.compile(r"\b(limit|used|requested):?\s+([0-9]{1,12})\b")
+# The error ``type`` and ``code`` values the provider documents. Anything else is kept as OTHER, never as the text it
+# came with, so a hostile or unexpected reply cannot put an identifier or a key into the book.
+_KNOWN_ERROR_VALUES = frozenset(
+    {"tokens", "requests", "invalid_request_error", "rate_limit_error", "rate_limit_exceeded", "request_too_large",
+     "context_length_exceeded", "model_not_found", "model_decommissioned", "json_validate_failed", "tool_use_failed",
+     "server_error", "api_error", "internal_server_error", "service_unavailable", "over_capacity",
+     "authentication_error", "invalid_api_key", "permission_error"}
+)  # fmt: skip
+
+
+def refusal_facts(headers: Mapping[str, str], body: bytes) -> dict[str, Any]:
+    """What a provider's refusal says, as numbers and fixed codes only (BADR-0048).
+
+    The limit window label, the provider's own Limit, Used and Requested figures, the wait it suggests, the error
+    ``type`` and ``code`` when they are among the provider's documented values (else OTHER), and the bounded rate-limit
+    headers. The message itself is never kept: it is a reply, and it names the organization.
+    """
+    message = str(_error_object(body).get("message", "")).lower()
+    window, suggested = _quota_window(body)
+    limits, retry_after, _ = _bounded_headers(headers)
+    facts: dict[str, Any] = {"window": window}
+    facts.update({name: int(value) for name, value in _FIGURES.findall(message)})
+    wait = retry_after if retry_after is not None else suggested
+    if wait is not None:
+        facts["retry_after_seconds"] = wait
+    for field, label in (("type", "error_type"), ("code", "error_code")):
+        value = _error_object(body).get(field)
+        if isinstance(value, str):
+            facts[label] = value if value in _KNOWN_ERROR_VALUES else "OTHER"
+    if limits:
+        facts["rate_limits"] = limits
+    return facts
 
 
 class GeneratorPool:

@@ -13,7 +13,9 @@ An agent arm (E1, E3, E4) sends tool definitions. They are accepted only when th
 tool call a reply requests is counted, and a request that offers tools is refused once the cap is reached (a request
 without tools, such as a final answer, is still served within the other caps).
 
-Records keep numbers and fixed codes only: never a prompt, a reply or a key.
+Records keep numbers and fixed codes only: never a prompt, a reply or a key. A refusal by the provider is kept as its
+facts (limit window, the provider's Limit, Used and Requested figures, wait, error type and code), never its message
+(BADR-0048).
 """
 
 from __future__ import annotations
@@ -29,7 +31,13 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 
-from benchmark.generator import GenerationError, GenerationTransientError, Transport, TransportResponse
+from benchmark.generator import (
+    GenerationError,
+    GenerationTransientError,
+    Transport,
+    TransportResponse,
+    refusal_facts,
+)
 
 CHAT_PATH = "/v1/chat/completions"
 EMBEDDINGS_PATH = "/v1/embeddings"
@@ -249,9 +257,10 @@ class CountingProxy:
                     completion_cap if completion is None else 0
                 )
         outcome = "OK" if response.status == 200 else ("RATE_LIMITED" if response.status == 429 else "ERROR")
+        facts = {} if response.status == 200 else {"refusal": refusal_facts(response.headers, response.body)}
         self._record(
             outcome=outcome, model=model, http_status=response.status, prompt_tokens=prompt,
-            completion_tokens=completion, latency_ms=latency_ms, tool_calls=requested_tools,
+            completion_tokens=completion, latency_ms=latency_ms, tool_calls=requested_tools, **facts,
         )  # fmt: skip
         return response
 
@@ -304,7 +313,7 @@ def _tool_calls(response: TransportResponse) -> int:
 def _usage(response: TransportResponse) -> tuple[int | None, int | None]:
     try:
         usage = json.loads(response.body).get("usage", {})
-    except (ValueError, AttributeError):
+    except (ValueError, AttributeError, RecursionError):
         return None, None
     prompt, completion = usage.get("prompt_tokens"), usage.get("completion_tokens")
     return (
