@@ -390,12 +390,15 @@ Palladion's agent answered 3 of 8 turns in an earlier trial. None of this suppor
 * **Palladion with graph links**: not supported by the benchmark yet.
 * **A sealed run for answering (tests B and C)**: not possible on the free model quota (it would take millions of
   tokens); those tests stay descriptive. The sealed run in section 4.1 covers document-finding only.
-* **Test C for the full Palladion (E4)**: run again in a clean block on 2026-10-30, but no question was answered. All
-  four questions and both change-and-ask checks were cut off by the model provider (9 of 25 calls refused: 3 "too
-  many requests", 6 "request too large"), so there is no score and no statement about Palladion. The first attempt
-  is void for a different reason (a test run of mine stopped a shared service). The benchmark's
-  record of such refusals now keeps their limit figures (not the provider's message), and E4 is run again on
-  2026-10-31; the other Palladion variant (E3) follows on 2026-11-01.
+* **Test C for the full Palladion (E4)**: run in a clean block twice (2026-10-30 and 2026-10-31), and no question was
+  answered either time. All four questions and both change-and-ask checks were cut off by the model provider (second
+  run: 12 of 29 calls refused, 7 "too many requests", 5 "request too large"), so there is no score and no statement
+  about Palladion. The second run's record shows why: the model's free-tier limit is 7,000 tokens per minute, and the
+  agent's requests are 5,700 to 8,400 tokens, so the largest can never succeed and the others fail whenever tokens
+  were used in the same minute. The first attempt
+  is void for a different reason (a test run of mine stopped a shared service). What would change that (smaller requests,
+  a longer pause, another model or a higher tier) changes what is measured, so it is the owner's choice; the other
+  Palladion variant (E3) is scheduled for 2026-11-01 and is expected to meet the same limit.
 * **Questions reworded by a different model**: done for the search test (section 4.5, exploratory). Not done for
   answering (tests B and C), and the rewrites were not read by a person.
 * **More public datasets**: one (SciFact, section 4.3) was run with the owner's approval; the others were not.
@@ -413,7 +416,7 @@ Palladion's agent answered 3 of 8 turns in an earlier trial. None of this suppor
 | Public data (SciFact, ordinary search) | Run, exploratory (section 4.3): Palladion on par with the strong baseline |
 | Palladion improvements (correctness, speed, packing, exact codes, named versions) | Done, measured, reviewed; 645 automated tests pass |
 | Test B (answering) | Run at the current Palladion, 200 of 200 pairs, scored (section 6); descriptive |
-| Test C (whole systems) | Partly run; the full Palladion (E4) was run in a clean block but every unit was cut off by the model provider, so it has no score; E4 is run again on 2026-10-31 with the provider's refusal figures recorded, E3 on 2026-11-01 |
+| Test C (whole systems) | Partly run; the full Palladion (E4) was run in a clean block but every unit was cut off by the model provider, so it has no score; E4 was run twice, every unit cut off by the provider's 7,000-token minute window (no score); E3 is scheduled for 2026-11-01 and is expected to meet the same limit |
 | Graph systems | Built; not measured |
 | Final publication package (licence, dataset card, reproducibility) | Not done |
 | Plain-language documentation (README, [architecture.md](architecture.md), this report) | Written; worked examples are reconstructions, not recorded runs |
