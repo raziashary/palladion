@@ -575,3 +575,69 @@ def test_the_facts_read_the_same_window_and_wait_as_the_pool_does() -> None:
     facts = refusal_facts({}, body_)
     assert (facts["window"], facts["retry_after_seconds"]) == _quota_window(body_)
     assert refusal_facts({"retry-after": "9"}, body_)["retry_after_seconds"] == 9.0
+
+
+# --------------------------------------------------------------------------- the request ceiling (BADR-0049)
+
+TOOL = {"type": "function", "function": {"name": "search", "description": "x" * 400, "parameters": {"type": "object"}}}
+
+
+def test_a_request_over_the_ceiling_is_refused_unsent_and_uses_no_call(tmp_path: Path) -> None:
+    transport = Fake()
+    proxy = make(transport, tmp_path, max_request_tokens=100)
+    messages = [{"role": "user", "content": "w" * 800}]  # about 200 tokens at four characters each
+    result = proxy.chat(body(messages=messages))
+    assert result == Refusal(413, "REQUEST_OVER_CEILING")
+    assert transport.payloads == [] and proxy.usage()["calls"] == 0 and proxy.usage()["refused"] == 1
+    row = book(tmp_path)[0]
+    assert row["outcome"] == "REFUSED" and row["code"] == "REQUEST_OVER_CEILING" and row["ceiling_tokens"] == 100
+    assert row["estimated_tokens"] > 100 and row["request_chars"] > 800 and "w" * 20 not in json.dumps(row)
+
+
+def test_the_tool_definitions_count_toward_the_ceiling(tmp_path: Path) -> None:
+    transport = Fake()
+    proxy = make(transport, tmp_path, max_request_tokens=100, max_tool_calls=5)
+    assert proxy.chat(body()).__class__ is TransportResponse  # the short message alone is under the ceiling
+    assert proxy.chat(body(tools=[TOOL])) == Refusal(413, "REQUEST_OVER_CEILING")
+    assert len(transport.payloads) == 1
+
+
+def test_a_request_exactly_at_the_ceiling_is_sent_and_one_token_over_is_not(tmp_path: Path) -> None:
+    transport = Fake()
+    proxy = make(transport, tmp_path, max_request_tokens=50, max_calls=5)
+    probe = json.dumps([[{"role": "user", "content": ""}], ""])  # the fixed part of the size
+    room = 50 * 4 - len(probe)  # characters of content that bring the estimate to 50 + 1 - 1
+    exactly = [{"role": "user", "content": "a" * (room - 4 + 3)}]
+    assert isinstance(proxy.chat(body(messages=exactly)), TransportResponse)
+    over = [{"role": "user", "content": "a" * (room - 4 + 4)}]
+    assert proxy.chat(body(messages=over)) == Refusal(413, "REQUEST_OVER_CEILING")
+
+
+def test_with_no_ceiling_a_large_request_is_sent_and_every_dispatch_row_keeps_its_size(tmp_path: Path) -> None:
+    transport = Fake(reply(), refused(TOO_LARGE, status=413))
+    proxy = make(transport, tmp_path, max_calls=5, max_tokens=100_000)
+    assert isinstance(proxy.chat(body(messages=[{"role": "user", "content": "w" * 40_000}])), TransportResponse)
+    proxy.chat(body())
+    rows = book(tmp_path)
+    assert [r["outcome"] for r in rows] == ["OK", "ERROR"]
+    assert rows[0]["request_chars"] > 40_000 and 0 < rows[1]["request_chars"] < 400
+
+
+def test_a_ceiling_below_one_token_is_refused_at_set_up() -> None:
+    with pytest.raises(ProxyError):
+        limits(max_request_tokens=0)
+
+
+def test_over_http_a_request_over_the_ceiling_comes_back_as_a_413_with_the_code(tmp_path: Path) -> None:
+    proxy = make(Fake(), tmp_path, max_request_tokens=10)
+    with ProxyServer(proxy, token=TOKEN) as server:
+        status, answer, _ = call(
+            server.base_url, "/chat/completions", body(messages=[{"role": "user", "content": "w" * 400}]), TOKEN
+        )
+    assert status == 413 and "REQUEST_OVER_CEILING" in json.dumps(answer)
+
+
+def test_a_transport_failure_row_keeps_the_request_size_too(tmp_path: Path) -> None:
+    proxy = make(Fake(GenerationTransientError("PROVIDER_UNAVAILABLE")), tmp_path)
+    assert proxy.chat(body()) == Refusal(502, "PROVIDER_UNAVAILABLE")
+    assert 0 < book(tmp_path)[0]["request_chars"] < 400

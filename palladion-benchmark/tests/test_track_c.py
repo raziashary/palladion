@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import importlib.util
 import json
 import re
@@ -775,3 +776,19 @@ def test_a_run_can_be_limited_to_named_memory_baselines() -> None:
     assert run_track_c.conditions_for([arm], [Heat.COLD], [Memory.NATIVE]) == [], (
         "a baseline the arm lacks is not invented"
     )
+
+
+def test_the_request_ceiling_option_reaches_the_proxy_limits() -> None:
+    options = argparse.Namespace(
+        call_cap=250, token_cap=190_000, max_completion_tokens=700, pace_seconds=30.0, max_request_tokens=6800
+    )
+    limits = run_track_c.proxy_limits(options, 1, 2)
+    assert limits.max_request_tokens == 6800 and limits.max_tool_calls == 1 * 48 + 2 * 16
+    options.max_request_tokens = None
+    assert run_track_c.proxy_limits(options, 1, 2).max_request_tokens is None
+
+
+def test_the_entry_point_accepts_the_request_ceiling_option(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    base = ["--root", str(tmp_path), "--out", str(tmp_path / "out"), "--run-id", "c-x", "--arms", "E3,E4"]
+    assert run_track_c.main([*base, "--max-request-tokens", "6800"]) == 2  # refused for the two arms, after parsing it
+    assert "share one Palladion state" in capsys.readouterr().err

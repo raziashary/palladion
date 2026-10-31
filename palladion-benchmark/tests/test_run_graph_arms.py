@@ -91,7 +91,7 @@ def test_the_run_keeps_its_books_as_numbers_and_codes_only(s_root: Path, tmp_pat
     rows = [json.loads(line) for line in (out / "proxy.jsonl").read_text(encoding="utf-8").splitlines()]
     assert [r["outcome"] for r in rows if r["outcome"] != "EMBEDDING"] == ["OK", "OK"]
     assert set(rows[0]) <= {"sequence", "at", "outcome", "model", "http_status", "prompt_tokens", "completion_tokens",
-                            "latency_ms", "code", "inputs", "tool_calls"}  # fmt: skip
+                            "latency_ms", "code", "inputs", "tool_calls", "request_chars"}  # fmt: skip
     spend = json.loads((out / "spend.json").read_text(encoding="utf-8"))
     assert spend["limits"] == {"calls": 100, "tokens": 1_000_000, "pace_seconds": 0.0}
     assert "t" * 24 not in (out / "spend.json").read_text(encoding="utf-8"), "the run token is never written"

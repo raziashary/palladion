@@ -230,6 +230,19 @@ class ProxyHandle:
     token: str
 
 
+def proxy_limits(options: argparse.Namespace, episodes: int, cases: int) -> ProxyLimits:
+    """What each arm's counting proxy may spend, from the run's options (the request ceiling is BADR-0049)."""
+    return ProxyLimits(
+        max_calls=options.call_cap,
+        max_tokens=options.token_cap,
+        max_completion_tokens=options.max_completion_tokens,
+        pace_seconds=options.pace_seconds,
+        models=(PRIMARY_MODEL,),
+        max_request_tokens=options.max_request_tokens,
+        max_tool_calls=episodes * 6 * 8 + cases * 16,
+    )
+
+
 def start_proxy(ctx: ArmContext, arm_id: str) -> ProxyHandle:
     proxy = CountingProxy(
         ctx.transport_for(arm_id),
@@ -460,6 +473,7 @@ def write_manifest(options: argparse.Namespace, fixture: Fixture, view: Publishe
                 "token_cap": options.token_cap,
                 "pace_seconds": options.pace_seconds,
                 "max_completion_tokens": options.max_completion_tokens,
+                "max_request_tokens": options.max_request_tokens,
                 "model_timeout": options.model_timeout,
                 "request_timeout": options.request_timeout,
             },
@@ -617,6 +631,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--token-cap", type=int, default=None, help="per arm; required for a live run")
     parser.add_argument("--pace-seconds", type=float, default=None, help="between calls; required for a live run")
     parser.add_argument("--max-completion-tokens", type=int, default=700)
+    parser.add_argument(
+        "--max-request-tokens", type=int, default=None,
+        help="refuse, unsent, a request estimated over this many tokens (BADR-0049); default none",
+    )  # fmt: skip
     parser.add_argument("--model-timeout", type=float, default=60.0, help="seconds one model request may take")
     parser.add_argument("--request-timeout", type=int, default=240, help="Palladion's per-message deadline, 1 to 300")
     parser.add_argument("--order-seed", type=int, default=7)
@@ -682,14 +700,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             return live_transport if live_transport is not None else scripted.setdefault(arm_id, ScriptedProvider())
 
         label = "groq" if live else "scripted-offline"
-        limits = ProxyLimits(
-            max_calls=options.call_cap,
-            max_tokens=options.token_cap,
-            max_completion_tokens=options.max_completion_tokens,
-            pace_seconds=options.pace_seconds,
-            models=(PRIMARY_MODEL,),
-            max_tool_calls=len(episodes) * 6 * 8 + len(cases) * 16,
-        )
+        limits = proxy_limits(options, len(episodes), len(cases))
         options.out.mkdir(parents=True, exist_ok=False)
         ctx = ArmContext(
             options,

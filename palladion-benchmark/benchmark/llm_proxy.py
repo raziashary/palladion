@@ -15,7 +15,8 @@ without tools, such as a final answer, is still served within the other caps).
 
 Records keep numbers and fixed codes only: never a prompt, a reply or a key. A refusal by the provider is kept as its
 facts (limit window, the provider's Limit, Used and Requested figures, wait, error type and code), never its message
-(BADR-0048).
+(BADR-0048). A run may also set a ceiling on the estimated size of a request; one over it is refused here, unsent
+(BADR-0049), and every dispatch row keeps the request's size in characters so the estimate can be calibrated.
 """
 
 from __future__ import annotations
@@ -68,12 +69,15 @@ class ProxyLimits:
     pace_seconds: float
     models: tuple[str, ...]
     max_tool_calls: int | None = None  # None: a request that carries tools is refused; a number allows them up to it
+    max_request_tokens: int | None = None  # a request estimated over this is refused here, unsent (BADR-0049)
 
     def __post_init__(self) -> None:
         if self.max_calls < 0 or self.max_tokens < 0 or self.max_completion_tokens < 1 or self.pace_seconds < 0:
             raise ProxyError("limits must be non-negative, with a completion cap of at least 1")
         if self.max_tool_calls is not None and self.max_tool_calls < 0:
             raise ProxyError("the tool-call cap must be non-negative")
+        if self.max_request_tokens is not None and self.max_request_tokens < 1:
+            raise ProxyError("the request ceiling must be at least 1 token")
         if not self.models or any(not m for m in self.models):
             raise ProxyError("a proxy needs at least one approved model")
 
@@ -87,6 +91,14 @@ class Refusal:
 _DAILY_LIMIT = b"tokens per day"  # the provider's own wording for a per-day token limit (Groq: TPD)
 # Refusals that are a limit stopping the run, the provider's day or the owner's cap, and so never an arm's failure.
 QUOTA_REFUSALS = frozenset({"DAILY_LIMIT_REACHED", "BUDGET_EXHAUSTED", "TOOL_BUDGET_EXHAUSTED"})
+
+
+_CHARS_PER_TOKEN = 4  # the request ceiling's estimate: an estimate, calibrated afterwards from the books' request_chars
+
+
+def _request_chars(payload: Mapping[str, Any]) -> int:
+    """The size of what a request sends to be read: its messages and its tool definitions, in characters."""
+    return len(json.dumps([payload.get("messages", ""), payload.get("tools", "")], ensure_ascii=False))
 
 
 def _estimate_tokens(payload: Mapping[str, Any]) -> int:
@@ -180,6 +192,15 @@ class CountingProxy:
             return self._refuse(403, "MODEL_NOT_APPROVED")
         if not isinstance(payload.get("messages"), list) or not payload["messages"]:
             return self._refuse(400, "NO_MESSAGES")
+        ceiling = self.limits.max_request_tokens
+        if ceiling is not None:
+            chars = _request_chars(payload)
+            estimated = chars // _CHARS_PER_TOKEN + 1
+            if estimated > ceiling:
+                return self._refuse(
+                    413, "REQUEST_OVER_CEILING", model=str(model), request_chars=chars,
+                    estimated_tokens=estimated, ceiling_tokens=ceiling,
+                )  # fmt: skip
         cap = self.limits.max_completion_tokens
         asked = payload.get("max_completion_tokens", payload.get("max_tokens"))
         completion_cap = cap if not isinstance(asked, int) or isinstance(asked, bool) else max(1, min(asked, cap))
@@ -192,6 +213,7 @@ class CountingProxy:
         self, model: str, payload: Mapping[str, Any], completion_cap: int, *, offers_tools: bool
     ) -> TransportResponse | Refusal:
         estimate = _estimate_tokens(payload)
+        chars = _request_chars(payload)
         with self._lock:
             calls = self._totals["calls"]
             spent = self._totals["prompt_tokens"] + self._totals["completion_tokens"] + self._totals["estimated_tokens"]
@@ -236,7 +258,9 @@ class CountingProxy:
             with self._lock:
                 self._totals["errors"] += 1
                 self._totals["estimated_tokens"] += estimate + completion_cap
-            self._record(outcome="ERROR", code=failure, model=model, latency_ms=latency_ms, http_status=None)
+            self._record(
+                outcome="ERROR", code=failure, model=model, latency_ms=latency_ms, http_status=None, request_chars=chars
+            )
             return Refusal(502, failure)
         prompt, completion = _usage(response)
         requested_tools = _tool_calls(response) if response.status == 200 else 0
@@ -260,7 +284,8 @@ class CountingProxy:
         facts = {} if response.status == 200 else {"refusal": refusal_facts(response.headers, response.body)}
         self._record(
             outcome=outcome, model=model, http_status=response.status, prompt_tokens=prompt,
-            completion_tokens=completion, latency_ms=latency_ms, tool_calls=requested_tools, **facts,
+            completion_tokens=completion, latency_ms=latency_ms, tool_calls=requested_tools,
+            request_chars=chars, **facts,
         )  # fmt: skip
         return response
 
