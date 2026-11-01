@@ -585,7 +585,7 @@ TOOL = {"type": "function", "function": {"name": "search", "description": "x" * 
 def test_a_request_over_the_ceiling_is_refused_unsent_and_uses_no_call(tmp_path: Path) -> None:
     transport = Fake()
     proxy = make(transport, tmp_path, max_request_tokens=100)
-    messages = [{"role": "user", "content": "w" * 800}]  # about 200 tokens at four characters each
+    messages = [{"role": "user", "content": "w" * 800}]  # about 267 tokens at three characters each
     result = proxy.chat(body(messages=messages))
     assert result == Refusal(413, "REQUEST_OVER_CEILING")
     assert transport.payloads == [] and proxy.usage()["calls"] == 0 and proxy.usage()["refused"] == 1
@@ -606,10 +606,10 @@ def test_a_request_exactly_at_the_ceiling_is_sent_and_one_token_over_is_not(tmp_
     transport = Fake()
     proxy = make(transport, tmp_path, max_request_tokens=50, max_calls=5)
     probe = json.dumps([[{"role": "user", "content": ""}], ""])  # the fixed part of the size
-    room = 50 * 4 - len(probe)  # characters of content that bring the estimate to 50 + 1 - 1
-    exactly = [{"role": "user", "content": "a" * (room - 4 + 3)}]
+    room = 50 * 3 - len(probe)  # content characters at which the estimate, characters // 3 + 1, passes 50 (BADR-0050)
+    exactly = [{"role": "user", "content": "a" * (room - 1)}]
     assert isinstance(proxy.chat(body(messages=exactly)), TransportResponse)
-    over = [{"role": "user", "content": "a" * (room - 4 + 4)}]
+    over = [{"role": "user", "content": "a" * room}]
     assert proxy.chat(body(messages=over)) == Refusal(413, "REQUEST_OVER_CEILING")
 
 

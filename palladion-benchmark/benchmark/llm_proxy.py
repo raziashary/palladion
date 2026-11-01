@@ -93,7 +93,8 @@ _DAILY_LIMIT = b"tokens per day"  # the provider's own wording for a per-day tok
 QUOTA_REFUSALS = frozenset({"DAILY_LIMIT_REACHED", "BUDGET_EXHAUSTED", "TOOL_BUDGET_EXHAUSTED"})
 
 
-_CHARS_PER_TOKEN = 4  # the request ceiling's estimate: an estimate, calibrated afterwards from the books' request_chars
+# The request ceiling's estimate; E-B08-019 measured 2.69 to 3.35 characters per provider prompt token (BADR-0050).
+_CHARS_PER_TOKEN = 3
 
 
 def _request_chars(payload: Mapping[str, Any]) -> int:
