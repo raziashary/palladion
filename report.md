@@ -7,7 +7,7 @@ the system itself works is in [architecture.md](architecture.md).
 
 **Status: the document-finding comparison now has a sealed run on new questions (section 4.1); everything else is
 still exploratory.** Where two numbers are close, they are not distinguishable. All data is fictional (an invented
-payments company called Meridian Switchworks). Last updated 2026-10-29, and it will keep growing as the benchmark
+payments company called Meridian Switchworks). Last updated 2026-11-01, and it will keep growing as the benchmark
 runs.
 
 > **Read this first.** Two kinds of result are in this report. Section 4.1 is a **sealed run on six new worlds**:
@@ -378,9 +378,18 @@ strong baseline each had 3 or 4 fabricated citations and 6 to 12 citations to th
 answering model does with the evidence, not only by what was retrieved. One run per question, one answering model
 per question, in-sample for Palladion; it supports no ranking.
 
-**Test C (the whole systems with an agent).** Run only partly because of daily model limits: the plain
-LangChain pipeline answered 15 of 16 turns, the LangGraph agent was mostly blocked by the daily limit, and
-Palladion's agent answered 3 of 8 turns in an earlier trial. None of this supports a comparison yet.
+**Test C (the whole systems with an agent).** The two Palladion agents were run as clean blocks on the free model
+tier, and **neither answered a single question.** The full Palladion (E4) was run twice (2026-10-30 and 2026-10-31)
+and the version without its critic (E3) once (2026-11-01); each time all four questions and both change-and-ask
+checks ended as invalid runs, because the model provider refused or cut off the calls. In the last E4 run 12 of 29
+calls were refused, and in the E3 run 6 of 19 (13 were answered by the model). All 18 refusals were the same
+provider limit, 7,000 tokens per minute: three of the E3 run's requests were over it by themselves (7,281 to 7,839
+tokens), and the rest arrived when tokens had already been spent in the same minute. In the E3 run the benchmark
+also refused locally any request it estimated to be over 6,800 tokens, but its estimate (4 characters to a token)
+was too loose, since the real figure was 2.7 to 3.35, and it refused nothing; it now counts 3, and that has not
+been run yet. In earlier trials the plain LangChain pipeline answered 15 of 16 turns and the LangGraph agent was
+mostly blocked by the daily limit. None of this says anything about how good any of these systems is, and none of
+it supports a comparison.
 
 ## 7. What has not been done
 
@@ -390,15 +399,15 @@ Palladion's agent answered 3 of 8 turns in an earlier trial. None of this suppor
 * **Palladion with graph links**: not supported by the benchmark yet.
 * **A sealed run for answering (tests B and C)**: not possible on the free model quota (it would take millions of
   tokens); those tests stay descriptive. The sealed run in section 4.1 covers document-finding only.
-* **Test C for the full Palladion (E4)**: run in a clean block twice (2026-10-30 and 2026-10-31), and no question was
-  answered either time. All four questions and both change-and-ask checks were cut off by the model provider (second
-  run: 12 of 29 calls refused, 7 "too many requests", 5 "request too large"), so there is no score and no statement
-  about Palladion. The second run's record shows why: the model's free-tier limit is 7,000 tokens per minute, and the
-  agent's requests are 5,700 to 8,400 tokens, so the largest can never succeed and the others fail whenever tokens
-  were used in the same minute. The first attempt
-  is void for a different reason (a test run of mine stopped a shared service). What would change that (smaller requests,
-  a longer pause, another model or a higher tier) changes what is measured, so it is the owner's choice; the other
-  Palladion variant (E3) is scheduled for 2026-11-01 and is expected to meet the same limit.
+* **Test C for the full Palladion (E4) and for Palladion without its critic (E3)**: run in clean blocks (E4 on
+  2026-10-30 and 2026-10-31, E3 on 2026-11-01) and no question was answered in any of them, so there is no score
+  and no statement about Palladion. The records show why: the model's free-tier limit is 7,000 tokens per minute,
+  and the agents' requests are 5,700 to 8,400 tokens, so the largest can never succeed and the others fail whenever
+  tokens were used in the same minute (E4 second run: 12 of 29 calls refused; E3: 6 of 19). The first E4 attempt
+  is void for a different reason (a test run of mine stopped a shared service). What would change this is the
+  owner's choice, because each option changes what is measured: a cap on request size in the benchmark's proxy (built;
+  its first setting refused nothing and was tightened, not yet run), a longer pause, another model or a higher tier.
+  A second E3 run with the tighter cap was prepared for 2026-11-02 and is not scheduled; E0 and E1 were not run live.
 * **Questions reworded by a different model**: done for the search test (section 4.5, exploratory). Not done for
   answering (tests B and C), and the rewrites were not read by a person.
 * **More public datasets**: one (SciFact, section 4.3) was run with the owner's approval; the others were not.
@@ -416,7 +425,7 @@ Palladion's agent answered 3 of 8 turns in an earlier trial. None of this suppor
 | Public data (SciFact, ordinary search) | Run, exploratory (section 4.3): Palladion on par with the strong baseline |
 | Palladion improvements (correctness, speed, packing, exact codes, named versions) | Done, measured, reviewed; 645 automated tests pass |
 | Test B (answering) | Run at the current Palladion, 200 of 200 pairs, scored (section 6); descriptive |
-| Test C (whole systems) | Partly run; the full Palladion (E4) was run in a clean block but every unit was cut off by the model provider, so it has no score; E4 was run twice, every unit cut off by the provider's 7,000-token minute window (no score); E3 is scheduled for 2026-11-01 and is expected to meet the same limit |
+| Test C (whole systems) | E4 run twice and E3 once in clean blocks; every unit was cut off by the provider's 7,000-token minute window, so there is no score; a tighter request cap is built and not yet run; E0 and E1 not run live |
 | Graph systems | Built; not measured |
 | Final publication package (licence, dataset card, reproducibility) | Not done |
 | Plain-language documentation (README, [architecture.md](architecture.md), this report) | Written; worked examples are reconstructions, not recorded runs |
@@ -431,8 +440,9 @@ Palladion's agent answered 3 of 8 turns in an earlier trial. None of this suppor
   the full-Palladion whole-system test (E4) is void, because I ran a test that restarts a shared search service while
   it was running; the first attempt at the second repeat of the sealed run had Palladion's side unrun in every world, because
   Palladion's table of loaded documents survived between repeats (found by a monitor, the attempt is kept under a
-  renamed folder, and the repeat was redone); and four of the 200 answering pairs of test B wait for model quota. None of
-  them touched the sealed result, which is the first repeat.
+  renamed folder, and the repeat was redone); and the benchmark's first request-size cap for the whole-system test
+  counted 4 characters to a token and refused nothing, because the real figure is about 3 (seen in the first E3 run's
+  records, and the cap now counts 3). None of them touched the sealed result, which is the first repeat.
 * One small, invented document set; results may not carry to real company data.
 * Single runs, one machine shared with other programs; timings move by up to 1.5 times between runs.
 * The 72 questions give wide uncertainty for most comparisons.

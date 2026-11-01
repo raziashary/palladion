@@ -1127,7 +1127,7 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
   - **Change:** Optional rewriting through the shared generator accepted only when IDs, dates, thresholds and negations are unchanged.
   - **Proof:** UNIT; BG-FIXTURE; a paraphrase that drops a negation is rejected; rejected rewrites keep the template text.
   - **Deferred:** BADR-0047 (2026-10-29): the checker and the paraphraser are built (`benchmark/paraphrase.py`, `scripts/paraphrase_questions.py`, a different-family model, rewrites accepted only when identifiers, numbers and the count of negation words are unchanged, Track A can ask the variants against the originals' gold); the variant sets for the development and test worlds wait for gpt-oss quota and the test worlds' set has its own second seal, so the card stays open. It rewrites questions, not documents (the document rewriting of the card text is not done).
-  - **Evidence:** Module and tests only (a dropped negation, a changed number and a lost identifier are each rejected; mutants killed); no variant set has been generated yet.
+  - **Evidence:** Module and tests only (a dropped negation, a changed number and a lost identifier are each rejected; mutants killed); no variant set has been generated yet. Update 2026-11-01: a variant set was generated and run for the search test (550 of 600 test questions rewritten, 404 asked; E-B08-016); the card's gate record and a read-through of the rewrites remain.
 
 <a id="b08-t02-01"></a>
 
@@ -1277,7 +1277,7 @@ order. Shared-file tasks are sequential. Each proof names an observation that co
   - **Depends:** B08-T08.09, B07-T09.01.
   - **Change:** Freeze 2 episodes and the cases M01, M13, M14, then run E3 and E4 (each on a freshly prepared runtime, one arm per invocation) and E0 and E1 on the same episodes with qwen as the one model, spreading the quota over days; E0 and E1 mutation cases are NOT_RUN and their live-status turns are a capability difference; E2 stays NOT_RUN.
   - **Proof:** MEASUREMENT; BG-TRACKC, BG-ADAPTER; counts come from the proxy books and agree with the saved rows (`check_books`); NOT_OBSERVABLE is never shown as zero; an episode that cannot finish is reported with the turns done.
-  - **Evidence:** Not yet executed.
+  - **Evidence:** Not closed. E4 (twice) and E3 (once) ran as clean blocks and answered no turn (E-B08-017, E-B08-018, E-B08-019; the provider's 7,000-token minute window, OQ15, BADR-0048 to BADR-0050); E0 and E1 not run live.
 
 <a id="b08-t08-05"></a>
 

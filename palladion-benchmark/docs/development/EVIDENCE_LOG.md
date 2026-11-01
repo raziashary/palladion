@@ -965,3 +965,15 @@ From `palladion-benchmark/`. Run `p12-b` (pin `caebd53`, frozen list `7803021a91
 **What this is.** A run state, not a result about E3 or Palladion. With the ceiling as implemented the proxy changed nothing in this run: it refused no request, so the run behaved as an E3 without a ceiling would, and the provider's per-minute window cut off every unit again. What Palladion's agent does when the proxy refuses a request locally is still unobserved. Nothing about Palladion's quality follows.
 
 **Consequence.** Three clean blocks on this tier (E4 twice, E3 once) ended without an answered turn. Any further attempt needs a recorded owner choice on OQ15 (a smaller ceiling or a different estimate, a longer pause, another approved model, a higher tier); none is made here. The 4-characters estimate stays as implemented until the owner decides; the rows now hold `request_chars` for that.
+
+## E-B08-020 — Closeout of 2026-11-01: full benchmark suite, documents brought current, state at stop
+
+**What this is.** The owner stopped work for the day. Nothing is running; the session's scheduled runs were cancelled; Qdrant was stopped after E3 and the three ports (17333, 17334, 18080) were free afterwards. No live provider call was made in this step.
+
+**Full suite.** `uv run pytest -q` from `palladion-benchmark/` with no provider credentials loaded: 1,871 passed in 2,063.19 s (34 min 23 s), exit 0, no failures, errors or skips in the log; the Qdrant and isolated-Palladion ports (17333, 17334, 18080, 18081) were free afterwards and no benchmark process was left running.
+
+**Documents updated.** PROGRESS, GOAL, PROJECT_MEMORY, PROJECT_MAP, PROJECT_LEARNING, RISKS (BR51), the cards B08-T08.04 and B08-T01.02 (evidence lines only, no checkbox changed), the benchmark README, and the repository README, `architecture.md` and `report.md` (the whole-system results and the stale statements about Test B and the answering pairs). The plain-language `report.md` still says what it did not before: no result for any whole system.
+
+**Counts.** Task register 115 atomic tasks, 105 checked, 10 open (B08-T01.01, T01.02, T02.03, T05.01, T07.01, T08.04, T08.05, T08.06, B09-T01.01, B09-T02.01); derived by `check_docs.py`, not a measure of readiness.
+
+**Not done.** Everything in PROGRESS "Next action"; no hypothesis H1 to H8 is claimed.

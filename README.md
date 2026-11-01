@@ -99,6 +99,11 @@ In words:
   retriever 4 of 31, the strong baseline 2; a difference that cannot be told from chance), and the answering model,
   not only the search, limits the result. Palladion's retriever gave the cleanest citations: all 80 real, 1 to a
   wrong version, against 3 to 4 fabricated ones for three of the others.
+* **Whole systems** (an agent that searches, answers and checks itself): **not scored.** Palladion's full agent was
+  run twice and the version without its critic once on the free model tier, and not one question was answered: the
+  provider's limit of 7,000 tokens per minute refused or cut off every run (18 of the 48 calls in the last two runs).
+  That says nothing about Palladion's quality. A cap on request size that the benchmark built refused nothing at first
+  and has been tightened; it is not yet run. See [report.md](report.md) section 6.
 
 The full plain-language report, with every test, the history of the improvements and what is still to do, is in
 [report.md](report.md).

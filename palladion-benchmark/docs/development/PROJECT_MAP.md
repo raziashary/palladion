@@ -1,6 +1,6 @@
 # Benchmark project map
 
-Updated 2026-10-18. Shows what exists and what is planned. Planned paths are not built. Mark uncertainty rather than guessing.
+Updated 2026-11-01. Shows what exists and what is planned. Planned paths are not built. Mark uncertainty rather than guessing.
 
 ## Exists now
 
@@ -42,6 +42,8 @@ flowchart LR
 | Scripts | `generate_data.py` (B02), `qdrant_server.py`, `palladion_runtime.py`, `build_indices.py`, `run_track_a.py`, `score_track_a.py`, `validate_results.py` (B04, built); `benchmark/track_a.py` and `benchmark/results_check.py` hold their logic; `run_track_b.py` (B05), `run_track_c.py` (B07) |
 | Tests | the eight protocol test files plus `test_generator_pool.py`, owned by the same cards as their modules |
 | Docs | `scoring_rubric.md`, `annotation_guide.md` (B05, built); `reproducibility.md` (B01, final B08); `dataset_card.md` (B02) |
+
+B08 additions: the counting proxy `benchmark/llm_proxy.py` with its refusal-facts and request-ceiling fields (BADR-0048 to BADR-0050), `benchmark/generator.py` (`refusal_facts`), `scripts/score_wording.py`, `scripts/score_sealed.py` and `benchmark/analysis/wording.py`; run books under `artifacts/runs/` (gitignored).
 
 Generated data stays outside git under `artifacts/` (corpora, fixtures with evaluator-only gold, runs, reports), referred to by manifest IDs.
 

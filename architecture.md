@@ -527,8 +527,10 @@ have plain names in [report.md](report.md); the codes are R (retrievers) and E (
 
 There are three tracks: A (finding documents only), B (the same search results given to one shared answering model) and
 C (each whole system end to end). **Track A exercises search only.** The policy engine, the critic and the gate act at
-tracks B and C, which have not been re-run on the current Palladion. So the benchmark can say how good the search is,
-and cannot yet say whether answers are more trustworthy. See [report.md](report.md) for the results and the hypotheses.
+tracks B and C. Track B has been run on the current Palladion (descriptive, 200 pairs: the answers are limited by the
+answering model, and Palladion's retriever gave the cleanest citations). Track C was run for E3 and E4 and no turn was
+answered, because the free model tier's limit of 7,000 tokens per minute cut every run off. So the benchmark can say how
+good the search is, and cannot yet say whether the whole agent's answers are more trustworthy. See [report.md](report.md) for the results and the hypotheses.
 
 ## 11. What an operator's screen must show
 

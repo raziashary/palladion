@@ -1,6 +1,6 @@
 # Project learning register
 
-Updated 2026-10-19. Mistakes, refuted claims and methods that worked, each with the evidence that shows it.
+Updated 2026-11-01. Mistakes, refuted claims and methods that worked, each with the evidence that shows it.
 Wrong claims are struck through and corrected in place, not erased.
 
 ## Methods that worked
@@ -110,3 +110,11 @@ Wrong claims are struck through and corrected in place, not erased.
 - ~~A heredoc passes backslashes through.~~ In this shell they were rewritten (a NUL byte ended up in a source file, scripts failed to parse). Rule: write scripts with the file tool, build special characters with chr(), and check files for NUL bytes after a scripted edit.
 - Method that worked: the seal and the aggregate-only scorer (the coordinator never saw a sealed question); mutants for every new module (two survivors showed two weak tests); a stop-and-restart of the chain the moment a NOT_RUN pair appeared; a small power simulation before the seal, written into the registration.
 
+## 2026-10-30 to 2026-11-01: Track C on the free tier (BADR-0048 to BADR-0050)
+
+- ~~A refusal's cause can be read from its status code.~~ HTTP 413 and 429 both turned out to be the provider's per-minute token window; only the stored facts (window, Limit, Used, Requested) showed it (E-B08-018). Rule: keep the provider's facts for every refusal, never its message text.
+- ~~`Requested` includes the 700-token reply cap.~~ Refuted the same day: OK prompts had up to 6,885 tokens, which plus 700 would already exceed 7,000. Struck in E-B08-018.
+- ~~Four characters to a token.~~ A request ceiling built on that estimate refused nothing in E3: the real figure was 2.69 to 3.35 characters per provider prompt token (E-B08-019). Rule: record the measure the estimate rests on in the rows first (`request_chars`), calibrate afterwards, and say the estimate is one.
+- ~~A deep nested JSON body overflows the parser in a test.~~ Not at 5,000 levels in this Python (it needs about 60,000); mutants of the error handling survived until the tests were corrected.
+- ~~Unbounded digits in a regex are harmless.~~ A huge digit string cost time; the facts regex is bounded.
+- Method that worked: planting mutants for every new proxy rule (the divisor of 3 is guarded by a boundary test that fails at 4 and at 2); gating a Track C day on 170,000 tokens; holding a run for the next clean day instead of splitting one; recording a failed run as a result with its measured cause.

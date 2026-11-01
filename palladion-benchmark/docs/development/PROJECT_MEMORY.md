@@ -1,6 +1,6 @@
 # Benchmark working memory
 
-Updated 2026-10-19. Navigation aid only; the user, the protocol, source and ADRs retain authority.
+Updated 2026-11-01. Navigation aid only; the user, the protocol, source and ADRs retain authority.
 
 ## Stable facts
 
@@ -20,7 +20,7 @@ Updated 2026-10-19. Navigation aid only; the user, the protocol, source and ADRs
 
 ## Locked decisions and open items
 
-Accepted: BADR-0001 to BADR-0037 (all; BADR-0031 to BADR-0037 are the B06 decisions: scope, live extraction limits, resumes on other models, and the private-experiment posture; BADR-0018 to BADR-0023 are the B02 decisions, BADR-0024 B03, BADR-0025 B04, BADR-0026 to BADR-0029 the audit, alias, B05 and live-use decisions, BADR-0030 the deferred owner items). All BADRs are accepted as of 2026-10-20 (BADR-0006 phase breakdown, BADR-0008 one model per question, BADR-0013 benchmark-local .env). Still open and tracked: OQ03 (read Palladion's interface at B04), OQ09 (license, before B08-T07.01), OQ10 (pairings, before B08-T03.01), OQ13 (label audit stance, before B08-T03.01). Open questions OQ01–OQ13 in [risks and open questions](RISKS_AND_OPEN_QUESTIONS.md).
+Accepted: BADR-0001 to BADR-0050 (the B08 decisions are BADR-0043 to BADR-0050: the descriptive re-plan, quota policy, licences, the re-pin, the sealed run, refusal facts, the request ceiling and its 3-characters estimate; BADR-0001 to BADR-0037: BADR-0031 to BADR-0037 are the B06 decisions: scope, live extraction limits, resumes on other models, and the private-experiment posture; BADR-0018 to BADR-0023 are the B02 decisions, BADR-0024 B03, BADR-0025 B04, BADR-0026 to BADR-0029 the audit, alias, B05 and live-use decisions, BADR-0030 the deferred owner items). All BADRs are accepted as of 2026-10-20 (BADR-0006 phase breakdown, BADR-0008 one model per question, BADR-0013 benchmark-local .env). Still open and tracked: OQ12 and OQ15 (OQ03, OQ09, OQ10 and OQ13 are answered, see PROGRESS). Open questions OQ01–OQ13 in [risks and open questions](RISKS_AND_OPEN_QUESTIONS.md).
 
 ## What exists in code (B01)
 
@@ -72,7 +72,7 @@ Accepted: BADR-0001 to BADR-0037 (all; BADR-0031 to BADR-0037 are the B06 decisi
 
 - Stage explicit `palladion-benchmark/` paths only; check `git diff --cached --name-only` before commit and `git log origin/main..HEAD` before push.
 - Run the checker with `python palladion-benchmark/docs/development/check_docs.py` from the repository root.
-- Provider calls need an explicit enable flag and a provisioned key; none exists yet. Never read or copy Palladion's `.env`.
+- Provider calls need an explicit enable flag, a call budget and the gitignored `.env` key (never printed, never copied from Palladion's `.env`).
 - Reviewer subagents: Haiku 5.5, read-only, complete protocol, no credentials, no git.
 
 
@@ -82,3 +82,10 @@ Accepted: BADR-0001 to BADR-0037 (all; BADR-0031 to BADR-0037 are the B06 decisi
 - `benchmark/adapters/{langchain,langgraph,google_adk,palladion_system}.py` (E0, E1, E2 NOT_RUN, E3/E4), `comparators/langchain/worker.py`, `benchmark/fixtures/{episodes,updates,mutations}.py`, `benchmark/eval/{memory,critic,tool_use,observable}.py` and the update-consistency section of `eval/cost_latency.py`, `benchmark/mutations_apply.py`, `benchmark/track_c.py`, `benchmark/scripted_provider.py`, `scripts/run_track_c.py`.
 - Key facts: E3 is Palladion's own critic-off control and a distinct treatment (BADR-0039); counts come from each arm's counting proxy; a measure no interface exposes is `NotObservable`, never zero; Palladion episodes are isolated by principal and session in the corpus case (BADR-0041); E3 and E4 run one at a time; a Palladion turn cost a mean 14,204 prompt tokens in the pilot (BR47); the live pilot is partial (E-B07-003, BADR-0042).
 - Evidence: E-B07-001 to E-B07-004. No system arm has a measured result that supports a ranking.
+
+## What exists in code and state (B08, 2026-11-01)
+
+- Sealed Track A: `scripts/score_sealed.py`, `scripts/score_wording.py` with `benchmark/analysis/wording.py` (aggregate-only: nothing about a sealed question is printed), seal files under `artifacts/comparison/` (digests in E-B08-013, BADR-0047). Attributing baselines R0x and R3f; every arm tuned equally (250-word chunks won for all).
+- Counting proxy (`benchmark/llm_proxy.py`): per-run book `proxy-<arm>.jsonl`; since BADR-0048 a non-200 row carries `refusal` facts (window label, Limit/Used/Requested, wait, an allow-listed error code, bounded rate-limit headers; never message text); since BADR-0049 and BADR-0050 `--max-request-tokens` (default none) refuses locally, unsent, a request estimated over it at 3 characters to a token (HTTP 413, code `REQUEST_OVER_CEILING`, counted as `refused`, not a call); every dispatch row keeps `request_chars`.
+- State: Palladion pinned at `caebd53`; qwen/qwen3.8-27b on the free tier (7,000-token minute window in the body, 8,000 in the headers; 190,000 tokens per model per rolling 24 hours); Track C needs at least 170,000 tokens in a clean block. Local time is UTC+7; proxy-book times are UTC. E4 and E3 have no answered turn (E-B08-017 to E-B08-019).
+- Tool pitfalls: write scripts with the file tool (a heredoc rewrites backslashes); `ruff format .` reformats the protocol and the checker, so format only touched files; `qdrant_server.py start` blocks (run it detached); never run a test that uses the `qdrant_server` fixture while anything live runs; monitor patterns must not match the plain word "errors".
